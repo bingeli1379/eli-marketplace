@@ -1,0 +1,29 @@
+{
+  "name": "sdd-python",
+  "description": "SDD language pack: Python backend/ML engineer and skills",
+  "version": "1.1.1",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "license": "MIT",
+  "keywords": [
+    "spec-driven",
+    "sdd",
+    "agents",
+    "skills"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "SDD \u2014 Python Pack",
+    "shortDescription": "SDD language pack: Python backend/ML engineer and skills",
+    "developerName": "Eli",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Skills",
+      "Files"
+    ]
+  }
+}

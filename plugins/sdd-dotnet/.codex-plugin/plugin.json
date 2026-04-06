@@ -1,0 +1,29 @@
+{
+  "name": "sdd-dotnet",
+  "description": "SDD language pack: ASP.NET / .NET backend engineer and skills",
+  "version": "1.1.1",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "license": "MIT",
+  "keywords": [
+    "spec-driven",
+    "sdd",
+    "agents",
+    "skills"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "SDD \u2014 .NET Pack",
+    "shortDescription": "SDD language pack: ASP.NET / .NET backend engineer and skills",
+    "developerName": "Eli",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Skills",
+      "Files"
+    ]
+  }
+}

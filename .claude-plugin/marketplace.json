@@ -1,0 +1,60 @@
+{
+  "name": "eli-marketplace",
+  "description": "Eli Marketplace",
+  "owner": {
+    "name": "Eli",
+    "email": "bingeli1379@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "dev-workflow",
+      "source": "./plugins/dev-workflow",
+      "description": "Daily dev workflow skills: commit, release, prompt & workflow audit, usage-driven skill refinement"
+    },
+    {
+      "name": "issue-tracing",
+      "source": "./plugins/issue-tracing",
+      "description": "On-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured Root Cause / Impact / How to Resolve / Unknowns report"
+    },
+    {
+      "name": "sdd",
+      "source": "./plugins/sdd",
+      "description": "Spec-driven AI development workflow core: workflow commands, orchestrator, architect, cross-cutting reviewers, and universal skills. Language/stack specialists ship as optional sdd-* packs."
+    },
+    {
+      "name": "sdd-vue",
+      "source": "./plugins/sdd-vue",
+      "description": "SDD language pack: Vue/Nuxt frontend engineer and frontend skills"
+    },
+    {
+      "name": "sdd-dotnet",
+      "source": "./plugins/sdd-dotnet",
+      "description": "SDD language pack: ASP.NET / .NET backend engineer and skills"
+    },
+    {
+      "name": "sdd-python",
+      "source": "./plugins/sdd-python",
+      "description": "SDD language pack: Python backend/ML engineer and skills"
+    },
+    {
+      "name": "sdd-godot",
+      "source": "./plugins/sdd-godot",
+      "description": "SDD language pack: Godot game engineer and skills"
+    },
+    {
+      "name": "sdd-electron",
+      "source": "./plugins/sdd-electron",
+      "description": "SDD language pack: Electron desktop/game engineer and skills"
+    },
+    {
+      "name": "sdd-database",
+      "source": "./plugins/sdd-database",
+      "description": "SDD language pack: database engineer and datastore skills"
+    },
+    {
+      "name": "sdd-devops",
+      "source": "./plugins/sdd-devops",
+      "description": "SDD language pack: DevOps engineer and infrastructure skills"
+    }
+  ]
+}

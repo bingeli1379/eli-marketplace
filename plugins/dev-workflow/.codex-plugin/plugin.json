@@ -1,0 +1,21 @@
+{
+  "name": "dev-workflow",
+  "description": "Daily dev workflow skills: commit, release, prompt & workflow audit, usage-driven skill refinement",
+  "version": "1.9.0",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "license": "MIT",
+  "keywords": ["commit", "release", "review-prompt", "review-workflow", "improve-skill", "workflow"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Dev Workflow",
+    "shortDescription": "Daily dev workflow skills: commit, release, prompt & workflow audit, usage-driven skill refinement",
+    "developerName": "Eli",
+    "category": "Developer Tools",
+    "capabilities": ["Skills", "Files"]
+  }
+}
