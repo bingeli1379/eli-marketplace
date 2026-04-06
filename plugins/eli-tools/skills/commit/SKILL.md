@@ -1,3 +1,8 @@
+---
+name: commit
+description: Use when committing staged changes or when the user asks to commit, write a commit message, or run /commit.
+---
+
 # Commit Message Generation
 
 **Type**: Automated dev workflow

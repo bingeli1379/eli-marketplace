@@ -1,3 +1,8 @@
+---
+name: review-prompt
+description: Use when auditing or reviewing agent and skill prompt files for quality, or when the user asks to review prompts or run /review-prompt.
+---
+
 # Prompt Audit
 
 Audit agent and skill prompt files for quality risks. **Zero errors > speed > brevity.**

@@ -4,30 +4,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repo Is
 
-A Claude Code plugin marketplace. It hosts custom plugins (skills/commands) distributed via the `.claude-plugin` system.
+A Claude Code plugin marketplace. It hosts custom plugins (skills) distributed via the `.claude-plugin` system.
 
 ## Structure
 
 - `.claude-plugin/marketplace.json` — marketplace manifest, lists all plugins with name/source/description
 - `plugins/<plugin-name>/` — each plugin directory
   - `.claude-plugin/plugin.json` — plugin metadata (name, version, description)
-  - `commands/<command-name>.md` — skill definitions in Markdown (the prompt files that Claude Code executes)
+  - `skills/<skill-name>/SKILL.md` — skill definitions with YAML frontmatter (name, description) and prompt body
 
-Currently contains one plugin: **eli-tools** (daily workflow commands: commit, release, review-prompt).
+Currently contains one plugin: **eli-tools** (daily workflow skills: commit, release, review-prompt).
 
 ## Adding a New Plugin
 
 1. Create `plugins/<name>/.claude-plugin/plugin.json` with name, description, version
-2. Add command files under `plugins/<name>/commands/`
+2. Add skill directories under `plugins/<name>/skills/`
 3. Register the plugin in `.claude-plugin/marketplace.json` under the `plugins` array
 
-## Adding a New Command to an Existing Plugin
+## Adding a New Skill to an Existing Plugin
 
-Create a Markdown file at `plugins/<plugin-name>/commands/<command-name>.md`. The filename becomes the slash command name.
+Create `plugins/<plugin-name>/skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description` starting with "Use when...") and the prompt body.
 
-## Command File Conventions
+## Skill File Conventions
 
-- Each command `.md` starts with a title, type, and goal
+- YAML frontmatter: `name` and `description` (description starts with "Use when...")
 - Instructions are structured with numbered steps and tables
 - Rules/guardrails go at the bottom
 - Audit report language: Traditional Chinese (technical terms stay English)

@@ -1,8 +1,8 @@
 # eli-tools
 
-Daily workflow commands for Claude Code.
+Daily workflow skills for Claude Code.
 
-## Commands
+## Skills
 
 ### `/commit` — Commit Message Generation
 

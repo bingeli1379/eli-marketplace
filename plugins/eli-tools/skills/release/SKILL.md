@@ -1,3 +1,8 @@
+---
+name: release
+description: Use when creating a release, bumping a version, generating a changelog, or when the user asks to release or run /release.
+---
+
 # Release Changelog & Version Bump
 
 **Type**: Automated release workflow
