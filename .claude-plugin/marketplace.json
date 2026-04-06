@@ -1,0 +1,15 @@
+{
+  "name": "eli-claude-marketplace",
+  "description": "Eli Claude Marketplace",
+  "owner": {
+    "name": "Eli",
+    "email": "bingeli1379@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "eli-tools",
+      "source": "./plugins/eli-tools",
+      "description": "Eli daily tools"
+    }
+  ]
+}
