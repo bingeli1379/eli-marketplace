@@ -8,36 +8,34 @@ A personal [Claude Code](https://claude.ai/code) plugin marketplace hosting cust
 |--------|-------------|
 | [eli-tools](./plugins/eli-tools) | Daily workflow commands — commit, release, prompt audit |
 
-## Usage
+## Install
 
-Install this marketplace as a Claude Code plugin source, then use the commands via slash commands in Claude Code.
+**Step 1** — open Claude Code:
 
-## Structure
-
-```
-.claude-plugin/
-  marketplace.json        # Marketplace manifest
-plugins/
-  <plugin-name>/
-    .claude-plugin/
-      plugin.json         # Plugin metadata (name, version)
-    commands/
-      <command-name>.md   # Skill definition (filename = slash command)
+```bash
+claude
 ```
 
-## Adding a Plugin
+**Step 2** — add the marketplace (one-time):
 
-1. Create `plugins/<name>/.claude-plugin/plugin.json`:
-   ```json
-   {
-     "name": "<name>",
-     "description": "<description>",
-     "version": "1.0.0"
-   }
-   ```
-2. Add command files under `plugins/<name>/commands/`
-3. Register in `.claude-plugin/marketplace.json`
+```
+/plugin marketplace add bingeli1379/eli-claude-marketplace
+```
+
+**Step 3** — install the plugin:
+
+```
+/plugin install bingeli1379/eli-claude-marketplace --scope local
+```
+
+**Step 4** — restart Claude Code to load the plugin.
+
+## Uninstall
+
+```
+/plugin uninstall bingeli1379/eli-claude-marketplace --scope local
+```
 
 ## License
 
-Private use.
+MIT
