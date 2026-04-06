@@ -1,0 +1,30 @@
+# Step 7 — Run ES queries (per-project counts)
+
+Required filters on every query:
+- `range` on `@timestamp` — the parsed time range with ±5 min buffer
+- an `env` filter — usually `prod` (from URL filters)
+- a `project` filter — REQUIRED; one query per candidate project
+- a `level` filter — default `["error", "fatal"]`; include `"warning"` only if the originating alert was warning-level or the dashboard panel includes warnings. Count warning separately from error/fatal.
+
+**Copy the URL's filter clause verbatim — do NOT default to `term .keyword`.** Kibana URL filters carry the exact query, e.g. `match_phrase:(project:<p>)` OR `match_phrase:(project.keyword:<p>)` — the field path differs per data view, the type is always `match_phrase`. Replicate it as-is; do not "upgrade" to `term <field>.keyword`. Why: many data streams map `project` / `env` / `level` as plain `text` with **no `.keyword` sub-field**, and a `term <field>.keyword` on a missing sub-field matches nothing → a false `0` with no error (this has burned whole investigations). `match_phrase` on whichever field the URL names sidesteps this, and also avoids value-casing misses like `"Error"` vs `"error"`. Only build your own `term <field>.keyword` after confirming the sub-field exists (sample one doc with `_source: "*"` or `get_mappings`). For a multi-value filter, use a `bool.should` of `match_phrase` clauses (mirroring the URL's `bool.should`), not `terms`.
+
+**NEVER run a query without a project filter, time range, AND level filter.** A `*` or `match_all` query is forbidden — past incidents include heap exhaustion from unbounded queries.
+
+**DO NOT include `aggs` / `aggregations` in your search body.** The `mcp__elasticsearch__search` wrapper strips aggregation results from responses; only `hits` are returned. Writing an `aggs` block wastes the round-trip — the wrapper accepts the body but drops the results, so you can't see what you asked for. Use per-bucket queries instead:
+- Total counts: `size: 0` **with `track_total_hits: true`** — then read the `Total results: N` line. WITHOUT `track_total_hits: true` the total is capped at 10000, so a real 72k count silently reads as "10000" and every baseline ratio / impact number built on it is wrong. Never use a `count` / `value_count` agg (stripped by the wrapper).
+- Top message patterns: `size: 5` sorted by `@timestamp desc`, read `message` field
+- First / last occurrence: two queries with `sort` `asc` and `desc`, `size: 1`
+- Distinct user counts: see step 8 (cannot use `cardinality` agg)
+
+**Token-budget rules** (the wrapper truncates large responses to a file when responses exceed its limit, costing extra `jq` round-trips):
+- **Always start with `size: 0`** to get the total. Only sample after that.
+- **`size` cap when fetching `message`/stack traces: 5.** A single `size: 100` over `error` logs with stack traces typically blows the limit. If 5 is not enough, paginate (`from`+`size`) or refine the filter — do not raise `size`.
+- **Always pass `_source`** with only the fields you need. For project distribution use `_source: ["project"]`; for time check use `_source: ["@timestamp"]`. Default `_source: "*"` only when you need to inspect schema once.
+- **Dedupe stack traces.** When sampling errors, identify each unique error pattern by its leading message (first line / exception type). Once you have one full sample per pattern, do NOT pull additional documents that share the same pattern — re-reading the same stack trace 5 times costs tokens for zero new information. Use `must_not match_phrase` to exclude already-seen patterns when fetching the next sample.
+
+**Finding the dominant pattern (do NOT trust the first sample)**:
+- The first message you sample is NOT necessarily the dominant pattern — recent errors are biased toward whatever fired most recently, not most often.
+- After getting a candidate pattern from `size: 5`, **verify its weight before trusting it**: run a `size: 0` query with `match_phrase` on a stable substring of the leading message. Compare hit count to the total from your first `size: 0`.
+- If the candidate covers a meaningful share (e.g. ≥10% of total), treat it as a main pattern.
+- If it covers <10%, it is a side pattern — `must_not match_phrase` it and sample again to find the actual dominant pattern.
+- This avoids the failure mode "first sample was 2/2151, agent built whole report around it".

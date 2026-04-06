@@ -1,0 +1,13 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "oneline",
+    "SSOT",
+    "overfitting",
+    "defence"
+  ],
+  "ignoreRegExpList": [
+    "/[\\u4e00-\\u9fff]+/"
+  ]
+}

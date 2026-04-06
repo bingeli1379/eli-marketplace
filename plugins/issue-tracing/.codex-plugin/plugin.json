@@ -1,0 +1,21 @@
+{
+  "name": "issue-tracing",
+  "description": "On-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured Root Cause / Impact / How to Resolve / Unknowns report",
+  "version": "1.3.0",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "license": "MIT",
+  "keywords": ["issue-tracing", "on-call", "grafana", "kibana", "incident", "observability"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Issue Tracing",
+    "shortDescription": "On-call triage from a Grafana/Kibana URL to a structured incident report",
+    "developerName": "Eli",
+    "category": "Developer Tools",
+    "capabilities": ["Skills", "Files"]
+  }
+}
