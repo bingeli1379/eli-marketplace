@@ -58,7 +58,10 @@ Once the baseline commit is identified, run:
 
 - Format: [Keep a Changelog](https://keepachangelog.com/) style
 - Sections: Added, Fixed, Changed, Removed (only include non-empty sections)
-- Each entry: one line per change, optionally reference commit hash for significant changes
+- Each entry: one line describing what changed + why it matters to the user
+- Do NOT include commit hashes — they add noise for end users
+- Aggressively merge related changes into a single entry
+- Aim for **3–7 entries total** per release; if you have more, you're being too granular
 - Date: use today's date (YYYY-MM-DD)
 - Prepend the new entry to `CHANGELOG.md` (create if not exists, keep existing entries)
 
@@ -78,23 +81,38 @@ Once the baseline commit is identified, run:
 ## [x.y.z] - YYYY-MM-DD
 
 ### Added
-- description (commit-hash)
+- Short description of what's new — what this means for you
 
 ### Fixed
-- description (commit-hash)
+- Short description of what was broken — how it behaves now
 
 ### Changed
-- description (commit-hash)
+- Short description of what's different — what you need to do (if anything)
 
 ### Removed
-- description (commit-hash)
+- Short description of what's gone — what to use instead (if applicable)
 ```
 
 ## Rules
-- Write from the end-user's perspective: describe **what changed**, not how it was implemented
-- Only include changes the user will actually notice or care about
-- Skip or omit: internal refactors, dependency bumps, CI tweaks, code style changes — unless they affect user-facing behavior
-- Condense minor fixes into a single line (e.g., "minor bug fixes") rather than listing each one
-- Group related commits into a single entry
-- Write in English, imperative mood
-- Keep entries concise — one line per change, fewer entries is better
+
+### Voice & audience
+- Write for **end users who don't read code** — describe behavior, not implementation
+- Use plain language; avoid jargon like "refactor", "migrate", "normalize"
+- Each entry answers: "What changed, and why should I care?"
+- English, imperative mood
+
+### What to include
+- Only changes the user will **notice or need to act on**
+- If a change has no visible effect, it doesn't belong in the changelog
+
+### What to omit (silently)
+- Internal refactors, code reorganization, renaming
+- Dependency bumps (unless they fix a user-visible bug or add a feature)
+- CI/CD, build, lint, style, test-only changes
+- Documentation-only changes (unless it's a new user-facing guide)
+
+### Compression
+- Merge related commits into **one entry** (e.g., 5 commits fixing the same form → 1 entry)
+- Batch trivial fixes into "Minor bug fixes and stability improvements" if individually uninteresting
+- Target **3–7 entries** per release; exceed only for genuinely large releases
+- No commit hashes — users don't need them
