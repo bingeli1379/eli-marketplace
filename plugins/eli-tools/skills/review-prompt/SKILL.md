@@ -15,6 +15,8 @@ Audit agent and skill prompt files for quality risks. **Zero errors > speed > br
 
 1. **Identify files to audit**
 
+   **Scope**: This skill assumes Claude Code plugin structure (`agents/*.md`, `skills/*/SKILL.md`). For non-plugin projects, specify target files explicitly via `$ARGUMENTS`.
+
    If files are specified, use them. Otherwise:
    - Run `git diff --name-only` to find modified files
    - Filter to `agents/*.md` and `skills/*/SKILL.md` only
@@ -74,10 +76,8 @@ Audit agent and skill prompt files for quality risks. **Zero errors > speed > br
    - Were any guardrails removed or weakened?
    - Were "MUST" / "do NOT" rules softened to suggestions?
 
-   ### For Checklist files
-
-   **i. Item preservation**
-   - Count checklist items before and after — were any lost?
+   **i. Item preservation** (applies to any bullet list, checklist, or enumerated section within the prompt)
+   - Count bullet items / enumerated entries before and after — were any silently lost in reformatting?
    - Were items merged in a way that loses specificity?
    - Are section boundaries clear (no two unrelated topics mixed under one heading)?
 
@@ -93,6 +93,7 @@ Audit agent and skill prompt files for quality risks. **Zero errors > speed > br
    - Assume every existing checklist item was added because the agent failed without it. Do NOT remove items just because the model "should know" this.
    - Only flag as RISKY (unnecessary) when you can demonstrate with high confidence that the model **never** makes this mistake in the specific context of this agent's role — not in general, but for this agent's actual tasks.
    - When evaluating whether to keep or remove a checklist item, the question is: "Is there any plausible scenario where this agent could get this wrong?" If yes, keep it.
+   - **When k and j conflict** (a verbose rationale that also references a past failure or documents a non-obvious constraint): k wins. Battle-tested content with rationale stays; only the WRITING STYLE may be tightened if bloated. Never remove the rule or its justification.
 
    **l. No assumptions about project tooling**
    - Prompts must not assume every project has a linter, formatter, test runner, or CI pipeline configured.
@@ -118,7 +119,24 @@ Audit agent and skill prompt files for quality risks. **Zero errors > speed > br
    - Also check that section anchors referenced actually exist in the target file.
    - Flag as **BROKEN** if a referenced file does not exist. Flag as **RISKY** if a referenced section heading cannot be found in the target file.
 
+   **q. Factual accuracy of named references**
+   - For every step number, file path, function / method / variable name, or CLI output string **added in the diff**, verify it actually exists:
+     - Step N references → check the step count and headings in the current file
+     - File paths → use `Glob` to confirm existence
+     - Function / method / variable names → grep the codebase
+     - CLI output strings → note as "requires manual verification" if cannot confirm programmatically
+   - Flag as **BROKEN** if a referenced item does not exist. Flag as **RISKY** if the reference is fragile — e.g., a step number without the step name alongside it (breaks on renumbering), or a hardcoded CLI output string that could drift across tool versions.
+
+   **r. Cross-file consistency**
+   - If multiple skills/agents in the same plugin have parallel structures (e.g., reviewer dispatch rules, agent coverage lists, shared prompt templates, repeated guardrails), audit them as a group — not in isolation.
+   - For each parallel concept, compare corresponding sections across all files. Flag divergences unless there is a documented reason (e.g., one skill explicitly scopes narrower).
+   - Example: if `skill-A` and `skill-B` both describe reviewer coverage, the lists should match unless one scope is intentionally narrower. A silent divergence is almost always a bug — one file was updated and the other was forgotten.
+
 4. **Produce the audit report**
+
+   **Language**: Audit report MUST be written in Traditional Chinese. Technical terms (file names, code, rating labels like SAFE/RISKY/BROKEN) remain in English.
+
+   **Finding format is MANDATORY structured** — every finding MUST include: location (`file:line`), what changed, and risk/failure/rationale. Bare `[description]` is not acceptable output.
 
    ```
    ## Prompt Audit Report
@@ -128,9 +146,14 @@ Audit agent and skill prompt files for quality risks. **Zero errors > speed > br
    ### [filename]
    **Rating: [SAFE / RISKY / BROKEN]**
 
-   #### SAFE changes — [description]
-   #### RISKY findings — [file:section] [description] — risk: [what could go wrong]
-   #### BROKEN findings — [file:section] [description] — will cause: [specific failure]
+   #### SAFE changes
+   - [file:line] [what changed] — [one-line why safe]
+
+   #### RISKY findings
+   - [file:line] [what changed] — risk: [what could go wrong] — suggested fix: [concrete action]
+
+   #### BROKEN findings
+   - [file:line] [what changed] — will cause: [specific failure] — required fix: [concrete action]
 
    ### Summary
    | File | Rating |
@@ -160,8 +183,6 @@ Audit agent and skill prompt files for quality risks. **Zero errors > speed > br
    ## Prompt Audit: N issues remaining after 3 rounds
    [list remaining RISKY/BROKEN with details]
    ```
-
-   **Language**: The audit report MUST be written in Traditional Chinese. Technical terms (file names, code, rating labels like SAFE/RISKY/BROKEN) remain in English.
 
 ---
 
