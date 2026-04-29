@@ -1,0 +1,5 @@
+{
+  "name": "eureka-sdd",
+  "version": "1.16.3",
+  "description": "Spec-driven AI development workflow plugin. Generates structured specs (proposal, design, tasks) from requirements, then dispatches specialized agents to implement, validate, and archive — turning ideas into code with minimal manual intervention."
+}

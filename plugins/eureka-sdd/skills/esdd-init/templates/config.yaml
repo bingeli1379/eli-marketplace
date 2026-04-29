@@ -1,0 +1,47 @@
+# feature-spec project configuration
+# This file provides context to /esdd-propose when generating artifacts.
+
+# Project context: tech stack, conventions, domain knowledge
+# This is shown to AI when creating artifacts.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, Vue 3, Nuxt 4, ASP.NET Core .NET 8+
+#     We use conventional commits
+#     Domain: e-commerce platform
+#     Frontend follows Atomic Design + Composable Pattern
+#     Backend follows Clean Architecture
+
+# Lint/format commands to run before each commit (optional)
+# Agents run these in order before committing. Use fix mode so auto-fixable issues are resolved.
+# Example:
+#   lint_commands:
+#     - pnpm eslint --fix .
+#     - pnpm prettier --write .
+#     - pnpm stylelint --fix "**/*.{css,vue}"
+#     - dotnet format
+
+# Verification commands to run after implementation (optional)
+# Agents run these to confirm their changes don't break the project.
+# Auto-detected from package.json scripts or project tooling.
+# IMPORTANT: Agents MUST use these exact commands — never hardcode tool-specific flags.
+# Example:
+#   verification_commands:
+#     type_check: npm run type-check
+#     unit_test: npm run test:unit
+#     build: npm run build
+
+# Commit consolidation (always enabled)
+# Each task group runs in an isolated worktree and is merge-squashed into a
+# single clean commit per group. Final commit messages follow conventional-commits skill (skills/conventional-commits/SKILL.md)
+# rules (no task numbers, no attribution blocks).
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals concise and focused
+#       - Always include a "Non-goals" section in design
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+#       - Group tasks by agent type (Backend/Frontend/Integration)
