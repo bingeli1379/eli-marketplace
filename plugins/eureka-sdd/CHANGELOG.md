@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.16.4] - 2026-05-01
+
+### Changed
+- `/esdd-init` asks fewer questions — only when AI truly cannot infer a section (no README, single source dir, no CLAUDE.md). Medium-confidence guesses now write the draft directly; edit the file if anything is off
+- `/esdd-init` batch decisions (knowledge candidate selection, audit findings) use clickable checkboxes instead of typing index lists like `C1,C3,C5` or `A1-A3`. Falls back to mode-based options when there are 5+ items
+- `/esdd-init` recognises config-only and docs-only repos (plugin marketplaces, doc sites, etc.) and stops asking about tech stack / lint / verification commands that do not apply
+- `/esdd-init` knowledge candidate sources pruned to high-signal only — `.env.example`, informational code comments, and named-symbol historical rules from `CLAUDE.md` / `AGENTS.md` (kept only when the named symbol still resolves in code). README, package.json scripts, and vague historical rules are dropped to reduce noise
+
+### Fixed
+- `/esdd-init` batch question no longer fails when only one knowledge candidate or audit finding survives — single-select Apply/Skip fallback added so the question UI satisfies its 2-option minimum
+
 ## [1.16.3] - 2026-04-27
 
 ### Fixed
