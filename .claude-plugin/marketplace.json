@@ -10,6 +10,11 @@
       "name": "eli-tools",
       "source": "./plugins/eli-tools",
       "description": "Eli daily tools"
+    },
+    {
+      "name": "eureka-sdd",
+      "source": "./plugins/eureka-sdd",
+      "description": "Spec-driven AI development workflow plugin. Generates structured specs (proposal, design, tasks) from requirements, then dispatches specialized agents to implement, validate, and archive — turning ideas into code with minimal manual intervention."
     }
   ]
 }
