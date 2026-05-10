@@ -16,7 +16,19 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
 ## Steps
 
-1. **Preflight: resolve the user's project root** (do this FIRST, before any URL work)
+1. **Preflight: resolve project root + preload tools** (do this FIRST, before any URL work)
+
+   ### 1a. Preload core deferred tools
+
+   Pre-load only the always-used entry-point tools so the very first ES / Grafana calls don't break narrative. Single `ToolSearch` with:
+
+   - `mcp__elasticsearch__search`
+   - `mcp__elasticsearch__list_indices`
+   - `mcp__grafana__list_datasources`
+
+   All other tools (panel queries, dashboard JSON, Prometheus / Loki query, panel image, etc.) are loaded on demand when actually needed — `ToolSearch` is cheap and saves context vs. preloading schemas you may not use.
+
+   ### 1b. Resolve the user's project root
 
    Code reading is required later (step 10) to determine user impact and confirm root cause; without a project root, the whole flow stalls partway. Resolve up front:
 
@@ -101,6 +113,7 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
    - **Always start with `size: 0`** to get the total. Only sample after that.
    - **`size` cap when fetching `message`/stack traces: 5.** A single `size: 100` over `error` logs with stack traces typically blows the limit. If 5 is not enough, paginate (`from`+`size`) or refine the filter — do not raise `size`.
    - **Always pass `_source`** with only the fields you need. For project distribution use `_source: ["project"]`; for time check use `_source: ["@timestamp"]`. Default `_source: "*"` only when you need to inspect schema once.
+   - **Dedupe stack traces.** When sampling errors, identify each unique error pattern by its leading message (first line / exception type). Once you have one full sample per pattern, do NOT pull additional documents that share the same pattern — re-reading the same stack trace 5 times costs tokens for zero new information. Use `must_not match_phrase` to exclude already-seen patterns when fetching the next sample.
 
 8. **Distinct user count** (when meaningful)
 
@@ -172,7 +185,7 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
     **Approach: query the datasource directly. Do NOT start from dashboards.** Dashboards are visualization for humans; for an agent, they are stale, full of unresolved scopedVars, and may not exist for the right tier. The metrics live in the datasource — go there first.
 
-    **Parallelize independent reconnaissance.** When you need multiple unrelated lookups before any decision (e.g. `list_datasources`, `list_indices`, `SHOW TAG VALUES` on different InfluxDB datasources, `label_values` on different Prometheus datasources), fire them in a single batch of parallel tool calls — do not serialize. Same applies to per-instance metric queries once you know the host list (CPU + Memory queries for all `<svc>` instances should be one parallel batch, not N sequential calls).
+    **Plan-then-batch execution.** Before issuing any infra query, write a short plan in chat: list the datasources to inspect, the hosts/instances to query, the metric per host (CPU, Memory, disk, etc.), and the time range. Then dispatch all independent calls **in a single parallel batch** (e.g. one tool-use block with N InfluxDB proxy queries, one per host × metric). Iterating sequentially when the calls are independent is the single biggest source of wall-clock waste in this skill.
 
     ### 11a. Identify the service token (not the literal hostname)
 
@@ -183,7 +196,7 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
     ### 11b. Query the datasource directly
 
-    1. **List datasources** — `mcp__grafana__list_datasources`. Note Prometheus and InfluxDB UIDs + databases.
+    1. **List datasources** — `mcp__grafana__list_datasources`. Note Prometheus and InfluxDB UIDs + databases. **If the response includes `hasMore: true` or fills the default page size, paginate with `offset`/`page` until you have all entries**, or use the `type` filter (`type: "influxdb"`, `type: "prometheus"`) to narrow. Skipping pagination is how you miss the InfluxDB datasource that holds VM metrics.
     2. **For each Prometheus datasource**: `mcp__grafana__query_prometheus` with `expr: label_values(up, instance)` (or a known service-label query) and grep for the service token. If hits, build queries:
        - CPU: `100 - rate(node_cpu_seconds_total{mode="idle",instance=~"<svc>.*"}[1m]) * 100` (or whatever the export pattern is — discover via `list_prometheus_metric_names`)
        - Memory: `node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes`
@@ -231,6 +244,46 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
     - Brief findings into Root Cause **only when the data is verified**. Acceptable verification: Prometheus query that returned numbers, InfluxDB proxy query that returned numbers, panel image that actually rendered a chart, or a user-supplied screenshot. **A "No data" image, an empty Prometheus result that you didn't double-check, or "current metrics look normal" are NOT verification of incident-time state.**
 
 12. **Produce the report**
+
+   ### Pre-report checklist — fill in BEFORE writing the report
+
+   Write the answer (yes / done with evidence, or "skipped because <reason>") in chat verbatim for each item. Do not paraphrase, do not hand-wave. Any item that is `no`, `not done`, or "I'll check Grafana later" → STOP, go back and complete it. Producing the report with unchecked items violates the skill.
+
+   **A. Inputs & scope**
+   - [ ] Time window narrowed to the actual error burst (not just the URL-given range)
+   - [ ] dataViewId verified against a data stream prefix (not guessed from data view name alone)
+   - [ ] Scope table written for every project named in this incident (step 10a)
+
+   **B. ES query hygiene (step 7)**
+   - [ ] Every search includes `@timestamp` + `project.keyword` + `level.keyword`
+   - [ ] `size` ≤ 5 whenever `message` / stack trace is requested
+   - [ ] `_source` filter passed (no default `*` except a one-off schema peek)
+   - [ ] Stack traces deduped — one full sample per error pattern; later samples exclude already-seen patterns
+
+   **C. Cross-project / baseline (step 9)**
+   - [ ] Pre-incident baseline run for EVERY sibling pattern that might be folded into Root Cause (not only the dominant one)
+   - [ ] Upstream identified via URL/host inside an error message (priority #1) — not by panel title or guess
+
+   **D. Code reading (step 10b, in-scope services)**
+   - [ ] Every in-scope service: backend code read at the failing endpoint
+   - [ ] Originating service ends with `-backend` AND Impact will describe user-visible behavior → frontend repo located and read
+
+   **E. Infra metrics (step 11, in-scope upstream — REQUIRED)**
+   - [ ] `list_datasources` fully paginated (`hasMore: true` followed up, or `type` filter used)
+   - [ ] Datasource type verified before building queries (don't guess "this UID is node-exporter")
+   - [ ] Query plan written in chat before dispatch (datasources × hosts × metrics × time range)
+   - [ ] All independent queries dispatched in a single parallel batch (NOT one at a time)
+   - [ ] All instances queried (every `<svc>-a01..<svc>-bNN`), not just one
+   - [ ] Each instance: CPU AND Memory BOTH queried (not one)
+   - [ ] VM tier: disk I/O AND network also queried if those measurements exist
+   - [ ] Aggregation uses `mean` AND `max` with `GROUP BY time(1m)` — full-window mean is NOT acceptable; it hides spikes
+
+   **F. Output discipline (drives step 12 below)**
+   - [ ] All times in the planned report are GMT+8, no UTC shown
+   - [ ] Planned Impact lines contain zero code elements (function names, `await`, file paths)
+   - [ ] Planned Unknowns contains zero items the agent could answer with an MCP query
+
+   If any box is unchecked or the answer is vague, return to that step. Only after every item is honestly checked do you proceed to write the report.
 
    ### HARD RULES (read before writing)
 
@@ -293,8 +346,6 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
    Root cause: <one sentence>
    Impact: <one sentence with number + behavior>
    ```
-
-   Omit fields that genuinely don't apply (e.g. no customerId field in this project) — write "n/a" instead of fabricating numbers.
 
 ---
 
