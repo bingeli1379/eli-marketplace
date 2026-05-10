@@ -113,11 +113,13 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
    1. **URL / hostname inside an error message** (most reliable — actual call data). e.g. a log shows `Url: "http://<svc>-01.<dc>.<internal-domain>/api/..." ... TimeoutRejectedException` → upstream is `<svc>`. Extract the host's leading token before the first `-` or `.` as the candidate `project.keyword`.
    2. **Log message** in the current project explicitly names another service (e.g. `Failed to call <upstream>`).
    3. **Reading code** (step 10) reveals an outbound call to another service that failed in the same window.
-   4. **Grafana panel title / sibling panel** mentions a service (lowest priority — may be unrelated). Treat as a hint only; verify by querying logs and require non-zero matching activity in the window before pursuing.
+   4. **Grafana panel title / sibling panel** mentions a service (lowest priority — may be unrelated). Treat as a hint only; verify by querying logs, then apply the correlation check below before pursuing.
 
    **HTTP error pattern** (`status=502/503/504`, `connection refused`, `timeout`) implies an upstream — apply the trigger ladder above to identify it. Do not stop at "got 503" without identifying the upstream.
 
    Maximum 2 hops total. If exceeded, stop and list the call chain in Unknowns.
+
+   **Correlation check before claiming "related"**: Before treating a sibling error pattern as part of this incident, run the same query over an **equally-long pre-incident window** (e.g. previous hour or previous day same time) and compare counts. If the pre-incident baseline is similar to the incident window, the pattern is **chronic, not caused by this incident** — list it as "out of scope / unrelated background error" instead of folding into Root Cause. Only fold in when incident-window count is materially higher than baseline.
 
 10. **Code inspection** (under the project root resolved in step 1)
 
@@ -133,7 +135,7 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
    **For each repo found, read code as follows:**
    - **Backend**: locate the failing endpoint/function from log clues (URL path, controller name, method name); inspect error handling and outbound calls.
    - **Frontend**: grep the failing API name (taken from the backend log) and read its call site. Determine: is the error caught? Does the UI fall back to empty / placeholder / error state / blank? Is there a retry?
-   - **Impact wording must be high-level**: 1–2 sentences describing what the user sees. e.g. "error 被 catch 後 該區塊顯示空白，頁面其餘正常". Do NOT include file paths, line numbers, or code mechanics in Impact (those belong in Root Cause if relevant). If frontend code is unreadable / unavailable, say so explicitly in Unknowns.
+   - **Impact wording**: derive from frontend code what the user actually sees, then write the Impact field per the rules in step 12 (HARD RULES). Do NOT include file paths, line numbers, or code mechanics here. If frontend code is unreadable / unavailable, say so explicitly in Unknowns.
 
 11. **Check infrastructure dashboards** (when upstream identified)
 
@@ -172,6 +174,7 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
       1. `mcp__grafana__get_datasource` with the panel's datasource UID → note `database` field.
       2. `GET /api/datasources/proxy/uid/<dsUid>/query?db=<database>&epoch=ms&q=<urlencoded InfluxQL>` via `mcp__grafana__grafana_api_request`.
       3. Build InfluxQL from the panel's saved query, BUT verify tag values first — saved queries can be stale. Run `SHOW TAG VALUES FROM "<measurement>" WITH KEY = "<tagKey>" WHERE "<filterKey>"='<value>'` to discover real tag values (e.g. `metric` may be `physical %`, not `physical memory %` as the panel saved query says).
+      4. **Aggregate with both `mean` AND `max`, and keep bins ≤ 1 min** for incident analysis. A 5-min `mean` smooths away spikes — a panel that visually shows 86% peak can read 50% under 5-min mean. Use `SELECT mean("value"), max("value") ... GROUP BY time(1m)`. Cite the **max** for spike detection, not the mean.
 
     - **`get_panel_image` is UNRELIABLE for InfluxDB-backed panels** — it commonly returns "No data" even when the dashboard clearly shows data. **NEVER conclude "metrics normal" or "no data available" from a `get_panel_image` "No data" result on an InfluxDB panel.** You MUST attempt the InfluxDB proxy path above before giving up.
 
@@ -193,16 +196,17 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
    ### HARD RULES (read before writing)
 
-   1. **Impact 的「使用者體驗」一行禁止出現任何 code 元素**：函式名、變數名、語法（`await`、`try/catch`、`.then()`、`Promise`）、file path、line number 都不行。只能寫**使用者眼睛看到什麼**。違反這條請重寫，不要送出。
+   1. **Impact 的「使用者體驗」禁止出現任何 code 元素**：函式名、變數名、語法（`await`、`try/catch`、`.then()`、`Promise`）、file path、line number 都不行。只能寫**使用者眼睛看到什麼**。違反這條請重寫，不要送出。
       - ❌ 反例：「`<funcName>` 的 `await` 拋例外後 `<varName>` 沒被更新且未被 catch」
       - ✅ 正例：「使用者進入 `<頁面>` 後 `<某區塊>` 顯示空白或維持上一次值，頁面其餘正常，因為 error 沒被 catch」
-   2. Code 機制（哪段 code、哪個函式失敗）寫在 **Root Cause** 區塊。**Impact 區塊寫使用者視角，Root Cause 區塊寫工程師視角**，不要混。
+   2. **多種影響可拆 bullet**：使用者體驗不限一句。如果有多條獨立影響（例如 logo 空白 + 登入失敗），用 sub-bullet 一條一條列出，每條都是使用者視角。
+   3. Code 機制（哪段 code、哪個函式失敗）寫在 **Root Cause** 區塊。**Impact 區塊寫使用者視角，Root Cause 區塊寫工程師視角**，不要混。
 
    ### Output
 
    Output **two versions**: Traditional Chinese first (full detail, the user reads it), then English (super-short, the user pastes to Jira / shares with others who only ask "what happened" + "how bad").
 
-   **All times use GMT+8 (Asia/Taipei).** Convert UTC from URLs / logs.
+   **All times in the report use GMT+8 (Asia/Taipei) ONLY.** Convert UTC from URLs / logs to GMT+8 internally; do not show UTC alongside (the user does not need it). Show the timezone tag once: `(GMT+8)` or `+08:00`.
 
    ### Chinese version — full
 
