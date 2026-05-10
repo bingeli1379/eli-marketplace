@@ -178,9 +178,17 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
     - **`get_panel_image` is UNRELIABLE for InfluxDB-backed panels** — it commonly returns "No data" even when the dashboard clearly shows data. **NEVER conclude "metrics normal" or "no data available" from a `get_panel_image` "No data" result on an InfluxDB panel.** You MUST attempt the InfluxDB proxy path above before giving up.
 
-    - Default scan: one CPU + one memory + restart/replica per service, **all instances**. Drill deeper only on anomalies.
+    - **Default scan — MUST query ALL of these for the suspected service** (one query per metric per instance, all instances):
+      1. **CPU** (mean + max, 1-min bins) — every instance
+      2. **Memory** (mean + max, 1-min bins) — every instance
+      3. **Restart / replica count** (k8s tiers only) — every replica
+      4. For VM tier: also check **disk I/O / network** if the panels exist
 
-    - Look for: pod restart, replica drop, CPU/memory saturation, throttle, network drop, redis timeout.
+      Do NOT report on memory while skipping CPU (or vice versa). If you only have data for one, the report is incomplete — go back and query the other before writing Root Cause. Report the worst instance's max value across all metrics.
+
+    - **Beyond the mandatory list above, drill into other panels (latency, GC, queue depth, thread pool, connection pool, etc.) only when one of the mandatory metrics shows an anomaly that needs further explanation.** Do not pre-emptively scan every panel.
+
+    - Other signals to look for during the mandatory scan: pod restart, replica drop, CPU/memory saturation, throttle, network drop, redis timeout.
 
     - For other reasons "No data" can be legitimate (instance decommissioned, naming changed, service migrated). Try the other tiers (VM ↔ GKE ↔ RKE) before assuming. Also check the dashboard's tags / OS — a Linux service on a Windows-tagged dashboard is the wrong dashboard, not "no metrics".
 
