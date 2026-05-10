@@ -33,3 +33,11 @@ Create `plugins/<plugin-name>/skills/<skill-name>/SKILL.md` with YAML frontmatte
 - Audit report language: Traditional Chinese (technical terms stay English)
 - All commit messages and code comments: English, imperative mood
 - Follows Conventional Commits format for commit-related tooling
+
+## Skill Development Rules (apply to ALL skills in this repo)
+
+1. **No company-specific information.** Skills are public; do not write internal service names, hostnames, FQDNs, internal domains, dashboard UIDs, or any identifying values. Use placeholders like `<svc>`, `<host>`, `<dc>`, `<internal-domain>`. Examples and templates must be generic.
+
+2. **Times in user-facing output use GMT+8 (Asia/Taipei).** Convert any UTC values from URLs, logs, or APIs before producing reports. Show the timezone explicitly (`GMT+8` / `+08:00`).
+
+3. **Preflight inputs that need the user.** Anything that requires the user to do something (e.g. `/add-dir`, supply credentials, confirm a path) must be the FIRST step of the skill flow, not buried mid-flow. Resolve it before doing the bulk of the work so a missing input does not waste prior tool calls.
