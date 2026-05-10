@@ -97,6 +97,11 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
    - First / last occurrence: two queries with `sort` `asc` and `desc`, `size: 1`
    - Distinct user counts: see step 8 (cannot use `cardinality` agg)
 
+   **Token-budget rules** (the wrapper truncates large responses to a file when responses exceed its limit, costing extra `jq` round-trips):
+   - **Always start with `size: 0`** to get the total. Only sample after that.
+   - **`size` cap when fetching `message`/stack traces: 5.** A single `size: 100` over `error` logs with stack traces typically blows the limit. If 5 is not enough, paginate (`from`+`size`) or refine the filter — do not raise `size`.
+   - **Always pass `_source`** with only the fields you need. For project distribution use `_source: ["project"]`; for time check use `_source: ["@timestamp"]`. Default `_source: "*"` only when you need to inspect schema once.
+
 8. **Distinct user count** (when meaningful)
 
    Many backend logs do NOT carry `customerid` / `accountid`. Workflow:
@@ -143,12 +148,14 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
     **Approach: query the datasource directly. Do NOT start from dashboards.** Dashboards are visualization for humans; for an agent, they are stale, full of unresolved scopedVars, and may not exist for the right tier. The metrics live in the datasource — go there first.
 
+    **Parallelize independent reconnaissance.** When you need multiple unrelated lookups before any decision (e.g. `list_datasources`, `list_indices`, `SHOW TAG VALUES` on different InfluxDB datasources, `label_values` on different Prometheus datasources), fire them in a single batch of parallel tool calls — do not serialize. Same applies to per-instance metric queries once you know the host list (CPU + Memory queries for all `<svc>` instances should be one parallel batch, not N sequential calls).
+
     ### 11a. Identify the service token (not the literal hostname)
 
     Extract the service token from the host string in error messages, NOT the literal config hostname:
 
     - `<qualifier>-<svc>-01.<dc>.<internal-domain>` → token `<svc>` (strip leading qualifier prefixes, trailing instance suffixes `-01`/`-a01`/`-b02`)
-    - **Why**: config / log hostnames are often DNS aliases or LB VIPs (e.g. `leda-siren-01.tw01.ppuff.com`), while monitoring uses a different naming (e.g. `siren-a01..siren-b03`). Querying with the literal config name will fail. Always use the **token** as a wildcard / regex filter.
+    - **Why**: config / log hostnames are often DNS aliases or LB VIPs (e.g. `<qualifier>-<svc>-01.<dc>.<internal-domain>`), while monitoring uses a different naming (e.g. `<svc>-a01..<svc>-b03`). Querying with the literal config name will fail. Always use the **token** as a wildcard / regex filter.
 
     ### 11b. Query the datasource directly
 
@@ -174,7 +181,9 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
       - `select` — field + aggregation (when `rawQuery=false`, UI uses this, not `query`)
       - `tags` — literal tag filters
     - **Do NOT guess measurement names.** **Do NOT loop through candidate names.** Hard limit: at most 1 alternate measurement attempt; then stop and list in Unknowns.
-    - `get_panel_image` is UNRELIABLE for InfluxDB-backed panels (often returns "No data" when data exists). NEVER conclude "metrics normal" from a "No data" image. If you must visualize, render the chart, but trust the proxy / Prometheus query for numbers.
+    - `get_panel_image` rules:
+      - For `prometheus`, `loki`, `elasticsearch`, `influxdb` panels: **do NOT call `get_panel_image` for data verification or as a sanity check.** Always use the direct query path (11b). Image rendering on these is at best redundant, at worst (InfluxDB) silently broken. Image is acceptable only when the user explicitly asks for a chart / screenshot — never for deciding numbers.
+      - For other datasources (CloudWatch, Splunk, SQL, Tempo, etc.) where no direct MCP query exists: `get_panel_image` is the legitimate fallback.
 
     ### 11d. Mandatory metric scan
 
