@@ -166,20 +166,24 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
       | Datasource | Method | Reliable? |
       |---|---|---|
       | `prometheus` | `mcp__grafana__query_prometheus` with the panel's `processedQuery` | yes |
-      | `influxdb` | `mcp__grafana__grafana_api_request` proxy (steps below) | yes |
+      | `influxdb` | `mcp__grafana__grafana_api_request` proxy + read panel JSON for measurement/tags (steps below) | yes |
       | `elasticsearch` | run via ES MCP directly (same as step 7) | yes |
       | other | `get_panel_image` | sometimes |
 
-    - **InfluxDB proxy steps** (MUST DO before declaring "infra unknown" for any VM/InfluxDB panel):
-      1. `mcp__grafana__get_datasource` with the panel's datasource UID → note `database` field.
-      2. **Read the panel JSON, NOT the raw query string.** Call `mcp__grafana__get_dashboard_property` with `property: "$.panels[?(@.id==<panelId>)]"` (or `get_dashboard_by_uid`) and inspect `targets[N]`:
-         - `measurement` — real measurement name (often differs from anything visible in the rendered dashboard or the panel's `query` field)
-         - `select` — field name + aggregation (e.g. `value` + `mean`); when `rawQuery=false`, UI uses this, not the `query` text
-         - `tags` / `where` — actual tag filters (resolves scopedVars hidden from `templating.list`)
-         - **Why**: panels often use template vars like `/^$service$/` that are panel-level scopedVars / constants, NOT in `dashboard.templating.list`. The raw `query` string is a stale display; trust `targets[N].measurement` + `select` + `tags` instead. Guessing measurement names from raw query (e.g. assuming `Linux Load Average` for a CPU panel) WILL fail.
-      3. **Verify tag values exist** before assuming. Run `SHOW TAG VALUES FROM "<measurement>" WITH KEY = "<tagKey>" WHERE "<filterKey>"='<value>'` to confirm — e.g. `metric` tag may be `physical %`, not `physical memory %`; or `CPU-AVG`, not `CPU Load`.
+      **Important**: `get_dashboard_panel_queries` is fine for Prometheus/Loki (the `processedQuery` substitutes vars), but for **InfluxDB it is NOT enough** — the returned query may keep `/^$service$/` regex unresolved when the var is a panel-level scopedVar (not in `dashboard.templating.list`). For InfluxDB panels, always read the raw panel JSON (step 1 below) before building any query. Do not pre-emptively guess measurement names; do not run trial queries with guessed measurements.
+
+    - **InfluxDB proxy steps** (do these IN ORDER; do NOT skip step 1):
+      1. **Read the raw panel JSON FIRST.** Call `mcp__grafana__get_dashboard_property` with `property: "$.panels[?(@.id==<panelId>)].targets"` (or `get_dashboard_by_uid` + jq `.dashboard.panels[] | select(.id==<n>) | .targets`). From `targets[N]` extract:
+         - `measurement` — literal measurement name (e.g. `check_avg_cpuload_sms`, `Physical Memory Usage`). Use this verbatim.
+         - `select` — field name + aggregation (e.g. `[[{"type":"field","params":["value"]},{"type":"mean","params":[]}]]` → field is `value`, agg is `mean`). When `rawQuery=false`, UI builds the query from `select`, NOT from the `query` text.
+         - `tags` — fixed tag filters (e.g. `[{"key":"metric","operator":"=","value":"CPU-AVG"}]`). Use these literal values; do not substitute placeholders from the `query` field.
+         - **DO NOT guess measurement names. DO NOT run a trial query with a guessed name.** If `targets` is missing or empty, list "panel JSON has no targets" in Unknowns and stop — do not trial-and-error.
+      2. `mcp__grafana__get_datasource` with the panel's datasource UID → note `database` field.
+      3. **Verify tag values exist** before assuming the literal in step 1 still applies. Run `SHOW TAG VALUES FROM "<measurement>" WITH KEY = "<tagKey>" WHERE "<filterKey>"='<value>'` to confirm.
       4. `GET /api/datasources/proxy/uid/<dsUid>/query?db=<database>&epoch=ms&q=<urlencoded InfluxQL>` via `mcp__grafana__grafana_api_request`.
       5. **Aggregate with both `mean` AND `max`, and keep bins ≤ 1 min** for incident analysis. A 5-min `mean` smooths away spikes — a panel that visually shows 86% peak can read 50% under 5-min mean. Use `SELECT mean("value"), max("value") ... GROUP BY time(1m)`. Cite the **max** for spike detection, not the mean.
+
+      **Hard limit on guess-and-retry**: if step 1's measurement does not return data, attempt at most ONE alternative (e.g. swap `measurement` if there are obvious sibling tables in `SHOW MEASUREMENTS`). If that also fails, stop and write "InfluxDB measurement <name> returned no data, cannot verify" in Unknowns. Do NOT loop through many candidate names.
 
     - **`get_panel_image` is UNRELIABLE for InfluxDB-backed panels** — it commonly returns "No data" even when the dashboard clearly shows data. **NEVER conclude "metrics normal" or "no data available" from a `get_panel_image` "No data" result on an InfluxDB panel.** You MUST attempt the InfluxDB proxy path above before giving up.
 
