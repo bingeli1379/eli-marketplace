@@ -7,6 +7,8 @@ description: Use when the user provides a Grafana or Kibana/ELK URL and asks to 
 
 On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) and produces a structured **Root Cause / Impact / How to Resolve / Unknowns** report in both Traditional Chinese and English.
 
+> **This skill is a step-by-step SOP, not a reference document.** Each step has rules and gates you MUST execute and acknowledge in chat before moving to the next. Reading the rules without writing the required outputs (scope table, query plan, etc.) violates the skill. If you find yourself thinking "I'll just write the report now" before completing every step, you are skipping work.
+
 **Input** (`$ARGUMENTS` optional):
 - Grafana dashboard / panel URL
 - Kibana Discover URL
@@ -59,11 +61,15 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
    | Grafana single panel URL (`viewPanel=panel-N`) | Focus on that panel only |
    | Kibana URL | Skip Grafana, go directly to ES query (step 7) |
 
-4. **Map Kibana data view → ES index pattern**
+4. **Map Kibana data view → ES index pattern** (skip when possible)
 
-   Kibana data views do not equal ES index names. ES MCP queries need real index patterns.
+   **Fast path — prefer this**: if the input already gives you a `project.keyword` filter (or any other strong field filter that pins the data), query with `index: "_all"` and the filter directly. The right index can be inferred afterwards from the `_index` field on hits if you really need it. This skips the entire discovery flow below and avoids the 80KB+ `list_indices` truncation.
 
-   Resolve every conversation (do not persist; infra can change):
+   Use the discovery flow below ONLY when:
+   - You have no strong filter and need to narrow search to a specific data stream, OR
+   - The user explicitly asks "only logs from <data view>"
+
+   Discovery flow (when needed):
    1. **List data streams** — call `mcp__elasticsearch__list_indices`, extract unique prefixes from `.ds-<prefix>-*` entries.
    2. **Match by name** — extract the data view name from URL or filters (the user usually mentions it in their question, e.g. "in `<product>-<region>`"). Match it against the data stream prefixes. A data view like `<x>-<y>` typically maps to a data stream like `<y>-logs-<x>*`, `<x>-<y>*`, or similar — show candidates and pick the one that returns hits with the expected `project.keyword` filter.
    3. **Ask the user** — if matching is ambiguous after looking at hits, ask once. Cache the answer in conversation context only (do not write to memory).
@@ -95,25 +101,7 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
 7. **Run ES queries** (per-project counts)
 
-   Required filters on every query:
-   - `range` on `@timestamp` — the parsed time range with ±5 min buffer
-   - `term` on `env.keyword` — usually `prod` (from URL filters)
-   - `term` on `project.keyword` — REQUIRED; one query per candidate project
-   - `terms` on `level.keyword` — default `["error", "fatal"]`; include `"warning"` only if the originating alert was warning-level or the dashboard panel includes warnings. Count warning separately from error/fatal.
-
-   **NEVER run a query without a project filter, time range, AND level filter.** A `*` or `match_all` query is forbidden — past incidents include heap exhaustion from unbounded queries.
-
-   **The `mcp__elasticsearch__search` wrapper drops `aggregations` from responses; only `hits` are returned.** Plan accordingly:
-   - Total counts: `size: 0` query — use the `Total results: N` line
-   - Top message patterns: `size: 5` sorted by `@timestamp desc`, read `message` field
-   - First / last occurrence: two queries with `sort` `asc` and `desc`, `size: 1`
-   - Distinct user counts: see step 8 (cannot use `cardinality` agg)
-
-   **Token-budget rules** (the wrapper truncates large responses to a file when responses exceed its limit, costing extra `jq` round-trips):
-   - **Always start with `size: 0`** to get the total. Only sample after that.
-   - **`size` cap when fetching `message`/stack traces: 5.** A single `size: 100` over `error` logs with stack traces typically blows the limit. If 5 is not enough, paginate (`from`+`size`) or refine the filter — do not raise `size`.
-   - **Always pass `_source`** with only the fields you need. For project distribution use `_source: ["project"]`; for time check use `_source: ["@timestamp"]`. Default `_source: "*"` only when you need to inspect schema once.
-   - **Dedupe stack traces.** When sampling errors, identify each unique error pattern by its leading message (first line / exception type). Once you have one full sample per pattern, do NOT pull additional documents that share the same pattern — re-reading the same stack trace 5 times costs tokens for zero new information. Use `must_not match_phrase` to exclude already-seen patterns when fetching the next sample.
+   **GATE — Read `references/step7-es-query.md` NOW** for the full procedure (filter requirements, aggs ban, token budget, stack-trace dedupe). Do not write any ES query before reading it; this content does not survive context dilution if you only read it once at the start of the conversation.
 
 8. **Distinct user count** (when meaningful)
 
@@ -126,18 +114,7 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
 9. **Cross-project drill-down**
 
-   Triggers, in priority order — use the highest-priority signal available, do not be misled by lower-priority hints:
-
-   1. **URL / hostname inside an error message** (most reliable — actual call data). e.g. a log shows `Url: "http://<svc>-01.<dc>.<internal-domain>/api/..." ... TimeoutRejectedException` → upstream is `<svc>`. Extract the host's leading token before the first `-` or `.` as the candidate `project.keyword`.
-   2. **Log message** in the current project explicitly names another service (e.g. `Failed to call <upstream>`).
-   3. **Reading code** (step 10) reveals an outbound call to another service that failed in the same window.
-   4. **Grafana panel title / sibling panel** mentions a service (lowest priority — may be unrelated). Treat as a hint only; verify by querying logs, then apply the correlation check below before pursuing.
-
-   **HTTP error pattern** (`status=502/503/504`, `connection refused`, `timeout`) implies an upstream — apply the trigger ladder above to identify it. Do not stop at "got 503" without identifying the upstream.
-
-   Maximum 2 hops total. If exceeded, stop and list the call chain in Unknowns.
-
-   **Correlation check before claiming "related"**: Before treating a sibling error pattern as part of this incident, run the same query over an **equally-long pre-incident window** (e.g. previous hour or previous day same time) and compare counts. If the pre-incident baseline is similar to the incident window, the pattern is **chronic, not caused by this incident** — list it as "out of scope / unrelated background error" instead of folding into Root Cause. Only fold in when incident-window count is materially higher than baseline.
+   **GATE — Read `references/step9-cross-project-drill.md` NOW** for the trigger priority ladder, hop limit, and the mandatory pre-incident baseline correlation check. Do not pull a sibling error pattern into Root Cause without the procedure in that file.
 
 10. **Code inspection & scope check**
 
@@ -167,6 +144,8 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
    - in-scope service → REQUIRED to read code (10b) and verify infra (step 11)
    - out-of-scope service → both are optional; root cause inside the service may stay in Unknowns
 
+   **GATE — write the scope table out in chat before continuing**, even if it has only one row. Without an explicit scope table, you have no basis to decide whether step 11 is mandatory or optional.
+
    ### 10b. Read code (in-scope only; required when impact involves them)
 
    - **Backend**: locate the failing endpoint/function from log clues (URL path, controller name, method name); inspect error handling and outbound calls.
@@ -179,173 +158,13 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
 11. **Verify infra metrics**
 
-    Once an upstream service is suspected (from step 9), use the scope table from step 10a:
-    - **In-scope upstream**: REQUIRED to verify infra health for the incident window before writing Root Cause.
-    - **Out-of-scope upstream**: optional. The default report can stop at "upstream `<svc>` returned 503/timeout"; deeper Root Cause (why `<svc>` failed) belongs to the owning team and may stay in Unknowns. Run 11 only if the user asks for a deeper dive or the log payload is too thin to confirm the upstream is the bottleneck.
+    **GATE — Read `references/step11-infra-metrics.md` NOW** for the full procedure (in-scope vs out-of-scope branch, service-token extraction, datasource-first query flow with Prometheus + InfluxDB recipes, dashboard fallback, mandatory CPU + Memory + restart scan, mean+max + 1-min-bin aggregation, Plan block requirement).
 
-    **Approach: query the datasource directly. Do NOT start from dashboards.** Dashboards are visualization for humans; for an agent, they are stale, full of unresolved scopedVars, and may not exist for the right tier. The metrics live in the datasource — go there first.
-
-    **Plan-then-batch execution.** Before issuing any infra query, write a short plan in chat: list the datasources to inspect, the hosts/instances to query, the metric per host (CPU, Memory, disk, etc.), and the time range. Then dispatch all independent calls **in a single parallel batch** (e.g. one tool-use block with N InfluxDB proxy queries, one per host × metric). Iterating sequentially when the calls are independent is the single biggest source of wall-clock waste in this skill.
-
-    ### 11a. Identify the service token (not the literal hostname)
-
-    Extract the service token from the host string in error messages, NOT the literal config hostname:
-
-    - `<qualifier>-<svc>-01.<dc>.<internal-domain>` → token `<svc>` (strip leading qualifier prefixes, trailing instance suffixes `-01`/`-a01`/`-b02`)
-    - **Why**: config / log hostnames are often DNS aliases or LB VIPs (e.g. `<qualifier>-<svc>-01.<dc>.<internal-domain>`), while monitoring uses a different naming (e.g. `<svc>-a01..<svc>-b03`). Querying with the literal config name will fail. Always use the **token** as a wildcard / regex filter.
-
-    ### 11b. Query the datasource directly
-
-    1. **List datasources** — `mcp__grafana__list_datasources`. Note Prometheus and InfluxDB UIDs + databases. **If the response includes `hasMore: true` or fills the default page size, paginate with `offset`/`page` until you have all entries**, or use the `type` filter (`type: "influxdb"`, `type: "prometheus"`) to narrow. Skipping pagination is how you miss the InfluxDB datasource that holds VM metrics.
-    2. **For each Prometheus datasource**: `mcp__grafana__query_prometheus` with `expr: label_values(up, instance)` (or a known service-label query) and grep for the service token. If hits, build queries:
-       - CPU: `100 - rate(node_cpu_seconds_total{mode="idle",instance=~"<svc>.*"}[1m]) * 100` (or whatever the export pattern is — discover via `list_prometheus_metric_names`)
-       - Memory: `node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes`
-       - Use `query_prometheus` with `query_type: "range"` and `step: 60` for 1-min bins.
-    3. **For each InfluxDB datasource**: query via `mcp__grafana__grafana_api_request` proxy:
-       - Discover hostnames: `SHOW TAG VALUES FROM /.+/ WITH KEY = "hostname"` then grep for the service token, OR run `SHOW SERIES WHERE hostname =~ /<svc>/` (lighter).
-       - Discover measurements for those hosts: `SHOW MEASUREMENTS WHERE hostname = '<svc>-a01'` (or browse `SHOW MEASUREMENTS` and identify CPU / memory / disk by name).
-       - Discover tag keys for chosen measurement: `SHOW TAG KEYS FROM "<measurement>"`; then `SHOW TAG VALUES FROM "<measurement>" WITH KEY = "metric"` to find the right metric tag value (e.g. `CPU-AVG`, `physical %`).
-       - Build query: `SELECT mean("value"), max("value") FROM "<measurement>" WHERE hostname =~ /<svc>/ AND "metric" = '<tag>' AND time >= '<from>' AND time <= '<to>' GROUP BY time(1m), hostname fill(null)`.
-
-    ### 11c. Dashboard as last-resort hint (NOT primary entry)
-
-    Only when 11b returns no metrics across all datasources should you turn to dashboards, and only to find which measurement / metric tag / aggregation the saved panel uses. Even then:
-
-    - `mcp__grafana__search_dashboards` — try generic terms (`vm`, `host`, `node`, `pod-info`, `resource`, plus the service token). **0 hits ≠ "no dashboard"** — broaden terms once before giving up.
-    - **Tags / titles are unreliable filters.** A `["windows"]`-tagged dashboard may still hold the Linux host you need (templating regex inside the dashboard is what matters, not the tag). If `search_dashboards` returns ≤ 5 candidates, you MUST run `get_dashboard_summary` (or `get_dashboard_property` for templating) on **every** candidate before discarding.
-    - When you find a panel with the right measurement, read the raw panel JSON (NOT `get_dashboard_panel_queries` — its `processedQuery` keeps unresolved `/^$var$/` for panel-level scopedVars). Use `mcp__grafana__get_dashboard_property` with `property: "$.panels[?(@.id==<panelId>)].targets"` and extract:
-      - `measurement` — literal name, use verbatim
-      - `select` — field + aggregation (when `rawQuery=false`, UI uses this, not `query`)
-      - `tags` — literal tag filters
-    - **Do NOT guess measurement names.** **Do NOT loop through candidate names.** Hard limit: at most 1 alternate measurement attempt; then stop and list in Unknowns.
-    - `get_panel_image` rules:
-      - For `prometheus`, `loki`, `elasticsearch`, `influxdb` panels: **do NOT call `get_panel_image` for data verification or as a sanity check.** Always use the direct query path (11b). Image rendering on these is at best redundant, at worst (InfluxDB) silently broken. Image is acceptable only when the user explicitly asks for a chart / screenshot — never for deciding numbers.
-      - For other datasources (CloudWatch, Splunk, SQL, Tempo, etc.) where no direct MCP query exists: `get_panel_image` is the legitimate fallback.
-
-    ### 11d. Mandatory metric scan
-
-    Once you have a working datasource path, query ALL of these for the suspected service (one query per metric per instance, all instances):
-
-    1. **CPU** (mean + max, 1-min bins) — every instance
-    2. **Memory** (mean + max, 1-min bins) — every instance
-    3. **Restart / replica count** (k8s tiers only) — every replica
-    4. For VM tier: also check **disk I/O / network** if the data exists
-
-    Do NOT report on memory while skipping CPU (or vice versa). If you only have data for one, the report is incomplete — go back and query the other before writing Root Cause. Report the **worst instance's max** value across all metrics.
-
-    **Beyond the mandatory list above, drill into other panels (latency, GC, queue depth, thread pool, connection pool, etc.) only when one of the mandatory metrics shows an anomaly that needs further explanation.** Do not pre-emptively scan every panel.
-
-    Other signals to look for during the mandatory scan: pod restart, replica drop, CPU/memory saturation, throttle, network drop, redis timeout.
-
-    ### 11e. Aggregation rule
-
-    **Aggregate with both `mean` AND `max`, and keep bins ≤ 1 min.** A 5-min `mean` smooths away spikes — a chart visually showing 86% peak can read 50% under 5-min mean. Cite the **max** for spike detection, not the mean.
-
-    - Brief findings into Root Cause **only when the data is verified**. Acceptable verification: Prometheus query that returned numbers, InfluxDB proxy query that returned numbers, panel image that actually rendered a chart, or a user-supplied screenshot. **A "No data" image, an empty Prometheus result that you didn't double-check, or "current metrics look normal" are NOT verification of incident-time state.**
+    The reference is the source of truth for this step; this skill body is intentionally thin so the rules arrive fresh in context when you actually run the step, not stale at conversation start.
 
 12. **Produce the report**
 
-   ### Pre-report checklist — fill in BEFORE writing the report
-
-   Write the answer (yes / done with evidence, or "skipped because <reason>") in chat verbatim for each item. Do not paraphrase, do not hand-wave. Any item that is `no`, `not done`, or "I'll check Grafana later" → STOP, go back and complete it. Producing the report with unchecked items violates the skill.
-
-   **A. Inputs & scope**
-   - [ ] Time window narrowed to the actual error burst (not just the URL-given range)
-   - [ ] dataViewId verified against a data stream prefix (not guessed from data view name alone)
-   - [ ] Scope table written for every project named in this incident (step 10a)
-
-   **B. ES query hygiene (step 7)**
-   - [ ] Every search includes `@timestamp` + `project.keyword` + `level.keyword`
-   - [ ] `size` ≤ 5 whenever `message` / stack trace is requested
-   - [ ] `_source` filter passed (no default `*` except a one-off schema peek)
-   - [ ] Stack traces deduped — one full sample per error pattern; later samples exclude already-seen patterns
-
-   **C. Cross-project / baseline (step 9)**
-   - [ ] Pre-incident baseline run for EVERY sibling pattern that might be folded into Root Cause (not only the dominant one)
-   - [ ] Upstream identified via URL/host inside an error message (priority #1) — not by panel title or guess
-
-   **D. Code reading (step 10b, in-scope services)**
-   - [ ] Every in-scope service: backend code read at the failing endpoint
-   - [ ] Originating service ends with `-backend` AND Impact will describe user-visible behavior → frontend repo located and read
-
-   **E. Infra metrics (step 11, in-scope upstream — REQUIRED)**
-   - [ ] `list_datasources` fully paginated (`hasMore: true` followed up, or `type` filter used)
-   - [ ] Datasource type verified before building queries (don't guess "this UID is node-exporter")
-   - [ ] Query plan written in chat before dispatch (datasources × hosts × metrics × time range)
-   - [ ] All independent queries dispatched in a single parallel batch (NOT one at a time)
-   - [ ] All instances queried (every `<svc>-a01..<svc>-bNN`), not just one
-   - [ ] Each instance: CPU AND Memory BOTH queried (not one)
-   - [ ] VM tier: disk I/O AND network also queried if those measurements exist
-   - [ ] Aggregation uses `mean` AND `max` with `GROUP BY time(1m)` — full-window mean is NOT acceptable; it hides spikes
-
-   **F. Output discipline (drives step 12 below)**
-   - [ ] All times in the planned report are GMT+8, no UTC shown
-   - [ ] Planned Impact lines contain zero code elements (function names, `await`, file paths)
-   - [ ] Planned Unknowns contains zero items the agent could answer with an MCP query
-
-   If any box is unchecked or the answer is vague, return to that step. Only after every item is honestly checked do you proceed to write the report.
-
-   ### HARD RULES (read before writing)
-
-   1. **Impact 的「使用者體驗」禁止出現任何 code 元素**：函式名、變數名、語法（`await`、`try/catch`、`.then()`、`Promise`）、file path、line number 都不行。只能寫**使用者眼睛看到什麼**。違反這條請重寫，不要送出。
-      - ❌ 反例：「`<funcName>` 的 `await` 拋例外後 `<varName>` 沒被更新且未被 catch」
-      - ✅ 正例：「使用者進入 `<頁面>` 後 `<某區塊>` 顯示空白或維持上一次值，頁面其餘正常，因為 error 沒被 catch」
-   2. **多種影響可拆 bullet**：使用者體驗不限一句。如果有多條獨立影響（例如 logo 空白 + 登入失敗），用 sub-bullet 一條一條列出，每條都是使用者視角。
-   3. Code 機制（哪段 code、哪個函式失敗）寫在 **Root Cause** 區塊。**Impact 區塊寫使用者視角，Root Cause 區塊寫工程師視角**，不要混。
-
-   ### Output
-
-   Output **two versions**: Traditional Chinese first (full detail, the user reads it), then English (super-short, the user pastes to Jira / shares with others who only ask "what happened" + "how bad").
-
-   **All times in the report use GMT+8 (Asia/Taipei) ONLY.** Convert UTC from URLs / logs to GMT+8 internally; do not show UTC alongside (the user does not need it). Show the timezone tag once: `(GMT+8)` or `+08:00`.
-
-   ### Chinese version — full
-
-   Heading 順序固定：**Root Cause → Impact → How to Resolve → Unknowns**。
-
-   寫作規則：
-   - 每個 section 之間空一行；section 內若 > 1 點用 bullet。
-   - 句子要短，避免長段落。一段超過 3 行就拆 bullet。
-   - **使用者體驗**遵守上面 HARD RULE #1。模板：「使用者進入 `<產品/頁面>` 後 `<看到什麼>`，`<其他部分如何>`，因為 `<error 處理方式>`。」`<error 處理方式>` 用人話描述（如「error 沒被 catch」、「有 fallback 顯示舊值」），不寫 code。
-   - 數字濃縮（Impact 區塊放數字，不在句子中重複）。
-
-   No "中文版" / "English" headings. Output the report blocks directly. Separate the Chinese block from the short English block with a horizontal rule (`---`).
-
-   ```
-   **Root Cause**
-   <核心一句話>
-
-   - <細節 / 上游 / call chain>
-   - <infra 數據 or 補充>
-
-   **Impact**
-   - 受影響使用者：~<N>（distinct customerId）or n/a
-   - 失敗 request：<N> / <duration>
-   - 時間：<from> ~ <to> (GMT+8)
-   - 使用者體驗：使用者進入 <產品> 後 <看到什麼>，<其他部分如何>，因為 <error 處理>。
-
-   **How to Resolve**
-   - 短期：<止血>
-   - 長期：<根治>
-
-   **Unknowns**
-   - <事項 1>
-   - <事項 2>
-   ```
-
-   ### English version — super short
-
-   Only **two lines**: `Root cause:` and `Impact:`. No fix, no unknowns, no time window, no headings beyond these two.
-
-   - Each line ≤ 25 words.
-   - Root cause: name the call chain in one sentence (e.g. `serviceA calls serviceB and serviceB CPU high can't respond`).
-   - Impact: numbers + behavior in one sentence (e.g. `~N user actions failed, button shows generic error`).
-   - Skip articles / be terse like a chat message — this is for quick "what's up" replies.
-
-   ```
-   Root cause: <one sentence>
-   Impact: <one sentence with number + behavior>
-   ```
+   **GATE — Read `references/step12-report.md` NOW** for the full procedure (pre-report final check, HARD RULES on Impact wording, GMT+8 rule, Chinese full template, English short template). Do not start writing the report before reading; the formatting rules and Impact constraints will not survive context dilution from the preceding tool calls.
 
 ---
 
