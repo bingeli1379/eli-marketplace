@@ -172,9 +172,14 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
     - **InfluxDB proxy steps** (MUST DO before declaring "infra unknown" for any VM/InfluxDB panel):
       1. `mcp__grafana__get_datasource` with the panel's datasource UID → note `database` field.
-      2. `GET /api/datasources/proxy/uid/<dsUid>/query?db=<database>&epoch=ms&q=<urlencoded InfluxQL>` via `mcp__grafana__grafana_api_request`.
-      3. Build InfluxQL from the panel's saved query, BUT verify tag values first — saved queries can be stale. Run `SHOW TAG VALUES FROM "<measurement>" WITH KEY = "<tagKey>" WHERE "<filterKey>"='<value>'` to discover real tag values (e.g. `metric` may be `physical %`, not `physical memory %` as the panel saved query says).
-      4. **Aggregate with both `mean` AND `max`, and keep bins ≤ 1 min** for incident analysis. A 5-min `mean` smooths away spikes — a panel that visually shows 86% peak can read 50% under 5-min mean. Use `SELECT mean("value"), max("value") ... GROUP BY time(1m)`. Cite the **max** for spike detection, not the mean.
+      2. **Read the panel JSON, NOT the raw query string.** Call `mcp__grafana__get_dashboard_property` with `property: "$.panels[?(@.id==<panelId>)]"` (or `get_dashboard_by_uid`) and inspect `targets[N]`:
+         - `measurement` — real measurement name (often differs from anything visible in the rendered dashboard or the panel's `query` field)
+         - `select` — field name + aggregation (e.g. `value` + `mean`); when `rawQuery=false`, UI uses this, not the `query` text
+         - `tags` / `where` — actual tag filters (resolves scopedVars hidden from `templating.list`)
+         - **Why**: panels often use template vars like `/^$service$/` that are panel-level scopedVars / constants, NOT in `dashboard.templating.list`. The raw `query` string is a stale display; trust `targets[N].measurement` + `select` + `tags` instead. Guessing measurement names from raw query (e.g. assuming `Linux Load Average` for a CPU panel) WILL fail.
+      3. **Verify tag values exist** before assuming. Run `SHOW TAG VALUES FROM "<measurement>" WITH KEY = "<tagKey>" WHERE "<filterKey>"='<value>'` to confirm — e.g. `metric` tag may be `physical %`, not `physical memory %`; or `CPU-AVG`, not `CPU Load`.
+      4. `GET /api/datasources/proxy/uid/<dsUid>/query?db=<database>&epoch=ms&q=<urlencoded InfluxQL>` via `mcp__grafana__grafana_api_request`.
+      5. **Aggregate with both `mean` AND `max`, and keep bins ≤ 1 min** for incident analysis. A 5-min `mean` smooths away spikes — a panel that visually shows 86% peak can read 50% under 5-min mean. Use `SELECT mean("value"), max("value") ... GROUP BY time(1m)`. Cite the **max** for spike detection, not the mean.
 
     - **`get_panel_image` is UNRELIABLE for InfluxDB-backed panels** — it commonly returns "No data" even when the dashboard clearly shows data. **NEVER conclude "metrics normal" or "no data available" from a `get_panel_image` "No data" result on an InfluxDB panel.** You MUST attempt the InfluxDB proxy path above before giving up.
 
