@@ -20,11 +20,10 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
    Code reading is required later (step 10) to determine user impact and confirm root cause; without a project root, the whole flow stalls partway. Resolve up front:
 
-   a. **Check `add-dir` paths** loaded in the session — if there's a plausible service repo under one, treat its parent as the root.
-   b. **Check user memory** — look for a recorded project root (e.g. `memory/issue_tracing_project_root.md`). If present, verify the path still exists.
-   c. **Ask the user once** — if not found in (a) or (b), ask: "請提供你的服務 repo 根目錄（例如 `~/Project`、`~/code`），用來在後續步驟讀 code 判斷影響。" Save the answer to memory as a `user`-type entry; on later runs read from memory.
+   a. **Check `add-dir` paths** loaded in the session — if there's a plausible service repo under one, treat its parent (or the path itself) as the root.
+   b. **Ask the user** — if (a) does not yield a root, ask: "請執行 `/add-dir <你的服務 repo 根目錄>`（例如 `/add-dir ~/Project`），讓我之後能讀 code 判斷使用者影響。" Wait for the user to add it, then re-check.
 
-   Cache the resolved root for the rest of this conversation. Then continue to step 2.
+   Cache the resolved root in conversation context. Then continue to step 2.
 
 2. **Parse the input URL**
 
@@ -160,23 +159,46 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
       - GKE / cloud k8s: multiple pod replicas per deployment in same namespace
       → Aggregate across instances when summarizing; cite the worst instance.
     - Pick tier by signal: hostname matches a VM panel → VM. k8s-style name → cloud or on-prem k8s. Hostname domain suffix often hints at the data center / cloud (e.g. `tw01.example.com` = on-prem) — note this in conversation context; do not persist.
-    - Render with `mcp__grafana__get_panel_image` for the incident window. Default scan: one CPU panel + one memory panel + restart/replica panel per service, **all instances**. Drill deeper only on anomalies.
-    - For `prometheus` panels, `mcp__grafana__query_prometheus` with the panel's `processedQuery` gives raw numbers.
+    - **Query the data source directly — do NOT lead with `get_panel_image`.** Image rendering is for visualization only; for triage, raw numbers are more reliable. Route by `datasource.type` from `get_dashboard_panel_queries`:
+
+      | Datasource | Method | Reliable? |
+      |---|---|---|
+      | `prometheus` | `mcp__grafana__query_prometheus` with the panel's `processedQuery` | yes |
+      | `influxdb` | `mcp__grafana__grafana_api_request` proxy (steps below) | yes |
+      | `elasticsearch` | run via ES MCP directly (same as step 7) | yes |
+      | other | `get_panel_image` | sometimes |
+
+    - **InfluxDB proxy steps** (MUST DO before declaring "infra unknown" for any VM/InfluxDB panel):
+      1. `mcp__grafana__get_datasource` with the panel's datasource UID → note `database` field.
+      2. `GET /api/datasources/proxy/uid/<dsUid>/query?db=<database>&epoch=ms&q=<urlencoded InfluxQL>` via `mcp__grafana__grafana_api_request`.
+      3. Build InfluxQL from the panel's saved query, BUT verify tag values first — saved queries can be stale. Run `SHOW TAG VALUES FROM "<measurement>" WITH KEY = "<tagKey>" WHERE "<filterKey>"='<value>'` to discover real tag values (e.g. `metric` may be `physical %`, not `physical memory %` as the panel saved query says).
+
+    - **`get_panel_image` is UNRELIABLE for InfluxDB-backed panels** — it commonly returns "No data" even when the dashboard clearly shows data. **NEVER conclude "metrics normal" or "no data available" from a `get_panel_image` "No data" result on an InfluxDB panel.** You MUST attempt the InfluxDB proxy path above before giving up.
+
+    - Default scan: one CPU + one memory + restart/replica per service, **all instances**. Drill deeper only on anomalies.
+
     - Look for: pod restart, replica drop, CPU/memory saturation, throttle, network drop, redis timeout.
-    - **`get_panel_image` is UNRELIABLE for InfluxDB-backed panels** (most VM dashboards). It commonly returns "No data" even when the dashboard clearly shows data. **Never conclude "metrics normal" from a "No data" image render.** Use the appropriate querying path:
-      - **Prometheus panels**: `mcp__grafana__query_prometheus` with the panel's `processedQuery`.
-      - **InfluxDB panels**: query via `mcp__grafana__grafana_api_request` proxy. Steps:
-        1. `mcp__grafana__get_datasource` with the panel's datasource UID → note `database` field
-        2. `GET /api/datasources/proxy/uid/<dsUid>/query?db=<database>&epoch=ms&q=<urlencoded InfluxQL>`
-        3. Build InfluxQL from the panel's saved query, BUT verify tag values first — saved queries can be stale. Run `SHOW TAG VALUES FROM "<measurement>" WITH KEY = "<tagKey>" WHERE "<filterKey>"='<value>'` to discover real tag values (e.g. `metric` may be `physical %`, not `physical memory %` as the panel saved query says).
-      - If neither works, ask the user to share a screenshot — but only after attempting the proxy path.
-    - For other reasons "No data" can be legitimate (instance decommissioned, naming changed, service migrated). Try the other tiers (VM ↔ GKE ↔ RKE) before assuming.
-    - Brief findings into Root Cause **only when the data is verified**. Acceptable verification: Prometheus query that returned numbers, panel image that actually rendered a chart, or a user-supplied screenshot. **A "No data" image, an empty Prometheus result that you didn't double-check, or "current metrics look normal" are NOT verification of incident-time state.**
-    - **Hard rule**: Do NOT use absence of data as evidence to rule out a hypothesis. If the renderer fails or you cannot query the incident-time metric, write "infra metrics 無法驗證，請提供 dashboard 截圖" in Unknowns and stop — do not fill the gap with a guess.
+
+    - For other reasons "No data" can be legitimate (instance decommissioned, naming changed, service migrated). Try the other tiers (VM ↔ GKE ↔ RKE) before assuming. Also check the dashboard's tags / OS — a Linux service on a Windows-tagged dashboard is the wrong dashboard, not "no metrics".
+
+    - Brief findings into Root Cause **only when the data is verified**. Acceptable verification: Prometheus query that returned numbers, InfluxDB proxy query that returned numbers, panel image that actually rendered a chart, or a user-supplied screenshot. **A "No data" image, an empty Prometheus result that you didn't double-check, or "current metrics look normal" are NOT verification of incident-time state.**
+
+    - **Hard rule — verification over speed**: Do NOT use absence of data as evidence to rule out a hypothesis. If the renderer fails AND you have not yet tried the InfluxDB proxy or Prometheus query, the answer is "haven't checked yet", not "no data". Only after attempting all available query paths may you write "infra metrics 無法驗證，請提供 dashboard 截圖" in Unknowns.
+
     - Null results are valuable only when verified — e.g. a Prometheus query returning numbers that show flat CPU/Mem rules out resource exhaustion. A failed render does not.
+
     - **Once a tier confirms the service exists (any panel returns data, even from a different time window), record it as "service runs on `<tier>` (`<instance pattern>`)" and move on.** Do not list "where does service run?" as Unknown if the dashboard already showed it. "No data in the incident window but data now" is a separate question (retention, instance churn) — phrase it that way, not as "infra unknown".
 
 12. **Produce the report**
+
+   ### HARD RULES (read before writing)
+
+   1. **Impact 的「使用者體驗」一行禁止出現任何 code 元素**：函式名、變數名、語法（`await`、`try/catch`、`.then()`、`Promise`）、file path、line number 都不行。只能寫**使用者眼睛看到什麼**。違反這條請重寫，不要送出。
+      - ❌ 反例：「`<funcName>` 的 `await` 拋例外後 `<varName>` 沒被更新且未被 catch」
+      - ✅ 正例：「使用者進入 `<頁面>` 後 `<某區塊>` 顯示空白或維持上一次值，頁面其餘正常，因為 error 沒被 catch」
+   2. Code 機制（哪段 code、哪個函式失敗）寫在 **Root Cause** 區塊。**Impact 區塊寫使用者視角，Root Cause 區塊寫工程師視角**，不要混。
+
+   ### Output
 
    Output **two versions**: Traditional Chinese first (full detail, the user reads it), then English (super-short, the user pastes to Jira / shares with others who only ask "what happened" + "how bad").
 
@@ -189,7 +211,7 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
    寫作規則：
    - 每個 section 之間空一行；section 內若 > 1 點用 bullet。
    - 句子要短，避免長段落。一段超過 3 行就拆 bullet。
-   - **使用者體驗**寫：使用者進入 `<產品/頁面>` 後 `<看到什麼>`，`<其他部分如何>`，因為 `<error 處理方式>`。只說使用者看到什麼，不寫 file:line / code 機制。
+   - **使用者體驗**遵守上面 HARD RULE #1。模板：「使用者進入 `<產品/頁面>` 後 `<看到什麼>`，`<其他部分如何>`，因為 `<error 處理方式>`。」`<error 處理方式>` 用人話描述（如「error 沒被 catch」、「有 fallback 顯示舊值」），不寫 code。
    - 數字濃縮（Impact 區塊放數字，不在句子中重複）。
 
    No "中文版" / "English" headings. Output the report blocks directly. Separate the Chinese block from the short English block with a horizontal rule (`---`).
@@ -240,7 +262,7 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 - **No fabricated numbers.** Distinct user counts, request counts, customer ids — only report what the aggregation actually returned. If a field is missing, write `n/a`, never estimate.
 - **No fabricated root causes.** If code is needed and unavailable, the report's Root Cause must say "需要看 code 才能確認" and the Unknowns must request the repo path. Do not pattern-match a guess.
 - **Cross-project drill is bounded** — max 2 hops. List the chain if you stop early.
-- **Project → repo mapping is per-user.** Ask the user once for their project root and save to memory; reuse on later runs. Never hardcode paths.
+- **Project → repo mapping is per-user.** Get it from `add-dir` paths or ask the user to `/add-dir`. Never hardcode paths and never persist to memory (per-project memory doesn't help cross-project triage).
 - **Honor user-mentioned excluded indices.** If the user mentions patterns to skip (e.g. lower-priority product lines, test indices) during the conversation, exclude them from queries. Only include excluded patterns if the user explicitly asks.
 - **Output language order is fixed**: Traditional Chinese first (full), English second (super-short two lines). No language headings ("中文版" / "English") in the output. Order: Root Cause → Impact → How to Resolve → Unknowns.
 - **Warning level handling**: include only when the originating signal is warning-level or the user asks. Always count warning separately from error/fatal in stats.
