@@ -137,77 +137,65 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
    - **Frontend**: grep the failing API name (taken from the backend log) and read its call site. Determine: is the error caught? Does the UI fall back to empty / placeholder / error state / blank? Is there a retry?
    - **Impact wording**: derive from frontend code what the user actually sees, then write the Impact field per the rules in step 12 (HARD RULES). Do NOT include file paths, line numbers, or code mechanics here. If frontend code is unreadable / unavailable, say so explicitly in Unknowns.
 
-11. **Check infrastructure dashboards** (when upstream identified)
+11. **Verify infra metrics** (when upstream identified)
 
-    Once an upstream service is suspected (from step 9), verify its infra health for the incident window. Discover the relevant infra dashboards every conversation (do not persist):
+    Once an upstream service is suspected (from step 9), verify its infra health for the incident window.
 
-    1. **Search by intent** — call `mcp__grafana__search_dashboards` with terms like `vm-resource`, `pod-info`, `node`, plus the suspected service name. Inspect tags (`["GKE"]`, `["RKE"]`, `["VM"]`, etc.) and titles to identify per-tier dashboards.
-    2. **Inspect candidates** — call `mcp__grafana__get_dashboard_summary` on the top match per tier; check that variables (`NAMESPACE`, `DEPLOYMENT`, etc.) and panel types (CPU / memory / replicas) fit the expected pattern below.
-    3. **Ask the user** — if multiple candidates look equally relevant, ask once and cache the choice in conversation context.
+    **Approach: query the datasource directly. Do NOT start from dashboards.** Dashboards are visualization for humans; for an agent, they are stale, full of unresolved scopedVars, and may not exist for the right tier. The metrics live in the datasource — go there first.
 
-    Typical tiers and what to look for:
+    ### 11a. Identify the service token (not the literal hostname)
 
-    | Tier | Typical panels | Common variables |
-    |---|---|---|
-    | VM | per-host CPU / memory time series, one panel per `<svc>-<dc><N>` host | none — host names hardcoded in panels |
-    | RKE / on-prem k8s | Pod info table, replica count, restart, throttle, memory/CPU per replica, often split per cluster | `NAMESPACE`, `DEPLOYMENT` |
-    | GKE / cloud k8s | Pod info, replica, CPU/memory, network packets | `NAMESPACE`, `DEPLOYMENT` |
+    Extract the service token from the host string in error messages, NOT the literal config hostname:
 
-    Workflow:
-    - **Extract the service name** from host strings in error messages (e.g. `<qualifier>-<svc>-01.<dc>.<internal-domain>` → service `<svc>`). Strip leading qualifier prefixes (when present) and trailing instance/ordinal suffixes (`-01`, `-a01`, `-b02`).
-    - **Match by service name token, never by exact instance**. Each tier fans out per service:
-      - VM: `<svc>-a01`, `<svc>-a02`, `<svc>-b01`, `<svc>-b02` (typical pattern: data center letter + ordinal; the user may follow a different convention)
-      - RKE / on-prem k8s: dashboard sections often split per cluster (e.g. cluster A / B), multiple pod replicas per deployment
-      - GKE / cloud k8s: multiple pod replicas per deployment in same namespace
-      → Aggregate across instances when summarizing; cite the worst instance.
-    - Pick tier by signal: hostname matches a VM panel → VM. k8s-style name → cloud or on-prem k8s. Hostname domain suffix often hints at the data center / cloud (e.g. `tw01.example.com` = on-prem) — note this in conversation context; do not persist.
-    - **Query the data source directly — do NOT lead with `get_panel_image`.** Image rendering is for visualization only; for triage, raw numbers are more reliable. Route by `datasource.type` from `get_dashboard_panel_queries`:
+    - `<qualifier>-<svc>-01.<dc>.<internal-domain>` → token `<svc>` (strip leading qualifier prefixes, trailing instance suffixes `-01`/`-a01`/`-b02`)
+    - **Why**: config / log hostnames are often DNS aliases or LB VIPs (e.g. `leda-siren-01.tw01.ppuff.com`), while monitoring uses a different naming (e.g. `siren-a01..siren-b03`). Querying with the literal config name will fail. Always use the **token** as a wildcard / regex filter.
 
-      | Datasource | Method | Reliable? |
-      |---|---|---|
-      | `prometheus` | `mcp__grafana__query_prometheus` with the panel's `processedQuery` | yes |
-      | `influxdb` | `mcp__grafana__grafana_api_request` proxy + read panel JSON for measurement/tags (steps below) | yes |
-      | `elasticsearch` | run via ES MCP directly (same as step 7) | yes |
-      | other | `get_panel_image` | sometimes |
+    ### 11b. Query the datasource directly
 
-      **Important**: `get_dashboard_panel_queries` is fine for Prometheus/Loki (the `processedQuery` substitutes vars), but for **InfluxDB it is NOT enough** — the returned query may keep `/^$service$/` regex unresolved when the var is a panel-level scopedVar (not in `dashboard.templating.list`). For InfluxDB panels, always read the raw panel JSON (step 1 below) before building any query. Do not pre-emptively guess measurement names; do not run trial queries with guessed measurements.
+    1. **List datasources** — `mcp__grafana__list_datasources`. Note Prometheus and InfluxDB UIDs + databases.
+    2. **For each Prometheus datasource**: `mcp__grafana__query_prometheus` with `expr: label_values(up, instance)` (or a known service-label query) and grep for the service token. If hits, build queries:
+       - CPU: `100 - rate(node_cpu_seconds_total{mode="idle",instance=~"<svc>.*"}[1m]) * 100` (or whatever the export pattern is — discover via `list_prometheus_metric_names`)
+       - Memory: `node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes`
+       - Use `query_prometheus` with `query_type: "range"` and `step: 60` for 1-min bins.
+    3. **For each InfluxDB datasource**: query via `mcp__grafana__grafana_api_request` proxy:
+       - Discover hostnames: `SHOW TAG VALUES FROM /.+/ WITH KEY = "hostname"` then grep for the service token, OR run `SHOW SERIES WHERE hostname =~ /<svc>/` (lighter).
+       - Discover measurements for those hosts: `SHOW MEASUREMENTS WHERE hostname = '<svc>-a01'` (or browse `SHOW MEASUREMENTS` and identify CPU / memory / disk by name).
+       - Discover tag keys for chosen measurement: `SHOW TAG KEYS FROM "<measurement>"`; then `SHOW TAG VALUES FROM "<measurement>" WITH KEY = "metric"` to find the right metric tag value (e.g. `CPU-AVG`, `physical %`).
+       - Build query: `SELECT mean("value"), max("value") FROM "<measurement>" WHERE hostname =~ /<svc>/ AND "metric" = '<tag>' AND time >= '<from>' AND time <= '<to>' GROUP BY time(1m), hostname fill(null)`.
 
-    - **InfluxDB proxy steps** (do these IN ORDER; do NOT skip step 1):
-      1. **Read the raw panel JSON FIRST.** Call `mcp__grafana__get_dashboard_property` with `property: "$.panels[?(@.id==<panelId>)].targets"` (or `get_dashboard_by_uid` + jq `.dashboard.panels[] | select(.id==<n>) | .targets`). From `targets[N]` extract:
-         - `measurement` — literal measurement name (e.g. `check_avg_cpuload_sms`, `Physical Memory Usage`). Use this verbatim.
-         - `select` — field name + aggregation (e.g. `[[{"type":"field","params":["value"]},{"type":"mean","params":[]}]]` → field is `value`, agg is `mean`). When `rawQuery=false`, UI builds the query from `select`, NOT from the `query` text.
-         - `tags` — fixed tag filters (e.g. `[{"key":"metric","operator":"=","value":"CPU-AVG"}]`). Use these literal values; do not substitute placeholders from the `query` field.
-         - **DO NOT guess measurement names. DO NOT run a trial query with a guessed name.** If `targets` is missing or empty, list "panel JSON has no targets" in Unknowns and stop — do not trial-and-error.
-      2. `mcp__grafana__get_datasource` with the panel's datasource UID → note `database` field.
-      3. **Verify tag values exist** before assuming the literal in step 1 still applies. Run `SHOW TAG VALUES FROM "<measurement>" WITH KEY = "<tagKey>" WHERE "<filterKey>"='<value>'` to confirm.
-      4. `GET /api/datasources/proxy/uid/<dsUid>/query?db=<database>&epoch=ms&q=<urlencoded InfluxQL>` via `mcp__grafana__grafana_api_request`.
-      5. **Aggregate with both `mean` AND `max`, and keep bins ≤ 1 min** for incident analysis. A 5-min `mean` smooths away spikes — a panel that visually shows 86% peak can read 50% under 5-min mean. Use `SELECT mean("value"), max("value") ... GROUP BY time(1m)`. Cite the **max** for spike detection, not the mean.
+    ### 11c. Dashboard as last-resort hint (NOT primary entry)
 
-      **Hard limit on guess-and-retry**: if step 1's measurement does not return data, attempt at most ONE alternative (e.g. swap `measurement` if there are obvious sibling tables in `SHOW MEASUREMENTS`). If that also fails, stop and write "InfluxDB measurement <name> returned no data, cannot verify" in Unknowns. Do NOT loop through many candidate names.
+    Only when 11b returns no metrics across all datasources should you turn to dashboards, and only to find which measurement / metric tag / aggregation the saved panel uses. Even then:
 
-    - **`get_panel_image` is UNRELIABLE for InfluxDB-backed panels** — it commonly returns "No data" even when the dashboard clearly shows data. **NEVER conclude "metrics normal" or "no data available" from a `get_panel_image` "No data" result on an InfluxDB panel.** You MUST attempt the InfluxDB proxy path above before giving up.
+    - `mcp__grafana__search_dashboards` — try generic terms (`vm`, `host`, `node`, `pod-info`, `resource`, plus the service token). **0 hits ≠ "no dashboard"** — broaden terms once before giving up.
+    - **Tags / titles are unreliable filters.** A `["windows"]`-tagged dashboard may still hold the Linux host you need (templating regex inside the dashboard is what matters, not the tag). If `search_dashboards` returns ≤ 5 candidates, you MUST run `get_dashboard_summary` (or `get_dashboard_property` for templating) on **every** candidate before discarding.
+    - When you find a panel with the right measurement, read the raw panel JSON (NOT `get_dashboard_panel_queries` — its `processedQuery` keeps unresolved `/^$var$/` for panel-level scopedVars). Use `mcp__grafana__get_dashboard_property` with `property: "$.panels[?(@.id==<panelId>)].targets"` and extract:
+      - `measurement` — literal name, use verbatim
+      - `select` — field + aggregation (when `rawQuery=false`, UI uses this, not `query`)
+      - `tags` — literal tag filters
+    - **Do NOT guess measurement names.** **Do NOT loop through candidate names.** Hard limit: at most 1 alternate measurement attempt; then stop and list in Unknowns.
+    - `get_panel_image` is UNRELIABLE for InfluxDB-backed panels (often returns "No data" when data exists). NEVER conclude "metrics normal" from a "No data" image. If you must visualize, render the chart, but trust the proxy / Prometheus query for numbers.
 
-    - **Default scan — MUST query ALL of these for the suspected service** (one query per metric per instance, all instances):
-      1. **CPU** (mean + max, 1-min bins) — every instance
-      2. **Memory** (mean + max, 1-min bins) — every instance
-      3. **Restart / replica count** (k8s tiers only) — every replica
-      4. For VM tier: also check **disk I/O / network** if the panels exist
+    ### 11d. Mandatory metric scan
 
-      Do NOT report on memory while skipping CPU (or vice versa). If you only have data for one, the report is incomplete — go back and query the other before writing Root Cause. Report the worst instance's max value across all metrics.
+    Once you have a working datasource path, query ALL of these for the suspected service (one query per metric per instance, all instances):
 
-    - **Beyond the mandatory list above, drill into other panels (latency, GC, queue depth, thread pool, connection pool, etc.) only when one of the mandatory metrics shows an anomaly that needs further explanation.** Do not pre-emptively scan every panel.
+    1. **CPU** (mean + max, 1-min bins) — every instance
+    2. **Memory** (mean + max, 1-min bins) — every instance
+    3. **Restart / replica count** (k8s tiers only) — every replica
+    4. For VM tier: also check **disk I/O / network** if the data exists
 
-    - Other signals to look for during the mandatory scan: pod restart, replica drop, CPU/memory saturation, throttle, network drop, redis timeout.
+    Do NOT report on memory while skipping CPU (or vice versa). If you only have data for one, the report is incomplete — go back and query the other before writing Root Cause. Report the **worst instance's max** value across all metrics.
 
-    - For other reasons "No data" can be legitimate (instance decommissioned, naming changed, service migrated). Try the other tiers (VM ↔ GKE ↔ RKE) before assuming. Also check the dashboard's tags / OS — a Linux service on a Windows-tagged dashboard is the wrong dashboard, not "no metrics".
+    **Beyond the mandatory list above, drill into other panels (latency, GC, queue depth, thread pool, connection pool, etc.) only when one of the mandatory metrics shows an anomaly that needs further explanation.** Do not pre-emptively scan every panel.
+
+    Other signals to look for during the mandatory scan: pod restart, replica drop, CPU/memory saturation, throttle, network drop, redis timeout.
+
+    ### 11e. Aggregation rule
+
+    **Aggregate with both `mean` AND `max`, and keep bins ≤ 1 min.** A 5-min `mean` smooths away spikes — a chart visually showing 86% peak can read 50% under 5-min mean. Cite the **max** for spike detection, not the mean.
 
     - Brief findings into Root Cause **only when the data is verified**. Acceptable verification: Prometheus query that returned numbers, InfluxDB proxy query that returned numbers, panel image that actually rendered a chart, or a user-supplied screenshot. **A "No data" image, an empty Prometheus result that you didn't double-check, or "current metrics look normal" are NOT verification of incident-time state.**
-
-    - **Hard rule — verification over speed**: Do NOT use absence of data as evidence to rule out a hypothesis. If the renderer fails AND you have not yet tried the InfluxDB proxy or Prometheus query, the answer is "haven't checked yet", not "no data". Only after attempting all available query paths may you write "infra metrics 無法驗證，請提供 dashboard 截圖" in Unknowns.
-
-    - Null results are valuable only when verified — e.g. a Prometheus query returning numbers that show flat CPU/Mem rules out resource exhaustion. A failed render does not.
-
-    - **Once a tier confirms the service exists (any panel returns data, even from a different time window), record it as "service runs on `<tier>` (`<instance pattern>`)" and move on.** Do not list "where does service run?" as Unknown if the dashboard already showed it. "No data in the incident window but data now" is a separate question (retention, instance churn) — phrase it that way, not as "infra unknown".
 
 12. **Produce the report**
 
