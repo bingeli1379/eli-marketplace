@@ -1,18 +1,51 @@
 # Step 12 — Produce the report
 
-## Pre-report final check
+## Pre-report evidence dump (NOT a checkbox list)
 
 Two upstream gates already enforced in chat output:
 - Step 10a: scope table written
 - Step 11: Plan block written + all planned queries dispatched
 
-Before writing the report, confirm the remaining points (one line each in chat — yes / no / n/a). Any `no` → go back, do not write the report.
+Before writing the report, paste the evidence below in chat verbatim. **No ticking boxes — paste real numbers, queries, and excerpts.** Empty fields are visible; faking data is harder than checking a box.
 
-- [ ] For every in-scope service in the scope table: code read AND infra metrics queried (CPU + Memory + restart, mean+max ≤1m bin)
-- [ ] Pre-incident baseline run for sibling error patterns before folding them into Root Cause
-- [ ] All times in the planned report are GMT+8, no UTC shown
-- [ ] Planned Impact lines contain zero code elements (function names, `await`, file paths)
-- [ ] Planned Unknowns contains zero items an MCP query could have answered
+```
+=== Pre-report evidence ===
+
+Time window (GMT+8): <from> ~ <to>
+Burst window (if narrower than the URL range): <from> ~ <to>
+
+Per-project error counts (size:0 query results):
+- <project-A>: <N> errors  | top message: "<first line of dominant pattern>"
+- <project-B>: <N> errors  | top message: "..."
+
+Pre-incident baseline (same-length window before incident, same filter):
+- <project>: <N> errors  → ratio incident/baseline: <X>x
+- (run for every project that may go into Root Cause; if ratio ≈ 1, treat as background and exclude)
+
+Infra metrics (one block per upstream named in the incident):
+
+<svc-A>:
+  Status: <REQUIRED / n/a (app-level root cause) / n/a (out-of-scope)>
+  # If REQUIRED, fill the rest. Otherwise leave a one-line reason.
+  Source: <prom expr | influxql>
+  Per instance, mean / max in incident window (1-min bins):
+    <inst-1>  CPU __ / __%   Mem __ / __%   Restarts __
+    <inst-2>  CPU __ / __%   Mem __ / __%   Restarts __
+    ...
+
+<svc-B>:
+  ... (same shape)
+
+Frontend behavior (when impact will describe user-visible behavior):
+- Repo: <path or "not found, listed in Unknowns">
+- Call site: <file:line of API call>
+- Error handling: <caught? fallback? retry?>
+- User sees: <one-line plain-language description>
+
+=== End evidence ===
+```
+
+If any block is empty or says "skipped", the work is incomplete — go back and fill it. Producing the report with empty evidence blocks violates the skill.
 
 ## HARD RULES (read before writing)
 

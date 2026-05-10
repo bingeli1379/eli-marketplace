@@ -1,8 +1,12 @@
 # Step 11 — Verify infra metrics
 
-Once an upstream service is suspected (from step 9), use the scope table from step 10a:
-- **In-scope upstream**: REQUIRED to verify infra health for the incident window before writing Root Cause.
-- **Out-of-scope upstream**: optional. The default report can stop at "upstream `<svc>` returned 503/timeout"; deeper Root Cause (why `<svc>` failed) belongs to the owning team and may stay in Unknowns. Run 11 only if the user asks for a deeper dive or the log payload is too thin to confirm the upstream is the bottleneck.
+Once an upstream service is suspected (from step 9), use the scope table from step 10a AND the shape of the error:
+
+- **In-scope upstream + infra-shape signal in log** → REQUIRED. Infra-shape signals: HTTP `502/503/504`, `connection refused`, `timeout`, `TaskCanceledException`, `Polly TimeoutRejectedException`, `OOMKilled`, throttling, redis timeout, "No server is available", DB connection pool exhaustion, etc. These error shapes only get explained by infra metrics, so checking is required before writing Root Cause.
+- **In-scope upstream + app-level root cause clearly visible in log** → OPTIONAL. App-level signals: validation errors, auth misconfig, deserialization / parse errors, explicit business-logic exceptions, code bugs with stack traces pointing at app code only. Infra numbers do not explain these, so a CPU/Memory check is noise. The evidence dump in step 12 should mark infra as `n/a (app-level root cause)` for that service.
+- **Out-of-scope upstream** → OPTIONAL. The default report can stop at "upstream `<svc>` returned 503/timeout"; deeper Root Cause (why `<svc>` failed) belongs to the owning team and may stay in Unknowns. Run 11 only if the user asks for a deeper dive or the log payload is too thin to confirm the upstream is the bottleneck.
+
+When in doubt about which category the error falls into, default to REQUIRED — it is cheaper to verify infra and find nothing than to ship a report that missed an infra-side root cause.
 
 **Approach: query the datasource directly. Do NOT start from dashboards.** Dashboards are visualization for humans; for an agent, they are stale, full of unresolved scopedVars, and may not exist for the right tier. The metrics live in the datasource — go there first.
 
