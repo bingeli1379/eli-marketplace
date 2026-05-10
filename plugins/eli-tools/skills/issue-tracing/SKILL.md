@@ -126,25 +126,49 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
    **Correlation check before claiming "related"**: Before treating a sibling error pattern as part of this incident, run the same query over an **equally-long pre-incident window** (e.g. previous hour or previous day same time) and compare counts. If the pre-incident baseline is similar to the incident window, the pattern is **chronic, not caused by this incident** — list it as "out of scope / unrelated background error" instead of folding into Root Cause. Only fold in when incident-window count is materially higher than baseline.
 
-10. **Code inspection** (under the project root resolved in step 1)
+10. **Code inspection & scope check**
 
-   Use the project root from step 1 to locate the involved repos. For each `project.keyword` you need to read:
+   ### 10a. Scope check — for EVERY project named in this incident
+
+   For the originating project AND every upstream identified in step 9, look it up under the project root from step 1 using these rules:
 
    a. **Direct match**: `<root>/<project.keyword>`
    b. **Dot variant**: replace `-` with `.` (e.g. `service-a-b` → `service.a.b`)
    c. **Hyphen variant**: replace `.` with `-`
    d. **Strip separators**: `ls <root> | grep -i <stripped>`
-   e. **Frontend / consuming repo — REQUIRED when user impact is being reported.** If the project ends with `-backend` / `.backend`, also check `<root>/<base>.frontend` / `<root>/<base>-frontend`. The frontend determines what the end user actually sees.
-   f. If a–e all fail for a repo, list in **Unknowns**: "需要 `<project>` 的 repo 路徑 / 請執行 `/add-dir <path>`".
+   e. **Frontend / consuming repo**: if the project ends with `-backend` / `.backend`, also check `<root>/<base>.frontend` / `<root>/<base>-frontend`.
 
-   **For each repo found, read code as follows:**
+   Record the result in conversation context as a scope table:
+
+   ```
+   Investigation scope:
+   - <project>: in-scope (path: <path>)
+   - <upstream-A>: in-scope (path: <path>)
+   - <upstream-B>: out-of-scope
+   ```
+
+   **In-scope** = repo found under project root.
+   **Out-of-scope** = no match after a–e (likely owned by another team / not on this machine).
+
+   The scope table drives the depth of step 10b and step 11:
+   - in-scope service → REQUIRED to read code (10b) and verify infra (step 11)
+   - out-of-scope service → both are optional; root cause inside the service may stay in Unknowns
+
+   ### 10b. Read code (in-scope only; required when impact involves them)
+
    - **Backend**: locate the failing endpoint/function from log clues (URL path, controller name, method name); inspect error handling and outbound calls.
    - **Frontend**: grep the failing API name (taken from the backend log) and read its call site. Determine: is the error caught? Does the UI fall back to empty / placeholder / error state / blank? Is there a retry?
-   - **Impact wording**: derive from frontend code what the user actually sees, then write the Impact field per the rules in step 12 (HARD RULES). Do NOT include file paths, line numbers, or code mechanics here. If frontend code is unreadable / unavailable, say so explicitly in Unknowns.
+   - **Impact wording**: derive from frontend code what the user actually sees, then write the Impact field per the rules in step 12 (HARD RULES). Do NOT include file paths, line numbers, or code mechanics here.
 
-11. **Verify infra metrics** (when upstream identified)
+   **Hard rule for frontend lookup**: if the originating service is `-backend` / `.backend` and the report's Impact will describe user-visible behavior, locating the frontend repo via 10a.e is REQUIRED — backend code alone cannot tell you how the error surfaces to the user. If the frontend repo is not found under the project root, Impact must say so explicitly in Unknowns instead of guessing.
 
-    Once an upstream service is suspected (from step 9), verify its infra health for the incident window.
+   If a–e all failed for a repo you needed (e.g. originating project's frontend not under root), list in **Unknowns**: "需要 `<project>` 的 repo 路徑 / 請執行 `/add-dir <path>`".
+
+11. **Verify infra metrics**
+
+    Once an upstream service is suspected (from step 9), use the scope table from step 10a:
+    - **In-scope upstream**: REQUIRED to verify infra health for the incident window before writing Root Cause.
+    - **Out-of-scope upstream**: optional. The default report can stop at "upstream `<svc>` returned 503/timeout"; deeper Root Cause (why `<svc>` failed) belongs to the owning team and may stay in Unknowns. Run 11 only if the user asks for a deeper dive or the log payload is too thin to confirm the upstream is the bottleneck.
 
     **Approach: query the datasource directly. Do NOT start from dashboards.** Dashboards are visualization for humans; for an agent, they are stale, full of unresolved scopedVars, and may not exist for the right tier. The metrics live in the datasource — go there first.
 
@@ -279,6 +303,7 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 - **No unbounded ES queries.** Every search MUST include `@timestamp` range + `project.keyword` + `level.keyword` + `size` cap. No `*` / `match_all` queries.
 - **No fabricated numbers.** Distinct user counts, request counts, customer ids — only report what the aggregation actually returned. If a field is missing, write `n/a`, never estimate.
 - **No fabricated root causes.** If code is needed and unavailable, the report's Root Cause must say "需要看 code 才能確認" and the Unknowns must request the repo path. Do not pattern-match a guess.
+- **No fabricated unknowns.** Unknowns may only contain: (a) facts about out-of-scope services (per step 10a scope table), (b) data that the available tools / permissions cannot reach, or (c) decisions that need a human (business / ownership). "Need to check Grafana for CPU", "should confirm pod restart" or any item the agent can answer with an MCP query is NOT a valid Unknown — go and check it.
 - **Cross-project drill is bounded** — max 2 hops. List the chain if you stop early.
 - **Project → repo mapping is per-user.** Get it from `add-dir` paths or ask the user to `/add-dir`. Never hardcode paths and never persist to memory (per-project memory doesn't help cross-project triage).
 - **Honor user-mentioned excluded indices.** If the user mentions patterns to skip (e.g. lower-priority product lines, test indices) during the conversation, exclude them from queries. Only include excluded patterns if the user explicitly asks.
