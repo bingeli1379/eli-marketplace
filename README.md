@@ -20,13 +20,13 @@ claude
 **Step 2** — add the marketplace (one-time):
 
 ```
-/plugin marketplace add bingeli1379/eli-claude-marketplace
+/plugin marketplace add bingeli1379/eli-marketplace
 ```
 
 **Step 3** — install the plugin:
 
 ```
-/plugin install bingeli1379/eli-claude-marketplace --scope local
+/plugin install bingeli1379/eli-marketplace --scope local
 ```
 
 **Step 4** — restart Claude Code to load the plugin.
@@ -34,7 +34,7 @@ claude
 ## Uninstall
 
 ```
-/plugin uninstall bingeli1379/eli-claude-marketplace --scope local
+/plugin uninstall bingeli1379/eli-marketplace --scope local
 ```
 
 ## License
