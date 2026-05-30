@@ -57,7 +57,12 @@ Draft the four `architecture` fields that go into `config.yaml`. Keep everything
   - Background jobs: `src/**/Jobs/`, `src/**/Workers/`, `worker/`
   - Event handlers: `src/**/EventHandlers/`, `src/**/Handlers/`
   - CLI / scripts: `bin/`, `scripts/`, `src/Cli/`
-- **hard_rules** — read existing `CLAUDE.md`, `AGENTS.md`, `.cursor/rules/`, `.github/copilot-instructions.md`, `eslint.config.*` / `.eslintrc*`, `.editorconfig`; extract imperative rules and **classify each**:
+- **hard_rules** — read existing `CLAUDE.md`, `AGENTS.md`, `.cursor/rules/`, `.github/copilot-instructions.md`, `eslint.config.*` / `.eslintrc*`, `.editorconfig`; extract imperative rules and **classify each** (below). Also infer **data-access / query conventions** from the code when the evidence is consistent across the codebase — these are exactly the invariants engineers must not break and that a code scan alone may not make obvious. Capture them as hard_rules when a quick grep confirms the pattern is followed everywhere, e.g.:
+  - data access always goes through stored procedures / a repository layer, never inline SQL or a direct `DbContext` in endpoints
+  - read queries use a specific convention (a locking hint like `NOLOCK`, a shared query helper, a standard pagination shape)
+  - a specific result/error type is always returned instead of throwing
+
+  Only record one when the codebase actually follows it consistently (grep shows ~no counter-examples). A convention with mixed adherence is not a hard_rule — leave it for per-task precedent-mirroring instead. Classification of every candidate:
   - **Structural** (true a year from now, layer/dependency invariants) → keep in `hard_rules`.
   - **Historical** (version-pinned migration leftovers, "do not use the old X", upgrade recipes) → **drop**. These age out; the project's own docs can carry them if it cares.
   - **Lint-enforceable** (anything an existing ESLint / dotnet-format / Ruff / Stylelint config already enforces — naming conventions, import order, `consistent-type-imports`, etc.) → **drop**. `hard_rules` is for invariants linters cannot express (layer boundaries, allowed call directions, cross-component contracts).
