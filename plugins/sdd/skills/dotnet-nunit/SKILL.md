@@ -23,6 +23,13 @@ compatibility: "Requires NUnit 3.x or 4.x packages and appropriate test adapter.
 - [NUnit3TestAdapter](https://github.com/nunit/nunit3-vs-adapter)
 - [NUnit Analyzers](https://github.com/nunit/nunit.analyzers)
 
+## Workflow
+
+1. Detect whether the project uses NUnit 3.x or 4.x and which runner path is active: VSTest, Microsoft.Testing.Platform, IDE runner, or CI wrapper.
+2. Keep test fixtures small, prefer focused assertions with `Assert.That`, and use `TestCase` or `TestCaseSource` only when parameterization improves signal.
+3. Add `NUnit3TestAdapter`, `Microsoft.NET.Test.Sdk`, and `NUnit.Analyzers` when CLI discovery or analyzer coverage is missing.
+4. Validate with the repo's real test command before changing assertion style or lifecycle hooks.
+
 ### References
 
 - [patterns.md](references/patterns.md) — Test patterns, assertions, parameterized tests, lifecycle

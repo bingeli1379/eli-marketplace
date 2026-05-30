@@ -101,10 +101,10 @@ authentication:
   path: skills/authentication
 dotnet-grpc:
   repo: https://github.com/managedcode/dotnet-skills
-  path: skills/dotnet-grpc
+  path: catalog/Frameworks/gRPC/skills/grpc
 dotnet-nunit:
   repo: https://github.com/managedcode/dotnet-skills
-  path: skills/dotnet-nunit
+  path: catalog/Testing/NUnit/skills/nunit
 
 # Database
 sql-expert:
@@ -287,6 +287,6 @@ dataverse-python-usecase-builder:
 # Electron (from vercel-labs/agent-browser)
 electron:
   repo: https://github.com/vercel-labs/agent-browser
-  path: skills/electron
+  path: skill-data/electron
 
 # Maintenance
