@@ -72,11 +72,9 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - `specs/*/spec.md` — all capability specs (acceptance criteria)
 
    Also read:
-   - `feature-spec/config.yaml` — project context and `lint_commands` (if exists)
-   - `feature-spec/context.md` — AI-readable project map (architecture layers, domain-to-code map, entry points, hard rules, common commands). Forwarded to every worker agent in Step 7 so they make changes in the right place and respect Hard Rules.
-   - `feature-spec/knowledge.md` — operational gotchas and dev tips. Forwarded to every worker agent in Step 7 so they avoid known landmines.
+   - `feature-spec/config.yaml` — `lint_commands` plus the `architecture` block (pattern, layers, entry_points, hard_rules). Forwarded to every worker agent in Step 7 so they make changes in the right place and respect `hard_rules`. This is the only project context — do not read the project's own docs (CLAUDE.md, README, etc.).
 
-   `context.md` and `knowledge.md` are optional — skip silently if missing (project may not have run `/init`).
+   `config.yaml` is optional — skip silently if missing (project may not have run `/init`).
 
    **If any required file is missing** (proposal, design, tasks, or specs):
    - Show which files are missing
@@ -142,13 +140,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    [agent role definition from agents/<agent>.md]
 
    ## Project Context
-   [from feature-spec/config.yaml]
-
-   ## Project Map
-   [full contents of feature-spec/context.md if it exists — architecture layers, domain-to-code map, entry points, hard rules, common commands. Hard Rules are non-negotiable invariants; do not violate them even if a task description appears to ask for it. Omit this entire section if the file is missing.]
-
-   ## Operational Knowledge
-   [full contents of feature-spec/knowledge.md if it exists — Domain rules, Dev Environment, Gotchas, External Dependencies. Treat Gotchas as binding constraints, not suggestions; consult before implementing in any area covered by an entry. Omit this entire section if the file is missing.]
+   [full contents of feature-spec/config.yaml if it exists — tech stack, lint commands, and the architecture block (pattern, layers, entry_points). hard_rules are non-negotiable invariants; do not violate them even if a task description appears to ask for it. This is the only project context; omit if the file is missing.]
 
    ## Full Design Context
    [complete design.md — so the agent understands the full picture even though it only implements its own group]
@@ -306,7 +298,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 - **No main-branch agents while worktrees are alive**: Do NOT dispatch any agent on the main branch while Phase 1 worktree agents are still running or their worktrees have not been cleaned up. Active worktrees can interfere with the main working directory's git index. If an unplanned fix is needed during Phase 1, dispatch it in its own worktree (`isolation: "worktree"`), or wait until all Phase 1 worktrees are merged and removed.
 - **Specs are the single source of truth** — avoid asking questions unless something is truly blocking and cannot be reasonably inferred. When in doubt, make a reasonable decision and flag it in the report.
 - Always read ALL context files before dispatching agents
-- `feature-spec/context.md` and `feature-spec/knowledge.md` (when present) MUST be forwarded verbatim into every worker agent's prompt as the `## Project Map` and `## Operational Knowledge` sections. Hard Rules from `context.md` are non-negotiable; Gotchas from `knowledge.md` are binding constraints. Skip the section silently if the source file is missing — never fabricate placeholder content.
+- `feature-spec/config.yaml` (when present) MUST be forwarded verbatim into every worker agent's prompt as the `## Project Context` section. `hard_rules` from config.yaml are non-negotiable. The project's own docs are never read or forwarded — config.yaml is the only project context. Skip the section silently if config.yaml is missing — never fabricate placeholder content.
 - Only dispatch agents for PENDING tasks (skip completed `- [x]` tasks)
 - Agents do NOT modify `tasks.md` — the orchestrator updates checkboxes after each merge-squash
 - **Safe tasks.md commits**: When committing tasks.md checkbox updates, ALWAYS: (1) `git status --short` to check for unexpected staged files, (2) stage ONLY tasks.md by exact path (`git add <path>`), (3) NEVER `git add .` for metadata-only commits. Worktree cleanup, lint-staged, or stale index entries can silently stage unrelated files — a `git status` check before commit prevents catastrophic reverts.

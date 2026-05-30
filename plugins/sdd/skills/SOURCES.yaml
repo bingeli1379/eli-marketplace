@@ -196,8 +196,6 @@ apply:
   repo: original
 complete:
   repo: original
-knowledge-audit:
-  repo: original
 quick:
   repo: original
 

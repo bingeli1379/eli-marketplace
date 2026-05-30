@@ -24,11 +24,9 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
 2. **Read project context**
 
-   - Read `feature-spec/config.yaml` for project context (tech stack, conventions, lint commands)
-   - Read `feature-spec/context.md` if it exists — AI-readable project map (architecture layers, domain-to-code map, entry points, hard rules). Use it to ground the Step 5 codebase scan and forward it to every worker agent in Step 6.
-   - Read `feature-spec/knowledge.md` if it exists — operational gotchas and dev tips. Forward to every worker agent in Step 6 so they avoid known landmines.
-   - If `config.yaml` doesn't exist, proceed without it — use defaults from CLAUDE.md
-   - `context.md` and `knowledge.md` are optional — skip silently if missing
+   - Read `feature-spec/config.yaml` — the sole grounding source (tech stack, lint commands, and the `architecture` block: pattern, layers, entry_points, hard_rules). Use the architecture block to ground the Step 5 codebase scan and forward it to every worker agent in Step 6; `hard_rules` are non-negotiable. Do not read the project's own docs — config.yaml is the only project context this workflow trusts.
+   - If `config.yaml` doesn't exist, proceed without it — fall back to the codebase scan alone
+   - `config.yaml` is optional — skip silently if missing
 
 3. **Confirm current branch**
 
@@ -188,13 +186,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    [include content of skills/frontend-checklist/SKILL.md for Frontend/Electron/review agents]
 
    ## Project Context
-   [from feature-spec/config.yaml, or CLAUDE.md defaults]
-
-   ## Project Map
-   [full contents of feature-spec/context.md if it exists — architecture layers, domain-to-code map, entry points, hard rules. Hard Rules are non-negotiable. Omit this entire section if the file is missing.]
-
-   ## Operational Knowledge
-   [full contents of feature-spec/knowledge.md if it exists — Domain rules, Dev Environment, Gotchas, External Dependencies. Treat Gotchas as binding constraints. Omit this entire section if the file is missing.]
+   [full contents of feature-spec/config.yaml if it exists — tech stack, architecture block (pattern, layers, entry_points), and hard_rules. hard_rules are non-negotiable. This is the only project context; omit the section if config.yaml is missing.]
 
    ## Design Decisions
    [from your inline analysis in step 5]
@@ -325,7 +317,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 - **You ARE the orchestrator** — do NOT spawn a separate orchestrator agent
 - **All worker agents run in background** (`run_in_background: true`, `mode: "bypassPermissions"`)
 - **No spec files are written** — analysis stays in-memory and is passed to agents via prompts
-- `feature-spec/context.md` and `feature-spec/knowledge.md` (when present) MUST be forwarded verbatim into every worker agent's prompt as `## Project Map` and `## Operational Knowledge`. Hard Rules and Gotchas are binding. Skip the section silently if the source file is missing.
+- `feature-spec/config.yaml` (when present) MUST be forwarded verbatim into every worker agent's prompt as `## Project Context`. `hard_rules` are binding. The project's own docs are never read or forwarded — config.yaml is the only project context. Skip the section silently if config.yaml is missing.
 - **Execute first, report after** — show the plan and dispatch immediately, do NOT wait for user confirmation
 - **Code review + security review are MANDATORY** for all complexity levels — never skip them
 - If review/QA fails → auto-dispatch fix → **full fresh review** (not just verify original issues) → loop until clean (max 3 rounds) → only then pause

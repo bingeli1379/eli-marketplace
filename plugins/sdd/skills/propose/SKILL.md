@@ -46,11 +46,9 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
 4. **Read existing context**
 
-   - Read `feature-spec/config.yaml` for project context (tech stack, conventions, rules)
-   - Read `feature-spec/context.md` if it exists — AI-readable project map (architecture layers, domain-to-code map, entry points, hard rules, common commands). Use it to ground the Step 5 codebase scan (start from the domain folders it points at) and the Step 6 boundary definition (Hard Rules become non-negotiable constraints for design.md).
-   - Read `feature-spec/knowledge.md` if it exists — operational tribal knowledge (Domain rules, Dev Environment, Gotchas, External Dependencies). Treat Gotchas as binding constraints when shaping design and tasks; ignoring a documented landmine is a propose-time bug.
+   - Read `feature-spec/config.yaml` — the sole grounding source. Use its `architecture` block (pattern, layers, entry_points) to ground the Step 5 codebase scan (start from the paths it points at), and treat `hard_rules` as non-negotiable constraints for the Step 6 boundary definition and design.md. Do not read the project's own docs (CLAUDE.md, README, etc.) — config.yaml is the only project context this workflow trusts.
    - Read `feature-spec/specs/` for existing main specs (to understand what capabilities already exist)
-   - `context.md` and `knowledge.md` are optional — skip silently if missing (the project may not have run `/init` yet, or the user may have removed them deliberately).
+   - `config.yaml` may be missing (project never ran `/init`) — skip silently and work from the codebase scan alone.
    - These inform artifact generation but are NOT copied into artifact files
 
 5. **Exhaustive codebase scan — identify ALL affected files**
@@ -270,7 +268,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
      4. Do NOT skip straight to "the answer". The comparison IS the design work — a single-option design.md is treated as incomplete.
 
      Rationale: structural enforcement of exhaustive reasoning, with an auditable trail of rejected alternatives, is the primary safeguard against a single-option design.md.
-   - **CRITICAL — feed pre-collected context**: The prompt MUST include the **complete affected-files inventory from Step 5**, the proposal.md content, **all completed spec files from Step 7b**, project context from config.yaml, **the full contents of `feature-spec/context.md` if it exists** (project map: architecture layers, domain-to-code map, entry points, hard rules — these are constraints the design MUST honor; surface Hard Rules to the architect as non-negotiable), **the full contents of `feature-spec/knowledge.md` if it exists** (operational gotchas and dev tips that must inform design decisions to avoid known landmines — explicitly instruct the architect to consult Gotchas when choosing patterns, especially for areas the change touches), existing specs from `feature-spec/specs/`, and the design.md template from `templates/`. Include any file contents you already read during the codebase scan (store definitions, key interfaces, usage patterns, etc.). If `context.md` / `knowledge.md` do not exist, omit those sections entirely from the prompt — do not fabricate placeholder content.
+   - **CRITICAL — feed pre-collected context**: The prompt MUST include the **complete affected-files inventory from Step 5**, the proposal.md content, **all completed spec files from Step 7b**, the **full contents of `feature-spec/config.yaml`** (the `architecture` block and `hard_rules` are constraints the design MUST honor — surface `hard_rules` to the architect as non-negotiable), existing specs from `feature-spec/specs/`, and the design.md template from `templates/`. Include any file contents you already read during the codebase scan (store definitions, key interfaces, usage patterns, etc.). Do not forward the project's own docs — config.yaml is the only project context. If `config.yaml` does not exist, omit that section entirely — do not fabricate placeholder content.
    - **CRITICAL — specs are constraints**: Explicitly instruct the architect: "The spec THEN clauses are acceptance criteria that your design MUST satisfy. If you believe a spec THEN clause should be different, do NOT silently override it. Instead, mark it as `CONFLICT:` in your design.md with your reasoning, so the orchestrator can resolve it with the user."
    - **Do NOT tell the architect to re-scan the codebase.** Explicitly instruct: "All context is provided below. Do NOT re-read files or re-scan the codebase. Go straight to writing design.md."
    - Instruct the architect to write `design.md` directly to `feature-spec/changes/<name>/design.md`
@@ -445,6 +443,6 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 - Ask all clarification questions in one structured message, not one at a time
 - Verify each artifact file exists after writing before proceeding to next
 - `config.yaml` context and rules are constraints for YOU, not content for artifact files
-- `context.md` and `knowledge.md` are first-class inputs for design.md generation: forward them verbatim to the architect agent in Step 7c. Hard Rules from `context.md` are non-negotiable; Gotchas from `knowledge.md` are binding constraints, not suggestions. If either file is missing, skip silently — the project may not have run `/init`.
+- `config.yaml` is the first-class input for design.md generation: forward the full `config.yaml` verbatim to the architect agent in Step 7c. `hard_rules` are non-negotiable. Do not read or forward the project's own docs — config.yaml is the only project context. If `config.yaml` is missing, skip silently — the project may not have run `/init`.
 - Use Traditional Chinese for artifact content (matching user's communication language)
 - Code examples and technical terms remain in English

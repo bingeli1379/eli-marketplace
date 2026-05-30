@@ -13,22 +13,19 @@ Quick: /quick <description>  (inline analysis → agent dispatch, no spec files)
 
 | Command | Description |
 |---|---|
-| `/init` | Initialize feature-spec directory; two-phase SCAN → BUILD generates config.yaml + context.md (AI-readable project map) |
+| `/init` | Initialize feature-spec directory; two-phase SCAN → BUILD generates `config.yaml` (tool commands + pointer-form architecture baseline). One artifact only. |
 | `/propose <description>` | Generate spec artifacts (proposal, design, specs, tasks) for a new change |
 | `/validate <change-name>` | Validate spec artifacts against structural and content rules |
 | `/quick <description>` | Quick mode — orchestrator analyzes inline and dispatches agents, no spec files |
 | `/apply <change-name>` | Implement tasks using agent team dispatch (no questions asked) |
 | `/apply-all [names...]` | Batch apply multiple changes sequentially, unattended |
-| `/complete <change-name>` | Complete change: extract knowledge, update docs, clean up |
-| `/knowledge-audit` | Audit knowledge.md entries against current codebase |
+| `/complete <change-name>` | Complete change: confirm tasks done, delete artifacts, commit cleanup |
 
 ## Spec Directory Structure
 
 ```
 feature-spec/
-  config.yaml                # Tool-runnable config: lint_commands, verification_commands (auto-generated, persists)
-  context.md                 # AI-readable project map: layers, domain map, entry points, hard rules (auto-generated, kept in sync by /complete)
-  knowledge.md               # Operational gotchas + dev tips (seeded by /init, appended by /complete; persists)
+  config.yaml                # Tool commands + architecture baseline (generated once by /init, persists; not auto-synced)
   specs/                     # Accumulated main specs (cleaned up after all changes complete)
     <capability>/spec.md
   changes/
@@ -40,7 +37,7 @@ feature-spec/
         <capability>/spec.md
 ```
 
-After `/complete`, completed changes are deleted (not archived). Valuable knowledge is extracted to `feature-spec/knowledge.md` (sits next to `context.md`). `config.yaml`, `context.md`, and `knowledge.md` persist; `context.md` is auto-synced (Domain-to-Code Map, Entry Points, Hard Rules, Common Commands) by each `/complete` run.
+After `/complete`, completed changes are deleted (not archived). `config.yaml` persists across changes. The plugin does not generate or maintain `context.md` / `knowledge.md`, and it does not read the project's own docs — `config.yaml` is the single, authoritative project context that `/propose`, `/apply`, and `/quick` consume. Keep its `architecture` block accurate.
 
 ## Agent Definitions
 
@@ -67,14 +64,6 @@ Agent role definitions live in `agents/`. The orchestrator reads these at dispat
 Skills in `skills/` provide domain knowledge that agents can reference. See `skills/SOURCES.yaml` for the full list and upstream sources.
 
 **When adding a new skill, you must also add its entry to `skills/SOURCES.yaml`** so that `scripts/update-skills.sh` can keep it in sync with upstream. Skills with `repo: original` are maintained in this plugin and are not pulled from upstream.
-
-## Shared Templates
-
-Plugin-level templates that are referenced by more than one skill live in `templates/`. Treat each as a single source of truth; skills must read from this directory rather than re-inlining the content.
-
-| Template | Used by |
-|---|---|
-| `templates/knowledge.md` | `/init` (initial skeleton), `/complete` (skeleton when missing) |
 
 ## Development Methodology
 
