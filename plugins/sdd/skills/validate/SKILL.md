@@ -41,7 +41,7 @@ Validate spec artifacts for a change. Checks structural completeness, content qu
 
 ## Validation Rules
 
-All rules are **ERROR** level. Any violation causes FAIL.
+Most rules are **ERROR** level — any ERROR causes FAIL. A few rules are marked **WARN** (e.g. mixed agent types in a group, missing `Reference:` line): they surface a quality risk but do **not** block implementation. Report both, but only ERRORs flip the verdict to FAIL.
 
 ### File Existence
 
@@ -136,7 +136,7 @@ All rules are **ERROR** level. Any violation causes FAIL.
 
 ### Summary
 
-Errors: N
+Errors: N | Warnings: N
 Total tasks: N (N complete, N pending)
 
 ### Verdict
@@ -145,7 +145,7 @@ Total tasks: N (N complete, N pending)
 
 OR
 
-✓ PASS — 0 errors
+✓ PASS — 0 errors (N warnings — advisory, review but not blocking)
   Ready for implementation. Run `/apply <name>` to start.
 ```
 
