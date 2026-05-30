@@ -85,6 +85,8 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
    `config.yaml` is optional — skip silently if missing (project may not have run `/init`).
 
+   **Staleness check (cheap, non-blocking)**: when config.yaml is present, test that its `architecture.layers` / `entry_points` paths still resolve on disk. If some do not, warn once (`⚠ config.yaml may be stale — N paths missing (<list>); consider re-running /init`) and proceed with what resolves. Never auto-edit config or block.
+
    **If any required file is missing** (proposal, design, tasks, or specs):
    - Show which files are missing
    - Suggest: "Run `/validate <name>` to check completeness, or `/propose` to generate missing artifacts."
@@ -219,6 +221,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - **Phase 1 — Wave-based development with worktree isolation**: Dispatch groups wave by wave. Each group = one agent in an isolated worktree. After each wave completes, merge-squash each group back to main as a single clean commit. **After each merge, verify the commit is clean** — if per-task commits leaked to main (worktree auto-merge), squash them into one group commit. See `orchestrator.md` Phase 1 (steps c and c-bis) for full details.
    - **Phase 2 — Review + Security + QA (parallel quality gate)**: After all Phase 1 waves complete, dispatch review-engineer + security-engineer + qa-engineer **simultaneously in one message** (all on main branch). This runs code review, security review, and E2E tests in parallel. A change is NOT complete until all three pass. Even if no E2E specs exist, dispatch qa-engineer — let it confirm there is nothing to verify.
      - **Reviewer context (MANDATORY)**: each reviewer's prompt MUST include the same grounding the implementers got — the full `feature-spec/config.yaml` (so `hard_rules` can be checked line by line) and `design.md` (so the **Reference implementation** named per group is the analog the conformance review diffs against). In multi-repo mode, pass the config(s) of the repos under review. Without this, review-engineer's Convention Conformance and hard_rules checks have nothing to anchor to.
+     - **Cross-repo QA (multi-repo)**: when the change spans repos, tell qa-engineer it is a multi-repo change and pass `design.md`'s cross-repo integration points plus the relevant files from both the provider and consumer repos, so its Step 0 contract check can diff the seams.
    - **Phase 3 — Documentation**: After Phase 2 passes, dispatch technical-writer in background (on main branch). Even if changes seem trivial, dispatch — let the writer decide whether docs are needed.
 
    If review, security, or QA fails: **collect all issues from all reviewers**, group by responsible agent, then dispatch **all fix agents in parallel** (on main branch). After all fixes complete, run a **full fresh review from scratch** — dispatch all three reviewers again simultaneously. Fixes can introduce new bugs, so reviewers must re-examine ALL changed files. Loop until clean (max 3 rounds). Only pause and report to user if still failing after 3 rounds.

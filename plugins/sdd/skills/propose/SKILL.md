@@ -53,6 +53,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - **single-repo**: read `feature-spec/config.yaml` — the grounding source. Use its `architecture` block (pattern, layers, entry_points) to ground the Step 5 codebase scan (start from the paths it points at), and treat `hard_rules` as non-negotiable constraints for the Step 6 boundary definition and design.md. If it is missing, skip silently and work from the codebase scan alone.
    - **multi-repo**: for **each child repo the change touches**, read `<repo>/feature-spec/config.yaml` if it exists (its `architecture` + `hard_rules` ground work in that repo); if a repo has none, scan that repo's code. Per the topology rules, never generate config here.
    - Do not read the project's own prose docs (CLAUDE.md, README, etc.) — config.yaml is the only curated grounding this workflow trusts.
+   - **Staleness check (cheap, non-blocking)**: for each config read, test that the `architecture.layers` and `entry_points` paths still resolve on disk. If one or more do not, warn once — `⚠ config.yaml references N paths that no longer exist (<list>); it may be stale — consider re-running /init or editing it` — then proceed using what still resolves. Never auto-edit config or block on this.
    - Read `feature-spec/specs/` for existing main specs (to understand what capabilities already exist)
    - These inform artifact generation but are NOT copied into artifact files
 

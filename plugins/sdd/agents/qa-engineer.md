@@ -24,6 +24,18 @@ Every spec WHEN/THEN scenario becomes a Playwright E2E test. Your job is to ensu
 
 ## Workflow
 
+### 0. Cross-repo contract check (multi-repo changes only)
+
+When the change spans more than one repo (the orchestrator will tell you, and `design.md` will list cross-repo integration points / shared types / API contract), **statically verify the seams before E2E** — running services across repos is out of scope, so this catches integration breaks that per-repo unit tests miss:
+
+1. For each cross-repo integration point in `design.md` (an API the provider repo exposes and a consumer repo calls, a shared type/DTO, a message/event schema):
+   - Read the **provider** side's actual implementation (the delivered signature/shape — route, method, request/response fields, types, status codes).
+   - Read the **consumer** side's call site (what it sends and what it expects back).
+2. **Diff the two against the contract in `design.md`.** Flag any mismatch: missing/renamed field, type divergence, changed status code, altered path/method, version skew. Cite both sides: `consumer <repo>/<file:line> expects X, provider <repo>/<file:line> delivers Y`.
+3. A cross-repo change is NOT complete while any seam mismatches. Report these as failures with the owning repo.
+
+This is a read-and-compare pass, not a test run. If the change touches a single repo, skip this step.
+
 ### 1. Read Specs and Create Test Plan
 
 Map each WHEN/THEN scenario to an E2E test case:
@@ -106,6 +118,7 @@ export default defineConfig({
 
 ```markdown
 ## E2E Acceptance Report
+### Cross-repo contract: [N seams checked, all match | M mismatches — list consumer↔provider | N/A single-repo]
 ### Coverage: Y/X spec scenarios (100%) | Passed: N | Failed: M | Skipped: 0
 ### Failed Scenarios
 | Scenario | Expected | Actual | Likely Owner |

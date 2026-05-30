@@ -31,6 +31,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - **single-repo**: read `feature-spec/config.yaml` — the grounding source (tech stack, lint commands, and the `architecture` block: pattern, layers, entry_points, hard_rules). Use it to ground the Step 5 scan and forward it to every worker agent in Step 6; `hard_rules` are non-negotiable.
    - **multi-repo**: for each child repo the task touches, read `<repo>/feature-spec/config.yaml` if it exists; else scan that repo's code. Forward each repo's grounding to the agents working in it.
    - Do not read the project's own prose docs — config.yaml is the only curated grounding this workflow trusts.
+   - **Staleness check (cheap, non-blocking)**: for each config read, test that its `architecture.layers` / `entry_points` paths still resolve; if some do not, warn once (`⚠ config.yaml may be stale — N paths missing`) and proceed with what resolves. Never auto-edit or block.
    - `config.yaml` is optional — if a repo has none, skip silently and rely on the codebase scan
 
 3. **Confirm current branch**
@@ -67,6 +68,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - Group by reviewable unit — each group = single agent type + single concern (same as tasks.md format)
    - Tag each subtask with an agent type: `(Backend)`, `(Python)`, `(Frontend)`, `(E2E)`, `(Electron)`, `(Database)`, `(DevOps)`, `(Performance)`, `(Security)`, `(Documentation)`
    - Add `<!-- depends: N -->` annotations if groups have dependencies
+   - **Shared-file groups MUST be serialized**: `/quick` does NOT use worktree isolation, so two groups dispatched in parallel that touch the **same file** will clobber each other's edits. Whenever two groups modify a common file, add a `<!-- depends: N -->` between them so they run sequentially, never in the same parallel wave. When in doubt, serialize.
    - Follow TDD structure for Backend/Frontend tasks when appropriate (write test → implement)
    - Number tasks: `1.1`, `1.2`, etc.
 

@@ -33,7 +33,9 @@ This file holds the flow, the SCAN-report contract, the question rules, and the 
 
 0. **`/init` is per-project — guard against a multi-repo root**
 
-   Run the topology detection from `plugins/sdd/references/repo-topology.md` § Step 0. If the result is **multi-repo** (cwd is not a git repo but contains child repos), `/init` does not apply at this level — config.yaml describes one project, not a collection. Tell the user: "`/init` runs per project. `cd` into the specific repo you want a config for and run it there. At a multi-repo root you don't need `/init` — `/propose` reads each touched repo's config if present, or scans its code." Then stop. Proceed only in **single-repo** mode (cwd inside a git repo) or a plain single-project folder.
+   Run the topology detection from `plugins/sdd/references/repo-topology.md` § Step 0. **Only bail on `multi-repo`** (cwd is not a git repo *and* contains child repos): `/init` does not apply at this level — config.yaml describes one project, not a collection. Tell the user: "`/init` runs per project. `cd` into the specific repo you want a config for and run it there. At a multi-repo root you don't need `/init` — `/propose` reads each touched repo's config if present, or scans its code." Then stop.
+
+   Otherwise **proceed normally**: both `single-repo` (cwd inside a git repo) and `no-git` (a plain single-project folder not yet `git init`-ed, with no child repos) are valid — config.yaml is just a file and does not require a repo. Do not block greenfield folders.
 
 1. **Inventory existing artifacts**
    - If `feature-spec/` does not exist → SCAN will create everything.
