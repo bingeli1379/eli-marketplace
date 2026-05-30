@@ -1,6 +1,6 @@
 ---
 name: dotnet-best-practices
-description: 'Ensure .NET/C# code meets best practices for the solution/project.'
+description: Use when writing or reviewing .NET / C# code and you need it to follow idiomatic .NET conventions and best practices (naming, async/await, nullability, LINQ, DI, error handling). Load when implementing or reviewing C# in a .NET project.
 user-invocable: false
 ---
 

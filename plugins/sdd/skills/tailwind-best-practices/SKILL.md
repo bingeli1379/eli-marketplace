@@ -1,6 +1,6 @@
 ---
 name: tailwind-best-practices
-description: Tailwind CSS styling guidelines for Mastra Playground UI. This skill should be used when writing, reviewing, or refactoring styling code in packages/playground-ui and packages/playground to ensure design system consistency. Triggers on tasks involving Tailwind classes, component styling, or design tokens.
+description: Use when writing, reviewing, or refactoring Tailwind CSS — applying utility classes, keeping design-system / token consistency, or cleaning up component styles. Triggers on Tailwind class usage, component styling, or design tokens.
 user-invocable: false
 ---
 

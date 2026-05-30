@@ -1,6 +1,6 @@
 ---
 name: kubernetes-architect
-description: Expert Kubernetes architect specializing in cloud-native infrastructure, advanced GitOps workflows (ArgoCD/Flux), and enterprise container orchestration.
+description: Use when designing Kubernetes platform architecture — cluster topology, GitOps workflows (ArgoCD/Flux), multi-cluster / multi-tenancy strategy, and enterprise orchestration decisions. For hands-on manifests, RBAC, and debugging pods, use kubernetes-specialist instead.
 risk: unknown
 source: community
 date_added: '2026-02-27'

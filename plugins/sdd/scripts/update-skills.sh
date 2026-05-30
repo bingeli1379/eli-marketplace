@@ -4,6 +4,12 @@ set -euo pipefail
 # Update bundled skills from their upstream sources.
 # Reads skills/SOURCES.yaml and pulls the latest SKILL.md + references/ for each.
 #
+# LOCAL FRONTMATTER IS PRESERVED: only the SKILL.md body (after the second `---`)
+# is replaced from upstream. The local frontmatter block — name, description,
+# user-invocable, etc. — is always kept. So you may edit a skill's `description`
+# (e.g. to sharpen its trigger wording) and re-run this script without losing it.
+# `repo: original` skills are never synced; `frozen: true` skills sync only with --all.
+#
 # Usage:
 #   ./scripts/update-skills.sh          # update all non-frozen skills
 #   ./scripts/update-skills.sh vue      # update a specific skill

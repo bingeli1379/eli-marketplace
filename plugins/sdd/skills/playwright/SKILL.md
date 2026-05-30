@@ -1,6 +1,6 @@
 ---
 name: playwright
-description: Use when writing E2E tests, automating browser interactions, or performing cross-browser testing, visual regression, or component testing with Playwright.
+description: Use when setting up Playwright, automating browser interactions, or running cross-browser / visual-regression / component tests. For how to write good tests, fix flaky tests, and test patterns, use playwright-best-practices.
 allowed-tools: Bash, Read, Edit, Write, Grep, Glob, TodoWrite
 user-invocable: false
 ---

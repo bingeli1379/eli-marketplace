@@ -1,6 +1,6 @@
 ---
 name: dotnet-upgrade
-description: 'Ready-to-use prompts for comprehensive .NET framework upgrade analysis and execution'
+description: Use when upgrading a .NET project to a newer target framework — analyzing breaking changes, planning the migration, or executing the upgrade across dependencies and APIs.
 user-invocable: false
 ---
 

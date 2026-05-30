@@ -1,6 +1,6 @@
 ---
 name: dataverse-python-usecase-builder
-description: 'Generate complete solutions for specific Dataverse SDK use cases with architecture recommendations'
+description: Use when scaffolding a complete solution for a specific Microsoft Dataverse SDK use case in Python — including architecture recommendations and end-to-end structure.
 user-invocable: false
 ---
 

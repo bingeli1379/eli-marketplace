@@ -1,6 +1,6 @@
 ---
 name: pixi-js
-description: Expert guidance for Pixi.js game development with TypeScript, focusing on high-performance web and mobile games
+description: Use when building 2D games or high-performance interactive graphics with Pixi.js and TypeScript — sprites, scene graph, render loop, asset loading, and WebGL performance for web and mobile.
 ---
 
 # Pixi.js Game Development
