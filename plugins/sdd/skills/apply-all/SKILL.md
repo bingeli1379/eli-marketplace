@@ -8,6 +8,8 @@ user-invocable: true
 
 Run `/apply` on multiple changes sequentially. The main Claude acts as orchestrator for the entire batch — dispatching worker agents in the background while remaining responsive to user messages.
 
+Repo topology (single-repo vs multi-repo) is handled by each per-change `/apply` invocation — it runs its own Step 0 detection and binds task groups to their target repos. `/apply-all` adds nothing topology-specific; it just sequences the changes.
+
 ---
 
 **Input**: Optionally specify change names in order (e.g., `/apply-all add-user-registration add-user-profile add-user-roles`). If omitted, auto-detect. An optional `dev-mode` token may appear anywhere in the arguments (e.g., `/apply-all add-user-registration dev-mode add-user-profile`) — see Step 1 for parsing rules.

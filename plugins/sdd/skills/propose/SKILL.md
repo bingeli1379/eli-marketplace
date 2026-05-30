@@ -21,6 +21,12 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
 **Steps**
 
+0. **Detect repo topology (MANDATORY first)**
+
+   Load `plugins/sdd/references/repo-topology.md` and run its Step 0 detection. Announce the mode.
+   - **single-repo** — scan and plan against the one repo (the steps below, unchanged).
+   - **multi-repo** — the change may span several child repos. The Step 5 codebase scan covers every repo the change plausibly touches; per-repo grounding is read per touched repo (Step 4); tasks are grouped so each group lands in exactly one repo (Step 7/design), ordered contract-first across repos. `feature-spec/` (the change artifacts) lives at the umbrella cwd.
+
 1. **If no clear input provided, ask what they want to build**
 
    Use the **AskUserQuestion tool** (open-ended, no preset options) to ask:
@@ -30,11 +36,9 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
    **IMPORTANT**: Do NOT proceed without understanding what the user wants to build.
 
-2. **Ensure feature-spec is initialized**
+2. **Ensure the feature-spec directory exists**
 
-   Check if `feature-spec/config.yaml` exists. If not, execute the `init` skill logic to initialize the directory structure and auto-detect project context.
-
-   If already initialized, read `feature-spec/config.yaml` for project context.
+   Create `feature-spec/specs/` and `feature-spec/changes/` at cwd if missing. Do **not** auto-run `/init` or generate `config.yaml` — config is optional. If it already exists it is read in Step 4; if not, Step 5's codebase scan is the grounding.
 
 3. **Create the change directory**
 
@@ -46,9 +50,10 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
 4. **Read existing context**
 
-   - Read `feature-spec/config.yaml` — the sole grounding source. Use its `architecture` block (pattern, layers, entry_points) to ground the Step 5 codebase scan (start from the paths it points at), and treat `hard_rules` as non-negotiable constraints for the Step 6 boundary definition and design.md. Do not read the project's own docs (CLAUDE.md, README, etc.) — config.yaml is the only project context this workflow trusts.
+   - **single-repo**: read `feature-spec/config.yaml` — the grounding source. Use its `architecture` block (pattern, layers, entry_points) to ground the Step 5 codebase scan (start from the paths it points at), and treat `hard_rules` as non-negotiable constraints for the Step 6 boundary definition and design.md. If it is missing, skip silently and work from the codebase scan alone.
+   - **multi-repo**: for **each child repo the change touches**, read `<repo>/feature-spec/config.yaml` if it exists (its `architecture` + `hard_rules` ground work in that repo); if a repo has none, scan that repo's code. Per the topology rules, never generate config here.
+   - Do not read the project's own prose docs (CLAUDE.md, README, etc.) — config.yaml is the only curated grounding this workflow trusts.
    - Read `feature-spec/specs/` for existing main specs (to understand what capabilities already exist)
-   - `config.yaml` may be missing (project never ran `/init`) — skip silently and work from the codebase scan alone.
    - These inform artifact generation but are NOT copied into artifact files
 
 5. **Exhaustive codebase scan — identify ALL affected files**
@@ -318,6 +323,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
      - GOOD: `## 1. Search API and service layer` (all Backend tasks)
      - GOOD: `## 2. Search page and composables` (all Frontend tasks)
      - BAD: `## 1. User Search` (mixes Backend + Frontend + E2E → produces a mixed-concern commit)
+   - **Multi-repo: each group MUST also stay within a single child repo.** A group's tasks all target files under one repo, so its commit lands atomically in that repo. A change spanning repos splits into one group per repo, wired with dependency annotations contract-first (the repo defining a shared API/type/schema runs first; consumer repos depend on it). Annotate each group's owning repo on the heading, e.g. `## 1. Search API and service layer <!-- repo: services/search-api -->`.
    - **Group heading describes the concern**, NOT the agent type.
      - GOOD: `## 1. Search API and service layer`
      - BAD: `## 1. Backend tasks`

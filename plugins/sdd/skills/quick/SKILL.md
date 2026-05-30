@@ -15,6 +15,10 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
 **Steps**
 
+0. **Detect repo topology (MANDATORY first)**
+
+   Load `plugins/sdd/references/repo-topology.md` and run its Step 0 detection. Announce the mode. In **multi-repo** mode: the scan covers every child repo the task touches; per-repo grounding is read per touched repo (Step 2); each dispatched agent is bound to one child repo and does its work + commits inside that repo (`git -C <repo> ...`); cross-repo work is ordered contract-first.
+
 1. **Get the task description**
 
    If no description is provided, use **AskUserQuestion** (open-ended) to ask:
@@ -24,14 +28,16 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
 2. **Read project context**
 
-   - Read `feature-spec/config.yaml` — the sole grounding source (tech stack, lint commands, and the `architecture` block: pattern, layers, entry_points, hard_rules). Use the architecture block to ground the Step 5 codebase scan and forward it to every worker agent in Step 6; `hard_rules` are non-negotiable. Do not read the project's own docs — config.yaml is the only project context this workflow trusts.
-   - If `config.yaml` doesn't exist, proceed without it — fall back to the codebase scan alone
-   - `config.yaml` is optional — skip silently if missing
+   - **single-repo**: read `feature-spec/config.yaml` — the grounding source (tech stack, lint commands, and the `architecture` block: pattern, layers, entry_points, hard_rules). Use it to ground the Step 5 scan and forward it to every worker agent in Step 6; `hard_rules` are non-negotiable.
+   - **multi-repo**: for each child repo the task touches, read `<repo>/feature-spec/config.yaml` if it exists; else scan that repo's code. Forward each repo's grounding to the agents working in it.
+   - Do not read the project's own prose docs — config.yaml is the only curated grounding this workflow trusts.
+   - `config.yaml` is optional — if a repo has none, skip silently and rely on the codebase scan
 
 3. **Confirm current branch**
 
    Use the current branch as-is. Do NOT create or switch branches.
    Announce: "Branch: **<current-branch>**"
+   **Multi-repo**: there is no single branch — announce the current branch of each child repo the task will touch (`git -C <repo> branch --show-current`). All commits for a repo's tasks land on that repo's current branch.
 
 4. **Pre-lint and commit (clean slate)**
 
@@ -256,7 +262,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **Commit consolidation after Phase 1:**
 
-   Since `/quick` does NOT use worktree isolation, per-task commits (with task-number prefixes) land directly on the branch. After all Phase 1 agents complete, **squash per-task commits into one clean commit per group** — matching `/apply`'s final commit style:
+   Since `/quick` does NOT use worktree isolation, per-task commits (with task-number prefixes) land directly on the branch. After all Phase 1 agents complete, **squash per-task commits into one clean commit per group** — matching `/apply`'s final commit style. **Multi-repo**: run this squash independently inside each child repo that received commits (`git -C <repo> ...`), against that repo's own base commit:
 
    1. Identify the base commit (the commit before the first per-task commit): `git log --oneline`
    2. Count per-task commits since base: `git log --oneline <base-sha>..HEAD`

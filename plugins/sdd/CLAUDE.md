@@ -9,6 +9,15 @@ Full:  /init → /propose → /validate → /apply → /complete
 Quick: /quick <description>  (inline analysis → agent dispatch, no spec files)
 ```
 
+## Repo Topology (single-repo vs multi-repo)
+
+The workflow auto-detects, at the start of `/propose`, `/apply`, `/quick`, and `/complete`, whether cwd is a single git repo or an umbrella folder containing several independent repos. See `references/repo-topology.md` for the detection and per-mode git rules.
+
+- **single-repo** — cwd is inside a git repo. Original behavior: all git ops and `feature-spec/` against that one repo.
+- **multi-repo** — cwd is a folder of independent repos. `feature-spec/` (planning artifacts) lives at the umbrella cwd; each task group is bound to one child repo, and its worktree/commits run inside that repo. A cross-repo change splits into one group per repo, ordered contract-first.
+
+`config.yaml` is always a per-project, optional artifact living inside a repo (`<repo>/feature-spec/config.yaml`). `/init` is per-project — run it inside a repo. Where a touched repo has no config, the workflow scans its code instead.
+
 ## Skills (User-Invocable)
 
 | Command | Description |

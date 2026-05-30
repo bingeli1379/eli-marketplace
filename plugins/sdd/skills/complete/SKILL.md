@@ -17,6 +17,10 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
 
 **Steps**
 
+0. **Detect repo topology (MANDATORY first)**
+
+   Load `plugins/sdd/references/repo-topology.md` and run its Step 0 detection. It only affects Step 4 (the cleanup commit): in **single-repo** mode the `feature-spec/` deletion is committed in the cwd repo; in **multi-repo** mode the code commits already landed per child repo during `/apply`, so `/complete` just deletes `feature-spec/` and commits that deletion only if cwd is itself a git repo (otherwise plain `rm`).
+
 1. **Select change(s) to complete**
 
    **If a name is provided:** Use that single change. Go to step 2.
@@ -57,12 +61,13 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
      - Delete `feature-spec/archive/` if it exists (legacy)
    - **Always keep** `feature-spec/config.yaml` — it is reused by future `/propose` and `/quick`.
 
-4. **Commit**
+4. **Commit the cleanup**
 
-   Stage the cleanup (deleted change files):
+   Stage the cleanup (deleted change files) and commit:
    - Single change: `chore: complete <change-name>`
    - Batch mode: `chore: complete <name1>, <name2>, ...`
    - Do NOT push to remote — only commit locally.
+   - **Multi-repo**: the change's code was already committed per child repo during `/apply` — do not re-commit code here. This commit only records the `feature-spec/` deletion, and only if cwd is itself a git repo. If cwd is not a repo (plain umbrella folder), skip the commit — the `rm` in Step 3 is enough.
 
 5. **Display summary**
 

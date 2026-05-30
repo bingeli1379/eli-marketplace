@@ -17,6 +17,13 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
 **Steps**
 
+0. **Detect repo topology (MANDATORY first)**
+
+   Load `plugins/sdd/references/repo-topology.md` and run its Step 0 detection. Announce the mode and, in multi-repo, list the child repos. Every git operation below follows the per-mode rules in that file:
+   - **single-repo** — all git ops run against the cwd repo. The steps below are written for this mode and are unchanged.
+   - **multi-repo** — bind each task group to its target child repo by file path (a group never spans repos). Run the worktree preflight, worktree isolation, and commits **inside that child repo** (`git -C <repo> ...`). `feature-spec/` stays at cwd.
+   - **no-git** — warn that worktree isolation and commits cannot run; implement directly and let the user commit.
+
 1. **Select the change and parse mode flags**
 
    **Mode flag parsing**: split arguments on whitespace. If any token equals `dev-mode` (case-insensitive), set the internal `DEV_MODE = true` flag and remove the token from the argument list. The remaining tokens go through normal name resolution. `DEV_MODE` defaults to `false` — the retrospective section in Step 9 is suppressed unless `DEV_MODE = true`. Plugin authors invoke with `dev-mode` to surface lessons-learned; end users get a clean report by default.
@@ -47,7 +54,9 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - If **aligned**: set `worktree_mode = true`. Phase 1 agents dispatch with `isolation: "worktree"` normally.
    - If **diverged**: set `worktree_mode = false`. Announce to the user: "⚠ HEAD is ahead of `<default-branch>`. Worktree isolation would branch from the default tip and miss in-progress commits — falling back to **no-worktree mode** for Phase 1 (agents work on the current branch directly with per-task commits; orchestrator auto-squashes per group)." Do NOT ask the user to confirm — this is an automatic decision based on observed state.
 
-   Pass `worktree_mode` to Phase 1 dispatch (see `orchestrator.md` Phase 1 for how it consumes the flag).
+   **Multi-repo mode**: run this preflight **once per child repo** that a task group targets (`git -C <repo> ...`), storing a per-repo `worktree_mode`. A group dispatched against repo X uses repo X's `worktree_mode` and worktrees created inside repo X.
+
+   Pass `worktree_mode` (per-repo in multi-repo mode) to Phase 1 dispatch (see `orchestrator.md` Phase 1 for how it consumes the flag).
 
 3. **Pre-lint and commit (clean slate — runs in background)**
 
@@ -169,7 +178,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
      3. **Decide** — Choose approach based on priority: project convention > official recommendation > your own judgment. Never default to the simplest fix without checking
      4. **Implement** — Write the code
      5. **Verify** — After implementing, confirm: does the new code match surrounding style? Did you introduce any inconsistent patterns?
-   - **CRITICAL — Committing is EXPLICITLY REQUIRED by the user as part of this workflow. You are authorized and expected to commit after every task. This is NOT optional.** After completing each task, you MUST:
+   - **CRITICAL — Committing is EXPLICITLY REQUIRED by the user as part of this workflow. You are authorized and expected to commit after every task. This is NOT optional.** (Multi-repo mode: all staging and committing for this group happen inside the group's target child repo — `git -C <repo> ...` — never at the umbrella root.) After completing each task, you MUST:
      1. Stage all changed files with `git add` (specify files by name)
      2. Run all lint commands listed above (if any) to fix formatting — stage any changes they produce
      3. Commit code + lint fixes following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`). **Read the skill for type list, description rules, and format.** The only sdd-specific addition: prefix the description with the task number — `<type>[optional scope]: <task-number> <description>` (e.g., `feat: 1.1 add UserSearch entity`, `test: 2.3 add unit tests for search service`).
@@ -186,7 +195,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    **Verification-only groups**: If a task group contains ONLY verification commands (type-check, test:unit, lint, grep — no file modifications), the orchestrator executes them directly instead of dispatching an agent. These tasks do not need worktree isolation and would waste tokens on agent setup overhead. If any verification fails, dispatch the appropriate agent type to fix the issue.
 
    **Dispatch rules:**
-   - Phase 1 agents: use the **Agent** tool with `isolation: "worktree"`, `run_in_background: true`, and `mode: "bypassPermissions"`. Each group = one agent in its own worktree.
+   - Phase 1 agents: use the **Agent** tool with `isolation: "worktree"`, `run_in_background: true`, and `mode: "bypassPermissions"`. Each group = one agent in its own worktree. **Multi-repo mode**: tell the agent which child repo it owns; its worktree, work, and commits all happen inside that repo (`git -C <repo> ...`). A group's files are all under one repo (enforced at task-grouping time), so the agent never touches another repo.
    - Phase 2-3 agents: use the **Agent** tool with `run_in_background: true` and `mode: "bypassPermissions"` (no worktree — work directly on main branch).
    - **Why `mode: "bypassPermissions"`**: Background agents cannot prompt the user for file Write/Edit permission — the permission dialog is invisible to the user, causing the agent to hang silently for minutes. All agents write only to project source files and `feature-spec/`, which is safe to auto-approve.
    - Give each agent a descriptive `name` (e.g., `"dotnet-search-api"`, `"vue-search-page"`)

@@ -144,6 +144,8 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
    - Rationale: worktree isolation requires the worktree base to equal the feature branch's tip, but `isolation: "worktree"` branches from the default branch. On a diverged HEAD this produces a stale base that causes wave-to-wave merge conflicts and invisible dependency chains. The no-worktree fallback yields the same final history — one clean squashed commit per group — via direct-commit + auto-squash.
    - Do NOT preemptively switch to no-worktree mode in the middle of a run. The flag is set once at Step 2 and held for the entire Phase 1.
 
+   **Multi-repo mode** (see `plugins/sdd/references/repo-topology.md`): each group is bound to one child repo. `worktree_mode` is evaluated per repo, and every git command in steps **a** / **c** / **c-bis** / **d** below runs against that group's repo (`git -C <repo> ...`); the worktree is created inside that repo. Groups in the same wave may target different repos and still run in parallel. Cross-repo waves are ordered contract-first (the repo defining a shared contract merges before its consumers).
+
    **For each wave (applies when `worktree_mode = true`; see the fallback above for `worktree_mode = false`):**
 
    a. **Dispatch** all groups in this wave **in parallel**. Each group = one agent dispatched with `isolation: "worktree"`. Give each agent a descriptive `name` (e.g., `"dotnet-search-api"`, `"vue-search-page"`).
