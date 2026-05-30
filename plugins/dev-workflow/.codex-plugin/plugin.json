@@ -1,6 +1,6 @@
 {
-  "name": "eli-tools",
-  "description": "Eli daily tools",
+  "name": "dev-workflow",
+  "description": "Daily dev workflow skills: commit, release, prompt audit",
   "version": "1.3.12",
   "author": {
     "name": "Eli",
@@ -11,8 +11,8 @@
   "license": "MIT",
   "keywords": ["commit", "release", "review-prompt", "workflow"],
   "interface": {
-    "displayName": "Eli Tools",
-    "shortDescription": "Eli daily tools",
+    "displayName": "Dev Workflow",
+    "shortDescription": "Daily dev workflow skills: commit, release, prompt audit",
     "category": "Productivity"
   }
 }

@@ -1,4 +1,4 @@
-# eli-tools
+# dev-workflow
 
 Daily workflow skills for Claude Code.
 

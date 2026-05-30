@@ -6,7 +6,8 @@ A personal [Claude Code](https://claude.ai/code) plugin marketplace hosting cust
 
 | Plugin | Description |
 |--------|-------------|
-| [eli-tools](./plugins/eli-tools) | Daily workflow commands — commit, release, prompt audit |
+| [dev-workflow](./plugins/dev-workflow) | Daily workflow commands — commit, release, prompt audit |
+| [issue-tracing](./plugins/issue-tracing) | On-call triage — turn a Grafana or Kibana/ELK URL into a structured incident report |
 | [eureka-sdd](./plugins/eureka-sdd) | Spec-driven multi-agent development workflow — propose, validate, apply, complete |
 
 ## Install

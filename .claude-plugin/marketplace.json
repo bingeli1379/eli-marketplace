@@ -7,9 +7,9 @@
   },
   "plugins": [
     {
-      "name": "eli-tools",
-      "source": "./plugins/eli-tools",
-      "description": "Eli daily tools"
+      "name": "dev-workflow",
+      "source": "./plugins/dev-workflow",
+      "description": "Daily dev workflow skills: commit, release, prompt audit"
     },
     {
       "name": "issue-tracing",
