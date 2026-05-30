@@ -10,9 +10,12 @@
   "repository": "https://github.com/bingeli1379/eli-claude-marketplace",
   "license": "MIT",
   "keywords": ["issue-tracing", "on-call", "grafana", "kibana", "incident", "observability"],
+  "skills": "./skills/",
   "interface": {
     "displayName": "Issue Tracing",
     "shortDescription": "On-call triage from a Grafana/Kibana URL to a structured incident report",
-    "category": "Productivity"
+    "developerName": "Eli",
+    "category": "Developer Tools",
+    "capabilities": ["Skills", "Files"]
   }
 }

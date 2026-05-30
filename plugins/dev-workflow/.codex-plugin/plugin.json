@@ -10,9 +10,12 @@
   "repository": "https://github.com/bingeli1379/eli-claude-marketplace",
   "license": "MIT",
   "keywords": ["commit", "release", "review-prompt", "workflow"],
+  "skills": "./skills/",
   "interface": {
     "displayName": "Dev Workflow",
     "shortDescription": "Daily dev workflow skills: commit, release, prompt audit",
-    "category": "Productivity"
+    "developerName": "Eli",
+    "category": "Developer Tools",
+    "capabilities": ["Skills", "Files"]
   }
 }
