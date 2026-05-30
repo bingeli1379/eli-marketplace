@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.0.0] - 2026-05-30
+
+### Changed
+- **Breaking:** workflow commands dropped the `esdd-` prefix — use `/sdd:init`, `/sdd:propose`, `/sdd:validate`, `/sdd:apply`, `/sdd:complete`, and `/sdd:quick` (previously `/esdd-init`, etc.). Update any saved command references or notes
+- The scope confirmation shown before implementation now presents each change as a "before → after" view: simple swaps stay on one line, and only changes that ripple through several steps expand into a full flow. Easier to scan and approve at a glance than the previous two-section layout
+- `config.yaml` is now the single source of project context. `/init` produces only `config.yaml` (tool commands plus an architecture baseline) and the workflow no longer reads your project's own README or docs, so what the agents rely on is explicit and in one place
+
+### Added
+- Multi-repo support: run the workflow from a folder containing several independent repos. Planning lives at the top level, each task group is tied to one repo, cross-repo changes are ordered contract-first, and QA checks the seams between repos
+- Generated changes now mirror your existing code — the planner finds the nearest similar file and follows its data-access, query, structure, and naming conventions instead of inventing a new style
+- The planner now serializes any two task groups that touch the same file, preventing the parallel edits that previously collided during implementation
+
+### Removed
+- **Breaking:** `/init` no longer generates `context.md` or `knowledge.md`, `/complete` no longer extracts knowledge, and the separate knowledge-audit step is gone. Project context is now fully captured by `config.yaml` — delete the old files if you have them
+
 ## [1.16.8] - 2026-05-16
 
 ### Changed
