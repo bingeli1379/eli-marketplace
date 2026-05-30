@@ -68,7 +68,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - Group by reviewable unit — each group = single agent type + single concern (same as tasks.md format)
    - Tag each subtask with an agent type: `(Backend)`, `(Python)`, `(Frontend)`, `(E2E)`, `(Electron)`, `(Database)`, `(DevOps)`, `(Performance)`, `(Security)`, `(Documentation)`
    - Add `<!-- depends: N -->` annotations if groups have dependencies
-   - **Shared-file groups MUST be serialized**: `/quick` does NOT use worktree isolation, so two groups dispatched in parallel that touch the **same file** will clobber each other's edits. Whenever two groups modify a common file, add a `<!-- depends: N -->` between them so they run sequentially, never in the same parallel wave. When in doubt, serialize.
+   - **Shared-file groups MUST be serialized**: `/quick` does NOT use worktree isolation, so two groups dispatched in parallel that touch the **same file** clobber each other's edits directly on the branch (worse than a worktree merge conflict — there is no merge step to catch it). To find collisions, derive the set of files each group actually edits from the Step 5 scan — **including the expansion of catch-all wording like "rewrite all N consumers": grep the real paths, do NOT trust the prose count**. Intersect every pair of group file-sets; any file edited by 2+ groups MUST have a `<!-- depends: N -->` between those groups so they run sequentially, never in the same parallel wave. When in doubt, serialize.
    - Follow TDD structure for Backend/Frontend tasks when appropriate (write test → implement)
    - Number tasks: `1.1`, `1.2`, etc.
 
@@ -92,20 +92,15 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **Scope:** <affected layers>   **Complexity:** <Simple/Medium/Complex>
 
-   ### 變更清單（依類別 + 動作）
+   ### 變更（現在 → 改成）
 
-   **【類別 A — e.g. UI 元件 / API endpoint / 中間對照表】**
-   - 新增 / 取代 / 移除 — <概念名稱描述，不用 symbol 名稱>
+   - <區域 / 行為 1>：現在 <how it works now> → 改成 <how it works after>   ← 單跳 / 大量取代：一行
+   - <區域 / 行為 2>：現在 ... → 改成 ...
 
-   **【類別 B】**
-   - ...
-
-   ### 流程鏈（一條流程走完會經過哪些環節 / 一個變動會擴散到哪些下游）
-
-   **【1. <一句話描述場景>】**
-   - <環節 / 下游 1 — 用行為動詞，不講 symbol>
-   - <環節 / 下游 2>
-   - ...
+   <只有真正改到幾條執行路徑的變動才展開成完整行為鏈：>
+   **【<關鍵流程名>】**
+   - 現在：A → B → C
+   - 改成：A → B′ → C′（標出差異）
 
    ### 鎖定假設
    - <假設 1>
@@ -131,20 +126,15 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **Scope:** <affected layers>   **Complexity:** <Simple/Medium/Complex>
 
-   ### 變更清單（依類別 + 動作）
+   ### 變更（現在 → 改成）
 
-   **【類別 A】**
-   - 新增 / 取代 / 移除 — <描述>
+   - <區域 / 行為 1>：現在 <how it works now> → 改成 <how it works after>   ← 單跳 / 大量取代：一行
+   - <區域 / 行為 2>：現在 ... → 改成 ...
 
-   **【類別 B】**
-   - ...
-
-   ### 流程鏈
-
-   **【1. <一句話描述場景>】**
-   - <環節 / 下游 1>
-   - <環節 / 下游 2>
-   - ...
+   <只有真正改到幾條執行路徑的變動才展開成完整行為鏈：>
+   **【<關鍵流程名>】**
+   - 現在：A → B → C
+   - 改成：A → B′ → C′（標出差異）
 
    ### 鎖定假設
    - <假設 1>
@@ -167,13 +157,12 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    ```
 
    **Format rules (same as `/propose` Step 6g)**:
-   - Categorize 變更清單 by concept, not file/directory
-   - Use concept names, not symbol names
-   - 流程鏈 entries need ≥ 3 hops (fold trivial 1-2-hop into 變更清單)
-   - Use action verbs, no file:line / import path / precise symbol references
-   - Format / shape changes MUST trace all downstream consumers in 流程鏈
-   - User-flow entries (new feature) MUST end at user-visible terminal state
-   - Combined 變更清單 + 流程鏈 SHOULD stay under 20 lines for quick mode (smaller cap than full propose — if exceeded, the task is too big for quick and SHOULD be promoted to `/propose`)
+   - **Depth scales with the item**: single-hop swap / bulk replacement → ONE `現在 X → 改成 Y` line (do NOT inflate); only a change that alters several execution-path steps gets an expanded 現在/改成 behavior chain.
+   - **Concise first, key points stand out** — most items are one line; only genuinely multi-step flows expand.
+   - Concrete names are fine when the name IS the change (function swap, value-format `ZH_CN`→`zh-CN`); use a concept name when a raw symbol is noise; never `file:line` or import paths.
+   - **Format / shape changes MUST get the expanded chain** with all downstream consumers traced (cookie / i18n / filenames / API body / string comparisons / backend mapping keys / …).
+   - User-flow entries (new feature) MUST end at a user-visible terminal state.
+   - Whole contract SHOULD stay under 20 lines for quick mode (smaller cap than full propose — if exceeded, the task is too big for quick and SHOULD be promoted to `/propose`).
 
    **Decision rule**: Only ask when there are genuine unknowns that would lead to wrong implementation. If you can make a reasonable decision, make it and note it — don't ask just to be safe.
 

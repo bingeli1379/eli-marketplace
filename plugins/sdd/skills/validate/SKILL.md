@@ -88,7 +88,7 @@ Most rules are **ERROR** level — any ERROR causes FAIL. A few rules are marked
 | Single agent type per group | Each group SHOULD contain only one agent-type tag. WARN if a group mixes multiple agent types (e.g., both `(Backend)` and `(Frontend)` tasks in the same group). Mixed groups produce mixed-concern commits after squash. |
 | Group heading descriptiveness | Group heading MUST NOT be just an agent type name (e.g., `Backend`, `Frontend`, `E2E`). It must describe the reviewable concern (e.g., `Search API and service layer`). |
 | Dependency annotation format | If `<!-- depends: N[, M...] -->` is present on a heading, referenced group numbers MUST exist in tasks.md |
-| Shared file conflict | If `design.md` has an Affected Files section, two independent groups (no dependency between them) MUST NOT both list the same file. ERROR — must add a dependency or merge the groups. |
+| Shared file conflict | If `design.md` has an Affected Files section, two independent groups (no dependency between them) MUST NOT both list the same file. ERROR — must add a dependency or merge the groups. This is a backstop only: it catches collisions only when files are enumerated per group. Catch-all wording ("rewrite all N consumers") hides the real paths, so the primary collision check is propose's Step 9a self-review (grep the inventory). Do NOT assume this rule covers refactors. |
 | Task numbering | Tasks MUST use `N.M` numbering (e.g., `1.1`, `1.2`, `2.1`) |
 | Task verb | Each task description MUST start with a verb (e.g., Create, Implement, Add, Write, Configure) |
 | Empty groups | Groups MUST NOT be empty (no tasks under heading) |
