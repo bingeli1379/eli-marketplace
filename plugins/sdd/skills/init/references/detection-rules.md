@@ -1,6 +1,6 @@
 # Detection Rules
 
-Detailed auto-detection logic for Phase 1 steps 1–3 of `/esdd-init`. Load this file when SCAN reaches the auto-detect stage.
+Detailed auto-detection logic for Phase 1 steps 1–3 of `/init`. Load this file when SCAN reaches the auto-detect stage.
 
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: esdd-complete
+name: complete
 description: >
   Complete a change: extract knowledge, update docs, then clean up.
   If a name is given, complete that specific change. If omitted, auto-scan
@@ -11,7 +11,7 @@ Complete a change by extracting valuable knowledge, updating project docs, then 
 
 ---
 
-**Input**: Optionally specify a change name (e.g., `/esdd-complete add-user-search`). If omitted, auto-scan for all completed changes.
+**Input**: Optionally specify a change name (e.g., `/complete add-user-search`). If omitted, auto-scan for all completed changes.
 
 **Steps**
 
@@ -95,7 +95,7 @@ Complete a change by extracting valuable knowledge, updating project docs, then 
    3. Can it collapse into one line without losing the fact? → collapse
    4. After all three filters, does anything survive? → if yes, write it; if no, skip silently
 
-   If `feature-spec/knowledge.md` does not exist, create it by copying the canonical skeleton from `plugins/sdd/templates/knowledge.md` (single source of truth, also used by `/esdd-init`). Do not paraphrase or trim — write it verbatim. The file lives next to `context.md` so all spec-related artifacts sit in one place. The HTML comments under each heading orient new contributors on what belongs where; **keep them in place** when appending new entries.
+   If `feature-spec/knowledge.md` does not exist, create it by copying the canonical skeleton from `plugins/sdd/templates/knowledge.md` (single source of truth, also used by `/init`). Do not paraphrase or trim — write it verbatim. The file lives next to `context.md` so all spec-related artifacts sit in one place. The HTML comments under each heading orient new contributors on what belongs where; **keep them in place** when appending new entries.
 
    **Legacy migration (one-time)**: if `./knowledge.md` exists at the project root from a previous plugin version, treat it as the source of truth and `git mv ./knowledge.md feature-spec/knowledge.md` before appending. If `feature-spec/knowledge.md` already exists too, leave both alone and surface in the summary so the user can resolve manually.
 
@@ -151,7 +151,7 @@ Complete a change by extracting valuable knowledge, updating project docs, then 
    - Preserve the user's hand-edits — never rewrite an existing line, only add or replace by exact match
    - Preserve the inline HTML guidance comments verbatim — they are load-bearing for future AI re-runs
    - Do NOT touch sections marked "Never auto-update" above
-   - If `context.md` does not exist, skip this step silently (do not auto-create it — that is `/esdd-init`'s job)
+   - If `context.md` does not exist, skip this step silently (do not auto-create it — that is `/init`'s job)
    - Historical / migration rules rejected from Hard Rules go into `knowledge.md/Gotchas` in the same step (counts toward the knowledge total in the summary)
 
    Track the count of updated sections for the final summary.
@@ -182,7 +182,7 @@ Complete a change by extracting valuable knowledge, updating project docs, then 
      - Also delete `feature-spec/specs/` (main specs are no longer needed)
      - Also delete `feature-spec/changes/` directory itself
      - Delete `feature-spec/archive/` if it exists (legacy)
-   - **Always keep** `feature-spec/config.yaml` and `feature-spec/context.md` — they're reused by future `/esdd-propose` and `/esdd-quick`
+   - **Always keep** `feature-spec/config.yaml` and `feature-spec/context.md` — they're reused by future `/propose` and `/quick`
 
 8. **Commit**
 

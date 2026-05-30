@@ -1,5 +1,5 @@
 ---
-name: esdd-apply
+name: apply
 description: >
   Implement tasks from a spec change using Agent Team dispatch.
   Use when the user wants to start or continue implementing a change.
@@ -9,11 +9,11 @@ user-invocable: true
 
 Implement tasks from a spec change. Reads all spec artifacts, prepares context, then **becomes the orchestrator** — the main Claude assumes the orchestrator role directly so the user can interact naturally via chat.
 
-**IMPORTANT**: Specs are the single source of truth. If specs are incomplete, suggest running `/esdd-validate` first.
+**IMPORTANT**: Specs are the single source of truth. If specs are incomplete, suggest running `/validate` first.
 
 ---
 
-**Input**: Optionally specify a change name (e.g., `/esdd-apply add-user-search`). If omitted, auto-detect. An optional `dev-mode` token may appear anywhere in the arguments (e.g., `/esdd-apply add-user-search dev-mode`) — see Step 1 for parsing rules.
+**Input**: Optionally specify a change name (e.g., `/apply add-user-search`). If omitted, auto-detect. An optional `dev-mode` token may appear anywhere in the arguments (e.g., `/apply add-user-search dev-mode`) — see Step 1 for parsing rules.
 
 **Steps**
 
@@ -25,7 +25,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - List directories under `feature-spec/changes/` (excluding `archive/`)
    - Auto-select if only one active change exists
    - If multiple, use **AskUserQuestion** to let the user choose
-   - If none exist, report error: "No active changes found. Run `/esdd-propose` first."
+   - If none exist, report error: "No active changes found. Run `/propose` first."
 
    Always announce: "Implementing change: **<name>**" (and append "(dev-mode)" when the flag is set, so the user can confirm parsing).
 
@@ -57,7 +57,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    1. Run all lint commands **in the background** (`run_in_background: true`) to fix any pre-existing formatting issues
    2. **Do NOT wait for lint to finish** — proceed to Step 4 (read context) and Step 5 (parse tasks) immediately
    3. **Before dispatching Phase 1 agents**, check if lint has completed:
-      - If lint produced changes: stage all changed files and commit with message: `chore: pre-lint cleanup before esdd-apply`
+      - If lint produced changes: stage all changed files and commit with message: `chore: pre-lint cleanup before apply`
       - If lint is still running: wait for it to finish, then commit if needed
       - If no changes, skip silently
 
@@ -76,11 +76,11 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - `feature-spec/context.md` — AI-readable project map (architecture layers, domain-to-code map, entry points, hard rules, common commands). Forwarded to every worker agent in Step 7 so they make changes in the right place and respect Hard Rules.
    - `feature-spec/knowledge.md` — operational gotchas and dev tips. Forwarded to every worker agent in Step 7 so they avoid known landmines.
 
-   `context.md` and `knowledge.md` are optional — skip silently if missing (project may not have run `/esdd-init`).
+   `context.md` and `knowledge.md` are optional — skip silently if missing (project may not have run `/init`).
 
    **If any required file is missing** (proposal, design, tasks, or specs):
    - Show which files are missing
-   - Suggest: "Run `/esdd-validate <name>` to check completeness, or `/esdd-propose` to generate missing artifacts."
+   - Suggest: "Run `/validate <name>` to check completeness, or `/propose` to generate missing artifacts."
    - Stop.
 
 5. **Parse tasks, detect interrupted state, and show progress**
@@ -88,7 +88,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    Parse `tasks.md`:
    - Identify task groups (## headings) and their agent mapping
    - Count total tasks, completed (`- [x]`), and pending (`- [ ]`)
-   - If all tasks are complete: congratulate, suggest `/esdd-complete <name>` to extract knowledge and clean up
+   - If all tasks are complete: congratulate, suggest `/complete <name>` to extract knowledge and clean up
 
    **Detect and recover interrupted state** (runs every time, not just after crashes):
 
@@ -180,7 +180,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - **CRITICAL — Committing is EXPLICITLY REQUIRED by the user as part of this workflow. You are authorized and expected to commit after every task. This is NOT optional.** After completing each task, you MUST:
      1. Stage all changed files with `git add` (specify files by name)
      2. Run all lint commands listed above (if any) to fix formatting — stage any changes they produce
-     3. Commit code + lint fixes following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`). **Read the skill for type list, description rules, and format.** The only esdd-specific addition: prefix the description with the task number — `<type>[optional scope]: <task-number> <description>` (e.g., `feat: 1.1 add UserSearch entity`, `test: 2.3 add unit tests for search service`).
+     3. Commit code + lint fixes following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`). **Read the skill for type list, description rules, and format.** The only sdd-specific addition: prefix the description with the task number — `<type>[optional scope]: <task-number> <description>` (e.g., `feat: 1.1 add UserSearch entity`, `test: 2.3 add unit tests for search service`).
    - Do NOT modify `tasks.md` — the orchestrator handles checkbox updates after merging your work.
    - Do NOT batch multiple tasks into one commit — one commit per task, no exceptions
    - After the commit, report back: "DONE: <task-number> <task-description>"
@@ -281,7 +281,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - 每個問題：發生什麼、根因、如何解決
    - 預防建議：針對未來任何人使用此 plugin 時可複用的通用做法（不要寫只適用本地環境的解法）
    - 若無問題：「乾淨執行，無問題。」
-   執行 `/esdd-complete <name>` 提取知識並清理。
+   執行 `/complete <name>` 提取知識並清理。
    ```
 
    **On pause:**

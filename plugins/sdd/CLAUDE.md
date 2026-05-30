@@ -5,21 +5,21 @@ Spec-driven multi-agent development team plugin for Claude Code.
 ## Workflow
 
 ```
-Full:  /esdd-init → /esdd-propose → /esdd-validate → /esdd-apply → /esdd-complete
-Quick: /esdd-quick <description>  (inline analysis → agent dispatch, no spec files)
+Full:  /init → /propose → /validate → /apply → /complete
+Quick: /quick <description>  (inline analysis → agent dispatch, no spec files)
 ```
 
 ## Skills (User-Invocable)
 
 | Command | Description |
 |---|---|
-| `/esdd-init` | Initialize feature-spec directory; two-phase SCAN → BUILD generates config.yaml + context.md (AI-readable project map) |
-| `/esdd-propose <description>` | Generate spec artifacts (proposal, design, specs, tasks) for a new change |
-| `/esdd-validate <change-name>` | Validate spec artifacts against structural and content rules |
-| `/esdd-quick <description>` | Quick mode — orchestrator analyzes inline and dispatches agents, no spec files |
-| `/esdd-apply <change-name>` | Implement tasks using agent team dispatch (no questions asked) |
-| `/esdd-apply-all [names...]` | Batch apply multiple changes sequentially, unattended |
-| `/esdd-complete <change-name>` | Complete change: extract knowledge, update docs, clean up |
+| `/init` | Initialize feature-spec directory; two-phase SCAN → BUILD generates config.yaml + context.md (AI-readable project map) |
+| `/propose <description>` | Generate spec artifacts (proposal, design, specs, tasks) for a new change |
+| `/validate <change-name>` | Validate spec artifacts against structural and content rules |
+| `/quick <description>` | Quick mode — orchestrator analyzes inline and dispatches agents, no spec files |
+| `/apply <change-name>` | Implement tasks using agent team dispatch (no questions asked) |
+| `/apply-all [names...]` | Batch apply multiple changes sequentially, unattended |
+| `/complete <change-name>` | Complete change: extract knowledge, update docs, clean up |
 | `/knowledge-audit` | Audit knowledge.md entries against current codebase |
 
 ## Spec Directory Structure
@@ -27,8 +27,8 @@ Quick: /esdd-quick <description>  (inline analysis → agent dispatch, no spec f
 ```
 feature-spec/
   config.yaml                # Tool-runnable config: lint_commands, verification_commands (auto-generated, persists)
-  context.md                 # AI-readable project map: layers, domain map, entry points, hard rules (auto-generated, kept in sync by /esdd-complete)
-  knowledge.md               # Operational gotchas + dev tips (seeded by /esdd-init, appended by /esdd-complete; persists)
+  context.md                 # AI-readable project map: layers, domain map, entry points, hard rules (auto-generated, kept in sync by /complete)
+  knowledge.md               # Operational gotchas + dev tips (seeded by /init, appended by /complete; persists)
   specs/                     # Accumulated main specs (cleaned up after all changes complete)
     <capability>/spec.md
   changes/
@@ -40,7 +40,7 @@ feature-spec/
         <capability>/spec.md
 ```
 
-After `/esdd-complete`, completed changes are deleted (not archived). Valuable knowledge is extracted to `feature-spec/knowledge.md` (sits next to `context.md`). `config.yaml`, `context.md`, and `knowledge.md` persist; `context.md` is auto-synced (Domain-to-Code Map, Entry Points, Hard Rules, Common Commands) by each `/esdd-complete` run.
+After `/complete`, completed changes are deleted (not archived). Valuable knowledge is extracted to `feature-spec/knowledge.md` (sits next to `context.md`). `config.yaml`, `context.md`, and `knowledge.md` persist; `context.md` is auto-synced (Domain-to-Code Map, Entry Points, Hard Rules, Common Commands) by each `/complete` run.
 
 ## Agent Definitions
 
@@ -74,11 +74,11 @@ Plugin-level templates that are referenced by more than one skill live in `templ
 
 | Template | Used by |
 |---|---|
-| `templates/knowledge.md` | `/esdd-init` (initial skeleton), `/esdd-complete` (skeleton when missing) |
+| `templates/knowledge.md` | `/init` (initial skeleton), `/complete` (skeleton when missing) |
 
 ## Development Methodology
 
-- **SDD (Spec-Driven Development)**: `/esdd-propose` produces complete specs before any code is written
+- **SDD (Spec-Driven Development)**: `/propose` produces complete specs before any code is written
 - **DDD (Domain-Driven Design)**: Domain model (aggregates, value objects, events) defined in `design.md` during propose
 - **TDD (Test-Driven Development)**: Frontend and backend agents write unit tests FIRST (Red → Green → Refactor)
 - **Contract-First**: API contracts and shared types defined in `design.md` enable parallel frontend/backend development

@@ -1,6 +1,6 @@
 # Knowledge Seed Candidates
 
-Detailed sources + filter passes for Phase 1 step 4 of `/esdd-init`. Load this file when SCAN starts collecting knowledge.md seed candidates.
+Detailed sources + filter passes for Phase 1 step 4 of `/init`. Load this file when SCAN starts collecting knowledge.md seed candidates.
 
 ---
 
@@ -24,7 +24,7 @@ Harvest the project's existing operational tribal knowledge that is **already do
 - Vague historical rules without a named symbol (e.g. "the old auth flow")
 - Third-party deps with internal-helper overlap (weak signal)
 
-These get picked up organically through `/esdd-complete` after each change instead.
+These get picked up organically through `/complete` after each change instead.
 
 ### Named-symbol historical rule — gating rules
 
@@ -43,7 +43,7 @@ A historical rule from `CLAUDE.md` / `AGENTS.md` / `.cursor/rules/` qualifies as
 
 ## Hard cap
 
-Surface **at most 5 candidates** in the SCAN report. If more survive the filters, rank by signal strength (env vars with inline comments > code comments > everything else) and drop the rest. False knowledge is worse than missing knowledge — `/esdd-complete` will pick up real operational facts as the project moves forward.
+Surface **at most 5 candidates** in the SCAN report. If more survive the filters, rank by signal strength (env vars with inline comments > code comments > everything else) and drop the rest. False knowledge is worse than missing knowledge — `/complete` will pick up real operational facts as the project moves forward.
 
 ---
 

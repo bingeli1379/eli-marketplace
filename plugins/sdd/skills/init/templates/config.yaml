@@ -1,5 +1,5 @@
 # feature-spec project configuration
-# This file provides context to /esdd-propose when generating artifacts.
+# This file provides context to /propose when generating artifacts.
 
 # Project context: tech stack, conventions, domain knowledge
 # This is shown to AI when creating artifacts.

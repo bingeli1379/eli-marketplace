@@ -7,7 +7,7 @@ Combines **SDD** (Spec-Driven Development), **DDD** (Domain-Driven Design), and 
 ## Workflow
 
 ```
-/esdd-init → /esdd-propose (auto-validate) → /esdd-apply → /esdd-complete
+/init → /propose (auto-validate) → /apply → /complete
 ```
 
 1. **Init** — auto-detect project context, create `feature-spec/` directory
@@ -33,15 +33,15 @@ Enable Agent Teams (required for multi-agent dispatch):
 ### 1. Initialize (once per project)
 
 ```
-/esdd-init
+/init
 ```
 
-Two-phase: SCAN (auto-detects tech stack, layers, domains; asks up to 3 confirmation questions) then BUILD (writes `feature-spec/config.yaml` for tool commands and `feature-spec/context.md` — an AI-readable project map covering architecture layers, domain-to-code map, entry points, cross-cutting concerns, hard rules, and common commands so AI knows *where* to make changes). `context.md` is auto-synced by `/esdd-complete`.
+Two-phase: SCAN (auto-detects tech stack, layers, domains; asks up to 3 confirmation questions) then BUILD (writes `feature-spec/config.yaml` for tool commands and `feature-spec/context.md` — an AI-readable project map covering architecture layers, domain-to-code map, entry points, cross-cutting concerns, hard rules, and common commands so AI knows *where* to make changes). `context.md` is auto-synced by `/complete`.
 
 ### 2. Propose a change
 
 ```
-/esdd-propose add user search feature for admin dashboard
+/propose add user search feature for admin dashboard
 ```
 
 Creates `feature-spec/changes/add-user-search/` with:
@@ -55,7 +55,7 @@ Automatically validates and fixes all artifacts before completion.
 ### 3. Implement
 
 ```
-/esdd-apply add-user-search
+/apply add-user-search
 ```
 
 The orchestrator dispatches agents through a 3-phase pipeline:
@@ -71,15 +71,15 @@ No questions asked — specs are the single source of truth.
 ### 3b. Batch implement (optional)
 
 ```
-/esdd-apply-all add-user-registration add-user-profile add-user-roles
+/apply-all add-user-registration add-user-profile add-user-roles
 ```
 
-Runs `/esdd-apply` on each change sequentially. Confirm execution order once, then unattended. Failed changes are skipped and reported at the end.
+Runs `/apply` on each change sequentially. Confirm execution order once, then unattended. Failed changes are skipped and reported at the end.
 
 ### 4. Complete & Extract Knowledge
 
 ```
-/esdd-complete add-user-search
+/complete add-user-search
 ```
 
 Extracts valuable domain knowledge and dev tips to `feature-spec/knowledge.md`, updates project docs (CLAUDE.md, README), reviews related knowledge for staleness, then deletes the change artifacts. `feature-spec/config.yaml`, `feature-spec/context.md`, and `feature-spec/knowledge.md` persist across changes.
@@ -125,8 +125,8 @@ See `skills/` for the full list of bundled skills.
 ```
 feature-spec/
   config.yaml               # Tool-runnable config: lint + verification commands (persists)
-  context.md                # AI-readable project map (persists, auto-synced by /esdd-complete)
-  knowledge.md              # Operational gotchas + dev tips (persists, appended by /esdd-complete)
+  context.md                # AI-readable project map (persists, auto-synced by /complete)
+  knowledge.md              # Operational gotchas + dev tips (persists, appended by /complete)
   changes/
     <name>/
       proposal.md            # What & why
@@ -136,7 +136,7 @@ feature-spec/
         <capability>/spec.md
 ```
 
-After `/esdd-complete`, change artifacts are deleted. Knowledge is extracted to `feature-spec/knowledge.md` (alongside `context.md` and `config.yaml`).
+After `/complete`, change artifacts are deleted. Knowledge is extracted to `feature-spec/knowledge.md` (alongside `context.md` and `config.yaml`).
 
 ## Customization
 

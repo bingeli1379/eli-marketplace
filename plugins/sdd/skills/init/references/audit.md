@@ -147,7 +147,7 @@ Translate the user's mode pick into per-entry actions:
 | User picked | Action per ⚠️ / ❌ / ❓ entry |
 |---|---|
 | 套用全部建議 | ⚠️ → replace original line with the AI-suggested rewrite. ❌ → delete the line entirely. ❓ → leave the entry unchanged and insert an HTML comment `<!-- audit YYYY-MM-DD: no citation, please review -->` on the line directly above the entry. |
-| 全部保留 (also: dismissed) | Leave every entry unchanged. Inject a single dated `<!-- audit YYYY-MM-DD: N entries flagged (Y rewrite / Z stale / W uncited), see /esdd-init SCAN report -->` comment at the top of `knowledge.md` so the user can find them later. |
+| 全部保留 (also: dismissed) | Leave every entry unchanged. Inject a single dated `<!-- audit YYYY-MM-DD: N entries flagged (Y rewrite / Z stale / W uncited), see /init SCAN report -->` comment at the top of `knowledge.md` so the user can find them later. |
 | 只套用改寫 | ⚠️ entries get rewritten in place. ❌❓ stay unchanged. Inject the audit-summary comment at top noting the unapplied ❌+❓ count. |
 | 讓我手動挑 (with `<indices>` from Other reply, e.g. `A1,A3`) | Apply the "套用全部建議" actions only to the listed entries; the rest stay unchanged. Inject the audit-summary comment at top noting the unapplied count. If the Other reply is empty or unparseable, fall back to "全部保留". |
 

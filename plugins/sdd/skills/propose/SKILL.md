@@ -1,5 +1,5 @@
 ---
-name: esdd-propose
+name: propose
 description: >
   Generate spec artifacts (proposal, design, tasks, specs) for a new change.
   Use when the user wants to describe what they want to build and get a complete
@@ -50,7 +50,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - Read `feature-spec/context.md` if it exists — AI-readable project map (architecture layers, domain-to-code map, entry points, hard rules, common commands). Use it to ground the Step 5 codebase scan (start from the domain folders it points at) and the Step 6 boundary definition (Hard Rules become non-negotiable constraints for design.md).
    - Read `feature-spec/knowledge.md` if it exists — operational tribal knowledge (Domain rules, Dev Environment, Gotchas, External Dependencies). Treat Gotchas as binding constraints when shaping design and tasks; ignoring a documented landmine is a propose-time bug.
    - Read `feature-spec/specs/` for existing main specs (to understand what capabilities already exist)
-   - `context.md` and `knowledge.md` are optional — skip silently if missing (the project may not have run `/esdd-init` yet, or the user may have removed them deliberately).
+   - `context.md` and `knowledge.md` are optional — skip silently if missing (the project may not have run `/init` yet, or the user may have removed them deliberately).
    - These inform artifact generation but are NOT copied into artifact files
 
 5. **Exhaustive codebase scan — identify ALL affected files**
@@ -155,7 +155,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - **Execution order:** N of M
    ```
 
-   This makes the dependency chain visible to users and to `/esdd-apply-all`. A combined summary with the full dependency graph is shown after Step 7 completes for all sub-changes.
+   This makes the dependency chain visible to users and to `/apply-all`. A combined summary with the full dependency graph is shown after Step 7 completes for all sub-changes.
 
    **g. Confirm scope contract before generating artifacts**
 
@@ -284,7 +284,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - Risks with mitigation strategies
    - **CONFLICT markers** (if any) — where the architect disagrees with a spec THEN clause
 
-   **Why `mode: "bypassPermissions"`**: The architect agent writes ONLY to `feature-spec/changes/<name>/design.md`. Without this mode, the agent blocks on Write permission approval — the user cannot see or approve the permission prompt from a background subprocess, causing the agent to hang for minutes (often 5-10 min per Write). This is the #1 cause of slow `/esdd-propose` execution.
+   **Why `mode: "bypassPermissions"`**: The architect agent writes ONLY to `feature-spec/changes/<name>/design.md`. Without this mode, the agent blocks on Write permission approval — the user cannot see or approve the permission prompt from a background subprocess, causing the agent to hang for minutes (often 5-10 min per Write). This is the #1 cause of slow `/propose` execution.
 
    **d. Resolve conflicts and cross-validate**
 
@@ -409,7 +409,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    ### Validation
    ✓ PASS — all checks passed
 
-   Ready for implementation. Run `/esdd-apply <name>` to start.
+   Ready for implementation. Run `/apply <name>` to start.
    ```
 
 11. **Commit spec artifacts**
@@ -445,6 +445,6 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 - Ask all clarification questions in one structured message, not one at a time
 - Verify each artifact file exists after writing before proceeding to next
 - `config.yaml` context and rules are constraints for YOU, not content for artifact files
-- `context.md` and `knowledge.md` are first-class inputs for design.md generation: forward them verbatim to the architect agent in Step 7c. Hard Rules from `context.md` are non-negotiable; Gotchas from `knowledge.md` are binding constraints, not suggestions. If either file is missing, skip silently — the project may not have run `/esdd-init`.
+- `context.md` and `knowledge.md` are first-class inputs for design.md generation: forward them verbatim to the architect agent in Step 7c. Hard Rules from `context.md` are non-negotiable; Gotchas from `knowledge.md` are binding constraints, not suggestions. If either file is missing, skip silently — the project may not have run `/init`.
 - Use Traditional Chinese for artifact content (matching user's communication language)
 - Code examples and technical terms remain in English

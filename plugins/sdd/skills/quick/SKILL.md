@@ -1,5 +1,5 @@
 ---
-name: esdd-quick
+name: quick
 description: >
   Quick task execution with orchestrator analysis but no spec artifacts.
   Use when the user has small-to-medium tasks and wants agent team dispatch
@@ -7,11 +7,11 @@ description: >
 user-invocable: true
 ---
 
-Lightweight alternative to the full `/esdd-propose` → `/esdd-apply` pipeline. The orchestrator **analyzes the task inline** (similar to propose) and **dispatches agents directly** — no spec files are written to disk.
+Lightweight alternative to the full `/propose` → `/apply` pipeline. The orchestrator **analyzes the task inline** (similar to propose) and **dispatches agents directly** — no spec files are written to disk.
 
 Best for: bug fixes, small features, refactors, chores — tasks where full spec ceremony is overkill but you still want the agent team's specialization and quality gates.
 
-**Input**: A task description (e.g., `/esdd-quick fix the login redirect loop` or `/esdd-quick add dark mode toggle to settings page`).
+**Input**: A task description (e.g., `/quick fix the login redirect loop` or `/quick add dark mode toggle to settings page`).
 
 **Steps**
 
@@ -41,12 +41,12 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    Otherwise, if `lint_commands` are configured in `feature-spec/config.yaml`:
    1. Run all lint commands to fix pre-existing formatting issues
-   2. If lint produced changes: stage and commit with `chore: pre-lint cleanup before esdd-quick`
+   2. If lint produced changes: stage and commit with `chore: pre-lint cleanup before quick`
    3. If no changes, skip silently
 
 5. **Analyze the task (inline propose)**
 
-   This is the core difference from `/esdd-apply`. Instead of reading spec files, you **perform the analysis yourself** — similar to what `/esdd-propose` does, but entirely in-memory without writing any files.
+   This is the core difference from `/apply`. Instead of reading spec files, you **perform the analysis yourself** — similar to what `/propose` does, but entirely in-memory without writing any files.
 
    **ZERO MISSES — exhaustive codebase scan (MANDATORY):**
    Scope specified → scan every file within it. No scope → scan entire project.
@@ -79,7 +79,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **e. If ambiguities exist — ask the user ONCE:**
 
-   Use **AskUserQuestion** with a structured summary that follows the same Scope Contract shape as `/esdd-propose` Step 6g, plus an explicit Questions block. Ask ALL questions in ONE message:
+   Use **AskUserQuestion** with a structured summary that follows the same Scope Contract shape as `/propose` Step 6g, plus an explicit Questions block. Ask ALL questions in ONE message:
 
    ```
    ## Quick Task: <summary>
@@ -160,14 +160,14 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    Dispatching now.
    ```
 
-   **Format rules (same as `/esdd-propose` Step 6g)**:
+   **Format rules (same as `/propose` Step 6g)**:
    - Categorize 變更清單 by concept, not file/directory
    - Use concept names, not symbol names
    - 流程鏈 entries need ≥ 3 hops (fold trivial 1-2-hop into 變更清單)
    - Use action verbs, no file:line / import path / precise symbol references
    - Format / shape changes MUST trace all downstream consumers in 流程鏈
    - User-flow entries (new feature) MUST end at user-visible terminal state
-   - Combined 變更清單 + 流程鏈 SHOULD stay under 20 lines for quick mode (smaller cap than full propose — if exceeded, the task is too big for quick and SHOULD be promoted to `/esdd-propose`)
+   - Combined 變更清單 + 流程鏈 SHOULD stay under 20 lines for quick mode (smaller cap than full propose — if exceeded, the task is too big for quick and SHOULD be promoted to `/propose`)
 
    **Decision rule**: Only ask when there are genuine unknowns that would lead to wrong implementation. If you can make a reasonable decision, make it and note it — don't ask just to be safe.
 
@@ -228,7 +228,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - **Language**: All output and reports MUST be in Traditional Chinese. Code and code comments MUST be in English.
    ```
 
-   **Dispatch rules (same as esdd-apply):**
+   **Dispatch rules (same as apply):**
    - Use the **Agent** tool with `run_in_background: true` and `mode: "bypassPermissions"` for ALL worker agents (without `bypassPermissions`, background agents hang on invisible Write permission prompts)
    - Give each agent a descriptive `name`
    - Dispatch agents that can run in parallel **simultaneously**
@@ -264,7 +264,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **Commit consolidation after Phase 1:**
 
-   Since `/esdd-quick` does NOT use worktree isolation, per-task commits (with task-number prefixes) land directly on the branch. After all Phase 1 agents complete, **squash per-task commits into one clean commit per group** — matching `/esdd-apply`'s final commit style:
+   Since `/quick` does NOT use worktree isolation, per-task commits (with task-number prefixes) land directly on the branch. After all Phase 1 agents complete, **squash per-task commits into one clean commit per group** — matching `/apply`'s final commit style:
 
    1. Identify the base commit (the commit before the first per-task commit): `git log --oneline`
    2. Count per-task commits since base: `git log --oneline <base-sha>..HEAD`
@@ -329,7 +329,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 - **Execute first, report after** — show the plan and dispatch immediately, do NOT wait for user confirmation
 - **Code review + security review are MANDATORY** for all complexity levels — never skip them
 - If review/QA fails → auto-dispatch fix → **full fresh review** (not just verify original issues) → loop until clean (max 3 rounds) → only then pause
-- **One commit per task during implementation** — atomic commits with task-number prefix. **Squashed into one clean group commit (no task numbers) after Phase 1 completes**, matching `/esdd-apply` final commit style.
+- **One commit per task during implementation** — atomic commits with task-number prefix. **Squashed into one clean group commit (no task numbers) after Phase 1 completes**, matching `/apply` final commit style.
 - Work on the current branch — do NOT create or switch branches
 - Keep the plan concise — this is quick mode, not a full spec
 - **Language**: All output in Traditional Chinese. Code and comments in English.
@@ -342,6 +342,6 @@ If during analysis (step 5) you determine the task is:
 - Requires significant architectural decisions
 - Needs cross-team coordination
 
-Then suggest: "This task looks complex enough for the full spec flow. Want me to run `/esdd-propose` instead?"
+Then suggest: "This task looks complex enough for the full spec flow. Want me to run `/propose` instead?"
 
 But still proceed if the user insists on quick mode.

@@ -62,7 +62,7 @@ user-invocable: false  # true only for /slash-command skills
 
 - `name`: letters, numbers, hyphens only (no special chars)
 - `description`: max 1024 characters total. Third person. No workflow summary.
-- `user-invocable`: `true` for skills the user invokes directly (esdd-* commands), `false` for reference skills
+- `user-invocable`: `true` for skills the user invokes directly (the sdd workflow commands), `false` for reference skills
 
 ## File Structure
 

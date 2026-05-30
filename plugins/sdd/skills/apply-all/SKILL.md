@@ -1,28 +1,28 @@
 ---
-name: esdd-apply-all
+name: apply-all
 description: >
-  Run /esdd-apply sequentially on multiple changes. Use when the user has
+  Run /apply sequentially on multiple changes. Use when the user has
   several prepared changes and wants to batch-implement them unattended.
 user-invocable: true
 ---
 
-Run `/esdd-apply` on multiple changes sequentially. The main Claude acts as orchestrator for the entire batch — dispatching worker agents in the background while remaining responsive to user messages.
+Run `/apply` on multiple changes sequentially. The main Claude acts as orchestrator for the entire batch — dispatching worker agents in the background while remaining responsive to user messages.
 
 ---
 
-**Input**: Optionally specify change names in order (e.g., `/esdd-apply-all add-user-registration add-user-profile add-user-roles`). If omitted, auto-detect. An optional `dev-mode` token may appear anywhere in the arguments (e.g., `/esdd-apply-all add-user-registration dev-mode add-user-profile`) — see Step 1 for parsing rules.
+**Input**: Optionally specify change names in order (e.g., `/apply-all add-user-registration add-user-profile add-user-roles`). If omitted, auto-detect. An optional `dev-mode` token may appear anywhere in the arguments (e.g., `/apply-all add-user-registration dev-mode add-user-profile`) — see Step 1 for parsing rules.
 
 **Steps**
 
 1. **Discover active changes and parse mode flags**
 
-   **Mode flag parsing**: split arguments on whitespace. If any token equals `dev-mode` (case-insensitive), set the internal `DEV_MODE = true` flag and remove the token from the argument list. Pass `dev-mode` through to each per-change `/esdd-apply` invocation in Step 3 so its retrospective is surfaced too. The remaining tokens go through normal name resolution. `DEV_MODE` defaults to `false` — the batch `事後檢討` block in Step 4 is suppressed unless the flag is set.
+   **Mode flag parsing**: split arguments on whitespace. If any token equals `dev-mode` (case-insensitive), set the internal `DEV_MODE = true` flag and remove the token from the argument list. Pass `dev-mode` through to each per-change `/apply` invocation in Step 3 so its retrospective is surfaced too. The remaining tokens go through normal name resolution. `DEV_MODE` defaults to `false` — the batch `事後檢討` block in Step 4 is suppressed unless the flag is set.
 
    List all directories under `feature-spec/changes/` (excluding `archive/`).
    Filter to only changes that have pending tasks (`- [ ]` in `tasks.md`).
 
    If no pending changes found:
-   - Report: "No pending changes found. Run `/esdd-propose` first."
+   - Report: "No pending changes found. Run `/propose` first."
    - Stop.
 
 2. **Determine execution order**
@@ -64,7 +64,7 @@ Run `/esdd-apply` on multiple changes sequentially. The main Claude acts as orch
 
    a. Announce: `[N/M] Applying: <change-name>` and record start time.
 
-   b. Execute the full `/esdd-apply` logic (Steps 3-9 from `esdd-apply/SKILL.md`):
+   b. Execute the full `/apply` logic (Steps 3-9 from `apply/SKILL.md`):
       - **Cache invariant files once at batch start**: Read `orchestrator.md` and `feature-spec/config.yaml` once before the first change. These are invariant across the batch — reuse them for all changes instead of re-reading each time.
       - **Re-read change-specific files fresh for each change** (proposal.md, design.md, tasks.md, specs/). Each change has different specs — do NOT reuse these from the previous change. Prior context may also have been compressed.
       - Read context → parse tasks → act as orchestrator → wave-based dispatch with worktree merge-squash → all phases (implementation → review+QA parallel → docs) → verify checkboxes and commit history
@@ -81,7 +81,7 @@ Run `/esdd-apply` on multiple changes sequentially. The main Claude acts as orch
 
    e. Announce: `[N/M] <change-name>: COMPLETE (8/8 tasks, 25m)` and **automatically proceed to next change**.
 
-   f. **If a change pauses** (review/QA failure after retries): record reason, **continue to next change** — do NOT stop the batch. User can fix later with `/esdd-apply <name>`.
+   f. **If a change pauses** (review/QA failure after retries): record reason, **continue to next change** — do NOT stop the batch. User can fix later with `/apply <name>`.
 
 4. **Show final batch report**
 
@@ -98,7 +98,7 @@ Run `/esdd-apply` on multiple changes sequentially. The main Claude acts as orch
    **摘要：** 2/3 changes 完成, 1 暫停
 
    **暫停的 changes：**
-   - `add-user-profile`: [原因]. 執行 `/esdd-apply add-user-profile` 重跑
+   - `add-user-profile`: [原因]. 執行 `/apply add-user-profile` 重跑
 
    **事後檢討：**            ← include this entire block ONLY when DEV_MODE = true; omit silently otherwise
    [彙整所有 changes 中遇到的錯誤、意外狀況、手動介入]
@@ -138,4 +138,4 @@ After responding to the user, **resume batch execution automatically** — do NO
 - Each change runs on the current branch — do NOT create or switch branches
 - If a change has no pending tasks (all `- [x]`), skip it and note in the report
 - Track and report duration for each change and total batch time
-- **Retrospective is dev-mode only**: the `**事後檢討：**` block in Step 4 is suppressed unless `DEV_MODE = true` (parsed from a `dev-mode` token in the arguments). The flag is also forwarded to each per-change `/esdd-apply` so per-change retrospectives surface consistently. Default behavior is silent — end users see only progress, results, and pause reasons.
+- **Retrospective is dev-mode only**: the `**事後檢討：**` block in Step 4 is suppressed unless `DEV_MODE = true` (parsed from a `dev-mode` token in the arguments). The flag is also forwarded to each per-change `/apply` so per-change retrospectives surface consistently. Default behavior is silent — end users see only progress, results, and pause reasons.

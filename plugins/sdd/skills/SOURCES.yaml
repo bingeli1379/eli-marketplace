@@ -186,19 +186,19 @@ threejs-tresjs:
   path: skills/threejs-tresjs
 
 # Workflow core (sdd original — not updatable)
-esdd-init:
+init:
   repo: original
-esdd-propose:
+propose:
   repo: original
-esdd-validate:
+validate:
   repo: original
-esdd-apply:
+apply:
   repo: original
-esdd-complete:
+complete:
   repo: original
 knowledge-audit:
   repo: original
-esdd-quick:
+quick:
   repo: original
 
 # Agent Guidelines (sdd original — inspired by forrestchang/andrej-karpathy-skills + shared agent protocols)
