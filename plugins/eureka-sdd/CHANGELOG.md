@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.16.8] - 2026-05-16
+
+### Changed
+- `/esdd-propose` and `/esdd-quick` scope confirmation now splits the contract into two sections — **變更清單** (what gets added / replaced / removed, grouped by concept) and **流程鏈** (how a user flow or refactor cascade traces through downstream consumers). Format / shape changes must trace every downstream consumer (CSS classes, asset filenames, string comparisons, etc.) and new-feature flows must end at a user-visible terminal state. Catches the "missed downstream consumer" class of bug that previously only surfaced at Phase 2 review
+
+## [1.16.7] - 2026-05-10
+
+### Changed
+- `/esdd-init` SCAN report now collapses high-confidence detections into a single summary line and only lists items that need your eyes (medium / low confidence). Reports stay under one screen instead of sprawling across a 13-row table
+- `/esdd-propose` scope confirmation replaces the seven-section block (In-Scope / Out-of-Scope / Assumptions / Unknowns / NFR / Approaches / Recommendation) with a chain-form view (`A → B → C`) that shows the change as a flow you can read like a diff. Approaches collapse to one line when there is no real trade-off, and the follow-up Scope Contract uses the same compact form
+- `engineering-checklist` replaces the vague "respect the existing codebase" principle with a concrete directive: open a sibling file and mirror its style before writing new code
+
+## [1.16.6] - 2026-05-02
+
+### Added
+- `frontend-checklist` adds a public API boundary rule for JS/TS library/plugin authoring: frontend agents now declare narrow TS types on the public surface so TS callers get compile-time constraints, and add runtime guards that emit `console.warn` with a documented fallback when JS callers (or `as`-casted code) pass wrong types. Keeps host apps alive instead of throwing when input slips through the type contract
+
+## [1.16.5] - 2026-05-01
+
+### Changed
+- `/esdd-init` confirmation prompts (Phase 0 keep/regenerate, gap-filling questions, knowledge candidate selection) now render in Traditional Chinese to match the rest of the conversation. The previous refactor accidentally left these strings as the literal English from the skill template
+- `/esdd-init` knowledge candidate review now shows a short Traditional Chinese summary alongside the original English claim, making it faster to skim before deciding what to keep. `knowledge.md` content itself still gets written in English so downstream agents read it consistently
+
 ## [1.16.4] - 2026-05-01
 
 ### Changed

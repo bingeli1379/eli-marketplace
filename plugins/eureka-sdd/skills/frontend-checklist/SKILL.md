@@ -3,8 +3,10 @@ name: frontend-checklist
 description: >
   Mandatory principles and checklist for frontend engineers when writing or modifying JS/TS/Vue code.
   MUST be loaded when: implementing frontend tasks, writing Vue components, composables,
-  migrating Options API to Composition API, refactoring SFC structure, or reviewing frontend code.
-  Covers Vue reactivity, Composition API patterns, SFC structure, and async pitfalls.
+  migrating Options API to Composition API, refactoring SFC structure, authoring a JS/TS
+  library/plugin, or reviewing frontend code.
+  Covers Vue reactivity, Composition API patterns, SFC structure, async pitfalls, and
+  public API boundary design (compile-time types + runtime guards) for library authors.
 user-invocable: false
 ---
 
@@ -26,6 +28,7 @@ Also load `engineering-checklist` — it contains common rules for all engineers
 8. **Template variables must match their scope** — `v-for` loop vars, `$event` params, `v-model` args must exactly match declared names and types
 9. **Use `as const` objects instead of `enum`** — `as const` with derived `typeof` union types; no TypeScript `enum`
 10. **Prefer named exports over `export default`** — only use default export where framework requires it (Nuxt config/plugins, Vue pages/layouts, Vite config)
+11. **Public APIs need both compile-time types and runtime guards** — when authoring a library/plugin, narrow the public TS type to what the function actually consumes (don't widen to absorb caller-side normalization). On invalid input from JS callers or `as`-casted TS code, emit `console.warn` (function name + offending parameter + fallback used) and return a documented fallback — never throw, never silently drop. Internal-only functions skip the guards.
 
 ---
 
@@ -97,6 +100,12 @@ Also load `engineering-checklist` — it contains common rules for all engineers
 - [ ] No `export default` used — all exports are named (`export function`, `export const`, `export type`)
 - [ ] Only framework-required files use default export (Nuxt config/plugins, Vue pages/layouts, Vite config)
 - [ ] Existing `export default` encountered during modification converted to named exports (or flagged if framework-required)
+
+### Public API Boundaries (library/plugin authoring)
+
+- [ ] Public exports declare narrow TS types matching what the function actually consumes (no `unknown` / `any` to dodge the contract; do not widen to absorb caller-side normalization)
+- [ ] Every public entry point validates runtime inputs (`typeof`, `Array.isArray`, `instanceof`, shape check, or a schema validator) before using them
+- [ ] Invalid input emits `console.warn` (function name + offending parameter + fallback used) and returns a documented fallback — never throws, never silently drops
 
 ### Data Fetching (Nuxt)
 

@@ -38,8 +38,8 @@ The main file (this one) holds the flow, the SCAN-report contract, the question 
 1. **Inventory existing artifacts**
    - If `feature-spec/` does not exist → SCAN will create everything.
    - Otherwise check each: `config.yaml`, `context.md`, `knowledge.md`, subdirs `specs/`, `changes/`.
-   - For each existing artifact, use **AskUserQuestion** to choose: "Regenerate (overwrite)" or "Keep existing".
-   - **`knowledge.md` special case**: regardless of "keep" vs "regenerate", if the file exists with real entries (more than skeleton + HTML comments), Phase 1 step 4.5 runs an inline audit and surfaces findings in the SCAN report. "Regenerate" still wipes the file at BUILD time; "Keep existing" preserves the file but lets the user act on audit findings via the audit-decision batch question.
+   - For each existing artifact, use **AskUserQuestion** to choose: `重新產生（覆寫）` or `保留現有`.
+   - **`knowledge.md` special case**: regardless of `保留現有` vs `重新產生（覆寫）`, if the file exists with real entries (more than skeleton + HTML comments), Phase 1 step 4.5 runs an inline audit and surfaces findings in the SCAN report. `重新產生（覆寫）` still wipes the file at BUILD time; `保留現有` preserves the file but lets the user act on audit findings via the audit-decision batch question.
    - Always create missing subdirectories:
 
    ```bash
@@ -80,7 +80,7 @@ Load `references/knowledge-seed.md` and run its sources + filter passes (Cite-or
 **Skip entirely** when any of the following is true:
 - `feature-spec/knowledge.md` does not exist.
 - The file contains only the canonical skeleton (headings + HTML guidance comments + zero real entries).
-- The user picked "Regenerate (overwrite)" for `knowledge.md` in Phase 0 (file will be wiped anyway).
+- The user picked `重新產生（覆寫）` for `knowledge.md` in Phase 0 (file will be wiped anyway).
 
 Otherwise load `references/audit.md` and run its per-entry pipeline. Output feeds the SCAN report's "既有 knowledge.md 審計" section.
 
@@ -88,31 +88,28 @@ Otherwise load `references/audit.md` and run its per-entry pipeline. Output feed
 
 ### 5. Present scan report and ask up to 3 confirmation questions
 
-Output the scan report in **Traditional Chinese** to the conversation. Use compact table form so the user can scan everything in one screen — never expand into multi-line bullet lists with prose. Format:
+Output the scan report in **Traditional Chinese**. Goal: user scans it in one screen and only reads what they need to decide on. **Hide ✅ High-confidence sections by default** — collapse them to a one-line summary. Surface only ⚠️ Medium and ❌ Low items individually.
+
+Format:
 
 ```
 ## SCAN Report
 
-### 偵測結果
-（圖示：✅ 高信心 / ⚠️ 中信心，建議檢視 / ❌ 低信心，將問你 / ○ 不適用，不寫入）
+✅ <count> 項已偵測（Tech stack · Lint · Verification · Entry points · Common cmds — 全部高信心，省略明細）
 
-| | Section        | Detected |
-|---|----------------|----------|
-| ✅ | Tech stack     | <lang · framework · build · pkg manager 全部濃縮成一行> |
-| ✅ | Lint           | <commands joined with ` · `> |
-| ✅ | Verification   | <commands joined with ` · `> |
-| ✅ | Entry points   | <N dirs: dir1 · dir2 · dir3 · ...> |
-| ✅ | Common cmds    | <N scripts in package.json> |
-| ⚠️ | Mission        | "<one-line guess>" |
-| ⚠️ | Architecture   | <layers + style summary, one line> |
-| ⚠️ | Domain map     | <N domains under <path>/: name1 · name2 · ...> |
-| ⚠️ | Cross-cutting  | <N concerns: name1 · name2 · ...> |
-| ⚠️ | Hard rules     | <count> structural invariants from <source> |
-| ❌ | Glossary       | <"omitted (reason)" or "N code / M business terms (待你補)"> |
-| ○ | Conditional    | none detected |
-| ○ | Anti-patterns  | omitted (no examples) |
+⚠️ 看一眼（中信心，OK 可不動）：
+  Mission        "<one-line guess>"
+  Architecture   <one line>
+  Domain map     <N domains @ <path>/: name1 · name2 · ...>
+  Cross-cutting  <N concerns: name1 · name2 · ...>
+  Hard rules     <count> from <source>
 
-注：表格不可拆成多行。每 section 一行，超過螢幕寬度寧可用 `·` 分隔短名稱也不要換行。
+❌ 需要你補（低信心，會問你）：
+  Glossary       <reason>
+
+○ 不適用：Conditional · Anti-patterns
+
+注：✅ 區塊只顯示一行 summary。要看明細的使用者直接讀生成出的 context.md。每個 ⚠️/❌ 一行，超過寬度用 `·` 分隔不換行。
 
 ### 既有 knowledge.md 審計  ✅ <X> 仍有效 · ⚠️ <Y> 改寫 · ❌ <Z> 失效 · ❓ <W> 無 citation　（共 N 條）
 （僅當步驟 4.5 有跑時顯示。整個 section 在步驟 4.5 被跳過時連同標題一起省略。✅ 不逐條列。）
@@ -134,14 +131,18 @@ A3  ❓ 無 citation
 ### Knowledge seed candidates　共 <N> 條（上限 5；預設未答 = `none`）
 （內容空時整個 section 連同標題一起省略並跳過 candidate-selection question。）
 
-C1  [Dev Environment]  <one-line claim>
+每條候選顯示「中文摘要 + Original (寫入 knowledge.md 的英文)」雙軌。中文摘要僅供使用者快速判斷是否要保留；寫入檔案的永遠是 Original 那行。
+
+C1  [Dev Environment]  <中文一句話摘要 ~30 字>
+    Original: <one-line English claim — 寫入 knowledge.md 的版本>
     📍 path:line
     ```<lang>
     <3-5 line snippet>
     ```
 
 C2  [Gotchas] ⚠️ Name-vs-impl mismatch
-    <one-line claim>
+    <中文一句話摘要 ~30 字>
+    Original: <one-line English claim>
     📍 path:line
     ```<lang>
     <3-5 line snippet>
@@ -157,14 +158,14 @@ C2  [Gotchas] ⚠️ Name-vs-impl mismatch
 ```
 
 **Format guardrails for the SCAN report**:
-- One line per section in the 偵測結果 table — never expand into bullet sub-lists or prose.
-- Use `·` (middle dot) as the list separator inside a single cell. Avoid commas and `/` because they get visually noisy when many items appear.
-- Confidence icons are tags, not section names — keep the section name in the second column verbatim.
-- The ✅/⚠️/❌/○ legend appears once below the heading. Do not repeat per section.
+- ✅ High-confidence sections collapse to a single one-line summary at the top — never list each one individually. The user trusts these and can read the generated file if curious.
+- ⚠️ Medium and ❌ Low sections each get one line. Never expand into bullet sub-lists or prose.
+- Use `·` (middle dot) as the list separator inside a single line. Avoid commas and `/` — visually noisy when many items appear.
 - 既有 knowledge.md 審計 summary line uses the same `· ` separator. Skip the whole section when step 4.5 was skipped.
 - Candidate snippets stay 3–5 lines max. If the surrounding code needs more context to make sense, the candidate is too complex — drop it.
 - 將寫入 list always shows action labels (`new` / `overwrite` / `keep` / `existing — audit + append`). Never leave action ambiguous.
 - 待確認 list shows only the actual questions about to be asked — not all medium-confidence sections. If gap-filling skips a section, that section does not appear here.
+- Total report length target: under 25 lines (excluding candidate snippets). Long reports are a smell — the user can't read them.
 
 #### Gap-filling questions (Low-confidence only; default 0 questions)
 
@@ -172,16 +173,16 @@ Default behavior: **ask nothing**. If every section came out ✅ High or ⚠️ 
 
 Only when a section is **❌ Low confidence** (AI literally could not infer) does it become a question candidate. Cap remains 3 — more than 3 Low-confidence sections means the project has too little signal to auto-init; let the user fill in by hand.
 
-Question candidates (asked only when the matching condition is true):
+Question candidates (asked only when the matching condition is true). All `question` text and option labels MUST be in Traditional Chinese:
 
 1. **Mission** — `README` missing entirely OR README is meta-only (no project description):
-   "What does this project do, in one sentence?"
+   "這個專案在做什麼？用一句話描述。"
 2. **Domain-to-Code Map** — only one top-level dir under `src/` / `app/` (cannot distinguish multiple domains):
-   "I see only `<dir>/` — what are the top-level domains in this project?"
+   "我只看到 `<dir>/` — 這個專案的頂層 domain 有哪些？"
 3. **Hard Rules** — no `CLAUDE.md`, `AGENTS.md`, `.cursor/rules/`, `.github/copilot-instructions.md`, or custom `eslint.config.*` rules at all:
-   "Any architectural rules AI must not break? (e.g., 'Endpoints don't access DbContext directly') — leave blank to skip"
+   "有哪些架構規則 AI 不能違反？（例：『Endpoint 不可直接存取 DbContext』）— 留空跳過"
 
-Each question must include a default suggested answer (when one can be inferred) + a "Skip / use my draft as-is" option.
+Each question must include a default suggested answer (when one can be inferred) + a `略過 / 使用草稿` option.
 
 **SCAN report rendering when zero questions**: the `### 待確認` section shows `無，將直接 BUILD（按 Ctrl+C 取消）`. Do not invent fake questions to fill the section.
 
@@ -198,30 +199,30 @@ Asked only when step 4 produced one or more surviving candidates. Use `AskUserQu
 ```
 AskUserQuestion({
   questions: [{
-    question: "Knowledge seed candidate — append?",
-    header: "Candidate",
+    question: "Knowledge seed 候選 — 要附加嗎？",
+    header: "候選",
     multiSelect: false,
     options: [
-      { label: "Skip (Recommended)", description: "False knowledge is worse than missing knowledge" },
-      { label: "Append C1",          description: "<C1 claim shortened> · <category> · <path:line>" }
+      { label: "略過（建議）",  description: "錯的知識比沒有知識更糟" },
+      { label: "附加 C1",       description: "<C1 中文摘要 ~30 字> · <category> · <path:line>" }
     ]
   }]
 })
 ```
 
-`Append C1` → write the candidate. Anything else (Skip / dismissed / Other) → write nothing.
+`附加 C1` → write the candidate. Anything else (略過 / dismissed / Other) → write nothing.
 
 **When 2 ≤ N ≤ 4 → multiSelect (one option per candidate)**:
 
 ```
 AskUserQuestion({
   questions: [{
-    question: "Knowledge seed candidates — which to append? (default: 不勾 = none)",
-    header: "Candidates",
+    question: "Knowledge seed 候選 — 要附加哪些？（未勾選 = 全不選）",
+    header: "候選",
     multiSelect: true,
     options: [
-      { label: "C1: <claim shortened to ~50 chars>", description: "<category> · <path:line>" },
-      { label: "C2: ...",                            description: "..." },
+      { label: "C1: <中文摘要 ~30 字>", description: "<category> · <path:line>" },
+      { label: "C2: <中文摘要 ~30 字>", description: "<category> · <path:line>" },
       // up to 4 options
     ]
   }]
@@ -235,19 +236,19 @@ User checks the candidates to keep. Empty selection / dismissed → write nothin
 ```
 AskUserQuestion({
   questions: [{
-    question: "5 knowledge seed candidates — keep which?",
-    header: "Candidates",
+    question: "5 條 knowledge seed 候選 — 保留哪些？",
+    header: "候選",
     multiSelect: false,
     options: [
-      { label: "None (Recommended)", description: "False knowledge is worse than missing knowledge" },
-      { label: "Keep all 5",         description: "Append every candidate under its category heading" },
-      { label: "Pick specific",      description: "Reply in Other with C-prefix indices (e.g. C1,C3,C5)" }
+      { label: "全不選（建議）",  description: "錯的知識比沒有知識更糟" },
+      { label: "全部保留 5 條",   description: "把每條候選附加到對應的 category heading 下" },
+      { label: "手動挑",          description: "在 Other 回填 C-prefix 索引（例：C1,C3,C5）" }
     ]
   }]
 })
 ```
 
-`Pick specific` parses Other free-text for C-prefix indices. Empty / unparseable → fall back to `None`.
+`手動挑` parses Other free-text for C-prefix indices. Empty / unparseable → fall back to `全不選`.
 
 Skip the question entirely when zero candidates survived.
 
@@ -280,14 +281,15 @@ Load `references/write-rules.md` and follow it. Steps:
 - **Hard Rules vs knowledge.md/Gotchas**: Hard Rules are structural invariants only. Historical rules ("do not use the old X", migration leftovers) go through the **named-symbol gate** in `references/knowledge-seed.md`: only when the rule names a code symbol in backticks AND that symbol still resolves in the codebase does it become a candidate (citation = symbol's definition site). Vague historical rules and rules whose symbol no longer exists are silently dropped. The BUILD summary surfaces a `Skipped N historical rules (no resolvable symbol)` count so the user knows to review manually.
 - **Domain map uses pointer form**: never enumerate component lists; rely on the path + cardinality so the doc does not rot.
 - **Entry Points scan is exhaustive**: walk the full Phase 1 checklist (HTTP, pages, middleware, plugins, modules, jobs, event handlers, CLI). Missing one entry point silently breaks AI's ability to add features there.
-- **Candidates require explicit user approval before writing**: `/esdd-init` shows surviving candidates inline in the SCAN report (numbered list with `path:line` + snippet, using `C`-prefix indices). Confirmation uses `AskUserQuestion` with three layouts (AskUserQuestion `options.minItems = 2`): single-select Apply/Skip when N=1, multiSelect checkboxes when 2 ≤ N ≤ 4, mode-based options (`None` / `Keep all` / `Pick specific`) when N=5. Only entries the user explicitly selects (or all when "Keep all" picked) are appended to `knowledge.md`. Default if dismissed = nothing written (false knowledge worse than missing). No `.draft` file is produced.
+- **Candidates require explicit user approval before writing**: `/esdd-init` shows surviving candidates inline in the SCAN report (numbered list with `path:line` + snippet, using `C`-prefix indices). Confirmation uses `AskUserQuestion` with three layouts (AskUserQuestion `options.minItems = 2`): single-select `略過`/`附加 C1` when N=1, multiSelect checkboxes when 2 ≤ N ≤ 4, mode-based options (`全不選` / `全部保留` / `手動挑`) when N=5. Only entries the user explicitly selects (or all when `全部保留` picked) are appended to `knowledge.md`. Default if dismissed = nothing written (false knowledge worse than missing). No `.draft` file is produced.
 - **Candidate-selection question is exempt from the 3-cap**: the gap-filling cap (max 3 questions for Mission / Domain map / Hard Rules) does not include the candidate-selection question; they are different decision categories.
-- **Existing-entry audit (step 4.5) only runs when there is real content to audit**: skip when `knowledge.md` is missing, contains only the skeleton, or the user picked "Regenerate" for it in Phase 0. AI never auto-deletes existing entries — every drop / rewrite must be approved through the audit-decision batch question.
+- **Existing-entry audit (step 4.5) only runs when there is real content to audit**: skip when `knowledge.md` is missing, contains only the skeleton, or the user picked `重新產生（覆寫）` for it in Phase 0. AI never auto-deletes existing entries — every drop / rewrite must be approved through the audit-decision batch question.
 - **Audit decisions default to "全部保留"**: when the user dismisses the audit-decision question, leave existing entries untouched and inject a single dated audit-summary HTML comment at the top of the file. Never silently apply suggested rewrites or deletions.
 - **Audit-decision question is exempt from the 3-cap**: same rationale as the candidate-selection question — different decision category, asked at most once per init run, only when step 4.5 produced ⚠️ / ❌ / ❓ findings.
 - **Audit + candidate dedup**: candidate scanning (step 4) must filter out anything that semantically duplicates a `✅ Still valid` or `⚠️ Needs rewrite` audited entry, so the user does not decide on the same fact twice.
 - **Audit indices use prefixes**: existing audited entries in the SCAN report use `A`-prefix indices (`A1`, `A2`); new candidates use `C`-prefix indices (`C1`, `C2`). The two question replies parse independently.
 - **One line per knowledge entry**: every claim appended to `knowledge.md` is exactly one line; the verification snippet shown during SCAN is dropped on write. No speculative ("if future X, then Y") claims.
+- **Candidate dual-track display (zh summary for review, en canonical for write)**: every candidate carries two strings — `claim_en` (the canonical one-line claim destined for `knowledge.md`) and `claim_zh` (a ~30-char Traditional Chinese summary used **only** for SCAN report rendering and AskUserQuestion option labels). The SCAN report shows the zh summary on the candidate's first line and the `Original:` line below it. AskUserQuestion labels show only the zh summary. **Phase 2 BUILD writes `claim_en` verbatim** — never the zh summary, never a translation of the zh summary, never a fresh re-translation. If `claim_en` is unavailable for any reason, drop the candidate; do not back-translate from zh. The zh summary is throw-away display; `knowledge.md` content stays English so downstream AI agents read it consistently.
 - **Cite-or-Skip is non-negotiable**: every knowledge candidate must carry a `path:line-line` citation and a 3–5 line snippet. No citation → silent drop, even if the candidate "looks right". Naming alone never qualifies.
 - **Citations must be code, not markdown**: `knowledge.md` entries cite `.ts` / `.cs` / `.vue` / `.py` / config files — never other markdown docs (`CLAUDE.md`, `AGENTS.md`, `README.md`). Markdown citations create circular references and are silently dropped.
 - **Pointer-over-enumeration is a global context.md rule, not just Domain Map**: every section must use pointer form when listing ≥4 named items. Cross-cutting Concerns, Architecture Layers, Conditional Subsystems all fall under this rule. Entry Points is the one exception (its purpose IS to enumerate locations) — but each row inside it still points at a directory, not the handlers within.

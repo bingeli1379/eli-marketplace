@@ -81,6 +81,25 @@ When in doubt, drop. False knowledge is worse than missing knowledge.
 
 ---
 
+## Dual-track output (zh summary for display, en canonical for write)
+
+After all filter passes (Cite-or-Skip → self-skeptic → counter-example → cap) finish, every surviving candidate carries two strings:
+
+| Field | Language | Used by |
+|---|---|---|
+| `claim_en` | English, one line, ≤120 chars | Phase 2 BUILD writes this verbatim into `knowledge.md`. |
+| `claim_zh` | Traditional Chinese, one line, ~30 chars | SCAN report candidate first line + AskUserQuestion option label. |
+
+`claim_en` is the canonical claim derived from the cited snippet — it never goes through translation. `claim_zh` is generated **once** from `claim_en` purely for the user's quick-skim during candidate selection. The two are kept paired through the candidate-selection question.
+
+**Hard rules**:
+- Phase 2 must write `claim_en`. Never write `claim_zh`. Never re-translate `claim_zh` back to English at write time.
+- If `claim_en` cannot be derived (e.g. the source comment is itself ambiguous), drop the candidate — do not back-translate from `claim_zh`.
+- Keep `claim_zh` faithful to `claim_en` (no extra context the snippet does not justify) and ≤30 chars so it fits inside an AskUserQuestion label.
+- The `claim_zh` is throw-away. It is not stored anywhere after the SCAN report; only `claim_en` survives into `knowledge.md`.
+
+---
+
 ## Dedup against audited entries
 
 Run this **after** the existing-entry audit (Phase 1 step 4.5) finishes, before rendering the SCAN report:

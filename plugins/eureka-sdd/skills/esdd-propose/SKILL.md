@@ -110,29 +110,37 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - Lead with the recommended approach and state why
    - If only one viable approach exists, state it and explain why alternatives were ruled out
 
-   **e. Ask the user** via **AskUserQuestion** — ONE message with:
+   **e. Ask the user** via **AskUserQuestion** — use a **chain-form** message that the user can scan in one screen. Goal: surface only what the user needs to decide on; hide what's already obvious.
+
    ```
-   **In-Scope:** [features]
-   **Out-of-Scope:** [separate changes]
-   **Scope Assessment:** [OK / Too Large — split suggestion if needed]
-   **Assumptions I'm making:**
-     - [assumption 1] — correct if wrong
-     - [assumption 2] — correct if wrong
-   **Unknowns (impact if wrong):**
-     - [unknown 1] — if X turns out to be Y, then Z in the design changes
-     - [unknown 2] — ...
-   **NFR / Data / Reversibility:**
-     - NFR budgets: [perf / security / UX constraints that apply, or "none specified"]
-     - Data: [tables/collections touched, migration/backfill expectations, or "none"]
-     - Reversibility: [easy / hard / irreversible] — [one-sentence implication]
-   **Approaches:**
-     1. [recommended] — description + trade-off
-     2. — description + trade-off
-     3. — description + trade-off (if applicable)
-   **Recommendation:** [which approach and why]
-   **Questions:** [all clarification questions, if any]
+   你說：<one-line restatement of the request>
+
+   理解的鏈：
+     <Layer/Module A> → <Layer/Module B> → <Layer/Module C> → ...
+     （e.g. User input → AuthService.login → JWT issuer → /api/auth/login → useAuth composable）
+
+   影響：<Backend(新/改)> · <Frontend(新/改)> · <DB(table)> · <其他>
+
+   預設（不對就講哪一條）：
+     - <assumption 1>
+     - <assumption 2>
+     - <assumption 3>
+   未定（影響面）：
+     - <unknown 1> — 若 X→Y，則 design 的 Z 會變
+   NFR/Data/Reversibility： <one line; "無" 可省略>
+
+   做法：<recommended one-liner — 只列推薦那條；替代方案只在真有 trade-off 時才列 #2 #3>
+
+   問題：<只列必須使用者回答的；無→空>
    ```
-   If the input is detailed and unambiguous with only one viable approach, the **Questions** section may be empty — but **Assumptions**, **Unknowns**, and **NFR / Data / Reversibility** MUST always be filled in so the user can catch silent misinterpretations.
+
+   **Format guardrails for the chain message**:
+   - The chain is the centerpiece — express the change as a flow of named symbols/modules so the user reads it like a diff (`A → B → C`), not a tree of bullets.
+   - **Hide noise**: in-scope/out-of-scope only when split is suggested or scope is non-obvious. Otherwise the chain itself implies scope.
+   - **Three defaults max**, one line each. Defaults are interpretations the user might disagree with; do NOT list trivially-true facts ("使用 TypeScript") — those are not assumptions, they're context.
+   - **Approaches collapse to one line** when only one is viable. Multi-option list only when there's a real trade-off the user must arbitrate.
+   - **Questions section is the ONLY place open clarifications go** — keep it short. If empty, omit the line.
+   - If the input is detailed and the chain + defaults already cover everything, the message can be ~10 lines total. Long chain messages are a smell — the user can't read them.
 
    **f. If splitting — plan the sub-change chain (artifacts are written later in Step 7)**
 
@@ -151,25 +159,66 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
    **g. Confirm scope contract before generating artifacts**
 
-   After the user answers 6e (or immediately, if 6e had no Questions), synthesize everything into a concise **Scope Contract** and show it back as a regular chat message (NOT AskUserQuestion — this is a final sanity check, not an open clarification round). Then wait for the user's reply.
+   After the user answers 6e (or immediately, if 6e had no Questions), synthesize everything into a **Scope Contract** organized as two sections — **變更清單** (what gets added / replaced / removed, grouped by concept category) and **流程鏈** (how a request / data flows through the system, or how a change cascades downstream). Show it back as a regular chat message (NOT AskUserQuestion — this is a final sanity check, not an open clarification round). Then wait for the user's reply.
+
+   The two sections work together regardless of change type:
+   - **新功能**：變更清單 = 列出新增的元件 / API / DB / service / 設定，分類擺好；流程鏈 = 走一遍使用者操作從觸發到結果會經過哪些環節
+   - **重構 / migration**：變更清單 = 列出被取代 / 移除的東西，分類擺好；流程鏈 = 一個變動沿著哪些下游擴散（值格式變了 → CSS class → 圖檔名 → API body → 字面比較 …）
+   - **混合**：變更清單三類混列（新增 / 取代 / 移除）；流程鏈兩種都有（使用者流程 + 衝擊流程），分標題
+
+   The contract MUST let the user scan top-to-bottom and verify intent without reading code. The single most common cause of Phase 2 review blockers is **a downstream consumer being missed** — either a callsite that wasn't updated (refactor), or a step in the user flow that wasn't accounted for (new feature). 流程鏈 exists specifically to surface these multi-hop ripples.
 
    ```
-   ## Scope Contract — confirm or correct
+   ## 確認一下（變更清單 + 流程鏈，不對就講哪條，OK 就 go）
 
-   **Change:** <name>
-   **Doing:** [concise in-scope bullets, reflecting the user's answers]
-   **NOT doing:** [concise out-of-scope bullets]
-   **Assumptions (locked in — design.md will depend on these):**
-     - [assumption 1]
-     - [assumption 2]
-   **NFR / Data / Reversibility:** [one line each, from 6e]
+   <change-name>
 
-   Reply with corrections, or "go" / "ok" / "proceed" to generate artifacts.
+   ### 變更清單（依類別 + 動作）
+
+   **【類別 A — e.g. UI 元件 / API endpoint / Cookie 讀寫 / 中間對照表 / DB schema / 拆檔搬家】**
+   - 新增 / 取代 / 移除 — <概念名稱描述，不用 symbol 名稱>
+   - <下一條>
+
+   **【類別 B】**
+   - ...
+
+   ### 流程鏈（一條流程走完會經過哪些環節 / 一個變動會擴散到哪些下游）
+
+   **【1. <一句話描述場景>】**
+   <若是新功能：寫使用者操作觸發；若是重構/格式變：寫情境前提，例如「store 存的值格式從 'EN' 變 'en-US'」>
+   - <環節 / 下游 1 — 用行為動詞描述，不講 symbol>
+   - <環節 / 下游 2>
+   - ...
+
+   **【2. <下一個場景或變動>】**
+   ...
+
+   ### 鎖定假設
+   - <假設 1>
+   - <假設 2>
+
+   ### 不做：<one line; 省略 if 無>
+   ### 影響範圍 / Reversibility：<one line; 省略 if "無">
    ```
 
-   - **Purpose**: catches interpretation mismatches BEFORE the architect agent writes design.md. A wrong design.md costs 5-10 minutes to regenerate; a wrong Scope Contract costs 10 seconds to correct here.
-   - **One correction round only**: if the user pushes back, incorporate the corrections and proceed directly to Step 7 — do NOT loop on this checkpoint. More than one round of correction is a signal that Step 6e was under-specified; treat that as self-feedback for future runs, not a reason to keep asking.
-   - **Split changes**: show ONE combined Scope Contract covering all sub-changes (with per-change Doing/NOT doing bullets), not one checkpoint per sub-change.
+   **Format rules for the two sections**:
+
+   - **Categorize 變更清單 by concept, not by directory / file path** — group similar items under `【類別】` brackets. Pick categories that match the change shape:
+     - 新功能常見類別：【UI 元件】、【API endpoint】、【後端 service】、【DB schema】、【設定 / env】、【權限】
+     - 重構常見類別：【某概念定義】、【Cookie 讀寫】、【中間對照表】、【拆檔搬家】、【UI 元件改造】、【測試 fixture】
+     - 每條前綴標 `新增 / 取代 / 移除` 三選一，讓動作清楚
+   - **Use concept names, not symbol names** — say "「語言 → 後端數字編號」橋接表" not "`LANGUAGE_TO_LANGUAGE_TYPE` map"; say "忘記密碼觸發點" not "`ForgotPasswordButton.vue`". The contract is for the user to verify intent, not to enumerate code.
+   - **流程鏈 entries need ≥ 3 hops** — if a flow only touches 1-2 places, fold it into 變更清單 instead. 流程鏈 exists specifically to surface multi-hop ripple (user flow with multiple system handoffs, or refactor cascade with multiple downstream consumers).
+   - **Use action verbs in 流程鏈, not technical jargon** — say "元件拼 CSS class 名" not "`:class` binding"; say "後端產生 token 寫 DB" not "`TokenService.generate()` + `INSERT INTO password_reset_tokens`". Stay readable for a non-engineer reviewer.
+   - **No file:line, no import paths, no precise symbol references** in either section. If the user needs to see file-level detail they can read design.md after approval. The Scope Contract is the conceptual sanity check that precedes design.md.
+   - **Format / shape changes are the most error-prone** — when a refactor modifies the FORMAT or SHAPE of data flowing through the system (enum value renamed, cookie format change, type signature widened, etc.), it MUST appear as a 流程鏈 item with all downstream consumers traced (CSS classes / asset filenames / API body / URL / string-literal comparisons / string-split operations / SCSS selectors / etc.). Reviewers historically miss these because they read the Scope Contract for "what changes" not "what downstream assumes about the old shape".
+   - **User flows in new features need terminal state** — every 流程鏈 entry for a new feature MUST end at a user-visible result (success page / email sent / data persisted / error message), not at an internal handoff. If the flow stops mid-system, the design will leave a feature half-built.
+   - **Length cap**: 變更清單 + 流程鏈 combined SHOULD stay under 30 lines. If exceeded, the change is too large and SHOULD be split into sub-changes (return to 6c/6f).
+   - **Split changes**: show ONE combined Scope Contract covering all sub-changes, with the two sections repeated under each sub-change name. Sub-change ordering must reflect the dependency chain from Step 6f.
+
+   **Purpose**: catches interpretation mismatches BEFORE the architect agent writes design.md. A wrong design.md costs 5–10 minutes to regenerate; a wrong Scope Contract costs 10 seconds to correct here. Per-category 變更清單 catches "you forgot to replace X". Multi-hop 流程鏈 catches "you didn't trace this change all the way to its terminal consumers" — the format-mismatch class of bug that typically only surfaces at Phase 2 review round 2 or later.
+
+   **One correction round only**: if the user pushes back, incorporate the corrections and proceed directly to Step 7 — do NOT loop on this checkpoint. More than one round of correction is a signal that Step 6e was under-specified; treat that as self-feedback for future runs, not a reason to keep asking.
 
 7. **Generate artifacts in dependency order**
 

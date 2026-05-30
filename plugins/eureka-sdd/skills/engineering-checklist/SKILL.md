@@ -13,7 +13,7 @@ user-invocable: false
 
 ## Principles — follow these while writing code
 
-1. **Respect the existing codebase** — scan existing conventions first; do not leave a mixed state unless it is a planned phased migration
+1. **Match existing patterns over "best practice"** — before writing any new file/query/function, open at least one sibling of the same kind and mirror its style (locking hints, `SELECT` shape, file structure, naming). Consistency outweighs theoretical improvements. Deviations must be stated up front, not silently introduced.
 2. **Run the linter** — if the project has a linter configured, run it after every change and fix errors before committing; no lint rules disabled without justification
 3. **Every rename must be total** — grep the entire codebase for the old name; string literals, dynamic refs, and config keys are easy to miss
 4. **Delete, don't comment out** — removed features = delete ALL related code (components, routes, tests, styles, configs)
@@ -28,8 +28,7 @@ user-invocable: false
 
 ### Existing Conventions Respected
 
-- [ ] Scanned the project's existing patterns before writing code
-- [ ] New code follows the same conventions already used in the project (naming, structure, patterns)
+- [ ] Opened a sibling file and confirmed the new code looks like it belongs next to it
 - [ ] If a better pattern was introduced, ALL affected code updated — no mixed state left behind
 
 ### Rename / Move Completeness

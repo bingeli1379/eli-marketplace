@@ -1,5 +1,27 @@
 {
   "name": "eureka-sdd",
-  "version": "1.16.4",
-  "description": "Spec-driven AI development workflow plugin. Generates structured specs (proposal, design, tasks) from requirements, then dispatches specialized agents to implement, validate, and archive — turning ideas into code with minimal manual intervention."
+  "version": "1.16.7",
+  "description": "Spec-driven workflow: requirements → specs → agent implementation",
+  "keywords": [
+    "spec-driven",
+    "sdd",
+    "agents",
+    "workflow",
+    "proposal",
+    "design",
+    "tasks",
+    "tdd",
+    "ddd"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Eureka Sdd",
+    "shortDescription": "Spec-driven workflow: requirements → specs → agent implementation",
+    "developerName": "Titansoft AI Team",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Skills",
+      "Files"
+    ]
+  }
 }

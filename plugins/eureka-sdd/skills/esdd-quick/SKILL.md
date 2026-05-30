@@ -79,16 +79,30 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **e. If ambiguities exist — ask the user ONCE:**
 
-   Use **AskUserQuestion** with a structured summary. Ask ALL questions in ONE message:
+   Use **AskUserQuestion** with a structured summary that follows the same Scope Contract shape as `/esdd-propose` Step 6g, plus an explicit Questions block. Ask ALL questions in ONE message:
 
    ```
    ## Quick Task: <summary>
 
-   **Scope:** <affected layers>
-   **Complexity:** <Simple/Medium/Complex>
+   **Scope:** <affected layers>   **Complexity:** <Simple/Medium/Complex>
 
-   ### My Understanding
-   - <what I plan to do>
+   ### 變更清單（依類別 + 動作）
+
+   **【類別 A — e.g. UI 元件 / API endpoint / 中間對照表】**
+   - 新增 / 取代 / 移除 — <概念名稱描述，不用 symbol 名稱>
+
+   **【類別 B】**
+   - ...
+
+   ### 流程鏈（一條流程走完會經過哪些環節 / 一個變動會擴散到哪些下游）
+
+   **【1. <一句話描述場景>】**
+   - <環節 / 下游 1 — 用行為動詞，不講 symbol>
+   - <環節 / 下游 2>
+   - ...
+
+   ### 鎖定假設
+   - <假設 1>
 
    ### Questions (need your input)
    1. <specific question about unclear behavior>
@@ -104,17 +118,34 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **f. If NO ambiguities — present the plan and dispatch immediately:**
 
-   If the task description is clear and unambiguous, skip the question step. Show the plan and dispatch right away:
+   If the task description is clear and unambiguous, skip the question step. Show the same Scope Contract shape (without the Questions block) plus tasks + agents, then dispatch:
 
    ```
    ## Quick Task: <summary>
 
-   **Scope:** <affected layers>
-   **Complexity:** <Simple/Medium/Complex>
+   **Scope:** <affected layers>   **Complexity:** <Simple/Medium/Complex>
 
-   ### Design Decisions
-   - <key decision 1>
-   - <key decision 2>
+   ### 變更清單（依類別 + 動作）
+
+   **【類別 A】**
+   - 新增 / 取代 / 移除 — <描述>
+
+   **【類別 B】**
+   - ...
+
+   ### 流程鏈
+
+   **【1. <一句話描述場景>】**
+   - <環節 / 下游 1>
+   - <環節 / 下游 2>
+   - ...
+
+   ### 鎖定假設
+   - <假設 1>
+
+   ### Acceptance Criteria
+   - WHEN <condition> THEN <expected result>
+   - WHEN <condition> THEN <expected result>
 
    ### Tasks
    ## 1. <Group Name>
@@ -122,16 +153,21 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - [ ] 1.2 (Frontend) <task description>
    ...
 
-   ### Acceptance Criteria
-   - WHEN <condition> THEN <expected result>
-   - WHEN <condition> THEN <expected result>
-
    ### Agents to Dispatch
    - <agent-1>: <task count> tasks
    - <agent-2>: <task count> tasks
 
    Dispatching now.
    ```
+
+   **Format rules (same as `/esdd-propose` Step 6g)**:
+   - Categorize 變更清單 by concept, not file/directory
+   - Use concept names, not symbol names
+   - 流程鏈 entries need ≥ 3 hops (fold trivial 1-2-hop into 變更清單)
+   - Use action verbs, no file:line / import path / precise symbol references
+   - Format / shape changes MUST trace all downstream consumers in 流程鏈
+   - User-flow entries (new feature) MUST end at user-visible terminal state
+   - Combined 變更清單 + 流程鏈 SHOULD stay under 20 lines for quick mode (smaller cap than full propose — if exceeded, the task is too big for quick and SHOULD be promoted to `/esdd-propose`)
 
    **Decision rule**: Only ask when there are genuine unknowns that would lead to wrong implementation. If you can make a reasonable decision, make it and note it — don't ask just to be safe.
 

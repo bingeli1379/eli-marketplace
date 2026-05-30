@@ -68,13 +68,14 @@ See `references/audit.md` "Apply audit decisions" section. Runs whenever audit r
 
 ### Step 3b — Append confirmed candidates
 
-Take the user's reply to the candidate-selection question (Phase 1 SCAN report) and append the chosen items directly under their respective category headings inside `feature-spec/knowledge.md`. Skip this step entirely if no candidates existed, the user dismissed the question (empty selection / closed without picking), or the user picked the "None" / "Skip" option.
+Take the user's reply to the candidate-selection question (Phase 1 SCAN report) and append the chosen items directly under their respective category headings inside `feature-spec/knowledge.md`. Skip this step entirely if no candidates existed, the user dismissed the question (empty selection / closed without picking), or the user picked the `全不選` / `略過` option.
 
 **Never write a candidate the user did not explicitly select** — false knowledge is worse than missing knowledge.
 
 #### Append rules
 
 - Each entry: `- <one-line claim>. <path:line pointer>.`
+- **Use `claim_en` only** — every candidate carries `claim_en` (English canonical, written here) and `claim_zh` (Traditional Chinese display summary used during SCAN / AskUserQuestion). The zh summary is throw-away; never write it to `knowledge.md`, and never re-translate it back to English at write time. If `claim_en` is missing for any reason, skip the candidate rather than back-translate.
 - If a candidate carried a `⚠️ Name-vs-impl mismatch` flag, keep the flag inline so the user sees the warning in the final file.
 - Drop the verification snippet when writing to `knowledge.md` — snippets exist only for the SCAN-time review, not for the final knowledge file.
 - Place each entry under the category heading shown in the SCAN report (Domain / Dev Environment / Gotchas / External Dependencies). Create the heading inside the skeleton if it is somehow missing.
@@ -137,7 +138,7 @@ feature-spec/
 
 ### Next steps
 - Review feature-spec/context.md and refine Domain-to-Code Map / Hard Rules
-- Open `feature-spec/knowledge.md` to confirm the appended entries look right (skip if you picked Skip / None / dismissed the question)
+- Open `feature-spec/knowledge.md` to confirm the appended entries look right (skip if you picked `略過` / `全不選` / dismissed the question)
 - Review audit decisions in `feature-spec/knowledge.md` — if you let the question default to "全部保留" (or dismissed it), look for the `<!-- audit ... -->` summary comment at the top of the file and resolve flagged entries manually; if you picked "套用全部建議" / "只套用改寫" / "讓我手動挑", sanity-check the rewritten lines (skip if step 4.5 did not run)
 - Run `/esdd-propose` to create your first change
 ```
