@@ -1,0 +1,21 @@
+{
+  "name": "sdd",
+  "description": "Spec-driven workflow: requirements → specs → agent implementation",
+  "version": "1.16.8",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "license": "MIT",
+  "keywords": ["spec-driven", "sdd", "agents", "workflow", "proposal", "design", "tasks", "tdd", "ddd"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Spec-Driven Development",
+    "shortDescription": "Spec-driven workflow: requirements → specs → agent implementation",
+    "developerName": "Eli",
+    "category": "Developer Tools",
+    "capabilities": ["Skills", "Files"]
+  }
+}

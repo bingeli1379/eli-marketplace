@@ -17,7 +17,7 @@ Currently contains three plugins:
 
 - **dev-workflow** — daily workflow skills: commit, release, review-prompt
 - **issue-tracing** — on-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured incident report
-- **eureka-sdd** — spec-driven AI development workflow (proposal, design, tasks → implement, validate, archive)
+- **sdd** — spec-driven AI development workflow (proposal, design, tasks → implement, validate, archive)
 
 ## Adding a New Plugin
 

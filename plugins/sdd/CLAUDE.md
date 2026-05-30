@@ -1,4 +1,4 @@
-# Eureka SDD
+# Spec-Driven Development
 
 Spec-driven multi-agent development team plugin for Claude Code.
 

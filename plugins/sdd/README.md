@@ -1,4 +1,4 @@
-# Eureka SDD
+# Spec-Driven Development
 
 Claude Code plugin — spec-driven multi-agent development team for Vue/Nuxt + ASP.NET projects.
 

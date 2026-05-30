@@ -1,6 +1,6 @@
 # Company Conventions
 
-Company-specific workflow overrides. These are **not** part of the core eureka-sdd methodology — they reflect internal team habits and can be removed entirely by deleting this file and its references.
+Company-specific workflow overrides. These are **not** part of the core sdd methodology — they reflect internal team habits and can be removed entirely by deleting this file and its references.
 
 ## Pre-lint Skip Rules
 
