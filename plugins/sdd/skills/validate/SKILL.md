@@ -92,6 +92,8 @@ All rules are **ERROR** level. Any violation causes FAIL.
 | Task numbering | Tasks MUST use `N.M` numbering (e.g., `1.1`, `1.2`, `2.1`) |
 | Task verb | Each task description MUST start with a verb (e.g., Create, Implement, Add, Write, Configure) |
 | Empty groups | Groups MUST NOT be empty (no tasks under heading) |
+| Reference pointer | Each group SHOULD carry a `Reference:` line (the nearest existing analog to mirror, or `Reference: none`). WARN if missing — the implementing and reviewing agents lose their pattern anchor and the change risks style drift. |
+| Repo annotation (multi-repo) | If a group heading carries a `<!-- repo: <path> -->` annotation, `<path>` MUST resolve to a directory on disk. ERROR if it does not. |
 
 ### specs/\*/spec.md
 
