@@ -12,6 +12,11 @@
       "description": "Eli daily tools"
     },
     {
+      "name": "issue-tracing",
+      "source": "./plugins/issue-tracing",
+      "description": "On-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured Root Cause / Impact / How to Resolve / Unknowns report"
+    },
+    {
       "name": "eureka-sdd",
       "source": "./plugins/eureka-sdd",
       "description": "Spec-driven AI development workflow plugin. Generates structured specs (proposal, design, tasks) from requirements, then dispatches specialized agents to implement, validate, and archive — turning ideas into code with minimal manual intervention."
