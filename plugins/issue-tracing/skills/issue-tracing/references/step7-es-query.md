@@ -2,9 +2,11 @@
 
 Required filters on every query:
 - `range` on `@timestamp` — the parsed time range with ±5 min buffer
-- `term` on `env.keyword` — usually `prod` (from URL filters)
-- `term` on `project.keyword` — REQUIRED; one query per candidate project
-- `terms` on `level.keyword` — default `["error", "fatal"]`; include `"warning"` only if the originating alert was warning-level or the dashboard panel includes warnings. Count warning separately from error/fatal.
+- an `env` filter — usually `prod` (from URL filters)
+- a `project` filter — REQUIRED; one query per candidate project
+- a `level` filter — default `["error", "fatal"]`; include `"warning"` only if the originating alert was warning-level or the dashboard panel includes warnings. Count warning separately from error/fatal.
+
+**Copy the URL's filter clause verbatim — do NOT default to `term .keyword`.** Kibana URL filters carry the exact query, e.g. `match_phrase:(project:<p>)` OR `match_phrase:(project.keyword:<p>)` — the field path differs per data view, the type is always `match_phrase`. Replicate it as-is; do not "upgrade" to `term <field>.keyword`. Why: many data streams map `project` / `env` / `level` as plain `text` with **no `.keyword` sub-field**, and a `term <field>.keyword` on a missing sub-field matches nothing → a false `0` with no error (this has burned whole investigations). `match_phrase` on whichever field the URL names sidesteps this, and also avoids value-casing misses like `"Error"` vs `"error"`. Only build your own `term <field>.keyword` after confirming the sub-field exists (sample one doc with `_source: "*"` or `get_mappings`). For a multi-value filter, use a `bool.should` of `match_phrase` clauses (mirroring the URL's `bool.should`), not `terms`.
 
 **NEVER run a query without a project filter, time range, AND level filter.** A `*` or `match_all` query is forbidden — past incidents include heap exhaustion from unbounded queries.
 
