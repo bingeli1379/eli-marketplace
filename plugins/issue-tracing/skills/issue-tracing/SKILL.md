@@ -63,6 +63,8 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
 4. **Map Kibana data view → ES index pattern** (skip when possible)
 
+   **Cross-cluster check FIRST**: the `mcp__elasticsearch__search` tool connects to ONE ES cluster. The URL's data view may live in a different ELK (e.g. one product's logs in cluster `<cluster-a>`, another's in `<cluster-b>`). Before trusting "0 hits = no such error", confirm the project you're filtering on actually exists in the connected cluster — a quick `project.keyword` + wide-time `size: 0` should return >0. If it's empty for a project you KNOW is logging, you're likely pointed at the wrong cluster: say so and ask the user which ELK / datasource matches the URL, rather than concluding the error doesn't exist.
+
    **Fast path — prefer this**: if the input already gives you a `project.keyword` filter (or any other strong field filter that pins the data), query with `index: "_all"` and the filter directly. The right index can be inferred afterwards from the `_index` field on hits if you really need it. This skips the entire discovery flow below and avoids the 80KB+ `list_indices` truncation.
 
    Use the discovery flow below ONLY when:
@@ -71,6 +73,7 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
    Discovery flow (when needed):
    1. **List data streams** — call `mcp__elasticsearch__list_indices`, extract unique prefixes from `.ds-<prefix>-*` entries.
+   1b. **When the data-stream name / wildcard returns 0 hits** (some clusters don't resolve a data-stream alias like `<logs-prefix>` or `.ds-<logs-prefix>-*` even though the backing indices exist): pull the concrete backing index names out of the (often 80KB-truncated) `list_indices` output with `jq`, filter to the days in your time window, and pass them as an explicit comma-separated `index` list. An exact single-day index is also the fastest query path (least shard fan-out).
    2. **Match by name** — extract the data view name from URL or filters (the user usually mentions it in their question, e.g. "in `<product>-<region>`"). Match it against the data stream prefixes. A data view like `<x>-<y>` typically maps to a data stream like `<y>-logs-<x>*`, `<x>-<y>*`, or similar — show candidates and pick the one that returns hits with the expected `project.keyword` filter.
    3. **Ask the user** — if matching is ambiguous after looking at hits, ask once. Cache the answer in conversation context only (do not write to memory).
 
@@ -144,11 +147,14 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
    - in-scope service → REQUIRED to read code (10b) and verify infra (step 11)
    - out-of-scope service → both are optional; root cause inside the service may stay in Unknowns
 
+   **Scope follows where the abnormal response is produced, NOT what triggered it.** A bot / scheduled / upstream trigger does NOT exempt an in-scope service that produced the error (e.g. threw the 500) from reading code. "The trigger was a bot" is never a reason to skip 10b for an in-scope service — the trigger source goes in the Root Cause fact layer (step12 HARD RULE #4), it does not shrink the code-reading obligation.
+
    **GATE — write the scope table out in chat before continuing**, even if it has only one row. Without an explicit scope table, you have no basis to decide whether step 11 is mandatory or optional.
 
    ### 10b. Read code (in-scope only; required when impact involves them)
 
    - **Backend**: locate the failing endpoint/function from log clues (URL path, controller name, method name); inspect error handling and outbound calls.
+   - **Intent vs defect**: when you can't tell whether an error is a real bug or intended behavior, `git blame` the failing line and read the introducing commit's message to determine intent. Intent being correct (e.g. deliberately rejecting a bad token) does NOT mean the implementation is correct — returning an unhandled 500 instead of a 403 is still a defect. Feed both findings into the step12 Root Cause judgment layer.
    - **Frontend**: grep the failing API name (taken from the backend log) and read its call site. Determine: is the error caught? Does the UI fall back to empty / placeholder / error state / blank? Is there a retry?
    - **Impact wording**: derive from frontend code what the user actually sees, then write the Impact field per the rules in step 12 (HARD RULES). Do NOT include file paths, line numbers, or code mechanics here.
 
@@ -170,7 +176,12 @@ On-call triage assistant. Takes a Grafana or Kibana URL (or alert description) a
 
 ## Guardrails
 
-- **No unbounded ES queries.** Every search MUST include `@timestamp` range + `project.keyword` + `level.keyword` + `size` cap. No `*` / `match_all` queries.
+- **No unbounded ES queries.** Every search MUST include `@timestamp` range + `project.keyword` + `level.keyword` + `size` cap.
+- **Where `*` is dangerous vs fine** — the heap-killer is an unbounded full scan, not the character `*`:
+  - `query` / `match_all` with no filter → **forbidden** (this is what exhausts ES heap).
+  - Index-level wildcard (`.ds-...-prod-*`) or `_all` → allowed ONLY with a strong filter (project + time + level), but prefer an exact single-day backing index — it is far faster and avoids multi-shard fan-out timeouts. Note some clusters don't resolve the data-stream name / wildcard at all (returns 0 hits, no error) — see step 4.
+  - `_source: "*"` → fine, but use it once to inspect schema, then list only the fields you need.
+- **Counting rows: `size: 0` + `track_total_hits: true`, NEVER aggs.** The `mcp__elasticsearch__search` wrapper STRIPS aggregation results, so a `date_histogram` / `terms` agg pays the full aggregation cost AND returns nothing — the #1 source of slow queries and timeouts. And without `track_total_hits: true` the total caps at 10000 (a real 72k reads as "10000"), which silently breaks every baseline ratio and impact number. One filtered `size: 0` query per bucket instead.
 - **No fabricated numbers.** Distinct user counts, request counts, customer ids — only report what the aggregation actually returned. If a field is missing, write `n/a`, never estimate.
 - **No fabricated root causes.** If code is needed and unavailable, the report's Root Cause must say "需要看 code 才能確認" and the Unknowns must request the repo path. Do not pattern-match a guess.
 - **No fabricated unknowns.** Unknowns may only contain: (a) facts about out-of-scope services (per step 10a scope table), (b) data that the available tools / permissions cannot reach, or (c) decisions that need a human (business / ownership). "Need to check Grafana for CPU", "should confirm pod restart" or any item the agent can answer with an MCP query is NOT a valid Unknown — go and check it.

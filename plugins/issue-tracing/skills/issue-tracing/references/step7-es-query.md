@@ -9,7 +9,7 @@ Required filters on every query:
 **NEVER run a query without a project filter, time range, AND level filter.** A `*` or `match_all` query is forbidden — past incidents include heap exhaustion from unbounded queries.
 
 **DO NOT include `aggs` / `aggregations` in your search body.** The `mcp__elasticsearch__search` wrapper strips aggregation results from responses; only `hits` are returned. Writing an `aggs` block wastes the round-trip — the wrapper accepts the body but drops the results, so you can't see what you asked for. Use per-bucket queries instead:
-- Total counts: `size: 0` query — use the `Total results: N` line
+- Total counts: `size: 0` **with `track_total_hits: true`** — then read the `Total results: N` line. WITHOUT `track_total_hits: true` the total is capped at 10000, so a real 72k count silently reads as "10000" and every baseline ratio / impact number built on it is wrong. Never use a `count` / `value_count` agg (stripped by the wrapper).
 - Top message patterns: `size: 5` sorted by `@timestamp desc`, read `message` field
 - First / last occurrence: two queries with `sort` `asc` and `desc`, `size: 1`
 - Distinct user counts: see step 8 (cannot use `cardinality` agg)

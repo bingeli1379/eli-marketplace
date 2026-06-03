@@ -14,11 +14,12 @@ Before writing the report, paste the evidence below in chat verbatim. **No ticki
 Time window (GMT+8): <from> ~ <to>
 Burst window (if narrower than the URL range): <from> ~ <to>
 
-Per-project error counts (size:0 query results):
+Per-project error counts (size:0 + track_total_hits:true — raw log-line count):
+# NOTE: one failed request can emit multiple log lines (e.g. AccessLog + Connection + Unhandled + fatal = 4 lines per failure). Sample one failure, count its lines, and state both raw lines AND estimated request count so the Impact number isn't inflated.
 - <project-A>: <N> errors  | top message: "<first line of dominant pattern>"
 - <project-B>: <N> errors  | top message: "..."
 
-Pre-incident baseline (same-length window before incident, same filter):
+Pre-incident baseline (same-length window before incident, same filter, track_total_hits:true):
 - <project>: <N> errors  → ratio incident/baseline: <X>x
 - (run for every project that may go into Root Cause; if ratio ≈ 1, treat as background and exclude)
 
@@ -54,6 +55,16 @@ If any block is empty or says "skipped", the work is incomplete — go back and 
    - ✅ 正例：「使用者進入 `<頁面>` 後 `<某區塊>` 顯示空白或維持上一次值，頁面其餘正常，因為 error 沒被 catch」
 2. **多種影響可拆 bullet**：使用者體驗不限一句。如果有多條獨立影響（例如 logo 空白 + 登入失敗），用 sub-bullet 一條一條列出，每條都是使用者視角。
 3. Code 機制（哪段 code、哪個函式失敗）寫在 **Root Cause** 區塊。**Impact 區塊寫使用者視角，Root Cause 區塊寫工程師視角**，不要混。
+4. **Root Cause 必須分兩層，「觸發源」永遠先寫**：
+   - **觸發源（事實層，必填）= 先回答「什麼變了？」四選一**：
+     - **A. code 變了** → 誰 release？（`git blame` 出事那行 + deploy timeline）→ 引入的 bug。
+     - **B. dependency 變了** → 第三方 / 別人的服務掛（往 callee 鑽，step9 callee ladder）。
+     - **C. input / load 變了** → 同一段 code、沒人 release，但進來的 request 變了：bot / 暴量 / 新客戶資料 / 一直潛伏今天才被打中的 edge case（往 caller 鑽，step9 caller-direction drill）。
+     - **D. 啥都沒變** → 本來就這個錯誤率 = chronic 背景 / by-design（step9 baseline ratio ≈ 1 即屬此類）。
+     - ⚠️ 最常見的漏判：沒人 release 就直接跳 B/D，漏掉 **C**（code 沒變但觸發變了）。
+     佐證用可查、不可捏造的數字：git blame 意圖、IP 集中度、distinct customerId 集中度（step8）、incident/baseline 暴增倍率（step9 correlation check）。這層是使用者做後續決策（封 bot / 改 code / 接受）的依據，**必須優先查實**。查不到就明寫「觸發源未判定 + 還缺什麼資料」，**絕不能因為「還沒確定是不是 bug」就把觸發源丟進 Unknowns** — 事實層與判斷層獨立。
+   - **機制 / 判斷（看法層）**：agent 認為這是 bug / 預期行為 / 設計缺陷，**標明這是判斷**並給依據（stack trace、code、git blame）。注意 throw 的那行不一定是真因，可能是下游症狀（頂層 NullRef 源自上游 bad state）——先判這行是因還是果。
+   - 兩層獨立：觸發是 bot 不代表沒有 code 問題；是設計意圖也要分清「意圖」與「實作後果」是否一致（例：刻意拒絕 token 是對的，但用 unhandled exception 回 500 仍是缺陷）。
 
 ## Output
 
@@ -75,10 +86,9 @@ No "中文版" / "English" headings. Output the report blocks directly. Separate
 
 ```
 **Root Cause**
-<核心一句話>
-
-- <細節 / 上游 / call chain>
-- <infra 數據 or 補充>
+- 觸發源（事實，什麼變了）：<A code 變 / B dependency 變 / C input·load 變 / D 啥都沒變>，佐證：<git blame? IP·customerId 集中? incident/baseline 倍率?>
+- 機制（判斷，標明看法）：<我認為這是 bug / 預期行為 / 設計缺陷，因為…（stack trace / code / git blame）>
+- <call chain / infra 數據 補充>
 
 **Impact**
 - 受影響使用者：~<N>（distinct customerId）or n/a
