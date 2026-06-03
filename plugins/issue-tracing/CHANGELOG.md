@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.0] - 2026-06-03
+
+### Fixed
+- Investigations no longer give a false "not found" / "wrong cluster" answer when the logs are there but the query was shaped wrong. Three traps that each silently returned zero results are now closed: (1) a Kibana data view is resolved to its real underlying index by reading the saved object directly, instead of guessing from its display name; (2) that index name is now queried exactly as-is, because tacking on a wildcard quietly skips logs stored in data streams; (3) filters now match how the values are actually stored, instead of assuming a keyword field that may not exist and matching nothing.
+
+### Added
+- A "0 hits" diagnostic checklist: before concluding an error doesn't exist, the investigation re-checks the resolved index name, confirms it didn't accidentally add a wildcard, peels back one filter at a time (catching a missing keyword field, or a level saved as "Error" vs "error"), confirms the time window has any data at all, and only then raises a cross-cluster or access question — offering to read the page from the browser when the user can already see it.
+
+### Changed
+- The investigation now honors the filters you put in the URL instead of fanning out on its own. If you send a link already filtered to errors, it surfaces those errors and stops; it only pulls extra data (baselines, related services, infrastructure metrics) when you ask for a full root-cause report or when the logs themselves don't explain the failure. Less waiting, fewer needless queries.
+
 ## [1.1.0] - 2026-06-03
 
 ### Added
