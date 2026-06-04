@@ -92,6 +92,8 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
 
 ### Dispatch in Spec-Driven Mode
 
+**Non-negotiable — dispatch is mandatory.** In `/apply` you MUST dispatch every task group to its mapped specialist agent via the Agent tool, and MUST NOT implement any task yourself — not even a trivial one, not even when the repo has no runnable toolchain. "It's trivial", "no toolchain to verify", and "faster to just do it" are NOT valid reasons to skip dispatch or Phase 2 review/security. Self-implementing forfeits the specialist's domain skills, project-knowledge consultation, and the mandatory review/security pipeline — the entire point of `/apply`. (Direct implementation with a folded-in pipeline is `/quick`, never `/apply`.)
+
 **Preparation:**
 
 1. **Parse `tasks.md`** to identify pending task groups and tasks (`- [ ]` items)
