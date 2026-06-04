@@ -116,6 +116,7 @@ Once the baseline commit is identified, run:
 - Documentation-only changes (unless it's a new user-facing guide)
 
 ### Compression
+- **Be as concise as possible WITHOUT distorting meaning** — trim filler, but never at the cost of accuracy. A shorter entry that misstates or over-generalizes what changed is worse than a longer, correct one. When concision and fidelity conflict, fidelity wins
 - Merge related commits into **one entry** (e.g., 5 commits fixing the same form → 1 entry)
 - Batch trivial fixes into "Minor bug fixes and stability improvements" if individually uninteresting
 - Target **3–7 entries** per release; exceed only for genuinely large releases
