@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.1] - 2026-06-04
+
+### Changed
+- During `/apply`, the workflow now always hands each task group to the right specialist agent and runs the full review and security checks — it will no longer take shortcuts and do the work itself, even for small or hard-to-test changes, so every change gets the same quality pipeline
+
 ## [2.1.0] - 2026-06-04
 
 ### Added
