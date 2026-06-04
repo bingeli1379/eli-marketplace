@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.0] - 2026-06-04
+
+### Added
+- On a project that ships its own repo-knowledge skill, the implementation agents now pull in that repo's context — its responsibility, dependencies, and conventions — before writing code, so generated work fits the target repo instead of a generic template, with no extra setup from you
+
 ## [2.0.0] - 2026-05-30
 
 ### Changed
