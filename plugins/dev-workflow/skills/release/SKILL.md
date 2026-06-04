@@ -16,6 +16,7 @@ Search the project root for version files in this priority order. Stop at the fi
 
 | Source | File | Field / Pattern |
 |--------|------|-----------------|
+| Plugin manifest | `.*-plugin/plugin.json` (e.g. `.claude-plugin/`, `.codex-plugin/`) | `"version": "x.y.z"` |
 | npm / Node.js | `package.json` | `"version": "x.y.z"` |
 | .NET | `*.csproj`, `Directory.Build.props` | `<Version>x.y.z</Version>` or `<PackageVersion>` |
 | Python | `pyproject.toml` | `version = "x.y.z"` |
@@ -26,7 +27,9 @@ Search the project root for version files in this priority order. Stop at the fi
 - If no version file is found, check git tags (`git tag --sort=-v:refname`) as fallback
 - If nothing is found, ask the user where the version lives
 
-Record: **current version**, **version file path**, **field location**
+**Parallel manifests (same artifact, multiple files):** one logical package may declare its version in several sibling manifests — e.g. a plugin that ships both `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`. Glob for ALL of them (`<package>/.*-plugin/plugin.json`) and treat them as ONE version source that must move together. They may currently be out of sync (one lagging behind); the release re-syncs them all to the new version. Use the highest existing version among them as the current baseline.
+
+Record: **current version**, **all version file paths** (every parallel manifest), **field location**
 
 ### 2. Find the previous version baseline
 
@@ -68,8 +71,9 @@ Once the baseline commit is identified, run:
 ### 6. Bump version number
 
 - Update the version field in the detected version file(s)
-- If multiple version files exist, ask the user which to update
-- Preserve the file's existing formatting
+- **Parallel manifests of the same package** (e.g. `.claude-plugin/plugin.json` + `.codex-plugin/plugin.json`) MUST all be bumped to the same new version in lockstep — do NOT ask which to update, update every one
+- Only ask the user when the files are **genuinely independent artifacts** (different packages with their own version lifecycles), not when they are mirror manifests of one package
+- Preserve each file's existing formatting
 
 ### 7. Commit
 
