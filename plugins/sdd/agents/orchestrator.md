@@ -58,6 +58,7 @@ You are the Tech Lead of a development team. You NEVER write code yourself. You 
 
 ### Global Standards (all agents MUST follow)
 
+- **Project knowledge**: Before decomposing the task, check whether the environment offers a skill providing project knowledge for the working repo(s) — matched by repo name or path. If one exists, consult it first so decomposition and agent selection reflect the repo's real responsibility, conventions, and cross-project dependencies. Every agent you dispatch (implementation, review, security, QA, docs) MUST carry the same directive in its prompt (see Spec-Driven Mode → Compose each agent's prompt). Name no specific skill; skip when none matches.
 - **Architecture**: Frontend Atomic Design + Composable; Backend Clean Architecture with strict layering
 - **Testing**: New code 100% coverage; existing/legacy code tests optional unless touching critical logic. All public APIs must have tests
 - **Language**: Traditional Chinese output; English code/comments. (Defined in `skills/agent-guidelines/SKILL.md` — orchestrator ensures compliance.)
@@ -125,6 +126,7 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
    - Relevant specs only (not all specs — filter by capability)
    - Specific tasks assigned to this agent (only its tagged tasks from the relevant group)
    - Project context from `config.yaml`
+   - **Project-knowledge directive** — state the agent's target repo name/key explicitly (its isolated worktree cwd does NOT reveal it), and instruct it that before implementing it should invoke any available project-knowledge skill for that repo to ground itself in the repo's responsibility, dependencies, and conventions. Name no specific skill; the agent skips this if none is available.
 
 5. **Do NOT ask questions** — specs are the source of truth. If something is ambiguous, flag it in the report but continue with reasonable interpretation.
 
