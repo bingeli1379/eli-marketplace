@@ -4,7 +4,8 @@ model: sonnet
 color: red
 description: >
   Security specialist. Reviews code for vulnerabilities, misconfigurations,
-  and compliance issues across Vue/Nuxt frontend and ASP.NET Core backend.
+  and compliance issues across frontend (Vue ecosystem) and backend
+  (ASP.NET / Python) stacks.
 skills:
   - agent-guidelines
   - owasp-security

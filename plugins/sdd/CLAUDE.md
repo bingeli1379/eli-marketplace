@@ -56,14 +56,14 @@ Agent role definitions live in `agents/`. The orchestrator reads these at dispat
 |---|---|
 | `orchestrator` | Tech Lead — task analysis, agent dispatch, progress tracking |
 | `architect` | Software Architect — system design, API contracts, integration specs |
-| `vue-engineer` | Frontend — Vue 3 / Nuxt 4, Atomic Design, Composable Pattern |
-| `dotnet-engineer` | Backend — ASP.NET Core, Clean Architecture, EF Core |
+| `vue-engineer` | Frontend — Vue ecosystem (Nuxt SSR, Vue 3 Vite SPA, Vue 2, single-spa), Atomic Design, Composable Pattern |
+| `dotnet-engineer` | Backend — ASP.NET (modern .NET Core + legacy .NET Framework), Clean/Layered Architecture, EF Core + Dapper |
 | `python-engineer` | Backend/ML — FastAPI, data pipelines, ML models, LLM, monitoring |
 | `review-engineer` | Code quality — architecture compliance, patterns, performance |
 | `security-engineer` | Security — OWASP, injection, auth, dependency risks |
 | `electron-engineer` | Electron — main process, IPC, preload, native OS, packaging |
 | `database-engineer` | Database — schema design, migration strategy, query optimization, indexing |
-| `devops-engineer` | DevOps — Docker, Kubernetes, GitHub Actions CI/CD, infrastructure |
+| `devops-engineer` | DevOps — Docker, Kubernetes, CI/CD (GitLab CI / GitHub Actions), infrastructure |
 | `performance-engineer` | Performance — Core Web Vitals, bundle analysis, API profiling, caching |
 | `qa-engineer` | QA — Playwright E2E acceptance testing, spec scenario verification |
 | `technical-writer` | Documentation — API docs, changelogs, README, ADRs |
@@ -91,6 +91,8 @@ Phase 3: Documentation
 ```
 
 ## Team Standards
+
+These are the **default** house standards for greenfield code. When a project's existing stack differs (a Vite SPA, legacy .NET Framework, a non-default data store, GitLab CI, etc.), each agent detects and matches the project — see each agent's *Stack Detection First* section.
 
 - **Frontend**: Vue 3 Composition API + Nuxt 4, Atomic Design, Composable Pattern, TailwindCSS, TypeScript strict
 - **Backend**: ASP.NET Core .NET 8–10, Clean/Layered Architecture, EF Core + Dapper, Polly, Redis, C# 12–13

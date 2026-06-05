@@ -105,6 +105,9 @@ dotnet-grpc:
 dotnet-nunit:
   repo: https://github.com/managedcode/dotnet-skills
   path: catalog/Testing/NUnit/skills/nunit
+legacy-aspnet:
+  repo: https://github.com/managedcode/dotnet-skills
+  path: catalog/Platform/Legacy-ASP.NET/skills/legacy-aspnet
 
 # Database
 sql-expert:
@@ -116,6 +119,14 @@ sql-query-optimization:
 database-schema-design:
   repo: https://github.com/secondsky/claude-skills
   path: plugins/database-schema-design/skills/database-schema-design
+
+# MongoDB (from mongodb/agent-skills — official MongoDB org)
+mongodb-schema-design:
+  repo: https://github.com/mongodb/agent-skills
+  path: skills/mongodb-schema-design
+mongodb-query-optimizer:
+  repo: https://github.com/mongodb/agent-skills
+  path: skills/mongodb-query-optimizer
 
 # DevOps
 devops-engineer:
@@ -207,6 +218,10 @@ agent-guidelines:
 engineering-checklist:
   repo: original
 frontend-checklist:
+  repo: original
+
+# Messaging (sdd original — grounded in Apache Kafka / Confluent consumer docs)
+kafka-consumer-patterns:
   repo: original
 
 # Development Discipline (from obra/superpowers — customized, do not sync)
