@@ -13,7 +13,7 @@ Combines **SDD** (Spec-Driven Development), **DDD** (Domain-Driven Design), and 
 1. **Init** — auto-detect project context, create `feature-spec/` directory
 2. **Propose** — clarify requirements and define feature boundaries, dispatch architect for design, generate specs (SDD), domain model (DDD), API contract, tasks (TDD structure). Auto-validates and fixes until all checks pass.
 3. **Apply** — launch named orchestrator agent to dispatch agent team in parallel, review, and verify. User can interact with orchestrator anytime.
-4. **Archive** — extract knowledge, update docs, delete change artifacts
+4. **Complete** — confirm tasks done, delete change artifacts, commit cleanup
 
 ## Prerequisites
 
