@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.2.0] - 2026-06-05
+
+### Added
+- Agents now ship with knowledge for more stacks out of the box — Kafka consumers (delivery semantics, offset commits, idempotent processing, dead-letter handling), legacy ASP.NET (.NET Framework / WebForms / MVC5), and MongoDB schema design & query optimization — so they produce sound work on these without extra guidance
+
+### Changed
+- Every engineer agent now detects your project's actual stack (framework, data store, CI) and follows it, using its built-in defaults only as a fallback — so it fits a Vite SPA, a Vue 2 app, a legacy .NET Framework service, or a MongoDB repo instead of forcing one template
+- The Python agent is no longer tied to one codebase's helpers and layout — it now adapts to any FastAPI / data / ML project's own conventions
+- The DevOps agent picks the CI system from your repo (GitLab CI or GitHub Actions) instead of always assuming GitHub Actions
+- Code review and security review now cover Python projects, not just Vue/Nuxt and .NET
+
 ## [2.1.1] - 2026-06-04
 
 ### Changed
