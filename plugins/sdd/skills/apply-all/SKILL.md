@@ -85,6 +85,8 @@ Repo topology (single-repo vs multi-repo) is handled by each per-change `/apply`
 
    f. **If a change pauses** (review/QA failure after retries): record reason, **continue to next change** — do NOT stop the batch. User can fix later with `/apply <name>`.
 
+   g. **Unresolvable NEEDS in unattended mode**: when a worker emits a `NEEDS:` (see `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*), resolve it with the tools available and resume the agent as in `/apply`. But because the batch runs unattended, if a NEEDS can only be answered by the user and no resolving tool is available, do NOT hang waiting — **park that change as PAUSED** (reason: `unresolved NEEDS: <question>`) and continue to the next. The user resolves it later with `/apply <name>`.
+
 4. **Show final batch report**
 
    ```

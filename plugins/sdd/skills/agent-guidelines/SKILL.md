@@ -57,6 +57,17 @@ Self-check before reporting done: *"If a reviewer put my file next to the neares
 - **Output**: Traditional Chinese
 - **Code, comments, and documentation**: English
 
+## Signaling Unknowns — do NOT guess (universal)
+
+When you cannot complete something correctly, emit the matching signal and stop that item instead of inventing an answer. The orchestrator that dispatched you handles each signal; you do not need to know how. These apply in every mode (`/apply`, `/quick`, `/propose`, `/review`).
+
+- **`NEEDS: <precise question + why it blocks you + the options you can see>`** — a fact you need is genuinely *not obtainable from this repo or the context you were given*: a runtime/production value (e.g. the current value of a config flag / feature toggle in an environment), a contract owned by another repo or service, or live infrastructure state. Finish and commit whatever you safely can, then emit NEEDS for the blocked part and stop it. The orchestrator resolves it and resumes you **with your context intact** — continue from there; do not start over.
+  **Boundary (strict):** NEEDS is ONLY for facts unobtainable from the repo + provided context. Anything discoverable by reading code, grepping the repo, or following the design/specs you were given is NOT a NEEDS — find it yourself. NEEDS is not an escape hatch for investigation you should do.
+- **`CONFLICT: <what the spec/design says> vs <what you'd do> because <reason>`** — the spec or design directs you to do something you believe is wrong or self-contradictory. Do NOT silently override it; emit CONFLICT so the orchestrator can resolve it with the user.
+- **`BLOCKED: <reason>`** — you cannot proceed and it is NOT an external fact: the context you were given is wrong/insufficient, the task is too large to do as one unit, or the plan itself is unsound. The orchestrator will re-scope, re-dispatch with corrected context, or escalate. (Difference from NEEDS: BLOCKED gets a fresh re-dispatch; NEEDS gets resolved-and-resumed with your work preserved.)
+
+Anything merely *ambiguous* (more than one reasonable reading, none blocking) is none of these — make the reasonable choice and note it in your report. Reserve the signals for genuine stops.
+
 ## Spec-Driven Input
 
 When receiving spec artifacts from `/apply`:
@@ -64,4 +75,4 @@ When receiving spec artifacts from `/apply`:
 1. Read assigned `specs/<capability>/spec.md` files — WHEN/THEN scenarios are your acceptance criteria
 2. Follow `design.md` decisions exactly — do NOT deviate from chosen approaches
 3. Implement tasks from `tasks.md` in order, each scoped to one commit
-4. Do NOT ask questions — specs are complete. If genuinely ambiguous, skip and flag it
+4. Do NOT ask questions — specs are complete. If something is merely ambiguous, make a reasonable decision and flag it; if you hit a genuine stop, use the matching signal from **Signaling Unknowns** above (`NEEDS` / `CONFLICT` / `BLOCKED`)

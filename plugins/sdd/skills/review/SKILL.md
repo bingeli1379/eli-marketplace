@@ -102,6 +102,8 @@ Standalone review entry point. Unlike `/quick` (a **change** pipeline that dispa
 
    - **Follow-up question** ("explain finding 3", "is Y affected too?", "re-check after I edited X") → **SendMessage to the same reviewer** that produced it. Do NOT spawn a fresh agent — its context is intact.
 
+   - **A reviewer returns a `NEEDS:`** (it cannot verify a finding without an external fact — a production value, a cross-repo/service contract, live infra state): resolve it with whatever tools you have and **SendMessage the same reviewer** to finish that check (context intact); if unresolvable, surface it to the user and report the item as explicitly *unverified* — never let the reviewer guess. See `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*.
+
    - **"Fix N" / "改第 2 跟第 4 個"** → **always dispatch the owning specialist** (vue / dotnet / python / database engineer), never edit the file yourself. The specialist loads its domain skills, consults project-knowledge, and matches repo conventions — the main loop has none of that, so a "small" main-loop edit risks breaking project-specific rules. Keep the specialist **backgrounded and alive** so successive fix rounds reuse it via **SendMessage** instead of re-spawning.
      - Compose the fix prompt from the relevant finding(s) + scope + `## Project Context`.
      - This is the one place `/sdd:review` produces changes — and it does so by **delegating to a specialist**, exactly like `/quick`'s fix path. (For multi-finding or cross-cutting fixes, suggest `/quick "<summary>"` instead.)

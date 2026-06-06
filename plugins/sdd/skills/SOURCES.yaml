@@ -124,7 +124,7 @@ sql-expert:
 sql-query-optimization:
   repo: https://github.com/secondsky/claude-skills
   path: plugins/sql-query-optimization/skills/sql-query-optimization
-# sql-optimization is SQL Server-aware (B2C primary); sql-query-optimization above is PG/MySQL-focused
+# sql-optimization is SQL Server-focused; sql-query-optimization above is PG/MySQL-focused
 sql-optimization:
   repo: https://github.com/github/awesome-copilot
   path: skills/sql-optimization

@@ -189,7 +189,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - After the commit, report back: "DONE: <task-number> <task-description>"
    - Only add code comments for business logic that is not obvious from the code — if good naming makes it clear, skip the comment
    - Do NOT narrate your actions ("Now I will...", "Let me..."). Report only structured output: task status, files changed, test results.
-   - Do NOT ask questions — specs should be complete. If something is genuinely ambiguous, skip it and flag it
+   - **Signaling a genuine stop (`NEEDS` / `CONFLICT` / `BLOCKED`)** — follow the **Signaling Unknowns** rules in `skills/agent-guidelines/SKILL.md`. In short: do NOT guess an external fact you can't obtain from the repo + this context — commit what is safely done, emit `NEEDS: <question + why blocked + options>`, and stop that task; the orchestrator resolves it and resumes you with your context intact. Aside from those signals, do NOT ask questions — specs should be complete; if merely ambiguous, make a reasonable decision and flag it.
    - **Verify after enabling tasks**: When a task enables/disables a config, rule, or flag that surfaces new errors (e.g., removing an ESLint `'off'` rule, enabling `strict` mode), you MUST run the relevant tool immediately after (e.g., `npm run lint`, `npm run type-check`) to discover the ACTUAL full violation list. Use that output — not the design estimates — as your work scope for subsequent fix tasks. Design estimates are approximations; tool output is truth.
    - **Language**: All output and reports MUST be in Traditional Chinese. Code and code comments MUST be in English.
    ```
@@ -213,6 +213,14 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
      3. **Severity-rank every finding** — `blocker` / `major` / `minor`, each with one-line rationale. Raw observations without severity are rejected.
 
      Do NOT apply this structure to Phase 1 implementation agents or Phase 2 fix agents (Backend/Frontend/Python/Electron/Database/DevOps/Performance) — they are executors; category enumeration produces over-engineered code. Do NOT apply to Phase 3 technical-writer either — documentation is executional. Rationale: structural enforcement of exhaustive scanning and auditable coverage is the primary safeguard.
+
+   **Handling a NEEDS return (orchestrator) — applies to every phase:**
+
+   When a background agent's report contains one or more `NEEDS:` lines, treat the agent as *paused awaiting input*, NOT as failed or done:
+   1. **Resolve each NEEDS using whatever tools and knowledge YOU (the orchestrator) have available** — connected MCP servers, lookup tools, project/domain knowledge skills, or the user. The worker agents deliberately do not carry these; resolving external/runtime/cross-repo facts is the orchestrator's job. sdd prescribes no specific tool here — use what the environment provides. If a NEEDS is genuinely unresolvable with the tools at hand, ask the user.
+   2. **Resume the SAME agent with `SendMessage`** (do NOT re-dispatch a fresh agent — its context is intact), passing the resolved fact(s) and an instruction to finish the blocked task and commit it.
+   3. Because Phase 1 agents run in the background, the orchestrator stays unblocked and can service NEEDS from several agents concurrently as they arrive — no need to resolve them one wave at a time.
+   4. If a resolved fact contradicts an assumption baked into `design.md` / `tasks.md` (e.g. the real production value makes a planned step wrong), surface it to the user before resuming — a NEEDS can legitimately invalidate part of the plan, and silently coding around it reintroduces the guessing the protocol exists to prevent.
 
    **Phase execution (mandatory, in order):**
 

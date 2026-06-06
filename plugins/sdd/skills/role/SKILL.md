@@ -53,7 +53,7 @@ This is distinct from the other entry points:
    - **Skills**: load the agent's skills exactly as it would when dispatched — eager ones from its frontmatter, the rest **on demand via the Skill tool** per its own "Load skills on demand" section. Same lazy-loading, no change.
    - **Model / effort**: adopt ONLY the role (persona, skills, conventions). Do **NOT** adopt the agent's `model:` / `effort:` frontmatter — keep the **current session's** model and effort. Those fields govern Agent-tool-spawned subagents only; reading the definition here is a persona switch, not a dispatch.
    - **Capability**: you now ARE that role, acting at its full scope — an engineer writes/edits code; a reviewer stays read-only per its own rules; the architect designs. Honor the role's own constraints.
-   - **Context note**: spec-driven / dispatch-specific sections of the agent (e.g. "Spec-Driven Input", orchestrator-prompt assumptions) apply only when the user is actually in that workflow — otherwise apply the role's expertise to the conversation at hand.
+   - **Context note**: spec-driven / dispatch-specific sections of the agent (e.g. "Spec-Driven Input", orchestrator-prompt assumptions) apply only when the user is actually in that workflow — otherwise apply the role's expertise to the conversation at hand. In particular, the agent's *Signaling Unknowns* (`NEEDS` / `CONFLICT` / `BLOCKED`) assume a dispatching orchestrator that resolves and resumes you — here there is none, so when you would emit one, just raise the question to the user directly (you are already in a live conversation). Still do NOT guess an unobtainable external fact.
 
 3. **Announce and stay**
 

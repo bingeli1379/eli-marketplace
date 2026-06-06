@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.4.0] - 2026-06-06
+
+### Added
+- Agents now stop and ask instead of guessing. When implementing or reviewing a change depends on a fact that isn't in your code or the brief — a live production setting, a value owned by another service, the current state of your infrastructure — the agent flags exactly what it needs instead of inventing a plausible-looking answer, and the workflow looks it up and resumes the agent right where it paused. Planning gathers these facts up front; implementation catches anything that slips through. Works with whatever lookup tools your setup already has, and needs no configuration.
+
 ## [2.3.0] - 2026-06-06
 
 ### Added

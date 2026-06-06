@@ -114,16 +114,16 @@ Answers the question "will this endpoint/job hold up at N rows, and how many row
 
 Give a verdict per data path: **SAFE / RISKY / WILL NOT SCALE**, with the row threshold where you expect it to degrade and why.
 
-**.NET — stored-procedure + Dapper data access (the dominant B2C pattern)**
+**.NET — stored-procedure + Dapper data access**
 
-Most B2C services call dated SPs (`Foo_25.01.01`) through a shared Dapper `DatabaseClient`. Static red flags for large result sets:
+Services that reach the database by calling stored procedures through a shared Dapper helper hit a recurring set of static red flags for large result sets:
 - **Buffered full materialization** — `QueryAsync<T>` / `Query<T>` returning `List<T>` (Dapper default `buffered: true`) loads every row into the heap before the caller sees it. Flag any unbounded SP call returning to a `List<T>` / `.ToList()`. For large/streamed reads recommend `buffered: false` + `IEnumerable`/`IAsyncEnumerable` consumption.
 - **No pagination** — SP and API both lack `OFFSET/FETCH`, `TOP`, or keyset paging. Flag list/report endpoints with no upper bound on returned rows.
 - **No `CommandTimeout`** on heavy SP calls — default timeout will abort a long pull; flag and recommend an explicit, sized timeout.
 - **App-side aggregation** — pulling raw rows to sum/group/dedupe in C# instead of in the SP. Push it down.
 - Use the `sql-optimization` skill for the SP/query interior (indexes, SARGable predicates, plan cache, OFFSET vs keyset) and `analyzing-dotnet-performance` for the calling code (allocations, LINQ on hot paths, async). **SP-internal tuning (execution plan, index design, parameter sniffing) is coordinated with database-engineer / DBA — recommend, don't prescribe.**
 
-**Python — data pipelines & analytics (TWUA-style FastAPI + pandas/BigQuery)**
+**Python — data pipelines & analytics (FastAPI + pandas/BigQuery)**
 
 Use the `python-performance-optimization` skill. Static red flags for data-scale:
 - **Row-wise iteration** — `.apply()` / `.iterrows()` / Python loops over big DataFrames. Recommend vectorized numpy/pandas (or polars). This is the single most common scale killer here.

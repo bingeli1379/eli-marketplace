@@ -251,6 +251,8 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
    **c. design.md** (AFTER specs — architect receives specs as constraints)
 
+   **Front-load external facts first (orchestrator).** Before dispatching, identify every fact the design will hinge on that is NOT obtainable from the repo or specs — a runtime/production config value (feature flags, rollout rates, limits), a cross-repo/service contract, live infrastructure state. For each one, **before you assume a value or let a plausible default stand, check whether your available tools can look it up** — a connected MCP server, a query/lookup tool, a project-knowledge skill — and **if such a tool exists you MUST use it rather than guess** (lookup tools often have no auto-trigger, so you must reach for them deliberately). Resolve what you can NOW, feed the values into the architect's context below, and record them in `design.md` with how/when they were obtained. sdd names no specific tool — use whatever the environment exposes; this front-loading is the primary thing that keeps the architect from designing on a guessed value. Anything you genuinely cannot resolve, leave for the architect to raise as a `NEEDS:` (handled in step d).
+
    Dispatch the **architect agent** — use the **Agent** tool with `run_in_background: true` and `mode: "bypassPermissions"`:
    - `subagent_type`: `"sdd:architect"`
    - **CRITICAL — enforce structured trade-off analysis**: The architect's dispatched prompt MUST include an "Analytical depth requirement" section instructing the agent, BEFORE writing design.md, to:
@@ -263,6 +265,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - **CRITICAL — feed pre-collected context**: The prompt MUST include the **complete affected-files inventory from Step 5** (including the **Reference implementation pointers** found there), the proposal.md content, **all completed spec files from Step 7b**, the **full contents of `feature-spec/config.yaml`** (the `architecture` block and `hard_rules` are constraints the design MUST honor — surface `hard_rules` to the architect as non-negotiable), existing specs from `feature-spec/specs/`, and the design.md template from `templates/`. Include any file contents you already read during the codebase scan (store definitions, key interfaces, usage patterns, etc.). Do not forward the project's own docs — config.yaml is the only project context. If `config.yaml` does not exist, omit that section entirely — do not fabricate placeholder content.
    - **CRITICAL — record patterns to mirror**: Instruct the architect: "For each new component, name the existing **Reference implementation** it must mirror (from the affected-files inventory) and state the local approach to follow — data access mechanism (stored procedure / repository / query helper, never inline SQL or direct DbContext when siblings avoid it), read-query conventions, structure, naming, error handling. Design decisions must conform to how the project already does the same kind of thing; do not introduce a new pattern when a sibling pattern exists."
    - **CRITICAL — specs are constraints**: Explicitly instruct the architect: "The spec THEN clauses are acceptance criteria that your design MUST satisfy. If you believe a spec THEN clause should be different, do NOT silently override it. Instead, mark it as `CONFLICT:` in your design.md with your reasoning, so the orchestrator can resolve it with the user."
+   - **CRITICAL — external facts → NEEDS, never guess**: Per `skills/agent-guidelines/SKILL.md` (*Signaling Unknowns*), instruct the architect: "If a design decision depends on a fact not present in the context provided to you — a runtime/production value, a contract owned by another repo/service, live infrastructure state — do NOT guess or quietly pick a default. Emit a `NEEDS:` line and stop that decision; the orchestrator will resolve it and resume you." (`UNKNOWN` = unverifiable in-repo name; `NEEDS` = external fact; `CONFLICT` = spec disagreement — three distinct signals.)
    - **Do NOT tell the architect to re-scan the codebase.** Explicitly instruct: "All context is provided below. Do NOT re-read files or re-scan the codebase. Go straight to writing design.md."
    - Instruct the architect to write `design.md` directly to `feature-spec/changes/<name>/design.md`
 
@@ -274,6 +277,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - Each decision with justification and rejected alternatives
    - Risks with mitigation strategies
    - **CONFLICT markers** (if any) — where the architect disagrees with a spec THEN clause
+   - **NEEDS markers** (if any) — where the architect is blocked on an external fact it could not obtain from the provided context
 
    **Why `mode: "bypassPermissions"`**: The architect agent writes ONLY to `feature-spec/changes/<name>/design.md`. Without this mode, the agent blocks on Write permission approval — the user cannot see or approve the permission prompt from a background subprocess, causing the agent to hang for minutes (often 5-10 min per Write). This is the #1 cause of slow `/propose` execution.
 
@@ -282,6 +286,8 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    **WAIT for the architect agent to complete before proceeding.** Do NOT write design.md yourself — the architect agent has a specialized system prompt with design checklists, trade-off frameworks, and structured analysis that you do not have access to. Its output will be more thorough than what you can produce. If the agent is taking long, check its progress — do NOT override it by writing the file yourself.
 
    Once the architect agent completes, read the generated `design.md`:
+
+   **d0. Resolve NEEDS markers (resume the architect)**: If the architect emitted any `NEEDS:` lines (or wrote `NEEDS` markers into design.md), it is paused on an external fact, not finished. Resolve each using whatever tools the environment provides (connected MCP servers, lookup tools, project-knowledge skills, or the user), then **resume the SAME architect with `SendMessage`** — its context is intact, so do NOT re-dispatch a fresh architect. Wait for it to finish design.md with the facts incorporated. If a resolved fact invalidates a spec assumption, note it for d2. Only proceed once no NEEDS remain. (If a NEEDS is genuinely unresolvable, surface it to the user before continuing.)
 
    **d1. Resolve CONFLICT markers**: If the architect marked any `CONFLICT:` items:
    - Collect ALL conflicts into one structured **AskUserQuestion** message:

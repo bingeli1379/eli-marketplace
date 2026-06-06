@@ -28,26 +28,6 @@ Multi-agent dispatch (`/apply`) needs the experimental Agent Teams flag:
 }
 ```
 
-### 3. Companion plugins (optional, recommended for B2C work)
-
-sdd's agents work standalone, but on B2C projects these two make them sharper — the agents auto-consult them at dispatch time:
-
-```
-/plugin install b2c-knowledge@titansoft-marketplace   # per-project architecture + cross-project business flows
-/plugin install devtools@titansoft-marketplace         # MCP lookups: global settings, CustomerId/LoginName/Username
-```
-
-### 4. Tool routing in CLAUDE.md (optional)
-
-Adding a routing block to `~/.claude/CLAUDE.md` (or a project's `CLAUDE.md`) tells Claude *when* to reach for each — most useful for `devtools`, since MCP tools have no auto-trigger of their own:
-
-```markdown
-# B2C tool routing
-- **Dev / debug / review / plan any B2C project or flow** → load `b2c-knowledge` (authoritative project + domain inventory). Quote its facts as written; never infer from training data.
-- **A global-setting value, or CustomerId ↔ LoginName ↔ Username** → `devtools` MCP (`get_global_settings` / `get_user_info`). Never guess a value or hand-search the DB.
-- **Multi-step / cross-project build** → `sdd` (`/propose` → `/apply`). Its sub-agents auto-consult `b2c-knowledge` per repo; name it explicitly on `/apply` to make it certain.
-```
-
 ## Workflow
 
 ```

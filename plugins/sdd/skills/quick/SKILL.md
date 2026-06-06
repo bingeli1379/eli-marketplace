@@ -62,6 +62,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - Which layers are affected? (Frontend, Backend, Database, DevOps, etc.)
    - What are the key design decisions? (API shape, data model changes, UI approach)
    - What are the acceptance criteria? (When X happens, then Y should be the result)
+   - **External facts → look up, don't guess:** if a decision hinges on a runtime/production value (feature flag, rollout rate, limit), a cross-repo/service contract, or live infra state not in the repo, check whether your available tools can resolve it (a connected MCP server, a query/lookup tool, a project-knowledge skill) and **use it before assuming a value** — lookup tools have no auto-trigger, so reach for them deliberately. What you genuinely can't resolve becomes a `NEEDS` a dispatched agent raises later.
 
    **b. Task breakdown:**
    - Break the task into discrete subtasks
@@ -213,7 +214,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - Do NOT batch multiple tasks into one commit — one commit per task
    - After the commit, report back: "DONE: <task-number> <task-description>"
    - Only add code comments for business logic that is not obvious from the code
-   - Do NOT ask questions — if something is ambiguous, make a reasonable decision and flag it
+   - **Signaling a genuine stop (`NEEDS` / `CONFLICT` / `BLOCKED`)** — follow the **Signaling Unknowns** rules in `skills/agent-guidelines/SKILL.md`. In short: do NOT guess an external fact you can't obtain from the repo + this context — commit what is safely done, emit `NEEDS: <question + why blocked + options>`, stop that task; the orchestrator resolves it and resumes you with your context intact. Aside from those signals, do NOT ask questions — if merely ambiguous, make a reasonable decision and flag it.
    - **Language**: All output and reports MUST be in Traditional Chinese. Code and code comments MUST be in English.
    ```
 
@@ -222,6 +223,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - Give each agent a descriptive `name`
    - Dispatch agents that can run in parallel **simultaneously**
    - You will be **automatically notified** when each background agent completes — do NOT poll
+   - **Handling a NEEDS return**: if an agent's report contains a `NEEDS:` line, treat it as *paused awaiting an external fact*, not done. Resolve it with whatever tools/knowledge you (the orchestrator) have, then **resume the SAME agent with `SendMessage`** (context intact — do NOT re-dispatch). Because agents run in the background you can service several concurrently. `CONFLICT:` → resolve with the user; `BLOCKED:` → re-scope or re-dispatch with corrected context. See `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns* for the vocabulary.
    - **Enforce analytical depth for reviewer agents only**: For `review-engineer`, `security-engineer`, and `qa-engineer` dispatches, the dispatched prompt MUST include an "Analytical depth requirement" section instructing the agent to:
      1. **Enumerate coverage BEFORE findings** — list the categories/dimensions examined:
         - `review-engineer` → architecture compliance, correctness, performance, readability, test quality

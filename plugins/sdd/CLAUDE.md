@@ -84,6 +84,7 @@ Skills in `skills/` provide domain knowledge that agents can reference. See `ski
 - **DDD (Domain-Driven Design)**: Domain model (aggregates, value objects, events) defined in `design.md` during propose
 - **TDD (Test-Driven Development)**: Frontend and backend agents write unit tests FIRST (Red → Green → Refactor)
 - **Contract-First**: API contracts and shared types defined in `design.md` enable parallel frontend/backend development
+- **No-guess signaling**: agents never invent facts they don't have. The `NEEDS` / `CONFLICT` / `BLOCKED` vocabulary (defined in `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*) lets an agent stop on an unobtainable external fact, a spec disagreement, or a genuine blocker; the orchestrator resolves `NEEDS` with whatever tools the environment provides and resumes the same agent with its context intact. sdd defines the protocol, not the lookup tools — keeping the plugin environment-agnostic.
 
 ## Implementation Pipeline
 

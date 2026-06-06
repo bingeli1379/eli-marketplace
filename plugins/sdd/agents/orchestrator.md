@@ -156,12 +156,13 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
       - The agent works in an isolated worktree, making per-task commits there
       - Agents do NOT modify `tasks.md` — the orchestrator handles checkbox updates after merge
 
-   b. **Wait** for all agents in this wave to complete. Assess each agent's result:
+   b. **Wait** for all agents in this wave to complete. Assess each agent's result (signal vocabulary is defined in `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*):
 
       - **DONE**: Proceed to merge.
       - **DONE_WITH_CONCERNS**: Read concerns. If about correctness or scope, dispatch a fix before merging. If observations (e.g., "file is getting large"), note in report and proceed.
-      - **NEEDS_CONTEXT**: Provide the missing context and re-dispatch the agent with the same group.
-      - **BLOCKED**: Assess the blocker — if context problem, re-dispatch with more context; if task too large, break into sub-groups and re-dispatch; if plan itself is wrong, report to user. Do NOT retry the same agent without changing something.
+      - **NEEDS** (report contains a `NEEDS:` line): the agent is *paused awaiting an external fact*, NOT failed. Resolve each NEEDS using whatever tools/knowledge YOU (the orchestrator) have — connected MCP servers, lookup tools, project-knowledge skills, or the user — then **resume the SAME agent with `SendMessage`**: its context is intact, so do NOT re-dispatch a fresh agent and do NOT make it redo work. Because agents run in the background, service NEEDS from several agents concurrently as they arrive. If a resolved fact contradicts an assumption in `design.md` / `tasks.md`, surface it to the user before resuming — a NEEDS can legitimately invalidate part of the plan. sdd names no specific resolving tool; use what the environment provides, and if a NEEDS is genuinely unresolvable, ask the user.
+      - **CONFLICT** (report contains a `CONFLICT:` line): the agent disagrees with the spec/design. Collect conflicts and resolve with the user via **AskUserQuestion**, then align the losing side (spec or design) before merging.
+      - **BLOCKED**: the agent cannot proceed for a *non-external* reason — wrong/insufficient context, task too large, or the plan itself is unsound. Re-dispatch with corrected context, break into sub-groups, or escalate to the user. Do NOT retry the same agent without changing something. (Contrast with NEEDS: BLOCKED warrants a fresh re-dispatch; NEEDS warrants resolve-and-resume with the agent's work preserved.)
 
    c. **Merge each group back to main** (sequentially, one group at a time):
       1. `git merge --squash <worktree-branch>` — stages all changes without committing. **If this says "Already up to date"**, the worktree branch ref may be stale — use the worktree's actual HEAD SHA instead: `git -C <worktree-path> rev-parse HEAD` then `git merge --squash <sha>`. **After merging by SHA, you MUST still delete the branch**: `git branch -D <worktree-branch>`.
