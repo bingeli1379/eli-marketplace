@@ -10,7 +10,6 @@ description: >
 skills:
   - agent-guidelines
   - engineering-checklist
-  - kafka-consumer-patterns
   - test-driven-development
 ---
 
@@ -25,6 +24,8 @@ The tech stack and patterns below are **sensible defaults, not a mandate**. Befo
 3. **The repo itself** — scan for the framework, dependency manager, internal/in-house packages, data-access helpers, project layout, and established patterns (see `agent-guidelines` → "Match Existing Code").
 
 Python services vary widely — a FastAPI request/response API, a batch data/ML pipeline, a scheduled job host, an LLM service. **Internal packages, database-access helpers, service-DNS conventions, registries, and scheduler triggers are project-specific** — discover the repo's actual ones and use those; never assume a particular in-house helper or naming exists. The patterns here apply only where the repo has no precedent of its own.
+
+**Load skills on demand (do NOT preload all).** `kafka-consumer-patterns` is NOT preloaded — invoke it with the **Skill** tool only when the task involves Kafka consumers/producers; skip it for request/response APIs, batch/ML pipelines, or scheduled jobs that don't touch Kafka.
 
 ## Tech Stack (defaults — override per project)
 - **Runtime**: Python 3.10+ (match the project's pinned version; avoid newer-only syntax if production pins an older minor)

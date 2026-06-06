@@ -26,6 +26,8 @@ The workflow auto-detects, at the start of `/propose`, `/apply`, `/quick`, and `
 | `/propose <description>` | Generate spec artifacts (proposal, design, specs, tasks) for a new change |
 | `/validate <change-name>` | Validate spec artifacts against structural and content rules |
 | `/quick <description>` | Quick mode — orchestrator analyzes inline and dispatches agents, no spec files |
+| `/review <target> [lens]` | Read-only standalone review by lens (quality/security/performance/e2e/all); auto-detects lens; no edits, no commits |
+| `/role [role]` | Become one specialist agent as an interactive persona on the session model (not the agent's sonnet/low); menu if no role given |
 | `/apply <change-name>` | Implement tasks using agent team dispatch (no questions asked) |
 | `/apply-all [names...]` | Batch apply multiple changes sequentially, unattended |
 | `/complete <change-name>` | Complete change: confirm tasks done, delete artifacts, commit cleanup |
@@ -64,7 +66,7 @@ Agent role definitions live in `agents/`. The orchestrator reads these at dispat
 | `electron-engineer` | Electron — main process, IPC, preload, native OS, packaging |
 | `database-engineer` | Database — schema design, migration strategy, query optimization, indexing |
 | `devops-engineer` | DevOps — Docker, Kubernetes, CI/CD (GitLab CI / GitHub Actions), infrastructure |
-| `performance-engineer` | Performance — Core Web Vitals, bundle analysis, API profiling, caching |
+| `performance-engineer` | Performance — cross-stack (FE Core Web Vitals/bundle, BE API/SP/query), static data-scale capacity review |
 | `qa-engineer` | QA — Playwright E2E acceptance testing, spec scenario verification |
 | `technical-writer` | Documentation — API docs, changelogs, README, ADRs |
 
@@ -73,6 +75,8 @@ Agent role definitions live in `agents/`. The orchestrator reads these at dispat
 Skills in `skills/` provide domain knowledge that agents can reference. See `skills/SOURCES.yaml` for the full list and upstream sources.
 
 **When adding a new skill, you must also add its entry to `skills/SOURCES.yaml`** so that `scripts/update-skills.sh` can keep it in sync with upstream. Skills with `repo: original` are maintained in this plugin and are not pulled from upstream.
+
+**Skill loading is per-agent and eager.** A subagent's `skills:` frontmatter is injected in full at spawn (not progressive), so each declared skill costs its SKILL.md body on every dispatch (`references/` stay on-demand). To keep dispatches lean, agents declare only **cross-task-universal** skills eagerly and invoke **stack-/datastore-/infra-specific** skills **on demand via the Skill tool** after their Stack Detection step (see database/performance/dotnet/python engineers' "Load skills on demand" sections).
 
 ## Development Methodology
 
@@ -86,7 +90,8 @@ Skills in `skills/` provide domain knowledge that agents can reference. See `ski
 ```
 Phase 1 (wave-based): Groups dispatched in dependency waves, each in isolated worktree
   → After each wave: merge-squash each group into one clean commit
-Phase 2 (parallel): Code Review + Security Review + QA (all 3 simultaneous) → parallel fix agents → squash
+Phase 2 (parallel): Code Review + Security Review + QA (+ performance-engineer if the
+  diff touches an API/DB surface — advisory, report-only) → parallel fix agents → squash
 Phase 3: Documentation
 ```
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.3.0] - 2026-06-06
+
+### Added
+- `/review` — review existing code, a diff, an API, or a stored procedure on its own, by lens (quality / security / performance / end-to-end); the right reviewer is chosen from what you point it at, and it only reports findings — it never edits or commits
+- `/role` — turn the conversation into any specialist persona (architect, an engineer, a reviewer, …) and work with it interactively, running on your session's model instead of the agent's lighter dispatch tier
+- Performance review now spans the whole stack — backend APIs, SQL / stored procedures, and Python data pipelines, not just the frontend — and adds a data-scale capacity check ("will this pull of N rows hold up, and how much can it pull?") that runs automatically when a change touches an API or database
+
+### Changed
+- Specialist agents now load only the skills a task actually needs (the rest load on demand), so each dispatch runs leaner and cheaper
+
 ## [2.2.0] - 2026-06-05
 
 ### Added

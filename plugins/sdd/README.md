@@ -4,6 +4,50 @@ Claude Code plugin — spec-driven multi-agent development team for Vue/Nuxt + A
 
 Combines **SDD** (Spec-Driven Development), **DDD** (Domain-Driven Design), and **TDD** (Test-Driven Development) into an automated pipeline.
 
+## Installation
+
+### 1. Install sdd (required)
+
+```
+/plugin marketplace add git@git.coreop.net:titansoft/ai/agent-marketplace.git
+/plugin install sdd@titansoft-marketplace
+```
+
+> Already added the marketplace? Just run the `install` line. To pull updates later: `/plugin marketplace update titansoft-marketplace`.
+
+### 2. Enable Agent Teams (required)
+
+Multi-agent dispatch (`/apply`) needs the experimental Agent Teams flag:
+
+```jsonc
+// ~/.claude/settings.json
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  }
+}
+```
+
+### 3. Companion plugins (optional, recommended for B2C work)
+
+sdd's agents work standalone, but on B2C projects these two make them sharper — the agents auto-consult them at dispatch time:
+
+```
+/plugin install b2c-knowledge@titansoft-marketplace   # per-project architecture + cross-project business flows
+/plugin install devtools@titansoft-marketplace         # MCP lookups: global settings, CustomerId/LoginName/Username
+```
+
+### 4. Tool routing in CLAUDE.md (optional)
+
+Adding a routing block to `~/.claude/CLAUDE.md` (or a project's `CLAUDE.md`) tells Claude *when* to reach for each — most useful for `devtools`, since MCP tools have no auto-trigger of their own:
+
+```markdown
+# B2C tool routing
+- **Dev / debug / review / plan any B2C project or flow** → load `b2c-knowledge` (authoritative project + domain inventory). Quote its facts as written; never infer from training data.
+- **A global-setting value, or CustomerId ↔ LoginName ↔ Username** → `devtools` MCP (`get_global_settings` / `get_user_info`). Never guess a value or hand-search the DB.
+- **Multi-step / cross-project build** → `sdd` (`/propose` → `/apply`). Its sub-agents auto-consult `b2c-knowledge` per repo; name it explicitly on `/apply` to make it certain.
+```
+
 ## Workflow
 
 ```
@@ -14,19 +58,6 @@ Combines **SDD** (Spec-Driven Development), **DDD** (Domain-Driven Design), and 
 2. **Propose** — clarify requirements and define feature boundaries, dispatch architect for design, generate specs (SDD), domain model (DDD), API contract, tasks (TDD structure). Auto-validates and fixes until all checks pass.
 3. **Apply** — launch named orchestrator agent to dispatch agent team in parallel, review, and verify. User can interact with orchestrator anytime.
 4. **Complete** — confirm tasks done, delete change artifacts, commit cleanup
-
-## Prerequisites
-
-Enable Agent Teams (required for multi-agent dispatch):
-
-```jsonc
-// ~/.claude/settings.json
-{
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  }
-}
-```
 
 ## Usage
 
@@ -90,6 +121,14 @@ Runs `/apply` on each change sequentially. Confirm execution order once, then un
 ```
 
 Confirms the change's tasks are done, deletes the change artifacts, and commits the cleanup. `feature-spec/config.yaml` persists across changes. `/complete` does not extract knowledge or maintain docs — keeping project context current is the project's own responsibility (use your own docs and whatever skills you prefer).
+
+## Standalone helpers
+
+Beyond the full `/init → /propose → /apply → /complete` pipeline, three commands work on their own:
+
+- **`/quick <task>`** — inline analysis + agent-team dispatch with the full review pipeline, but no spec files. For small-to-medium tasks where the spec ceremony is overkill.
+- **`/review <target> [lens]`** — read-only review of existing code, a diff, an API, or a stored procedure by lens (`quality` / `security` / `performance` / `e2e` / `all`); the lens is auto-detected from the target when omitted. No edits, no commits — findings only; fixes are delegated on request.
+- **`/role [role]`** — become one specialist agent as an interactive persona (architect, the engineers, the reviewers, …), running on your current session's model/effort rather than the agent's dispatch tier. Type a role name or pick from the listed set.
 
 ## Agents
 

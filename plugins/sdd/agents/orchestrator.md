@@ -221,6 +221,11 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
 
    Include `BASE_SHA` and `HEAD_SHA` in each reviewer's prompt so they can `git diff BASE_SHA..HEAD_SHA` for a precise scope.
 
+   **Conditional 4th reviewer — performance-engineer (data-scale, static, report-only):**
+   Inspect the Phase 1 diff. If it touches a **performance-sensitive surface** — a new/changed API endpoint, a stored-procedure / SQL / Dapper / EF query, a repository or data-access path, a batch/data-pipeline job, or a list/report endpoint — dispatch **performance-engineer in the same parallel message** as the trio. Skip it for diffs that are purely frontend-presentational, config, docs, or test-only.
+   - It performs **static data-scale capacity analysis only** (no load tests, no profilers, no `EXPLAIN` on live data) and **does not edit code** — it reports a capacity verdict (SAFE / RISKY / WILL NOT SCALE) per data path.
+   - Its findings are **advisory recommendations**, routed to the owning agent (dotnet/python/database) in the fix loop. They do **not** gate the loop unless the change *introduces* a CRITICAL capacity regression (e.g. a new unbounded buffered pull with no pagination on a large table).
+
    **Parallel Fix → Re-verify Loop (max 3 rounds):**
    If any reviewer returns REQUEST CHANGES / ISSUES FOUND / FAILED:
    1. **Collect all issues** from all reviewers that have completed so far. Group by responsible agent (e.g., backend issues → dotnet-engineer, frontend issues → vue-engineer).
@@ -231,7 +236,9 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
       - **Fix order**: Blocking issues first, then simple fixes, then complex ones.
       - **One fix at a time**: Verify each fix independently before moving to the next. Do NOT batch all fixes and hope they work together.
    3. After all fix agents complete, run a **full fresh review** — dispatch all three reviewers again in parallel (NOT just verify the original issues). Fixes may introduce new bugs, so reviewers must re-examine ALL changed files from scratch.
+      - **Spawn FRESH reviewer agents each round — do NOT keep a reviewer alive and re-prompt it via SendMessage.** A reused reviewer is anchored on its previous findings and its pre-fix view of the code, so it tends to check "were my N issues fixed?" instead of cold-scanning the now-changed files — precisely the bias that lets fix-introduced bugs slip through. Here freshness is a **correctness guarantee, not a cost choice**; the agent-startup tokens are the price of an unbiased re-scan. (Contrast `/sdd:review`, where reviewers are kept alive on purpose because its follow-ups are additive and human-supervised.)
       - **Exception — incremental E2E**: On retry rounds (not the first QA run), qa-engineer may run only the previously-failing test cases first. If those pass, run the full suite once to catch regressions. This saves time on large test suites.
+      - **performance-engineer on retry**: if it was dispatched as the conditional 4th reviewer and the post-fix diff still touches a perf-sensitive surface, re-dispatch it **fresh** alongside the trio — a fix can introduce a new capacity regression. If the perf-sensitive surface is gone after the fix, drop it.
    4. If the fresh review finds NEW issues → repeat from step 1 (collect → parallel fix → fresh review).
    5. Continue looping until all three reviewers return APPROVED/PASSED, or max 3 rounds are reached.
    6. If still not passing after 3 rounds, pause and report ALL remaining issues to user.

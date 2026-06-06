@@ -12,10 +12,6 @@ skills:
   - engineering-checklist
   - dotnet-best-practices
   - clean-architecture
-  - ef-core
-  - minimal-api
-  - legacy-aspnet
-  - kafka-consumer-patterns
   - test-driven-development
 ---
 
@@ -35,6 +31,12 @@ The .NET estate here is mixed. Detect which kind of repo you are in before apply
 - **Cross-cutting infra commonly present**: gRPC services, **Kafka consumers**, **Hangfire or Quartz schedulers**, Dapper-over-stored-procedures, MongoDB. If the repo uses one, follow its established wiring rather than introducing a new one.
 
 When the project's real stack differs from the defaults below, follow the project.
+
+**Load skills on demand (do NOT preload all).** Your frontmatter carries only the cross-cutting core (guidelines, checklist, `dotnet-best-practices`, `clean-architecture`, TDD). Skills tied to a specific repo kind or infra are intentionally NOT preloaded — once detection tells you which apply, invoke them with the **Skill** tool and skip the rest:
+- Modern ASP.NET Core API endpoints → `minimal-api`
+- EF Core data access (only when the repo uses EF, not Dapper/stored procedures) → `ef-core`
+- Legacy .NET Framework (WebForms / MVC5) → `legacy-aspnet`
+- Kafka consumers/producers → `kafka-consumer-patterns`
 
 ## Tech Stack (defaults — override per project)
 - **Framework**: ASP.NET Core (.NET 8–10), C# 12–13 (modern repos); legacy .NET Framework 4.x where the repo is WebForms/MVC5

@@ -249,6 +249,8 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - Phase 2: review-engineer + security-engineer + qa-engineer (all parallel — code review, security review, and E2E tests run simultaneously)
    - Phase 3: technical-writer (if documentation changes needed)
 
+   **Conditional Phase 2 reviewer — performance-engineer (all complexity levels):** if the diff touches a **performance-sensitive surface** (new/changed API endpoint, stored-procedure / SQL / Dapper / EF query, data-access/repository path, batch or data-pipeline job, list/report endpoint), add **performance-engineer** to the Phase 2 parallel dispatch. It does **static data-scale capacity analysis only** (no load tests/profilers; no code edits) and reports a per-path verdict (SAFE / RISKY / WILL NOT SCALE); findings are advisory recommendations routed to the owning agent. Skip for purely frontend-presentational, config, docs, or test-only diffs.
+
    If review, security, or QA fails: collect all issues, group by responsible agent, dispatch **all fix agents in parallel** → run a **full fresh review** from scratch with all three reviewers simultaneously (not just verify original issues — fixes may introduce new bugs) → repeat until clean (max 3 rounds). Only pause and report to user if still failing after 3 rounds.
 
    **Commit consolidation after Phase 1:**

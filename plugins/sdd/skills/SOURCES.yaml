@@ -108,6 +108,14 @@ dotnet-nunit:
 legacy-aspnet:
   repo: https://github.com/managedcode/dotnet-skills
   path: catalog/Platform/Legacy-ASP.NET/skills/legacy-aspnet
+analyzing-dotnet-performance:
+  repo: https://github.com/managedcode/dotnet-skills
+  path: catalog/Tools/Official-DotNet-Diagnostics/skills/analyzing-dotnet-performance
+
+# Python (from wshobson/agents — python-development plugin)
+python-performance-optimization:
+  repo: https://github.com/wshobson/agents
+  path: plugins/python-development/skills/python-performance-optimization
 
 # Database
 sql-expert:
@@ -116,6 +124,10 @@ sql-expert:
 sql-query-optimization:
   repo: https://github.com/secondsky/claude-skills
   path: plugins/sql-query-optimization/skills/sql-query-optimization
+# sql-optimization is SQL Server-aware (B2C primary); sql-query-optimization above is PG/MySQL-focused
+sql-optimization:
+  repo: https://github.com/github/awesome-copilot
+  path: skills/sql-optimization
 database-schema-design:
   repo: https://github.com/secondsky/claude-skills
   path: plugins/database-schema-design/skills/database-schema-design
@@ -208,6 +220,10 @@ apply:
 complete:
   repo: original
 quick:
+  repo: original
+review:
+  repo: original
+role:
   repo: original
 
 # Agent Guidelines (sdd original — inspired by forrestchang/andrej-karpathy-skills + shared agent protocols)
