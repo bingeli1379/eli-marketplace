@@ -17,7 +17,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
 0. **Detect repo topology (MANDATORY first)**
 
-   Load `plugins/sdd/references/repo-topology.md` and run its Step 0 detection. Announce the mode. In **multi-repo** mode: the scan covers every child repo the task touches; per-repo grounding is read per touched repo (Step 2); each dispatched agent is bound to one child repo and does its work + commits inside that repo (`git -C <repo> ...`); cross-repo work is ordered contract-first.
+   Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode. In **multi-repo** mode: the scan covers every child repo the task touches; per-repo grounding is read per touched repo (Step 2); each dispatched agent is bound to one child repo and does its work + commits inside that repo (`git -C <repo> ...`); cross-repo work is ordered contract-first.
 
 1. **Get the task description**
 
@@ -42,7 +42,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
 4. **Pre-lint and commit (clean slate)**
 
-   First, check `company-conventions.md` (in the plugin root) for pre-lint skip rules. If the current project matches a skip condition (e.g., .NET project), skip this entire step silently.
+   First, check `${CLAUDE_PLUGIN_ROOT}/company-conventions.md` for pre-lint skip rules. If the current project matches a skip condition (e.g., .NET project), skip this entire step silently.
 
    Otherwise, if `lint_commands` are configured in `feature-spec/config.yaml`:
    1. Run all lint commands to fix pre-existing formatting issues

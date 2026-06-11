@@ -19,7 +19,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
 0. **Detect repo topology (MANDATORY first)**
 
-   Load `plugins/sdd/references/repo-topology.md` and run its Step 0 detection. Announce the mode and, in multi-repo, list the child repos. Every git operation below follows the per-mode rules in that file:
+   Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode and, in multi-repo, list the child repos. Every git operation below follows the per-mode rules in that file:
    - **single-repo** — all git ops run against the cwd repo. The steps below are written for this mode and are unchanged.
    - **multi-repo** — bind each task group to its target child repo by file path (a group never spans repos). Run the worktree preflight, worktree isolation, and commits **inside that child repo** (`git -C <repo> ...`). `feature-spec/` stays at cwd.
    - **no-git** — warn that worktree isolation and commits cannot run; implement directly and let the user commit.
@@ -60,7 +60,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
 3. **Pre-lint and commit (clean slate — runs in background)**
 
-   First, check `company-conventions.md` (in the plugin root) for pre-lint skip rules. If the current project matches a skip condition (e.g., .NET project), skip this entire step silently.
+   First, check `${CLAUDE_PLUGIN_ROOT}/company-conventions.md` for pre-lint skip rules. If the current project matches a skip condition (e.g., .NET project), skip this entire step silently.
 
    Otherwise, if `lint_commands` are configured in `feature-spec/config.yaml`:
    1. Run all lint commands **in the background** (`run_in_background: true`) to fix any pre-existing formatting issues
@@ -83,9 +83,9 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    Also read:
    - `feature-spec/config.yaml` — `lint_commands` plus the `architecture` block (pattern, layers, entry_points, hard_rules). Forwarded to every worker agent in Step 7 so they make changes in the right place and respect `hard_rules`. This is the only project context — do not read the project's own docs (CLAUDE.md, README, etc.).
 
-   `config.yaml` is optional — skip silently if missing (project may not have run `/init`).
+   `config.yaml` is optional — skip silently if missing (project may not have run `/setup`).
 
-   **Staleness check (cheap, non-blocking)**: when config.yaml is present, test that its `architecture.layers` / `entry_points` paths still resolve on disk. If some do not, warn once (`⚠ config.yaml may be stale — N paths missing (<list>); consider re-running /init`) and proceed with what resolves. Never auto-edit config or block.
+   **Staleness check (cheap, non-blocking)**: when config.yaml is present, test that its `architecture.layers` / `entry_points` paths still resolve on disk. If some do not, warn once (`⚠ config.yaml may be stale — N paths missing (<list>); consider re-running /setup`) and proceed with what resolves. Never auto-edit config or block.
 
    **If any required file is missing** (proposal, design, tasks, or specs):
    - Show which files are missing

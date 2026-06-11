@@ -1,6 +1,6 @@
 # Detection Rules
 
-Auto-detection logic for Phase 1 of `/init`. Load this file when SCAN reaches the auto-detect stage. Everything here feeds `feature-spec/config.yaml` — nothing else is generated.
+Auto-detection logic for Phase 1 of `/setup`. Load this file when SCAN reaches the auto-detect stage. Everything here feeds `feature-spec/config.yaml` — nothing else is generated.
 
 ---
 
@@ -28,7 +28,7 @@ Read these files if they exist and synthesize a **one-line** `tech_stack` string
 - Check config files: `eslint.config.*`, `.eslintrc*`, `.prettierrc*`, `.stylelintrc*`
 - Check `.csproj` / `.sln` → `dotnet format`
 - Use the project's package manager based on lock file
-- **Before generating**, check `company-conventions.md` (in the plugin root) for pre-lint skip rules. Skip matching tooling.
+- **Before generating**, check `${CLAUDE_PLUGIN_ROOT}/company-conventions.md` for pre-lint skip rules. Skip matching tooling.
 
 **Verification commands** — use the **exact script name** from `package.json`:
 - `type-check` / `typecheck` / `tsc`

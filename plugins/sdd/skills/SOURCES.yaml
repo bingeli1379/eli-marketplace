@@ -209,7 +209,7 @@ threejs-tresjs:
   path: skills/threejs-tresjs
 
 # Workflow core (sdd original — not updatable)
-init:
+setup:
   repo: original
 propose:
   repo: original

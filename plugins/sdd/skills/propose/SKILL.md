@@ -23,7 +23,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
 0. **Detect repo topology (MANDATORY first)**
 
-   Load `plugins/sdd/references/repo-topology.md` and run its Step 0 detection. Announce the mode.
+   Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode.
    - **single-repo** — scan and plan against the one repo (the steps below, unchanged).
    - **multi-repo** — the change may span several child repos. The Step 5 codebase scan covers every repo the change plausibly touches; per-repo grounding is read per touched repo (Step 4); tasks are grouped so each group lands in exactly one repo (Step 7/design), ordered contract-first across repos. `feature-spec/` (the change artifacts) lives at the umbrella cwd.
 
@@ -38,7 +38,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
 2. **Ensure the feature-spec directory exists**
 
-   Create `feature-spec/specs/` and `feature-spec/changes/` at cwd if missing. Do **not** auto-run `/init` or generate `config.yaml` — config is optional. If it already exists it is read in Step 4; if not, Step 5's codebase scan is the grounding.
+   Create `feature-spec/specs/` and `feature-spec/changes/` at cwd if missing. Do **not** auto-run `/setup` or generate `config.yaml` — config is optional. If it already exists it is read in Step 4; if not, Step 5's codebase scan is the grounding.
 
 3. **Create the change directory**
 
@@ -53,7 +53,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - **single-repo**: read `feature-spec/config.yaml` — the grounding source. Use its `architecture` block (pattern, layers, entry_points) to ground the Step 5 codebase scan (start from the paths it points at), and treat `hard_rules` as non-negotiable constraints for the Step 6 boundary definition and design.md. If it is missing, skip silently and work from the codebase scan alone.
    - **multi-repo**: for **each child repo the change touches**, read `<repo>/feature-spec/config.yaml` if it exists (its `architecture` + `hard_rules` ground work in that repo); if a repo has none, scan that repo's code. Per the topology rules, never generate config here.
    - Do not read the project's own prose docs (CLAUDE.md, README, etc.) — config.yaml is the only curated grounding this workflow trusts.
-   - **Staleness check (cheap, non-blocking)**: for each config read, test that the `architecture.layers` and `entry_points` paths still resolve on disk. If one or more do not, warn once — `⚠ config.yaml references N paths that no longer exist (<list>); it may be stale — consider re-running /init or editing it` — then proceed using what still resolves. Never auto-edit config or block on this.
+   - **Staleness check (cheap, non-blocking)**: for each config read, test that the `architecture.layers` and `entry_points` paths still resolve on disk. If one or more do not, warn once — `⚠ config.yaml references N paths that no longer exist (<list>); it may be stale — consider re-running /setup or editing it` — then proceed using what still resolves. Never auto-edit config or block on this.
    - Read `feature-spec/specs/` for existing main specs (to understand what capabilities already exist)
    - These inform artifact generation but are NOT copied into artifact files
 
@@ -446,6 +446,6 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 - Ask all clarification questions in one structured message, not one at a time
 - Verify each artifact file exists after writing before proceeding to next
 - `config.yaml` context and rules are constraints for YOU, not content for artifact files
-- `config.yaml` is the first-class input for design.md generation: forward the full `config.yaml` verbatim to the architect agent in Step 7c. `hard_rules` are non-negotiable. Do not read or forward the project's own docs — config.yaml is the only project context. If `config.yaml` is missing, skip silently — the project may not have run `/init`.
+- `config.yaml` is the first-class input for design.md generation: forward the full `config.yaml` verbatim to the architect agent in Step 7c. `hard_rules` are non-negotiable. Do not read or forward the project's own docs — config.yaml is the only project context. If `config.yaml` is missing, skip silently — the project may not have run `/setup`.
 - Use Traditional Chinese for artifact content (matching user's communication language)
 - Code examples and technical terms remain in English

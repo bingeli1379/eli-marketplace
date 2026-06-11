@@ -25,7 +25,7 @@ Standalone review entry point. Unlike `/quick` (a **change** pipeline that dispa
 
 0. **Detect repo topology (MANDATORY first)**
 
-   Load `plugins/sdd/references/repo-topology.md` and run its Step 0 detection. Announce the mode. In **multi-repo** mode, resolve the target to the child repo(s) that contain it; each review agent is bound to the repo holding its target (`git -C <repo> ...`).
+   Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode. In **multi-repo** mode, resolve the target to the child repo(s) that contain it; each review agent is bound to the repo holding its target (`git -C <repo> ...`).
 
 1. **Resolve the target**
 

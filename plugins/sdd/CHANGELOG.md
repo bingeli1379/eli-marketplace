@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.5.0] - 2026-06-11
+
+### Changed
+- **Breaking:** `/sdd:init` renamed to `/sdd:setup` to stop colliding with the native `/init` command in the slash-command picker. Update any saved command references or notes — the behavior is unchanged (it still generates `feature-spec/config.yaml`)
+
+### Fixed
+- Shared plugin-root references (`repo-topology.md`, `company-conventions.md`) are now addressed via `${CLAUDE_PLUGIN_ROOT}/...` so they resolve in the installed location. They previously used a wrong/relative path (`plugins/sdd/...` or bare `(in the plugin root)`) that did not resolve at runtime, which could break multi-repo topology detection and the pre-lint skip rules
+
 ## [2.4.0] - 2026-06-06
 
 ### Added

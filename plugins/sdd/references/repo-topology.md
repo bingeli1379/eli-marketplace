@@ -40,9 +40,9 @@ Always at **cwd**:
 `config.yaml` is always a **per-project, optional** artifact living inside a repo at `<repo>/feature-spec/config.yaml`. There is no multi-repo config.
 
 - single-repo → read `feature-spec/config.yaml` if it exists; else scan the code.
-- multi-repo → for **each repo the change touches**, read `<repo>/feature-spec/config.yaml` if it exists; else scan that repo's code. Never generate config for a repo here — only `/init`, run inside a repo, creates one.
+- multi-repo → for **each repo the change touches**, read `<repo>/feature-spec/config.yaml` if it exists; else scan that repo's code. Never generate config for a repo here — only `/setup`, run inside a repo, creates one.
 
-What config uniquely adds over a code scan is the **vetted `hard_rules`** (confirmed by the user during `/init` SCAN). Without config, those are unavailable for that repo; everything else (stack, layers, entry points) is recoverable by scanning.
+What config uniquely adds over a code scan is the **vetted `hard_rules`** (confirmed by the user during `/setup` SCAN). Without config, those are unavailable for that repo; everything else (stack, layers, entry points) is recoverable by scanning.
 
 ---
 

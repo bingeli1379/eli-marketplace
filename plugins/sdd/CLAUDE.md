@@ -5,7 +5,7 @@ Spec-driven multi-agent development team plugin for Claude Code.
 ## Workflow
 
 ```
-Full:  /init → /propose → /validate → /apply → /complete
+Full:  /setup → /propose → /validate → /apply → /complete
 Quick: /quick <description>  (inline analysis → agent dispatch, no spec files)
 ```
 
@@ -16,13 +16,13 @@ The workflow auto-detects, at the start of `/propose`, `/apply`, `/quick`, and `
 - **single-repo** — cwd is inside a git repo. Original behavior: all git ops and `feature-spec/` against that one repo.
 - **multi-repo** — cwd is a folder of independent repos. `feature-spec/` (planning artifacts) lives at the umbrella cwd; each task group is bound to one child repo, and its worktree/commits run inside that repo. A cross-repo change splits into one group per repo, ordered contract-first.
 
-`config.yaml` is always a per-project, optional artifact living inside a repo (`<repo>/feature-spec/config.yaml`). `/init` is per-project — run it inside a repo. Where a touched repo has no config, the workflow scans its code instead.
+`config.yaml` is always a per-project, optional artifact living inside a repo (`<repo>/feature-spec/config.yaml`). `/setup` is per-project — run it inside a repo. Where a touched repo has no config, the workflow scans its code instead.
 
 ## Skills (User-Invocable)
 
 | Command | Description |
 |---|---|
-| `/init` | Initialize feature-spec directory; two-phase SCAN → BUILD generates `config.yaml` (tool commands + pointer-form architecture baseline). One artifact only. |
+| `/setup` | Initialize feature-spec directory; two-phase SCAN → BUILD generates `config.yaml` (tool commands + pointer-form architecture baseline). One artifact only. |
 | `/propose <description>` | Generate spec artifacts (proposal, design, specs, tasks) for a new change |
 | `/validate <change-name>` | Validate spec artifacts against structural and content rules |
 | `/quick <description>` | Quick mode — orchestrator analyzes inline and dispatches agents, no spec files |
@@ -36,7 +36,7 @@ The workflow auto-detects, at the start of `/propose`, `/apply`, `/quick`, and `
 
 ```
 feature-spec/
-  config.yaml                # Tool commands + architecture baseline (generated once by /init, persists; not auto-synced)
+  config.yaml                # Tool commands + architecture baseline (generated once by /setup, persists; not auto-synced)
   specs/                     # Accumulated main specs (cleaned up after all changes complete)
     <capability>/spec.md
   changes/

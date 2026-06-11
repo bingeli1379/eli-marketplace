@@ -1,5 +1,5 @@
 ---
-name: init
+name: setup
 description: >
   Initialize feature-spec directory and auto-generate config.yaml — a one-time
   baseline of tool commands plus a pointer-form architecture map. Two-phase:
@@ -12,7 +12,7 @@ Initialize the `feature-spec/` directory in the current project. Generates exact
 
 - `feature-spec/config.yaml` — tool-runnable config (lint/verification commands) **plus** a pointer-form architecture baseline (tech stack, pattern, layers, entry points, hard rules).
 
-This skill does **not** generate or maintain prose docs, and the workflow does **not** read the project's own docs (CLAUDE.md, README, `docs/`). `config.yaml` is the single, authoritative description of the project that `/propose`, `/apply`, and `/quick` consume — what AI knows is exactly what lives there. The architecture block is a one-time snapshot — it is never auto-synced. When it drifts, the user edits it by hand or re-runs `/init`.
+This skill does **not** generate or maintain prose docs, and the workflow does **not** read the project's own docs (CLAUDE.md, README, `docs/`). `config.yaml` is the single, authoritative description of the project that `/propose`, `/apply`, and `/quick` consume — what AI knows is exactly what lives there. The architecture block is a one-time snapshot — it is never auto-synced. When it drifts, the user edits it by hand or re-runs `/setup`.
 
 Runs in two phases: **SCAN** (analyze + confirm) then **BUILD** (write file). No arguments required.
 
@@ -31,9 +31,9 @@ This file holds the flow, the SCAN-report contract, the question rules, and the 
 
 ## Phase 0 — Pre-flight
 
-0. **`/init` is per-project — guard against a multi-repo root**
+0. **`/setup` is per-project — guard against a multi-repo root**
 
-   Run the topology detection from `plugins/sdd/references/repo-topology.md` § Step 0. **Only bail on `multi-repo`** (cwd is not a git repo *and* contains child repos): `/init` does not apply at this level — config.yaml describes one project, not a collection. Tell the user: "`/init` runs per project. `cd` into the specific repo you want a config for and run it there. At a multi-repo root you don't need `/init` — `/propose` reads each touched repo's config if present, or scans its code." Then stop.
+   Run the topology detection from `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` § Step 0. **Only bail on `multi-repo`** (cwd is not a git repo *and* contains child repos): `/setup` does not apply at this level — config.yaml describes one project, not a collection. Tell the user: "`/setup` runs per project. `cd` into the specific repo you want a config for and run it there. At a multi-repo root you don't need `/setup` — `/propose` reads each touched repo's config if present, or scans its code." Then stop.
 
    Otherwise **proceed normally**: both `single-repo` (cwd inside a git repo) and `no-git` (a plain single-project folder not yet `git init`-ed, with no child repos) are valid — config.yaml is just a file and does not require a repo. Do not block greenfield folders.
 
@@ -126,7 +126,7 @@ Load `references/write-rules.md` and follow it. Write `feature-spec/config.yaml`
 
 ## Guardrails
 
-- **One artifact only**: `/init` writes `feature-spec/config.yaml` and nothing else. It never generates `context.md`, `knowledge.md`, or any prose doc — those are the project's own responsibility.
+- **One artifact only**: `/setup` writes `feature-spec/config.yaml` and nothing else. It never generates `context.md`, `knowledge.md`, or any prose doc — those are the project's own responsibility.
 - **Language**: all conversation output (SCAN report, AskUserQuestion text, BUILD summary, errors) in **Traditional Chinese**. File content (`config.yaml` values, comments) stays in **English** so downstream AI agents read it consistently.
 - **Two-phase is mandatory**: never skip SCAN — architecture inference (pattern / layers / entry points) is not 100% accurate, so the user confirms before write.
 - **Default 0 gap-filling questions; cap 3**: only ask for ❌ Low-confidence fields (AI could not infer at all). ⚠️ Medium trusts the draft — the user edits config.yaml by hand if it is off. More than 3 Low fields means the project has too little signal; stop asking and let the user fill in.

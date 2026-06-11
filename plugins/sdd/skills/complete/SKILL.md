@@ -19,7 +19,7 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
 
 0. **Detect repo topology (MANDATORY first)**
 
-   Load `plugins/sdd/references/repo-topology.md` and run its Step 0 detection. It only affects Step 4 (the cleanup commit): in **single-repo** mode the `feature-spec/` deletion is committed in the cwd repo; in **multi-repo** mode the code commits already landed per child repo during `/apply`, so `/complete` just deletes `feature-spec/` and commits that deletion only if cwd is itself a git repo (otherwise plain `rm`).
+   Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. It only affects Step 4 (the cleanup commit): in **single-repo** mode the `feature-spec/` deletion is committed in the cwd repo; in **multi-repo** mode the code commits already landed per child repo during `/apply`, so `/complete` just deletes `feature-spec/` and commits that deletion only if cwd is itself a git repo (otherwise plain `rm`).
 
 1. **Select change(s) to complete**
 
