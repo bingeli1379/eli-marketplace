@@ -36,12 +36,13 @@ User instruction (optional): $ARGUMENTS
 
 ### Format
 ```
-<type>(<scope>)<!>: <title>
+<type>(<scope>)!: <title>
 
 <body>
 
 <footer>
 ```
+`(<scope>)` and the breaking-change `!` are both optional — see below.
 
 ### Scope
 - Optional, lowercase noun in parens: `feat(parser): ...`
