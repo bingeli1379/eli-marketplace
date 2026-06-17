@@ -9,17 +9,17 @@ Audit agent and skill prompt files for quality risks. **Zero errors > speed > br
 
 ---
 
-**Input**: Optionally specify files via $ARGUMENTS. If omitted, auto-detect changed files via `git diff`.
+**Input**: Optionally specify files via `$ARGUMENTS`. If omitted, auto-detect changed files via `git diff`. Pass `--report-only` in `$ARGUMENTS` to stop after the report without auto-fixing.
 
 **Steps**
 
 1. **Identify files to audit**
 
-   **Scope**: This skill assumes Claude Code plugin structure (`agents/*.md`, `skills/*/SKILL.md`). For non-plugin projects, specify target files explicitly via `$ARGUMENTS`.
+   **Scope**: This skill assumes Claude Code plugin structure — agent files matching `**/agents/*.md` and skill files matching `**/skills/*/SKILL.md` at any depth (e.g. `plugins/<name>/skills/<skill>/SKILL.md`). For non-plugin projects, specify target files explicitly via `$ARGUMENTS`.
 
    If files are specified, use them. Otherwise:
    - Run `git diff --name-only` to find modified files
-   - Filter to `agents/*.md` and `skills/*/SKILL.md` only
+   - Filter to paths matching `**/agents/*.md` or `**/skills/*/SKILL.md` (match by path suffix; ignore any leading directories like `plugins/<name>/`)
    - If no relevant changes found, report and stop
 
 2. **For each file, read the FULL current version and the diff**
@@ -34,7 +34,7 @@ Audit agent and skill prompt files for quality risks. **Zero errors > speed > br
    - **RISKY**: Could cause the agent to produce lower quality output
    - **BROKEN**: Will definitely cause issues — must fix before using
 
-   ### For Agent files (`agents/*.md`)
+   ### For Agent files (`**/agents/*.md`)
 
    **a. Actionable instructions**
    - Was any rule, constraint, or instruction removed (not just reformatted)?
@@ -57,7 +57,7 @@ Audit agent and skill prompt files for quality risks. **Zero errors > speed > br
    - Language line: still unambiguous?
    - Mandatory Skills references: still pointing to correct files?
 
-   ### For Skill files (`skills/*/SKILL.md`)
+   ### For Skill files (`**/skills/*/SKILL.md`)
 
    **e. Step-by-step workflows**
    - Is each step still followable by an agent that has never seen the original?
@@ -165,7 +165,9 @@ Audit agent and skill prompt files for quality risks. **Zero errors > speed > br
 
 5. **Auto-fix until ALL SAFE**
 
-   If any BROKEN or RISKY findings exist:
+   If `--report-only` was passed in `$ARGUMENTS`, STOP after the Step 4 report — do not modify any files.
+
+   Otherwise, if any BROKEN or RISKY findings exist:
    a. Fix them immediately — do NOT ask the user, just fix.
    b. After fixing, re-run the full audit (Step 2-4) on the fixed files.
    c. Repeat until all files are rated **SAFE**.

@@ -10,9 +10,11 @@ description: Use when creating a release, bumping a version, generating a change
 
 ## Instructions
 
-### 1. Detect version source
+### 1. Resolve target & detect version source
 
-Search the project root for version files in this priority order. Stop at the first match:
+**Target package** (multi-package repos): if `$ARGUMENTS` names a package/plugin, that is the release target. Otherwise detect candidate packages (each directory carrying its own version manifest). If exactly one exists, use it. If several exist (e.g. a marketplace with multiple plugins), list them with their current versions and ask which to release — never release all of them at once unless explicitly told.
+
+Within the target package's directory, search for version files in this priority order. Stop at the first match:
 
 | Source | File | Field / Pattern |
 |--------|------|-----------------|
@@ -27,7 +29,7 @@ Search the project root for version files in this priority order. Stop at the fi
 - If no version file is found, check git tags (`git tag --sort=-v:refname`) as fallback
 - If nothing is found, ask the user where the version lives
 
-**Parallel manifests (same artifact, multiple files):** one logical package may declare its version in several sibling manifests — e.g. a plugin that ships both `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`. Glob for ALL of them (`<package>/.*-plugin/plugin.json`) and treat them as ONE version source that must move together. They may currently be out of sync (one lagging behind); the release re-syncs them all to the new version. Use the highest existing version among them as the current baseline.
+**Parallel manifests (same artifact, multiple files):** one logical package may declare its version in several sibling manifests — e.g. a plugin that ships both `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`. Glob for ALL of them (`<package>/.*-plugin/plugin.json`) and treat them as ONE version source that must move together. They may currently be out of sync (one lagging behind); the release re-syncs them all to the new version. Use the highest existing version among them as the current baseline. This lockstep applies ONLY within the chosen target package — manifests belonging to *different* packages are independent and must never be bumped together.
 
 Record: **current version**, **all version file paths** (every parallel manifest), **field location**
 
@@ -55,6 +57,8 @@ Once the baseline commit is identified, run:
 - **major**: any commit contains `BREAKING CHANGE` or `!` after type
 - **minor**: any `feat` commit
 - **patch**: only `fix`, `perf`, `refactor`, or other non-feature changes
+- Compute the new number from the current version: major → `(x+1).0.0`, minor → `x.(y+1).0`, patch → `x.y.(z+1)`
+- **Pre-1.0 (`0.y.z`)**: shift down one level — a breaking change bumps minor (`0.(y+1).0`), a `feat` bumps patch (`0.y.(z+1)`). Never auto-promote a `0.x` package to `1.0.0`; do that only if the user explicitly asks
 - Apply the suggested bump automatically without asking for confirmation
 
 ### 5. Generate changelog entry
@@ -66,7 +70,7 @@ Once the baseline commit is identified, run:
 - Aggressively merge related changes into a single entry
 - Aim for **3–7 entries total** per release; if you have more, you're being too granular
 - Date: use today's date (YYYY-MM-DD)
-- Prepend the new entry to `CHANGELOG.md` (create if not exists, keep existing entries)
+- Prepend the new entry to the **target package's** `CHANGELOG.md` — the one alongside its version manifest (e.g. `plugins/<name>/CHANGELOG.md`), NOT the repo root. Create if not exists, keep existing entries
 
 ### 6. Bump version number
 
@@ -78,7 +82,8 @@ Once the baseline commit is identified, run:
 ### 7. Commit
 
 - Show the changelog entry and version diff, then immediately commit without waiting for user confirmation
-- Stage and commit all release changes (CHANGELOG.md, version file(s)) with a conventional commit message
+- Stage and commit all release changes (the target's CHANGELOG + version file(s)) with a conventional commit message
+- In a multi-package repo, scope the commit to the released package: `chore(<package>): release vX.Y.Z`
 
 ## Changelog Format
 ```markdown
