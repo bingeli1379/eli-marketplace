@@ -132,6 +132,25 @@ Audit agent and skill prompt files for quality risks. **Zero errors > speed > br
    - For each parallel concept, compare corresponding sections across all files. Flag divergences unless there is a documented reason (e.g., one skill explicitly scopes narrower).
    - Example: if `skill-A` and `skill-B` both describe reviewer coverage, the lists should match unless one scope is intentionally narrower. A silent divergence is almost always a bug — one file was updated and the other was forgotten.
 
+   **s. Cross-harness portability (Agent Skills open standard)**
+
+   Skills and agents here target the [Agent Skills open standard](https://agentskills.io) (SKILL.md), now supported by a broad and growing set of harnesses (Claude Code, Codex, Cursor, GitHub Copilot, Gemini, and many more). **Audit against the standard, not against each tool** — do NOT maintain a per-tool matrix; the harness list churns constantly. The single rule of thumb: **"`name` + `description` + plain markdown works everywhere; everything else is an extension that a harness without support for it silently ignores."** Do NOT blanket-remove harness extensions: ignored ≠ broken, and removing them loses value on the harness that does support them for zero portability gain. Claude Code and Codex below are concrete worked examples of the two failure shapes — the same classification covers every standard-compliant harness.
+
+   **BROKEN — must fix (silently does the WRONG thing on the other harness, and has a portable equivalent):**
+   - **Harness context injection** — `` !`cmd` `` in the body expands only in Claude Code; on Codex it stays literal and the agent acts on empty/wrong context. **Fix:** replace with an explicit instruction to run the same command first and use its output (e.g. "Run `git diff --name-only` and use the result"). Identical behavior on Claude Code.
+   - **`name` ≠ parent directory** — the `name:` frontmatter MUST equal the skill's parent folder name exactly (lowercase, hyphens, case-sensitive). A mismatch is a *silent* load failure on some harnesses. **Fix:** make them match.
+
+   **RISKY — flag and fix the wording (degrades, but can mislead a literal agent):**
+   - **Hardcoded harness tool names in the body** — Codex follows instructions very literally: telling it to "use your `TodoWrite` tool" / "use the `Task` tool" makes it hunt for a tool by that exact name that does not exist on Codex (Claude's `TodoWrite` ≈ Codex `update_plan`; Claude's `Task`/subagents have no Codex equivalent). **Fix:** refer to the *capability* generically — "track your steps in a task list", "search the codebase", "read the file" — not the Claude tool name. **Exception:** skills whose subject IS Claude Code tooling, where the tool name is the actual content (keep, it's intentional).
+   - **`$ARGUMENTS` in the body** — Claude Code substitutes it in place; on Codex in-place substitution is a custom-prompt feature not guaranteed for skills, so it may stay literal (the model still reads it as a placeholder and infers intent from the user's actual message). Keeping it is net positive — full function on Claude Code, harmless literal on Codex. Flag RISKY **only if the logic requires exact in-place substitution**; fix by wording it so the skill also works when args arrive as free text. Do NOT remove `$ARGUMENTS`.
+   - **Required MCP tool, hardcoded by exact name** — a skill that hardcodes `mcp__<server>__<tool>` as a *required* step works only if the user wired that exact MCP server under that exact name. **Fix:** name the capability and the server it needs, and degrade gracefully if absent — don't make an exact MCP tool id a silent hard dependency.
+
+   **SAFE — keep as-is (silently ignored by harnesses that don't support it; gracefully degrades):**
+   - Frontmatter `allowed-tools`, `disallowed-tools`, `argument-hint`, `model:`, `effort:`, `context: fork`, `disable-model-invocation`, `user-invocable`, `hooks` — enforced on Claude Code, ignored on Codex. Keep them; they cost nothing on the harness that ignores them.
+
+   **SAFE but NOTE — never auto-rewrite (intentional, documented design choice):**
+   - Subagent / orchestration constructs: `subagent_type`, Task/Agent dispatch, companion `agents/*.md`, and `context: fork` relied on for isolation. Codex has no equivalent; the skill degrades to running inline in the main agent. This is an architectural decision tracked in the README compatibility table — emit a one-line portability note in the report, but do NOT rewrite the architecture and do NOT rate it BROKEN/RISKY.
+
 4. **Produce the audit report**
 
    **Language**: Audit report MUST be written in Traditional Chinese. Technical terms (file names, code, rating labels like SAFE/RISKY/BROKEN) remain in English.
@@ -197,6 +216,7 @@ Audit agent and skill prompt files for quality risks. **Zero errors > speed > br
 - **Bloat is also a risk** — but ONLY for verbose explanations and tutorials, not for concise rules or constraints
 - **Presume existing content is battle-tested** — every rule in the prompt was likely added because the agent failed without it. The burden of proof is on removal.
 - **No tooling assumptions** — rules must not assume linter, formatter, test runner, or CI are always present
+- **Portable across harnesses, but don't strip graceful features** — `name`+`description`+plain markdown is the portable core. FIX: `` !`cmd` `` injection (→ explicit "run the command"), `name`≠directory, body text that names Claude-only tools like `TodoWrite`/`Task` (→ name the capability, not the tool). KEEP (harmlessly ignored on Codex): `allowed-tools` / `model:` / `argument-hint` / `hooks` / `context: fork`. NEVER auto-rewrite subagent dispatch — intentional Claude-first design, note it and move on
 - **Prefer generic over hardcoded** — prompts should work across projects. Hardcoded values (URLs, names, paths, versions) need justification; if a value could vary, parameterize or conditionalize it
 - **Zero errors is the absolute principle** — when in doubt, rate as RISKY and fix it
 - **Auto-fix, don't ask** — fix BROKEN/RISKY issues immediately, re-audit, repeat until clean
