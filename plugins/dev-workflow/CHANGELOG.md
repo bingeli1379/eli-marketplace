@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0] - 2026-06-18
+
+### Added
+- `/review-prompt` now checks that your skills work across AI tools — it flags syntax that only runs in one tool (e.g. Claude Code) and breaks in others like Codex, keeps settings that are harmlessly ignored elsewhere, and auto-fixes what it safely can
+
+### Fixed
+- `/commit` now works correctly in AI tools other than Claude Code — it no longer depends on Claude-only command syntax that left it acting on empty context elsewhere
+
 ## [1.6.0] - 2026-06-18
 
 ### Added
