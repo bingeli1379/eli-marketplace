@@ -48,7 +48,9 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
    If a change with that name already exists, use **AskUserQuestion** to ask if user wants to continue it or create a new one with a different name.
 
-4. **Read existing context**
+4. **Read existing context (grounding)**
+
+   Follow `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` — the canonical grounding step. In short: consult any project-knowledge skill for the working repo(s) first, then `config.yaml`, then plan to front-load external facts (done concretely in Step 7c before dispatching the architect). The rest of this step is the `config.yaml` specifics.
 
    - **single-repo**: read `feature-spec/config.yaml` — the grounding source. Use its `architecture` block (pattern, layers, entry_points) to ground the Step 5 codebase scan (start from the paths it points at), and treat `hard_rules` as non-negotiable constraints for the Step 6 boundary definition and design.md. If it is missing, skip silently and work from the codebase scan alone.
    - **multi-repo**: for **each child repo the change touches**, read `<repo>/feature-spec/config.yaml` if it exists (its `architecture` + `hard_rules` ground work in that repo); if a repo has none, scan that repo's code. Per the topology rules, never generate config here.
@@ -105,9 +107,12 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - **Integration**: which systems this calls, which systems call this
    - **Data**: tables/collections in scope, migration/backfill expectations
    - **NFR budget**: performance targets, security requirements, UX constraints that apply to THIS change
-   - **Reversibility**: how hard is this decision to change later (easy / hard / irreversible) — drives how careful the upfront clarification needs to be
+   - **Reversibility**: how hard is this decision to change later (easy / hard / irreversible) — drives how careful the upfront clarification needs to be. **Safe-by-default rule (irreversible / destructive operations):** when the change performs an action with no undo — bulk deletion, mass external mutation (e.g. patching/removing remote resources), data purges — the *proposed default* MUST be the safe one: dry-run / preview / explicit-confirm, with the destructive behavior as an opt-in the caller consciously requests (e.g. `dryRun` defaults to `true`). This is the design you propose in the Scope Contract from the start — NOT a hardening to be added later by review. Do not let caller convenience ("they'll just call it directly") set a destructive default; identifying the risk is not enough, the default must encode the safe choice.
 
-   **c. Assess size** — if 3+ independent capabilities or 15+ tasks, suggest splitting. Each split should be reviewable in one sitting, self-contained, and focused on one concern. Example: "Add user management" → `add-user-registration`, `add-user-profile`, `add-user-roles`.
+   **c. Assess size** — two directions:
+
+   - **Too large** — if 3+ independent capabilities or 15+ tasks, suggest splitting. Each split should be reviewable in one sitting, self-contained, and focused on one concern. Example: "Add user management" → `add-user-registration`, `add-user-profile`, `add-user-roles`.
+   - **Too small for full spec (downgrade suggestion)** — if the change is a single capability, single layer, and roughly ≤5 tasks with no cross-cutting integration, the full `/propose` → `/apply` spec ceremony (4 artifacts, architect dispatch, validation) is likely overkill. Say so in one line and offer the lighter path: **`/quick <description>`** (inline analysis + review, no spec files), or just a direct edit if the user is at the keyboard. Spec artifacts earn their cost mainly when the work is large, spans sessions/people, or must be handed off — so still proceed with full `/propose` if the user wants that durable record; this is a suggestion, not a gate. Ask once via the Step 6e message (or proceed with full spec if they already signalled they want it).
 
    **d. Propose approaches** — Based on the codebase scan and requirement analysis, propose 2-3 implementation approaches with trade-offs and a clear recommendation. This step prevents the architect agent from committing to a direction the user didn't intend.
 
@@ -163,6 +168,8 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    This makes the dependency chain visible to users and to `/apply-all`. A combined summary with the full dependency graph is shown after Step 7 completes for all sub-changes.
 
    **g. Confirm scope contract before generating artifacts**
+
+   This gate is also packaged as the standalone `scope-contract` skill (`skills/scope-contract/SKILL.md`) — the canonical definition of the format, depth rule, and rationale. The inline copy below is kept so `/propose` is self-contained; when editing the rules, keep both in sync (or trim this to a reference).
 
    After the user answers 6e (or immediately, if 6e had no Questions), synthesize everything into a **Scope Contract** — a single **現在 → 改成 (Before → After)** list where every modified area is shown as how it works now versus how it works after. Show it back as a regular chat message (NOT AskUserQuestion — this is a final sanity check, not an open clarification round). Then wait for the user's reply.
 
@@ -255,13 +262,14 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
    Dispatch the **architect agent** — use the **Agent** tool with `run_in_background: true` and `mode: "bypassPermissions"`:
    - `subagent_type`: `"sdd:architect"`
-   - **CRITICAL — enforce structured trade-off analysis**: The architect's dispatched prompt MUST include an "Analytical depth requirement" section instructing the agent, BEFORE writing design.md, to:
-     1. Enumerate **2-3 candidate designs** for each major decision (domain model shape, storage / aggregate boundaries, API style, integration pattern).
-     2. For each candidate, list **concrete trade-offs** (complexity, performance, reversibility, blast radius, coupling).
-     3. **Explicitly justify rejections** — rejected alternatives must be named, with the reason they were ruled out (cost, mismatch with constraints, unnecessary flexibility, etc.).
-     4. Do NOT skip straight to "the answer". The comparison IS the design work — a single-option design.md is treated as incomplete.
+   - **CRITICAL — trade-off analysis scaled to stakes (progressive depth)**: The architect's dispatched prompt MUST include an "Analytical depth requirement" section. The depth of analysis is **conditional on each decision's stakes — do NOT apply the full multi-candidate treatment to every decision**, that is the design-level equivalent of gold-plating (wasted tokens + a bloated design.md). Instruct the agent, BEFORE writing design.md, to first classify each major decision (domain model shape, storage / aggregate boundaries, API style, integration pattern) as **high-stakes** or **routine**:
+     - **High-stakes** = irreversible or hard-to-reverse, high blast-radius, or the constraints genuinely admit materially different approaches with real trade-offs. For these, do the full treatment:
+       1. Enumerate **2-3 candidate designs**.
+       2. For each, list **concrete trade-offs** (complexity, performance, reversibility, blast radius, coupling).
+       3. **Explicitly justify rejections** — name each rejected alternative and why (cost, mismatch with constraints, unnecessary flexibility, etc.).
+     - **Routine** = reversible, low blast-radius, or effectively determined by an existing project convention / the named Reference implementation. For these, **one line stating the choice and why is enough** — do NOT manufacture 2-3 candidates to compare. Naming the convention/Reference it follows IS the justification.
 
-     Rationale: structural enforcement of exhaustive reasoning, with an auditable trail of rejected alternatives, is the primary safeguard against a single-option design.md.
+     The bar: a high-stakes decision presented as a single option with no alternatives considered is incomplete; a routine decision padded into a 3-candidate comparison is over-engineered. Match the analysis to the decision. (Reversibility was already assessed per area in the Step 6b Scope Contract — reuse that classification here.)
    - **CRITICAL — feed pre-collected context**: The prompt MUST include the **complete affected-files inventory from Step 5** (including the **Reference implementation pointers** found there), the proposal.md content, **all completed spec files from Step 7b**, the **full contents of `feature-spec/config.yaml`** (the `architecture` block and `hard_rules` are constraints the design MUST honor — surface `hard_rules` to the architect as non-negotiable), existing specs from `feature-spec/specs/`, and the design.md template from `templates/`. Include any file contents you already read during the codebase scan (store definitions, key interfaces, usage patterns, etc.). Do not forward the project's own docs — config.yaml is the only project context. If `config.yaml` does not exist, omit that section entirely — do not fabricate placeholder content.
    - **CRITICAL — record patterns to mirror**: Instruct the architect: "For each new component, name the existing **Reference implementation** it must mirror (from the affected-files inventory) and state the local approach to follow — data access mechanism (stored procedure / repository / query helper, never inline SQL or direct DbContext when siblings avoid it), read-query conventions, structure, naming, error handling. Design decisions must conform to how the project already does the same kind of thing; do not introduce a new pattern when a sibling pattern exists."
    - **CRITICAL — specs are constraints**: Explicitly instruct the architect: "The spec THEN clauses are acceptance criteria that your design MUST satisfy. If you believe a spec THEN clause should be different, do NOT silently override it. Instead, mark it as `CONFLICT:` in your design.md with your reasoning, so the orchestrator can resolve it with the user."
@@ -270,11 +278,11 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - Instruct the architect to write `design.md` directly to `feature-spec/changes/<name>/design.md`
 
    The architect agent will produce:
-   - Context, Goals/Non-Goals, Decisions (with alternatives considered), Risks/Trade-offs
+   - Context, Goals/Non-Goals, Decisions (alternatives considered for high-stakes decisions; one-line choice for routine ones), Risks/Trade-offs
    - **Domain Model (DDD)**: Bounded contexts, aggregates (root + children + invariants), value objects, domain events
    - **API Contract**: Every endpoint (METHOD, path, request/response schema, status codes, auth)
    - **Shared Types**: TypeScript interfaces and C# DTOs as integration contract
-   - Each decision with justification and rejected alternatives
+   - Each high-stakes decision with justification and rejected alternatives; routine decisions with a one-line rationale (naming the convention/Reference followed)
    - Risks with mitigation strategies
    - **CONFLICT markers** (if any) — where the architect disagrees with a spec THEN clause
    - **NEEDS markers** (if any) — where the architect is blocked on an external fact it could not obtain from the provided context
@@ -335,10 +343,9 @@ After all artifacts are created, **automatically runs validation** (`validate` s
      - GOOD: `- [ ] 2.1 (DevOps) git mv src/ → packages/toolkit/src/ AND update vite.config lib.entry paths, tsconfig include paths, and eslint.config parserOptions.project in the same commit`
      - BAD: `- [ ] 2.1 git mv src/` then `- [ ] 2.2 update vite.config path` then `- [ ] 2.3 update eslint config` (three intermediate broken commits; every one fails pre-commit lint)
      - If the full structural edit is genuinely too large for a single commit (e.g., > 40 files), split by **independent move units** (e.g., move library source as one task, move docs as another) — NOT by operation type within a single move unit.
-   - **Dependency annotations**: if a group depends on another group's output (e.g., frontend needs backend API types), annotate with `<!-- depends: N[, M...] -->` on the group heading line. The orchestrator uses these to determine execution waves.
-     - Groups without dependencies run in parallel (Wave 1)
-     - Groups depending on Wave 1 groups run after Wave 1 completes (Wave 2), etc.
-     - If two independent groups (no dependency) modify the same file, add a dependency between them to prevent merge conflicts.
+   - **Dependency annotations**: if a group depends on another group's output (e.g., frontend needs backend API types), annotate with `<!-- depends: N[, M...] -->` on the group heading line. The orchestrator topologically sorts these into a **linear execution order** (writes are single-threaded — groups run one at a time, in dependency order; contract-defining groups first).
+     - Annotate dependencies wherever one group consumes another's output, so the order is correct (e.g., backend contract before frontend that calls it).
+     - In multi-repo mode, groups bound to *different* child repos may run in parallel; annotate cross-repo dependencies contract-first.
    - **Tag each task with an agent type** in parentheses:
      - `(Backend)` → dotnet-engineer (includes unit tests, TDD style)
      - `(Python)` → python-engineer (FastAPI, data pipelines, ML, LLM, monitoring)
@@ -350,7 +357,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
      - `(Security)` → security-engineer (security audit, hardening)
      - `(Documentation)` → technical-writer (API docs, changelog, ADR)
      - `(E2E)` → qa-engineer (Playwright E2E tests for AC verification)
-   - The orchestrator dispatches **one agent per group** in an isolated worktree. Groups in the same wave run in parallel.
+   - The orchestrator dispatches **one agent per group**, sequentially in dependency order on the current branch (single-writer). Each group's agent reads the prior groups' committed code.
    - **AI decides group granularity automatically** based on the change type. Do NOT ask the user to choose a commit strategy.
    - **Group complexity estimation**: For each group, assess whether tasks are **mechanical** (find-and-replace, type annotation changes, import updates) or **analytical** (requires reading context, making judgment calls, fixing cascading errors). If a group has analytical tasks AND > 6 total tasks, split into sub-groups by concern. Mechanical-only groups can be larger. Never create groups with unbounded scope — every task must have a predictable, finite scope determined by the dry-run in Step 5.
    - **TDD task structure for Backend/Frontend tasks**: Each feature should follow RED → GREEN → REFACTOR:
@@ -383,7 +390,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - **Internal consistency:** Do any sections across artifacts contradict each other? Does the design match the proposal's capabilities? Do tasks cover all spec scenarios?
    - **Scope check:** Has scope crept beyond what user approved? Are there tasks not traceable to a spec requirement?
    - **Ambiguity check:** Could any requirement be interpreted two ways? If so, pick one and make it explicit.
-   - **Cross-group file collision (MANDATORY for refactors / multi-consumer changes):** Using the Step 5 affected-files inventory, derive the set of files each group actually edits — including the expansion of catch-all task wording like "rewrite all N consumers" (grep the real paths, do NOT trust the prose count). Intersect every pair of group file-sets. **Any file edited by 2+ groups MUST have those groups on a dependency chain** (`<!-- depends: ... -->`), so they never run in the same wave and never edit that file in parallel worktrees. For each collision found, add the missing dependency (the lower-numbered or contract-owning group runs first). A shared file across independent groups is the #1 cause of worktree merge conflicts at apply consolidation — catching it here is far cheaper than at Phase 1 merge.
+   - **Cross-group file collision (MANDATORY for refactors / multi-consumer changes):** Using the Step 5 affected-files inventory, derive the set of files each group actually edits — including the expansion of catch-all task wording like "rewrite all N consumers" (grep the real paths, do NOT trust the prose count). Intersect every pair of group file-sets. **Any file edited by 2+ groups MUST have those groups on a dependency chain** (`<!-- depends: ... -->`) so their edits to that shared file land in a deterministic order, with the contract-owning group first. Single-repo writes are fully serialized so there is no concurrent clobbering, but a missing dependency can still let the groups run in the wrong order (a consumer edited before the contract it depends on). In multi-repo mode the same file cannot be shared across repos, so collisions only arise within a repo — where serialization already applies; the dependency just fixes the order.
 
    Fix any issues found inline immediately.
 
@@ -440,7 +447,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 - **Every affected file in `design.md` must be covered by at least one task in `tasks.md`** — cross-check before finalizing
 - Capability names in proposal MUST match `specs/<name>/` directory names exactly
 - Each task group MUST contain a single agent type and describe a reviewable concern. Each task tagged by agent type in parentheses: `(Backend)`, `(Frontend)`, `(E2E)`, etc.
-- If two independent groups modify the same file, add a `<!-- depends: N -->` annotation to prevent merge conflicts during worktree consolidation
+- If two groups modify the same file, add a `<!-- depends: N -->` annotation so their edits land in a deterministic order (writes are serialized single-writer; the dependency fixes which group goes first)
 - Every spec requirement MUST have SHALL/MUST and at least 2 WHEN/THEN scenarios (happy path + edge case)
 - Proactively clarify ambiguities and define feature boundaries BEFORE generating artifacts — do NOT guess when scope is unclear
 - Ask all clarification questions in one structured message, not one at a time

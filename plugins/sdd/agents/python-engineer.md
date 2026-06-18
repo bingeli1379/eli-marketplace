@@ -1,7 +1,7 @@
 ---
 name: python-engineer
 model: sonnet
-effort: low
+effort: medium
 color: blue
 description: >
   Senior Python backend/ML engineer. Handles FastAPI endpoints, data pipelines,

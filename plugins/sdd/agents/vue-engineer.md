@@ -1,7 +1,7 @@
 ---
 name: vue-engineer
 model: sonnet
-effort: low
+effort: medium
 color: green
 description: >
   Senior frontend engineer specializing in the Vue ecosystem (Nuxt SSR,

@@ -30,6 +30,18 @@ Minimum code that solves the stated problem. Nothing speculative.
 - Do NOT create abstractions for single-use code.
 - Do NOT add unrequested flexibility or configurability.
 - Do NOT add error handling for scenarios that cannot happen.
+- Do NOT add a new dependency for what a few lines or an already-installed package can do.
+
+Before writing custom code, stop at the first rung that holds:
+
+1. **Does this need to exist?** Speculative need → skip it, say so in one line (YAGNI).
+2. **Standard library does it?** Use it.
+3. **Native platform feature covers it?** Use it (a DB constraint over app code, CSS over JS, `<input type="date">` over a picker lib).
+4. **Already-installed dependency solves it?** Use it.
+5. **Can it be one line?** One line.
+6. **Only then:** the minimum code that works.
+
+**The ladder runs *inside* the project's conventions, never above them** — it chooses only among options that already match how this codebase does the same thing (see *Match Existing Code Before Writing* below). When the local precedent is more verbose than a stdlib/native shortcut, the precedent wins: flag the divergence in your report if you think it matters, but do NOT silently introduce a leaner-but-foreign pattern. Correctness, trust-boundary validation, security, and accessibility are never traded for brevity.
 
 Self-check: *"Would a senior engineer call this overcomplicated?"*
 

@@ -1,6 +1,7 @@
 ---
 name: performance-engineer
 model: sonnet
+effort: medium
 color: red
 description: >
   Performance engineer. Handles frontend performance (Core Web Vitals, bundle size,

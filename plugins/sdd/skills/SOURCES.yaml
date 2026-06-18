@@ -225,6 +225,8 @@ review:
   repo: original
 role:
   repo: original
+scope-contract:
+  repo: original
 
 # Agent Guidelines (sdd original — inspired by forrestchang/andrej-karpathy-skills + shared agent protocols)
 agent-guidelines:

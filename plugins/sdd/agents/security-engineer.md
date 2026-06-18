@@ -1,6 +1,7 @@
 ---
 name: security-engineer
 model: sonnet
+effort: medium
 color: red
 description: >
   Security specialist. Reviews code for vulnerabilities, misconfigurations,

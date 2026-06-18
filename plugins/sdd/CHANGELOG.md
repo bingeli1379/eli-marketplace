@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.6.0] - 2026-06-18
+
+### Added
+- `/propose` now suggests the lighter `/quick` path when a change is too small to justify full spec ceremony, so you don't over-plan a trivial task.
+
+### Changed
+- Implementing a change (`/apply`) now runs as one continuous line of work on a single branch instead of parallel copies — eliminating merge conflicts and divergent working trees, making larger implementations more predictable.
+- `/quick` now handles small tasks directly with the right specialist knowledge loaded, instead of spinning up a separate agent first — faster turnaround on trivial and simple changes.
+- Design planning now scales its depth to the stakes of the change: lighter for low-risk work, more thorough where the risk is higher.
+
+### Fixed
+- `/apply` no longer stalls or wrongly gives up when a background worker goes quiet — it confirms real progress against git history and continues reliably.
+
+## [2.5.2] - 2026-06-17
+
+### Changed
+- When a proposed change involves an irreversible or destructive action (bulk deletion, mass external updates, data purges), the design now defaults to the safe path — dry-run / preview / explicit confirmation — with the destructive behavior as a conscious opt-in, encoded in the API contract from the start instead of left to a later review pass.
+
+## [2.5.1] - 2026-06-16
+
+### Changed
+- Agents now favor the simplest solution that fits your codebase — reaching for the standard library, a native platform feature, or a dependency you already have before writing new custom code, and not pulling in a new dependency for something a few lines can do. This always stays subordinate to your project's existing conventions: a leaner-but-unfamiliar pattern never replaces how your code already does the same thing, and correctness, security, and accessibility are never traded for brevity
+- Code review (and the `/review` quality lens) now also flags over-engineering — reinvented standard-library code, dead abstractions, needless dependencies — and tells you what to delete, while leaving alone the layers your architecture actually requires
+
 ## [2.5.0] - 2026-06-11
 
 ### Changed

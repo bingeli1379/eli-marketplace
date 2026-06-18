@@ -1,7 +1,7 @@
 ---
 name: database-engineer
 model: sonnet
-effort: low
+effort: medium
 color: orange
 description: >
   Database specialist. Handles schema design, migration strategy, query optimization,

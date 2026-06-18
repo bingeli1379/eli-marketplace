@@ -1,7 +1,7 @@
 ---
 name: devops-engineer
 model: sonnet
-effort: low
+effort: medium
 color: orange
 description: >
   DevOps engineer. Handles Docker containerization, Kubernetes deployment,

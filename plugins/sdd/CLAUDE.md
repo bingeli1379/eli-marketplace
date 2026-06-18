@@ -14,7 +14,7 @@ Quick: /quick <description>  (inline analysis → agent dispatch, no spec files)
 The workflow auto-detects, at the start of `/propose`, `/apply`, `/quick`, and `/complete`, whether cwd is a single git repo or an umbrella folder containing several independent repos. See `references/repo-topology.md` for the detection and per-mode git rules.
 
 - **single-repo** — cwd is inside a git repo. Original behavior: all git ops and `feature-spec/` against that one repo.
-- **multi-repo** — cwd is a folder of independent repos. `feature-spec/` (planning artifacts) lives at the umbrella cwd; each task group is bound to one child repo, and its worktree/commits run inside that repo. A cross-repo change splits into one group per repo, ordered contract-first.
+- **multi-repo** — cwd is a folder of independent repos. `feature-spec/` (planning artifacts) lives at the umbrella cwd; each task group is bound to one child repo, and its commits run inside that repo. A cross-repo change splits into one group per repo, ordered contract-first; groups in different repos may run in parallel.
 
 `config.yaml` is always a per-project, optional artifact living inside a repo (`<repo>/feature-spec/config.yaml`). `/setup` is per-project — run it inside a repo. Where a touched repo has no config, the workflow scans its code instead.
 
@@ -25,7 +25,7 @@ The workflow auto-detects, at the start of `/propose`, `/apply`, `/quick`, and `
 | `/setup` | Initialize feature-spec directory; two-phase SCAN → BUILD generates `config.yaml` (tool commands + pointer-form architecture baseline). One artifact only. |
 | `/propose <description>` | Generate spec artifacts (proposal, design, specs, tasks) for a new change |
 | `/validate <change-name>` | Validate spec artifacts against structural and content rules |
-| `/quick <description>` | Quick mode — orchestrator analyzes inline and dispatches agents, no spec files |
+| `/quick <description>` | Quick mode — orchestrator analyzes inline, no spec files. Trivial/simple work it implements inline (no dispatch); medium/complex it dispatches agents sequentially. Always followed by a read-only review pass |
 | `/review <target> [lens]` | Read-only standalone review by lens (quality/security/performance/e2e/all); auto-detects lens; no edits, no commits |
 | `/role [role]` | Become one specialist agent as an interactive persona on the session model (not the agent's sonnet/low); menu if no role given |
 | `/apply <change-name>` | Implement tasks using agent team dispatch (no questions asked) |
@@ -49,6 +49,10 @@ feature-spec/
 ```
 
 After `/complete`, completed changes are deleted (not archived). `config.yaml` persists across changes. The plugin does not generate or maintain `context.md` / `knowledge.md`, and it does not read the project's own docs — `config.yaml` is the single, authoritative project context that `/propose`, `/apply`, and `/quick` consume. Keep its `architecture` block accurate.
+
+### Handoff & resume
+
+`tasks.md` (with its `- [x]` checkboxes) **is** the durable handoff/state artifact — no separate state file. A `/apply` run interrupted by a rate limit, a crash, or a handoff to another person resumes from it: Step 5 reconciles `tasks.md` against git history (matching task numbers in commits), re-marks anything already committed, and continues from the first pending group. Because writes are single-writer on one branch, the branch tip + `tasks.md` fully describe progress. `/quick` is **fileless by design** — it writes no `tasks.md`, so a long `/quick` run is not resumable across sessions; if a change is large enough to need cross-session handoff or hand-off to another person, use the spec path (`/propose` → `/apply`) so the durable record exists.
 
 ## Agent Definitions
 
@@ -89,10 +93,12 @@ Skills in `skills/` provide domain knowledge that agents can reference. See `ski
 ## Implementation Pipeline
 
 ```
-Phase 1 (wave-based): Groups dispatched in dependency waves, each in isolated worktree
-  → After each wave: merge-squash each group into one clean commit
-Phase 2 (parallel): Code Review + Security Review + QA (+ performance-engineer if the
-  diff touches an API/DB surface — advisory, report-only) → parallel fix agents → squash
+Phase 1 (sequential single-writer): Groups dispatched one at a time in dependency order,
+  each committing on the current branch → in-place squash into one clean commit per group.
+  Writes stay single-threaded (no parallel worktrees, no merge step); reads may fan out.
+  Multi-repo exception: groups in different child repos may run in parallel.
+Phase 2 (parallel read-only review): Code Review + Security Review + QA (+ performance-engineer
+  if the diff touches an API/DB surface — advisory, report-only) → sequential fix agents → squash
 Phase 3: Documentation
 ```
 

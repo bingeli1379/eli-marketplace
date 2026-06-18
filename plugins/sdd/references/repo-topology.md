@@ -1,6 +1,6 @@
 # Repo Topology
 
-Shared rules for how the sdd workflow adapts to **single-repo** vs **multi-repo** working directories. `/propose`, `/apply`, `/quick`, and `/complete` load this file at Step 0 and follow it. The single-repo path is the original behavior and must stay unchanged; multi-repo is the added mode.
+Shared rules for how the sdd workflow adapts to **single-repo** vs **multi-repo** working directories. `/propose`, `/apply`, `/quick`, and `/complete` load this file at Step 0 and follow it. Both modes implement via **sequential single-writer** (writes serialized on one branch); the only structural difference is that multi-repo may run groups in *different* child repos in parallel.
 
 ---
 
@@ -21,7 +21,7 @@ fi
 
 - **single-repo** — cwd is within a git repo (at its root or below). The original mode. Everything (git ops, `feature-spec/`) happens against that one repo.
 - **multi-repo** — cwd is NOT in a git repo, but has one or more immediate child directories that are git repos. Each child repo is an independent project; a change may span several of them.
-- **no-git** — cwd is not in a repo and has no child repos. Proceed read-only where possible; warn that git-dependent steps (worktree, commit) cannot run.
+- **no-git** — cwd is not in a repo and has no child repos. Proceed read-only where possible; warn that git-dependent steps (commits) cannot run.
 
 Child-repo detection is **immediate children only** — nested repos deeper in the tree are out of scope. Announce the detected mode (and, in multi-repo, the list of child repos) before proceeding.
 
@@ -59,9 +59,8 @@ Every task targets file paths. The **owning repo** of a task is the child repo w
 
 | Operation | single-repo | multi-repo |
 |---|---|---|
-| Worktree-base preflight (HEAD vs default branch) | once, on the cwd repo | per child repo a group targets, before dispatching that group |
-| Phase 1 worktree isolation | worktree in the cwd repo | worktree created **inside the target child repo** (`git -C <repo> worktree ...`) |
-| Per-group commit | in the cwd repo | in the group's target child repo |
+| Phase 1 implementation | sequential single-writer on the cwd repo's current branch | sequential within each child repo (`git -C <repo> ...`); groups in *different* child repos may run in parallel, since separate repos are already isolated working trees |
+| Per-group commit + in-place squash | in the cwd repo | in the group's target child repo |
 | `/complete` artifact cleanup commit | commit the `feature-spec/` deletion in the cwd repo | code commits already landed per child repo during `/apply`; `/complete` deletes `feature-spec/` and commits that deletion only if cwd is itself a git repo — otherwise just `rm` (the umbrella is unversioned scratch) |
 
-All other `/apply` mechanics (waves, merge-squash, Phase 2/3 reviewers, retry loop) are unchanged — they just operate within whichever repo the group is bound to.
+All other `/apply` mechanics (dependency-ordered groups, in-place squash, Phase 2/3 reviewers, retry loop) are unchanged — they just operate within whichever repo the group is bound to. No worktrees are used in either mode.

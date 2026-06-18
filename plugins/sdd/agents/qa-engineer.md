@@ -1,6 +1,7 @@
 ---
 name: qa-engineer
 model: sonnet
+effort: medium
 color: red
 description: >
   Senior QA Engineer specializing in E2E acceptance testing with Playwright.

@@ -69,14 +69,13 @@ Repo topology (single-repo vs multi-repo) is handled by each per-change `/apply`
    b. Execute the full `/apply` logic (Steps 3-9 from `apply/SKILL.md`):
       - **Cache invariant files once at batch start**: Read `orchestrator.md` and `feature-spec/config.yaml` once before the first change. These are invariant across the batch — reuse them for all changes instead of re-reading each time.
       - **Re-read change-specific files fresh for each change** (proposal.md, design.md, tasks.md, specs/). Each change has different specs — do NOT reuse these from the previous change. Prior context may also have been compressed.
-      - Read context → parse tasks → act as orchestrator → wave-based dispatch with worktree merge-squash → all phases (implementation → review+QA parallel → docs) → verify checkboxes and commit history
+      - Read context → parse tasks → act as orchestrator → sequential single-writer dispatch with in-place squash → all phases (implementation → review+QA parallel read-only → docs) → verify checkboxes and commit history
       - **Do NOT ask implementation questions** — make reasonable choices, flag ambiguities in report
 
    c. **Mandatory completion checkpoint — Do NOT proceed to next change until ALL are satisfied:**
       - [ ] Phase 1-3 ALL dispatched (orchestrator never pre-judges whether a phase is "needed" — always dispatch, let the agent decide scope)
       - [ ] Phase 2 all three verdicts pass: code review APPROVED (or APPROVED WITH COMMENTS), security SECURE, QA PASSED — a change is NOT complete until all three pass
       - [ ] Step 9 tasks.md re-read from disk and checkboxes verified
-      - [ ] All worktrees cleaned up (no leftover worktree branches)
       - [ ] Final commits are clean conventional-commit messages with no task numbers
 
    d. Record end time, duration, and result (COMPLETE or PAUSED with reason).
@@ -138,8 +137,7 @@ After responding to the user, **resume batch execution automatically** — do NO
 - **Do NOT stop the batch if one change fails** — skip it and continue to next
 - **After responding to user messages, resume automatically** — never wait for follow-up input unless the user explicitly says "stop"
 - **Zero-misses: ALL phases (1-3) are mandatory** — see Step 3c checkpoint for the complete checklist
-- **Worktree cleanup**: ensure all worktrees are removed after each change completes
-- Each change runs on the current branch — do NOT create or switch branches
+- Each change runs sequentially (single-writer) on the current branch — do NOT create or switch branches
 - If a change has no pending tasks (all `- [x]`), skip it and note in the report
 - Track and report duration for each change and total batch time
 - **Retrospective is dev-mode only**: the `**事後檢討：**` block in Step 4 is suppressed unless `DEV_MODE = true` (parsed from a `dev-mode` token in the arguments). The flag is also forwarded to each per-change `/apply` so per-change retrospectives surface consistently. Default behavior is silent — end users see only progress, results, and pause reasons.

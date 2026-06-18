@@ -7,7 +7,7 @@ description: >
 user-invocable: true
 ---
 
-Lightweight alternative to the full `/propose` → `/apply` pipeline. The orchestrator **analyzes the task inline** (similar to propose) and **dispatches agents directly** — no spec files are written to disk.
+Lightweight alternative to the full `/propose` → `/apply` pipeline. The orchestrator **analyzes the task inline** (similar to propose) — no spec files are written to disk. For **trivial / simple** work it implements the change **itself on the main thread** (it is the single writer); for **medium / complex** work it dispatches implementation agents **sequentially** (single-writer). A read-only review pass (review + security, plus QA for bigger work) always follows.
 
 Best for: bug fixes, small features, refactors, chores — tasks where full spec ceremony is overkill but you still want the agent team's specialization and quality gates.
 
@@ -26,7 +26,9 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    Do NOT proceed without a clear task description.
 
-2. **Read project context**
+2. **Read project context (grounding)**
+
+   Follow `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` — consult any project-knowledge skill for the working repo(s) first, then the curated `config.yaml` below, then resolve external facts with available lookup tools rather than guessing.
 
    - **single-repo**: read `feature-spec/config.yaml` — the grounding source (tech stack, lint commands, and the `architecture` block: pattern, layers, entry_points, hard_rules). Use it to ground the Step 5 scan and forward it to every worker agent in Step 6; `hard_rules` are non-negotiable.
    - **multi-repo**: for each child repo the task touches, read `<repo>/feature-spec/config.yaml` if it exists; else scan that repo's code. Forward each repo's grounding to the agents working in it.
@@ -69,14 +71,14 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - Group by reviewable unit — each group = single agent type + single concern (same as tasks.md format)
    - Tag each subtask with an agent type: `(Backend)`, `(Python)`, `(Frontend)`, `(E2E)`, `(Electron)`, `(Database)`, `(DevOps)`, `(Performance)`, `(Security)`, `(Documentation)`
    - Add `<!-- depends: N -->` annotations if groups have dependencies
-   - **Shared-file groups MUST be serialized**: `/quick` does NOT use worktree isolation, so two groups dispatched in parallel that touch the **same file** clobber each other's edits directly on the branch (worse than a worktree merge conflict — there is no merge step to catch it). To find collisions, derive the set of files each group actually edits from the Step 5 scan — **including the expansion of catch-all wording like "rewrite all N consumers": grep the real paths, do NOT trust the prose count**. Intersect every pair of group file-sets; any file edited by 2+ groups MUST have a `<!-- depends: N -->` between those groups so they run sequentially, never in the same parallel wave. When in doubt, serialize.
+   - **Writes are single-threaded** — implementation groups run **sequentially**, one agent at a time on the current branch, each reading the prior groups' committed work. Use `<!-- depends: N -->` to fix the order wherever one group consumes another's output (contract-defining group first). To order shared-file edits correctly, derive the set of files each group actually edits from the Step 5 scan — **including the expansion of catch-all wording like "rewrite all N consumers": grep the real paths, do NOT trust the prose count** — and add a dependency between any two groups touching the same file.
    - Follow TDD structure for Backend/Frontend tasks when appropriate (write test → implement)
    - Number tasks: `1.1`, `1.2`, etc.
 
    **c. Complexity judgment:**
-   - **Simple** (single agent): one layer only → implementation agent → review
-   - **Medium** (2-3 agents): cross-cutting → parallel implementation → review
-   - **Complex** (full pipeline): new module/feature → full 4-phase pipeline
+   - **Trivial / Simple** (one layer, one concern, ~≤5 files, mechanical or near-mechanical, no cross-layer dependency) → **orchestrator implements INLINE on the main thread** (you are already the single writer), then review. Do NOT dispatch a background specialist for this — it is pure overkill and the dominant failure mode is a background worker going idle mid-task without committing. If the task is trivial enough that the user could just have written it directly, say so in one line and proceed inline.
+   - **Medium** (2-3 groups, cross-cutting) → sequential single-writer dispatch → review
+   - **Complex** (full pipeline): new module/feature → full 4-phase pipeline (sequential implementation)
 
    **d. Identify ambiguities and unknowns:**
    - Are there vague requirements? ("improve" → improve what exactly?)
@@ -86,7 +88,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **e. If ambiguities exist — ask the user ONCE:**
 
-   Use **AskUserQuestion** with a structured summary that follows the same Scope Contract shape as `/propose` Step 6g, plus an explicit Questions block. Ask ALL questions in ONE message:
+   Use **AskUserQuestion** with a structured summary that follows the Scope Contract shape (canonical definition: the `scope-contract` skill, `skills/scope-contract/SKILL.md`), plus an explicit Questions block. Ask ALL questions in ONE message:
 
    ```
    ## Quick Task: <summary>
@@ -204,7 +206,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - **Implementation Protocol — MUST follow when modifying existing code:**
      1. **Read** — Read surrounding code (same file + similar files in same directory) to identify existing conventions (naming, patterns, error handling style)
      2. **Look up** — If the change involves framework API usage or pattern choices, use context7 (resolve-library-id → query-docs) to check the current recommended approach
-     3. **Decide** — Choose approach based on priority: project convention > official recommendation > your own judgment. Never default to the simplest fix without checking
+     3. **Decide** — Choose approach by priority: project convention > official recommendation > your own judgment. Check convention first, *then* prefer the simplest option that matches it (standard library / native platform feature / an already-installed dependency over new custom code or a new dependency). Never reach for a leaner-but-foreign pattern over an established local one, and never trade away correctness, trust-boundary validation, security, or accessibility for brevity.
      4. **Implement** — Write the code
      5. **Verify** — After implementing, confirm: does the new code match surrounding style? Did you introduce any inconsistent patterns?
    - **CRITICAL — Committing is EXPLICITLY REQUIRED by the user as part of this workflow. You are authorized and expected to commit after every task. This is NOT optional.** After completing each task, you MUST:
@@ -213,15 +215,17 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
      3. Commit following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`). Format: `<type>[optional scope]: <task-number> <description>` (e.g., `fix: 1.1 resolve login redirect loop`)
    - Do NOT batch multiple tasks into one commit — one commit per task
    - After the commit, report back: "DONE: <task-number> <task-description>"
+   - **Completion contract — do NOT end your turn early.** You are NOT finished until **every** assigned task is committed and you have printed a `DONE:` line for each. Do NOT stop to "report progress" and wait — complete all your tasks within this turn. The ONLY valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:`. Going idle or yielding without one of {all tasks DONE, NEEDS, CONFLICT, BLOCKED} is a protocol violation, not a pause — the orchestrator treats it as a failed dispatch and re-dispatches.
    - Only add code comments for business logic that is not obvious from the code
    - **Signaling a genuine stop (`NEEDS` / `CONFLICT` / `BLOCKED`)** — follow the **Signaling Unknowns** rules in `skills/agent-guidelines/SKILL.md`. In short: do NOT guess an external fact you can't obtain from the repo + this context — commit what is safely done, emit `NEEDS: <question + why blocked + options>`, stop that task; the orchestrator resolves it and resumes you with your context intact. Aside from those signals, do NOT ask questions — if merely ambiguous, make a reasonable decision and flag it.
    - **Language**: All output and reports MUST be in Traditional Chinese. Code and code comments MUST be in English.
    ```
 
    **Dispatch rules (same as apply):**
+   - **Trivial / Simple tier implements inline — skip dispatch entirely.** Per the complexity judgment (Step 5c), when the work is one layer / one concern / mechanical, you (the orchestrator) write it yourself on the main thread — but FIRST load the mapped specialist's `skills:` via the Skill tool so inline work keeps the same skill context (see the Trivial/Simple block under *Phase execution*). The dispatch rules below apply only to Medium / Complex tier.
    - Use the **Agent** tool with `run_in_background: true` and `mode: "bypassPermissions"` for ALL worker agents (without `bypassPermissions`, background agents hang on invisible Write permission prompts)
    - Give each agent a descriptive `name`
-   - Dispatch agents that can run in parallel **simultaneously**
+   - **Writes single-threaded**: dispatch implementation/fix agents **one at a time** in dependency order, each committing before the next starts. Only read-only reviewers (Phase 2) are dispatched simultaneously. (Multi-repo exception: agents in *different* child repos may run concurrently.)
    - You will be **automatically notified** when each background agent completes — do NOT poll
    - **Handling a NEEDS return**: if an agent's report contains a `NEEDS:` line, treat it as *paused awaiting an external fact*, not done. Resolve it with whatever tools/knowledge you (the orchestrator) have, then **resume the SAME agent with `SendMessage`** (context intact — do NOT re-dispatch). Because agents run in the background you can service several concurrently. `CONFLICT:` → resolve with the user; `BLOCKED:` → re-scope or re-dispatch with corrected context. See `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns* for the vocabulary.
    - **Enforce analytical depth for reviewer agents only**: For `review-engineer`, `security-engineer`, and `qa-engineer` dispatches, the dispatched prompt MUST include an "Analytical depth requirement" section instructing the agent to:
@@ -236,34 +240,36 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **Phase execution based on complexity:**
 
-   **Simple tasks:**
-   - Phase 1: Single implementation agent
-   - Phase 2: review-engineer + security-engineer (parallel)
+   **Trivial / Simple tasks (orchestrator implements inline — NO dispatch):**
+   - **First, borrow the specialist's skills (MANDATORY — do NOT skip).** Implementing inline means you do NOT get the mapped agent's eagerly-loaded skills automatically, so load them yourself: read `agents/<mapped-agent>.md`, take its `skills:` frontmatter list, and invoke each via the **Skill tool** before writing (e.g., a `(Frontend)` task → load `vue-best-practices`, `frontend-checklist`, `engineering-checklist`, `test-driven-development`; a `(Backend)` task → `dotnet-best-practices`, `clean-architecture`, `engineering-checklist`, `test-driven-development`). Then load any stack-/datastore-specific skill the task needs on demand, exactly as that agent would after its Stack Detection step. This gives inline work the same skill context a dispatched agent would have had — without it, inline output silently loses the specialist's best-practices.
+   - Phase 1: **you (the orchestrator / main thread) implement it directly** — read the reference/sibling code, write the change, run the project's verification + lint, and commit it yourself following the same per-task → squash discipline. Do NOT spawn a background implementation agent; you are the single writer. (A background specialist here is overkill and its dominant failure mode is going idle mid-task without committing.)
+   - Phase 2: review-engineer + security-engineer (parallel, read-only) — still mandatory; you wrote the code, so an independent review is the safeguard.
    - Done.
+   - **Note:** if the task is so small the user could have written it in a couple of edits, say so — `/quick` exists for tasks worth a review pass, not as a wrapper around a two-line change.
 
    **Medium tasks:**
-   - Phase 1: Implementation agents in parallel
-   - Phase 2: review-engineer + security-engineer + qa-engineer (all parallel)
+   - Phase 1: Implementation agents **sequentially** in dependency order (contract-first)
+   - Phase 2: review-engineer + security-engineer + qa-engineer (all parallel, read-only)
    - Done.
 
    **Complex tasks (full pipeline):**
-   - Phase 1: All implementation agents in parallel (including qa-engineer for E2E test writing)
-   - Phase 2: review-engineer + security-engineer + qa-engineer (all parallel — code review, security review, and E2E tests run simultaneously)
+   - Phase 1: Implementation agents **sequentially** in dependency order (then qa-engineer for E2E test writing)
+   - Phase 2: review-engineer + security-engineer + qa-engineer (all parallel, read-only — code review, security review, and E2E tests run simultaneously)
    - Phase 3: technical-writer (if documentation changes needed)
 
    **Conditional Phase 2 reviewer — performance-engineer (all complexity levels):** if the diff touches a **performance-sensitive surface** (new/changed API endpoint, stored-procedure / SQL / Dapper / EF query, data-access/repository path, batch or data-pipeline job, list/report endpoint), add **performance-engineer** to the Phase 2 parallel dispatch. It does **static data-scale capacity analysis only** (no load tests/profilers; no code edits) and reports a per-path verdict (SAFE / RISKY / WILL NOT SCALE); findings are advisory recommendations routed to the owning agent. Skip for purely frontend-presentational, config, docs, or test-only diffs.
 
-   If review, security, or QA fails: collect all issues, group by responsible agent, dispatch **all fix agents in parallel** → run a **full fresh review** from scratch with all three reviewers simultaneously (not just verify original issues — fixes may introduce new bugs) → repeat until clean (max 3 rounds). Only pause and report to user if still failing after 3 rounds.
+   If review, security, or QA fails: collect all issues, group by responsible agent, dispatch **fix agents sequentially** (one write agent at a time) → run a **full fresh review** from scratch with all three reviewers simultaneously (read-only; not just verify original issues — fixes may introduce new bugs) → repeat until clean (max 3 rounds). Only pause and report to user if still failing after 3 rounds.
 
-   **Commit consolidation after Phase 1:**
+   **Commit consolidation (per group, single-writer):**
 
-   Since `/quick` does NOT use worktree isolation, per-task commits (with task-number prefixes) land directly on the branch. After all Phase 1 agents complete, **squash per-task commits into one clean commit per group** — matching `/apply`'s final commit style. **Multi-repo**: run this squash independently inside each child repo that received commits (`git -C <repo> ...`), against that repo's own base commit:
+   Per-task commits (with task-number prefixes) land directly on the branch. Squash **each group as it completes** (before dispatching the next group), so the next group's agent reads a clean history — matching `/apply`'s final commit style. **Multi-repo**: run this inside each child repo that received commits (`git -C <repo> ...`).
 
-   1. Identify the base commit (the commit before the first per-task commit): `git log --oneline`
-   2. Count per-task commits since base: `git log --oneline <base-sha>..HEAD`
-   3. If > 1 commit: `git reset --soft <base-sha>` then `git commit` with a clean conventional commit message following `conventional-commits` skill rules — **NO task numbers** (e.g., `refactor(enum): rename lowercase enum objects to PascalCase`)
+   1. Before dispatching the group's agent, capture the base: `GROUP_BASE=$(git rev-parse HEAD)`
+   2. After the agent completes, count its per-task commits: `git log --oneline $GROUP_BASE..HEAD`
+   3. If > 1 commit: `git reset --soft $GROUP_BASE` then `git commit` with a clean conventional commit message following `conventional-commits` skill rules — **NO task numbers** (e.g., `refactor(enum): rename lowercase enum objects to PascalCase`)
    4. If only 1 commit: `git commit --amend -m "<clean message>"` to remove the task number prefix
-   5. Safety: verify `git diff <base-sha>..HEAD` before and after squash produces identical tree
+   5. Safety: verify `git diff $GROUP_BASE..HEAD` before and after squash produces identical tree
 
    **Commit consolidation after Phase 2 fixes:**
    Same as above — if Phase 2 fix agents produce multiple commits, squash them into one clean commit (e.g., `fix: address review and security findings`).

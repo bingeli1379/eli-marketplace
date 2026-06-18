@@ -20,9 +20,9 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 0. **Detect repo topology (MANDATORY first)**
 
    Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode and, in multi-repo, list the child repos. Every git operation below follows the per-mode rules in that file:
-   - **single-repo** — all git ops run against the cwd repo. The steps below are written for this mode and are unchanged.
-   - **multi-repo** — bind each task group to its target child repo by file path (a group never spans repos). Run the worktree preflight, worktree isolation, and commits **inside that child repo** (`git -C <repo> ...`). `feature-spec/` stays at cwd.
-   - **no-git** — warn that worktree isolation and commits cannot run; implement directly and let the user commit.
+   - **single-repo** — all git ops run against the cwd repo. The steps below are written for this mode.
+   - **multi-repo** — bind each task group to its target child repo by file path (a group never spans repos). Run the sequential single-writer implementation and commits **inside that child repo** (`git -C <repo> ...`); groups in different repos may run in parallel. `feature-spec/` stays at cwd.
+   - **no-git** — warn that commits cannot run; implement directly and let the user commit.
 
 1. **Select the change and parse mode flags**
 
@@ -36,27 +36,14 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
    Always announce: "Implementing change: **<name>**" (and append "(dev-mode)" when the flag is set, so the user can confirm parsing).
 
-2. **Confirm current branch and detect worktree-base mismatch (MANDATORY)**
+2. **Confirm current branch (MANDATORY)**
 
    Use the current branch as-is. Do NOT create or switch branches — the user manages branches themselves.
    - Announce: "Branch: **<current-branch>**"
 
-   **Worktree-base pre-flight check**: The Agent tool's `isolation: "worktree"` creates each worktree from the repo's **default branch** (typically `master` or `main`), NOT from the current HEAD. When HEAD is ahead of the default branch — the normal case when working on a feature branch — the worktree misses every commit already landed on the feature branch. Wave 1 commits become invisible inside Wave 2+ worktrees, producing merge-squash conflicts and stale-base implementations.
+   Phase 1 is **sequential single-writer on this branch** — agents commit directly here, one group at a time, and the orchestrator squashes each group in place (`git reset --soft`). There are no worktrees, so there is no worktree-base mismatch to guard against: a feature branch ahead of `master` is exactly what we want each group's agent to build on. (See `orchestrator.md` Phase 1.)
 
-   Before Phase 1 dispatch, run:
-   ```bash
-   DEFAULT_BRANCH=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|origin/||' || echo master)
-   HEAD_SHA=$(git rev-parse HEAD)
-   DEFAULT_SHA=$(git rev-parse "$DEFAULT_BRANCH" 2>/dev/null || echo "")
-   [ -n "$DEFAULT_SHA" ] && [ "$HEAD_SHA" = "$DEFAULT_SHA" ] && echo aligned || echo diverged
-   ```
-
-   - If **aligned**: set `worktree_mode = true`. Phase 1 agents dispatch with `isolation: "worktree"` normally.
-   - If **diverged**: set `worktree_mode = false`. Announce to the user: "⚠ HEAD is ahead of `<default-branch>`. Worktree isolation would branch from the default tip and miss in-progress commits — falling back to **no-worktree mode** for Phase 1 (agents work on the current branch directly with per-task commits; orchestrator auto-squashes per group)." Do NOT ask the user to confirm — this is an automatic decision based on observed state.
-
-   **Multi-repo mode**: run this preflight **once per child repo** that a task group targets (`git -C <repo> ...`), storing a per-repo `worktree_mode`. A group dispatched against repo X uses repo X's `worktree_mode` and worktrees created inside repo X.
-
-   Pass `worktree_mode` (per-repo in multi-repo mode) to Phase 1 dispatch (see `orchestrator.md` Phase 1 for how it consumes the flag).
+   **Multi-repo mode**: the same applies inside each child repo (`git -C <repo> ...`). Groups bound to *different* child repos may run in parallel because separate repos are already isolated working directories; groups within one repo stay sequential.
 
 3. **Pre-lint and commit (clean slate — runs in background)**
 
@@ -72,7 +59,9 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
    This ensures agents start from a clean state without blocking the orchestrator's preparation work.
 
-4. **Read all context files**
+4. **Read all context files (grounding)**
+
+   Follow `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` — consult any project-knowledge skill for the working repo(s), read the curated context below, and resolve external facts with available lookup tools rather than guessing (you carry the tools the worker agents lack; resolving their `NEEDS` is your job — Step 7).
 
    Read these files from `feature-spec/changes/<name>/`:
    - `proposal.md` — scope and capabilities
@@ -101,17 +90,13 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
    **Detect and recover interrupted state** (runs every time, not just after crashes):
 
-   a. **Orphaned worktrees**: Run `git worktree list`. If worktrees exist from a previous run:
-      1. For each worktree, run the project's verification commands (type-check, test) **inside the worktree** to assess health
-      2. If healthy (zero new errors): merge-squash back to main, same as normal Phase 1 merge
-      3. If unhealthy (new errors from incomplete work): evaluate — if close to done, dispatch an agent to fix in the worktree first; if too broken, discard the worktree (`git worktree remove --force`) and re-dispatch the group from scratch
-      4. Clean up worktree branches after merge
+   a. **Stray worktrees from older runs**: Run `git worktree list`. Earlier versions of this workflow used worktrees; the current single-writer flow does not create them. If any are left over, merge or discard them as appropriate and `git worktree remove` to clean up, so the branch is the single source of truth before continuing.
 
-   b. **Un-squashed per-task commits on main**: Run `git log --oneline` and look for task-number prefixed commits (e.g., `1.1`, `2.3`) that weren't squashed into group commits. If found, squash adjacent same-group commits into one clean commit per group.
+   b. **Un-squashed per-task commits on the branch**: Run `git log --oneline` and look for task-number prefixed commits (e.g., `1.1`, `2.3`) that weren't squashed into group commits. If found, squash adjacent same-group commits into one clean commit per group (`git reset --soft` + re-commit).
 
-   c. **Reconcile tasks.md with git history**: For each pending task (`- [ ]`), search `git log --oneline` for its task number. If a matching commit exists (on main or in a worktree), mark the task as `- [x]` in tasks.md. Report: `"Recovered N tasks from previous interrupted run"`.
+   c. **Reconcile tasks.md with git history**: For each pending task (`- [ ]`), search `git log --oneline` for its task number. If a matching commit exists, mark the task as `- [x]` in tasks.md. Report: `"Recovered N tasks from previous interrupted run"`.
 
-   d. **Verify main health**: Run type-check and/or test on main to establish the current baseline error count before dispatching new agents.
+   d. **Verify branch health**: Run type-check and/or test on the current branch to establish the baseline error count before dispatching new agents.
 
    Display:
    ```
@@ -177,7 +162,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - **Implementation Protocol — MUST follow when modifying existing code:**
      1. **Read** — Read surrounding code (same file + similar files in same directory) to identify existing conventions (naming, patterns, error handling style)
      2. **Look up** — If the change involves framework API usage or pattern choices, use context7 (resolve-library-id → query-docs) to check the current recommended approach
-     3. **Decide** — Choose approach based on priority: project convention > official recommendation > your own judgment. Never default to the simplest fix without checking
+     3. **Decide** — Choose approach by priority: project convention > official recommendation > your own judgment. Check convention first, *then* prefer the simplest option that matches it (standard library / native platform feature / an already-installed dependency over new custom code or a new dependency). Never reach for a leaner-but-foreign pattern over an established local one, and never trade away correctness, trust-boundary validation, security, or accessibility for brevity.
      4. **Implement** — Write the code
      5. **Verify** — After implementing, confirm: does the new code match surrounding style? Did you introduce any inconsistent patterns?
    - **CRITICAL — Committing is EXPLICITLY REQUIRED by the user as part of this workflow. You are authorized and expected to commit after every task. This is NOT optional.** (Multi-repo mode: all staging and committing for this group happen inside the group's target child repo — `git -C <repo> ...` — never at the umbrella root.) After completing each task, you MUST:
@@ -187,6 +172,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - Do NOT modify `tasks.md` — the orchestrator handles checkbox updates after merging your work.
    - Do NOT batch multiple tasks into one commit — one commit per task, no exceptions
    - After the commit, report back: "DONE: <task-number> <task-description>"
+   - **Completion contract — do NOT end your turn early.** You are NOT finished until **every** assigned task is committed and you have printed a `DONE:` line for each. Do NOT stop to "report progress" and wait for further instructions — complete all your tasks within this turn. The ONLY valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:` (below). Going idle or yielding without one of {all tasks DONE, NEEDS, CONFLICT, BLOCKED} is a protocol violation, not a pause — the orchestrator treats it as a failed dispatch and re-dispatches.
    - Only add code comments for business logic that is not obvious from the code — if good naming makes it clear, skip the comment
    - Do NOT narrate your actions ("Now I will...", "Let me..."). Report only structured output: task status, files changed, test results.
    - **Signaling a genuine stop (`NEEDS` / `CONFLICT` / `BLOCKED`)** — follow the **Signaling Unknowns** rules in `skills/agent-guidelines/SKILL.md`. In short: do NOT guess an external fact you can't obtain from the repo + this context — commit what is safely done, emit `NEEDS: <question + why blocked + options>`, and stop that task; the orchestrator resolves it and resumes you with your context intact. Aside from those signals, do NOT ask questions — specs should be complete; if merely ambiguous, make a reasonable decision and flag it.
@@ -194,15 +180,14 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - **Language**: All output and reports MUST be in Traditional Chinese. Code and code comments MUST be in English.
    ```
 
-   **Verification-only groups**: If a task group contains ONLY verification commands (type-check, test:unit, lint, grep — no file modifications), the orchestrator executes them directly instead of dispatching an agent. These tasks do not need worktree isolation and would waste tokens on agent setup overhead. If any verification fails, dispatch the appropriate agent type to fix the issue.
+   **Verification-only groups**: If a task group contains ONLY verification commands (type-check, test:unit, lint, grep — no file modifications), the orchestrator executes them directly instead of dispatching an agent — it would waste tokens on agent setup overhead. If any verification fails, dispatch the appropriate agent type to fix the issue.
 
    **Dispatch rules:**
-   - Phase 1 agents: use the **Agent** tool with `isolation: "worktree"`, `run_in_background: true`, and `mode: "bypassPermissions"`. Each group = one agent in its own worktree. **Multi-repo mode**: tell the agent which child repo it owns; its worktree, work, and commits all happen inside that repo (`git -C <repo> ...`). A group's files are all under one repo (enforced at task-grouping time), so the agent never touches another repo.
-   - Phase 2-3 agents: use the **Agent** tool with `run_in_background: true` and `mode: "bypassPermissions"` (no worktree — work directly on main branch).
+   - Phase 1 agents: use the **Agent** tool with `run_in_background: true` and `mode: "bypassPermissions"` — **no `isolation` parameter**. Each group = one agent committing directly on the current branch; dispatch groups **one at a time** in dependency order (single-writer). **Multi-repo mode**: tell the agent which child repo it owns; its work and commits happen inside that repo (`git -C <repo> ...`). A group's files are all under one repo (enforced at task-grouping time). Groups bound to *different* child repos may be dispatched in parallel; groups in the same repo stay sequential.
+   - Phase 2-3 agents: use the **Agent** tool with `run_in_background: true` and `mode: "bypassPermissions"` (work directly on the current branch).
    - **Why `mode: "bypassPermissions"`**: Background agents cannot prompt the user for file Write/Edit permission — the permission dialog is invisible to the user, causing the agent to hang silently for minutes. All agents write only to project source files and `feature-spec/`, which is safe to auto-approve.
    - Give each agent a descriptive `name` (e.g., `"dotnet-search-api"`, `"vue-search-page"`)
-   - Dispatch agents within the same wave **simultaneously** (multiple Agent calls in one message)
-   - Between waves and between phases, wait for all agents to complete before dispatching the next batch
+   - Dispatch implementation/fix (write) agents **sequentially** — wait for one to commit before dispatching the next. Only read-only reviewers (Phase 2) are dispatched simultaneously.
    - You will be **automatically notified** when each background agent completes — do NOT poll or sleep
    - **Enforce analytical depth for reviewer agents only**: For every `review-engineer`, `security-engineer`, and `qa-engineer` dispatch (Phase 2 initial run AND all fresh-review retry rounds), the dispatched prompt MUST include an "Analytical depth requirement" section instructing the agent to:
      1. **Enumerate coverage BEFORE findings** — list the categories/dimensions examined:
@@ -219,20 +204,20 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    When a background agent's report contains one or more `NEEDS:` lines, treat the agent as *paused awaiting input*, NOT as failed or done:
    1. **Resolve each NEEDS using whatever tools and knowledge YOU (the orchestrator) have available** — connected MCP servers, lookup tools, project/domain knowledge skills, or the user. The worker agents deliberately do not carry these; resolving external/runtime/cross-repo facts is the orchestrator's job. sdd prescribes no specific tool here — use what the environment provides. If a NEEDS is genuinely unresolvable with the tools at hand, ask the user.
    2. **Resume the SAME agent with `SendMessage`** (do NOT re-dispatch a fresh agent — its context is intact), passing the resolved fact(s) and an instruction to finish the blocked task and commit it.
-   3. Because Phase 1 agents run in the background, the orchestrator stays unblocked and can service NEEDS from several agents concurrently as they arrive — no need to resolve them one wave at a time.
+   3. Because the Phase 1 agent runs in the background, the orchestrator stays unblocked while it works; resolve its NEEDS as they arrive and resume it before moving to the next group.
    4. If a resolved fact contradicts an assumption baked into `design.md` / `tasks.md` (e.g. the real production value makes a planned step wrong), surface it to the user before resuming — a NEEDS can legitimately invalidate part of the plan, and silently coding around it reintroduces the guessing the protocol exists to prevent.
 
    **Phase execution (mandatory, in order):**
 
    **Zero-misses principle: orchestrator ALWAYS dispatches every phase — the agent decides scope, not you.** Do NOT skip any phase based on your own judgement (e.g., "this is just a migration", "changes are mechanical", "only config files changed"). If there is genuinely nothing to do, the dispatched agent will report that. The ONLY way to skip a phase is if `config.yaml` explicitly provides a skip option for it.
 
-   - **Phase 1 — Wave-based development with worktree isolation**: Dispatch groups wave by wave. Each group = one agent in an isolated worktree. After each wave completes, merge-squash each group back to main as a single clean commit. **After each merge, verify the commit is clean** — if per-task commits leaked to main (worktree auto-merge), squash them into one group commit. See `orchestrator.md` Phase 1 (steps c and c-bis) for full details.
-   - **Phase 2 — Review + Security + QA (parallel quality gate)**: After all Phase 1 waves complete, dispatch review-engineer + security-engineer + qa-engineer **simultaneously in one message** (all on main branch). This runs code review, security review, and E2E tests in parallel. A change is NOT complete until all three pass. Even if no E2E specs exist, dispatch qa-engineer — let it confirm there is nothing to verify.
+   - **Phase 1 — Sequential single-writer development**: Dispatch groups one at a time in dependency order, each agent committing on the current branch. After each group completes, squash its per-task commits into a single clean commit in place (`git reset --soft <prev-group-sha>` + re-commit). The next group's agent reads the committed result. See `orchestrator.md` Phase 1 (steps a–d) for full details.
+   - **Phase 2 — Review + Security + QA (parallel read-only quality gate)**: After all Phase 1 groups are committed, dispatch review-engineer + security-engineer + qa-engineer **simultaneously in one message** (read-only review fans out safely). This runs code review, security review, and E2E tests in parallel. A change is NOT complete until all three pass. Even if no E2E specs exist, dispatch qa-engineer — let it confirm there is nothing to verify.
      - **Reviewer context (MANDATORY)**: each reviewer's prompt MUST include the same grounding the implementers got — the full `feature-spec/config.yaml` (so `hard_rules` can be checked line by line) and `design.md` (so the **Reference implementation** named per group is the analog the conformance review diffs against). In multi-repo mode, pass the config(s) of the repos under review. Without this, review-engineer's Convention Conformance and hard_rules checks have nothing to anchor to.
      - **Cross-repo QA (multi-repo)**: when the change spans repos, tell qa-engineer it is a multi-repo change and pass `design.md`'s cross-repo integration points plus the relevant files from both the provider and consumer repos, so its Step 0 contract check can diff the seams.
-   - **Phase 3 — Documentation**: After Phase 2 passes, dispatch technical-writer in background (on main branch). Even if changes seem trivial, dispatch — let the writer decide whether docs are needed.
+   - **Phase 3 — Documentation**: After Phase 2 passes, dispatch technical-writer in background (on the current branch). Even if changes seem trivial, dispatch — let the writer decide whether docs are needed.
 
-   If review, security, or QA fails: **collect all issues from all reviewers**, group by responsible agent, then dispatch **all fix agents in parallel** (on main branch). After all fixes complete, run a **full fresh review from scratch** — dispatch all three reviewers again simultaneously. Fixes can introduce new bugs, so reviewers must re-examine ALL changed files. Loop until clean (max 3 rounds). Only pause and report to user if still failing after 3 rounds.
+   If review, security, or QA fails: **collect all issues from all reviewers**, group by responsible agent, then dispatch **fix agents sequentially** — one responsible agent at a time, each committing before the next (fixing is a write task and stays single-threaded). After all fixes complete, run a **full fresh review from scratch** — dispatch all three reviewers again simultaneously (read-only). Fixes can introduce new bugs, so reviewers must re-examine ALL changed files. Loop until clean (max 3 rounds). Only pause and report to user if still failing after 3 rounds.
    - **Incremental E2E on retries**: On retry rounds (not the first QA run), qa-engineer may run only the previously-failing tests first. If those pass, run the full suite once to catch regressions.
 
    **Commit consolidation for Phase 2 fixes:**
@@ -246,7 +231,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
    While agents are running in the background, you remain available in the main conversation. Respond to user messages:
 
-   - **"status" / "進度"** — show current wave/phase, which agents are running, which tasks are done
+   - **"status" / "進度"** — show current group/phase, which agent is running, which tasks are done
    - **"pause" / "暫停"** — stop dispatching new agents (already-running agents will finish)
    - **"skip <task>"** — mark a task as skipped and continue
    - **"dispatch <agent> <instruction>"** — manually dispatch a specific agent with custom instructions
@@ -259,14 +244,14 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    Progress: N/M tasks
    ```
 
-   When a wave's merge-squash completes, announce the resulting commit:
+   When a group's squash completes, announce the resulting commit:
    ```
-   Wave N merged: "feat(search): add search API and service layer"
+   Group N committed: "feat(search): add search API and service layer"
    ```
 
 9. **After all phases complete, verify and report**
 
-   - **MUST re-read `tasks.md` from disk** (not from memory) and verify all completed tasks are checked `- [x]`. The orchestrator updates checkboxes after each merge, but this step is the safety net. Do NOT skip because "agents all reported DONE."
+   - **MUST re-read `tasks.md` from disk** (not from memory) and verify all completed tasks are checked `- [x]`. The orchestrator updates checkboxes after squashing each group, but this step is the safety net. Do NOT skip because "agents all reported DONE."
    - If any completed task was missed, update it now
    - **Verify commit history**: `git log --oneline <base-sha>..HEAD` — each commit should be a clean, single-concern conventional commit with no task numbers. The expected pattern:
      ```
@@ -315,21 +300,21 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 ## Guardrails
 
 - **You ARE the orchestrator** — do NOT spawn a separate orchestrator agent. You dispatch worker agents directly.
-- **Phase 1 agents run in worktrees** (`isolation: "worktree"`, `run_in_background: true`, `mode: "bypassPermissions"`). **Phase 2-3 agents run on main branch** (`run_in_background: true`, `mode: "bypassPermissions"`, no worktree). The `mode: "bypassPermissions"` is critical — without it, background agents hang on invisible permission prompts.
-- **No main-branch agents while worktrees are alive**: Do NOT dispatch any agent on the main branch while Phase 1 worktree agents are still running or their worktrees have not been cleaned up. Active worktrees can interfere with the main working directory's git index. If an unplanned fix is needed during Phase 1, dispatch it in its own worktree (`isolation: "worktree"`), or wait until all Phase 1 worktrees are merged and removed.
+- **All agents run on the current branch** (`run_in_background: true`, `mode: "bypassPermissions"`, no `isolation`). The `mode: "bypassPermissions"` is critical — without it, background agents hang on invisible permission prompts.
+- **One write agent at a time**: writes are single-threaded. Do NOT dispatch a second implementation or fix agent while one is still running — concurrent edits on the same branch diverge and collide. Only read-only reviewers (Phase 2) run simultaneously. (Multi-repo exception: agents in *different* child repos may run concurrently.)
 - **Specs are the single source of truth** — avoid asking questions unless something is truly blocking and cannot be reasonably inferred. When in doubt, make a reasonable decision and flag it in the report.
 - Always read ALL context files before dispatching agents
 - `feature-spec/config.yaml` (when present) MUST be forwarded verbatim into every worker agent's prompt as the `## Project Context` section. `hard_rules` from config.yaml are non-negotiable. The project's own docs are never read or forwarded — config.yaml is the only project context. Skip the section silently if config.yaml is missing — never fabricate placeholder content.
 - Only dispatch agents for PENDING tasks (skip completed `- [x]` tasks)
-- Agents do NOT modify `tasks.md` — the orchestrator updates checkboxes after each merge-squash
-- **Safe tasks.md commits**: When committing tasks.md checkbox updates, ALWAYS: (1) `git status --short` to check for unexpected staged files, (2) stage ONLY tasks.md by exact path (`git add <path>`), (3) NEVER `git add .` for metadata-only commits. Worktree cleanup, lint-staged, or stale index entries can silently stage unrelated files — a `git status` check before commit prevents catastrophic reverts.
+- Agents do NOT modify `tasks.md` — the orchestrator updates checkboxes after squashing each group
+- **Safe tasks.md commits**: When committing tasks.md checkbox updates, ALWAYS: (1) `git status --short` to check for unexpected staged files, (2) stage ONLY tasks.md by exact path (`git add <path>`), (3) NEVER `git add .` for metadata-only commits. Lint-staged or stale index entries can silently stage unrelated files — a `git status` check before commit prevents catastrophic reverts.
 - If `lint_commands` are configured in `config.yaml`, agents MUST run them before every commit — no exceptions. **Exception**: if the project matches a pre-lint skip rule in `company-conventions.md`, lint commands are not required.
 - If a task genuinely cannot be implemented (missing dependency, unclear spec), skip it and flag it in the report — do NOT block the entire pipeline
 - Keep code changes minimal and scoped to each task
-- **One commit per task inside worktrees** — format follows `conventional-commits` skill with task-number prefix. These per-task commits are squashed into one clean commit per group during merge-squash. Final commit messages follow `conventional-commits` skill (`skills/conventional-commits/SKILL.md`) rules with NO task numbers.
+- **One commit per task on the branch** — format follows `conventional-commits` skill with task-number prefix. These per-task commits are squashed in place into one clean commit per group (`git reset --soft`). Final commit messages follow `conventional-commits` skill (`skills/conventional-commits/SKILL.md`) rules with NO task numbers.
 - Work on the current branch — do NOT create or switch branches
 - **Zero-misses: ALL phases (1-3) are mandatory** — orchestrator always dispatches, agent decides scope. See Step 7 for details.
-- If review, security, or QA fails: collect all issues, group by responsible agent, dispatch **all fix agents in parallel** → full fresh review from scratch with all three reviewers simultaneously (max 3 rounds). Only pause and report if still failing.
+- If review, security, or QA fails: collect all issues, group by responsible agent, dispatch **fix agents sequentially** (one write agent at a time) → full fresh review from scratch with all three reviewers simultaneously (read-only, max 3 rounds). Only pause and report if still failing.
 - Pass full `design.md` to each agent for context, but only RELEVANT specs to keep focus
 - **Retrospective is dev-mode only**: the `### 事後檢討` block in Step 9's report is suppressed unless `DEV_MODE = true` (parsed from a `dev-mode` token in the arguments). Default behavior is silent — end users do not see lessons-learned content. Plugin authors re-run with `dev-mode` when they want it. Applies to both completion and pause outputs.
 - When background agents complete, briefly announce results to the user — don't wait for them to ask
