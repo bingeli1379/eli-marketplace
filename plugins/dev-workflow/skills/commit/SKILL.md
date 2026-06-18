@@ -9,19 +9,21 @@ allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git l
 **Type**: Automated dev workflow
 **Goal**: Group uncommitted changes into logical commits and create them, each following Conventional Commits.
 
-## Context (gathered at invocation)
+## Context (gather first)
 
-- Status: !`git status --short`
-- Change stat: !`git diff --stat HEAD`
-- Recent commits (style reference): !`git log --oneline -10`
+Before doing anything else, run these and read the output:
 
-User instruction (optional): $ARGUMENTS
+- `git status --short` — what changed (untracked files show as `??`)
+- `git diff --stat HEAD` — per-file change size
+- `git log --oneline -10` — recent commits, for style reference
+
+User instruction (optional): `$ARGUMENTS` (the text passed after the command; empty if none)
 
 ## Flow
 
 1. **Honor the user instruction first.** If `$ARGUMENTS` says how to commit (e.g. "one commit", "split X and Y", named files, or a fixed message), follow it and skip any grouping decision it already resolves.
 2. **Default = split by concern.** Group changes into the smallest set of cohesive commits: one concern per commit. A feature, a bug fix, and a chore must NOT share a commit. Untracked files show as `??` in status — include them.
-   - **Read frugally.** Work from the injected `--stat` first. Open the full diff (`git diff HEAD -- <file>`) ONLY for files whose intent isn't clear from path + stat. Skip pure renames, deletions, and obvious-from-path changes.
+   - **Read frugally.** Work from the `--stat` output first. Open the full diff (`git diff HEAD -- <file>`) ONLY for files whose intent isn't clear from path + stat. Skip pure renames, deletions, and obvious-from-path changes.
    - **Never read generated/vendored content.** Lock files (`package-lock.json`, `pnpm-lock.yaml`, `*.sum`), `dist/`, `*.min.js`, snapshots, etc. — classify as `chore` by filename alone, do not open them.
    - **One read, not N.** When the changeset is small, run a single `git diff HEAD` instead of one call per file; switch to targeted per-file reads only when the diff is large.
 3. **Match this repo's style** from the recent-commits log (scope usage, casing, prefixes) on top of the format rules below.
