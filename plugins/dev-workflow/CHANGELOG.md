@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.7.1] - 2026-06-19
+
+### Fixed
+- `/review-prompt` no longer crashes on startup — an example in its own instructions was being run as a command and is now plain text
+
 ## [1.7.0] - 2026-06-18
 
 ### Added
