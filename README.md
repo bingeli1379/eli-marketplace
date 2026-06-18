@@ -4,11 +4,16 @@ A personal [Claude Code](https://claude.ai/code) plugin marketplace hosting cust
 
 ## Plugins
 
-| Plugin | Description |
-|--------|-------------|
-| [dev-workflow](./plugins/dev-workflow) | Daily workflow commands — commit, release, prompt audit |
-| [issue-tracing](./plugins/issue-tracing) | On-call triage — turn a Grafana or Kibana/ELK URL into a structured incident report |
-| [sdd](./plugins/sdd) | Spec-driven multi-agent development workflow — propose, validate, apply, complete |
+| Plugin | Description | Compatibility |
+|--------|-------------|---------------|
+| [dev-workflow](./plugins/dev-workflow) | Daily workflow commands — commit, release, prompt audit | Claude Code · Codex |
+| [issue-tracing](./plugins/issue-tracing) | On-call triage — turn a Grafana or Kibana/ELK URL into a structured incident report | Claude Code · Codex |
+| [sdd](./plugins/sdd) | Spec-driven multi-agent development workflow — propose, validate, apply, complete | Claude Code (Codex: degraded) |
+
+**Compatibility legend**
+
+- **Claude Code · Codex** — fully portable. Claude-specific frontmatter (`allowed-tools`, `$ARGUMENTS`) is silently ignored or gracefully degraded on Codex; behavior is otherwise identical.
+- **Claude Code (Codex: degraded)** — built around Claude Code subagent dispatch (`agents/*.md` + `subagent_type`), which Codex does not support. The skills still load on Codex but run inline in the main agent without the specialized parallel agent orchestration.
 
 ## Install
 
