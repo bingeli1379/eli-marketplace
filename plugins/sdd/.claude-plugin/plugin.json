@@ -3,7 +3,7 @@
   "name": "sdd",
   "displayName": "Spec-Driven Development",
   "description": "Spec-driven workflow: requirements → specs → agent implementation",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"

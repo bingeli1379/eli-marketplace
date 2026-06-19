@@ -109,7 +109,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
 6. **Become the orchestrator**
 
-   Read `agents/orchestrator.md` to load the orchestrator role definition. **You MUST actually read this file every time** — do NOT rely on memory from a previous change or earlier in the conversation, as context may have been compressed. **You are now the orchestrator.** Do NOT spawn a separate orchestrator agent — you act as the orchestrator directly in the main conversation.
+   Read `${CLAUDE_PLUGIN_ROOT}/agents/orchestrator.md` to load the orchestrator role definition. **You MUST actually read this file every time** — do NOT rely on memory from a previous change or earlier in the conversation, as context may have been compressed. **You are now the orchestrator.** Do NOT spawn a separate orchestrator agent — you act as the orchestrator directly in the main conversation.
 
    This means:
    - The user can talk to you naturally at any time

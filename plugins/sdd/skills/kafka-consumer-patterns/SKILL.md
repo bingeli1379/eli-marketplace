@@ -1,6 +1,10 @@
 ---
 name: kafka-consumer-patterns
-description: Use when building, reviewing, or debugging a Kafka consumer — delivery semantics, offset-commit strategy, consumer-group rebalancing, idempotent processing / dedup, poison-message / dead-letter handling, ordering, and backpressure. Load when a repo consumes from Kafka (any client: Confluent.Kafka, kafka-python/aiokafka, librdkafka, Spring Kafka, etc.).
+description: >
+  Use when building, reviewing, or debugging a Kafka consumer: delivery semantics,
+  offset-commit strategy, consumer-group rebalancing, idempotent processing,
+  dedup, poison-message handling, dead-letter topics, ordering, or backpressure.
+  MUST be loaded when: a repo consumes from Kafka using any client.
 user-invocable: false
 ---
 

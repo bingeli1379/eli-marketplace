@@ -68,6 +68,7 @@ Agent role definitions live in `agents/`. The orchestrator reads these at dispat
 | `review-engineer` | Code quality — architecture compliance, patterns, performance |
 | `security-engineer` | Security — OWASP, injection, auth, dependency risks |
 | `electron-engineer` | Electron — main process, IPC, preload, native OS, packaging |
+| `godot-engineer` | Godot — GDScript/C# game dev, scenes, nodes, autoloads, signals, resources, 2D game systems |
 | `database-engineer` | Database — schema design, migration strategy, query optimization, indexing |
 | `devops-engineer` | DevOps — Docker, Kubernetes, CI/CD (GitLab CI / GitHub Actions), infrastructure |
 | `performance-engineer` | Performance — cross-stack (FE Core Web Vitals/bundle, BE API/SP/query), static data-scale capacity review |
@@ -108,6 +109,7 @@ These are the **default** house standards for greenfield code. When a project's 
 
 - **Frontend**: Vue 3 Composition API + Nuxt 4, Atomic Design, Composable Pattern, TailwindCSS, TypeScript strict
 - **Backend**: ASP.NET Core .NET 8–10, Clean/Layered Architecture, EF Core + Dapper, Polly, Redis, C# 12–13
+- **Game (Godot)**: Godot 4.x, GDScript with static typing (C# when the repo is a .NET project), scene/node composition + loose coupling ("call down, signal up"), data-driven via `Resource`, gdUnit4 tests, gdtoolkit format/lint
 - **Unit Tests**: Written by frontend/backend agents themselves (TDD), new code 100% coverage
 - **E2E Tests**: Written by QA agent with Playwright, verifies all spec WHEN/THEN scenarios
 - **Language**: Traditional Chinese communication, English code and comments

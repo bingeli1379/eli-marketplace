@@ -14,11 +14,10 @@ The principle is **environment-agnostic by design**: sdd defines *what* to groun
 
 ## What you cannot ground → signal, never guess
 
-Anything you genuinely cannot resolve with the tools at hand is an **external unknown**. Do NOT pick a plausible default. Use the `NEEDS` / `CONFLICT` / `BLOCKED` / `UNKNOWN` vocabulary defined in `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*:
+Anything you genuinely cannot resolve with the tools at hand is an **external unknown**. Do NOT pick a plausible default. Use the `NEEDS` / `CONFLICT` / `BLOCKED` vocabulary defined in `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*:
 
-- `NEEDS` — an external fact you can't obtain from repo + context. Stop that decision; the orchestrator resolves it (with the same tools above, or the user) and resumes you.
+- `NEEDS` — an external fact you can't obtain from repo + context (including an in-repo name/path you could not verify). Stop that decision; the orchestrator resolves it (with the same tools above, or the user) and resumes you.
 - `CONFLICT` — a spec/design disagreement.
 - `BLOCKED` — a non-external blocker (insufficient context, task too large, unsound plan).
-- `UNKNOWN` — an in-repo name/path you could not verify.
 
 The whole point: grounding turns guesses into looked-up facts, and the signaling vocabulary turns un-lookable facts into an explicit pause instead of a silent fabrication. Together they are what keep the workflow from designing or coding on invented values.

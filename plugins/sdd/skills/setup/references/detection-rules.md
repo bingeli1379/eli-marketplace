@@ -15,6 +15,7 @@ Read these files if they exist and synthesize a **one-line** `tech_stack` string
 - `tailwind.config.*` / `unocss.config.*` → CSS framework
 - `docker-compose.yml` / `Dockerfile` → containerization
 - `go.mod` / `Cargo.toml` / `pyproject.toml` / `requirements.txt` → other languages
+- `project.godot` → Godot game project. Read `config/features` for the engine version (e.g. `"4.6"`) and renderer (`Forward Plus` / `Mobile` / `GL Compatibility`). Language track = GDScript by default; **C# (Mono/.NET) only if a `.csproj` / `.cs` files are present**. Note both when mixed.
 - Lock files → package manager (pnpm/npm/yarn)
 
 `tech_stack` is the **single source of truth** for versions. Do not repeat version numbers anywhere else in `config.yaml`.
@@ -27,6 +28,7 @@ Read these files if they exist and synthesize a **one-line** `tech_stack` string
 - Check `package.json` scripts for `lint`, `lint:fix`, `format`, `stylelint`
 - Check config files: `eslint.config.*`, `.eslintrc*`, `.prettierrc*`, `.stylelintrc*`
 - Check `.csproj` / `.sln` → `dotnet format`
+- Godot (`project.godot` present): **gdtoolkit** if configured — `gdformat` (format), `gdlint` (lint). Look for `.pre-commit-config.yaml` referencing Scony/godot-gdscript-toolkit, a `.gdlintrc`, or `[tool.gdtoolkit]` in `pyproject.toml`. Leave empty if not configured (Godot ships no first-party formatter).
 - Use the project's package manager based on lock file
 - **Before generating**, check `${CLAUDE_PLUGIN_ROOT}/company-conventions.md` for pre-lint skip rules. Skip matching tooling.
 
@@ -35,6 +37,7 @@ Read these files if they exist and synthesize a **one-line** `tech_stack` string
 - `test` / `test:unit` / `test:e2e`
 - `build`
 - For .NET: `dotnet build`, `dotnet test`
+- For Godot (`project.godot` present): import/parse check `<godot-bin> --headless --import` (the universal baseline — catches parse and import errors); tests via the repo's runner — gdUnit4 (`addons/gdUnit4/runtest.sh` / `.cmd`), GUT (`<godot-bin> --headless -s addons/gut/gut_cmdln.gd`), or a custom `tools/*runner*`. C# track adds `<godot-bin> --headless --build-solutions` and/or `dotnet test`. The Godot binary path is machine-specific — record the command shape and let the project override the binary.
 - **CRITICAL**: never hardcode tool flags (e.g., `vue-tsc --noEmit`) — different projects configure tools differently.
 
 ---
@@ -47,6 +50,7 @@ Draft the four `architecture` fields that go into `config.yaml`. Keep everything
   - `src/Domain/`, `src/Application/`, `src/Infrastructure/`, `src/Api/` → Clean Architecture
   - `pages/`, `composables/`, `components/`, `server/` → Nuxt / Vue
   - `controllers/`, `models/`, `views/` → MVC
+  - `project.godot` present → "Godot scene/node composition". Note the layout variant: **feature-folder** (assets co-located with scenes, the official recommendation) vs **type-split** (`scenes/ scripts/ assets/ data/`). Flag autoload-centric global state if `project.godot` has an `[autoload]` block.
   - Combine front/back when both present (e.g. "Clean Architecture (backend) + Atomic Design (frontend)").
 - **layers** — the architectural folders that define the pattern, as `name → path` pointers (e.g. `domain → src/Domain/`). Do not enumerate files inside them.
 - **entry_points** — scan **all** conventional locations and list each that exists as `kind → path`. Missing one silently breaks AI's ability to add features there:
@@ -57,6 +61,7 @@ Draft the four `architecture` fields that go into `config.yaml`. Keep everything
   - Background jobs: `src/**/Jobs/`, `src/**/Workers/`, `worker/`
   - Event handlers: `src/**/EventHandlers/`, `src/**/Handlers/`
   - CLI / scripts: `bin/`, `scripts/`, `src/Cli/`
+  - Godot: main scene (`project.godot` `run/main_scene`), autoloads (`project.godot` `[autoload]` → each global script — the cross-scene entry points), scenes (`scenes/` or feature folders' `*.tscn`), input actions (`project.godot` `[input]`)
 - **hard_rules** — read existing `CLAUDE.md`, `AGENTS.md`, `.cursor/rules/`, `.github/copilot-instructions.md`, `eslint.config.*` / `.eslintrc*`, `.editorconfig`; extract imperative rules and **classify each** (below). Also infer **data-access / query conventions** from the code when the evidence is consistent across the codebase — these are exactly the invariants engineers must not break and that a code scan alone may not make obvious. Capture them as hard_rules when a quick grep confirms the pattern is followed everywhere, e.g.:
   - data access always goes through stored procedures / a repository layer, never inline SQL or a direct `DbContext` in endpoints
   - read queries use a specific convention (a locking hint like `NOLOCK`, a shared query helper, a standard pagination shape)

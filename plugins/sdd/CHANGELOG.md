@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.7.0] - 2026-06-19
+
+### Added
+- Godot game development support — you can now build Godot 4.x games (GDScript-first, and C# where the project uses it) through the full spec-driven pipeline. Adds a dedicated game engineer that follows Godot's scene/node composition model, plus a library of Godot skills covering architecture, testing, the C# track, and 2D game systems. Code review and acceptance testing adapt to Godot on their own (headless scene tests instead of a browser, Godot-specific anti-pattern checks), and `/setup` recognizes a Godot project automatically.
+
+### Changed
+- Simplified how agents flag missing information: the separate "UNKNOWN" signal is folded into "NEEDS", so there is one clear way an agent pauses for a fact it cannot obtain.
+
+### Fixed
+- The orchestrator now finds its role definition reliably across different install locations, so `/apply` starts correctly in setups where it previously could not.
+
 ## [2.6.0] - 2026-06-18
 
 ### Added

@@ -171,7 +171,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
 6. **Become the orchestrator and dispatch**
 
-   Read `agents/orchestrator.md` to load the orchestrator role. You are now the orchestrator.
+   Read `${CLAUDE_PLUGIN_ROOT}/agents/orchestrator.md` to load the orchestrator role. You are now the orchestrator.
 
    **Agent Prompt Template** — compose each worker agent's prompt with:
 

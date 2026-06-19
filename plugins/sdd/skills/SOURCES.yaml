@@ -320,4 +320,102 @@ electron:
   repo: https://github.com/vercel-labs/agent-browser
   path: skill-data/electron
 
+
+# Godot — 2D single-player subset (from jame581/GodotPrompter — MIT, native Claude SKILL.md format)
+# Local dir names are godot-/gdscript-/csharp- prefixed; `path` points at the upstream (unprefixed) skill.
+# update-skills.sh preserves our local frontmatter (name/description) and only refreshes the body.
+gdscript-patterns:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/gdscript-patterns
+gdscript-advanced:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/gdscript-advanced
+godot-project-setup:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/godot-project-setup
+godot-scene-organization:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/scene-organization
+godot-code-review:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/godot-code-review
+godot-testing:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/godot-testing
+godot-debugging:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/godot-debugging
+godot-optimization:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/godot-optimization
+godot-event-bus:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/event-bus
+godot-state-machine:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/state-machine
+godot-component-system:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/component-system
+godot-dependency-injection:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/dependency-injection
+godot-resource-pattern:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/resource-pattern
+godot-save-load:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/save-load
+csharp-godot:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/csharp-godot
+csharp-signals:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/csharp-signals
+godot-export-pipeline:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/export-pipeline
+godot-input-handling:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/input-handling
+godot-player-controller:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/player-controller
+godot-ui:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/godot-ui
+godot-hud-system:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/hud-system
+godot-audio-system:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/audio-system
+godot-animation-system:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/animation-system
+godot-tween-animation:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/tween-animation
+godot-camera-system:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/camera-system
+godot-physics-system:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/physics-system
+godot-2d-essentials:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/2d-essentials
+godot-math-essentials:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/math-essentials
+godot-localization:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/localization
+godot-inventory-system:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/inventory-system
+godot-dialogue-system:
+  repo: https://github.com/jame581/GodotPrompter
+  path: skills/dialogue-system
+
 # Maintenance
