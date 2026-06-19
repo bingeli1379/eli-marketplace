@@ -1,7 +1,7 @@
 {
   "name": "sdd-vue",
   "description": "SDD language pack: Vue/Nuxt frontend engineer and frontend skills",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
