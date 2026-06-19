@@ -2,11 +2,11 @@
 name: role
 description: >
   Use when you want to interactively work AS one of the sdd specialist agents (architect,
-  dotnet/vue/python/electron engineer, database, devops, security, performance, qa, review,
+  dotnet/vue/python/electron/godot engineer, database, devops, security, performance, qa, review,
   technical-writer) — adopting its expertise, skills, and conventions as a conversational persona.
   Unlike dispatching an agent, this runs in the main conversation on the current session's model.
 user-invocable: true
-argument-hint: "<role> (architect | dotnet | vue | python | electron | database | devops | security | performance | qa | review | technical-writer)"
+argument-hint: "<role> (architect | dotnet | vue | python | electron | godot | database | devops | security | performance | qa | review | technical-writer)"
 ---
 
 Become one sdd specialist agent as an **interactive persona**. The main conversation adopts that agent's role definition and you talk to it directly, with full back-and-forth.
@@ -17,11 +17,12 @@ This is distinct from the other entry points:
 
 ## Roles
 
-**Implementation**
+**Implementation** (each lives in its `sdd-<lang>` pack — must be installed)
 - `vue` — Vue/Nuxt UI: components, composables, Pinia, styling
 - `dotnet` — ASP.NET API & business logic; Dapper+SP / EF Core
 - `python` — FastAPI, data/ML pipelines, pandas/batch jobs
 - `electron` — Electron main/preload, IPC, native OS, packaging
+- `godot` — Godot game dev (GDScript/C#): scenes, nodes, signals, resources, 2D systems
 
 **Review**
 - `review` — code review: architecture, code quality, maintainability
