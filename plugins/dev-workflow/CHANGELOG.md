@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.0] - 2026-06-19
+
+### Changed
+- `/review-prompt` now reviews your skills with Claude Code as the main target instead of chasing cross-tool compatibility — it no longer flags Claude-specific features as problems to strip out, and assumes support for other tools is added later by a separate build step
+- `/review-prompt` adds two new correctness checks: it catches file-read instructions that point to the wrong folder (so bundled files load reliably), and flags speed/model settings placed where they have no effect
+
 ## [1.7.1] - 2026-06-19
 
 ### Fixed

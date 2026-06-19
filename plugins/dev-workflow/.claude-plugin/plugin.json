@@ -3,7 +3,7 @@
   "name": "dev-workflow",
   "displayName": "Dev Workflow",
   "description": "Daily dev workflow skills: commit, release, prompt audit",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
