@@ -44,11 +44,11 @@ This is distinct from the other entry points:
    - **Role given in args** (a name or its short alias from the list above) → use it directly.
    - **No / unknown role** → print the full role list above (grouped, name + one-line duty) and ask the user to reply with the role name. Do **NOT** use a multi-step picker — one glance at the list, type the name. Keep waiting until you have a valid role.
 
-   Map the chosen name to its agent file: `<name>-engineer.md` for `vue` / `dotnet` / `python` / `electron` / `review` / `security` / `performance` / `qa` / `database` / `devops`; `architect` → `agents/architect.md`; `technical-writer` → `agents/technical-writer.md`.
+   Resolve the chosen name to its agent file per `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md` (*Agent-file resolution*). Core roles (`architect`, `review`, `security`, `performance`, `qa`, `technical-writer`) live in this plugin's `agents/`. Implementation roles (`vue`, `dotnet`, `python`, `electron`, `godot`, `database`, `devops`) live in their `sdd-<lang>` pack — locate the file with `find ~/.claude/plugins -path "*/<pack>/agents/<role>.md"`. If the pack is not installed (nothing found), tell the user `該 specialist 屬於 sdd-<pack>，尚未安裝。請先 /plugin install sdd-<pack> 再 /sdd:role。` and stop.
 
 2. **Become the role**
 
-   Read the **full** `agents/<agent>.md`. Adopt its entire definition — responsibilities, conventions, scope, stack-detection, output format, and its **Stack Detection First** / **Load skills on demand** rules — as your operating instructions for the rest of the conversation.
+   Read the **full** resolved agent file (from step 1). Adopt its entire definition — responsibilities, conventions, scope, stack-detection, output format, and its **Stack Detection First** / **Load skills on demand** rules — as your operating instructions for the rest of the conversation.
 
    - **Skills**: load the agent's skills exactly as it would when dispatched — eager ones from its frontmatter, the rest **on demand via the Skill tool** per its own "Load skills on demand" section. Same lazy-loading, no change.
    - **Model / effort**: adopt ONLY the role (persona, skills, conventions). Do **NOT** adopt the agent's `model:` / `effort:` frontmatter — keep the **current session's** model and effort. Those fields govern Agent-tool-spawned subagents only; reading the definition here is a persona switch, not a dispatch.
