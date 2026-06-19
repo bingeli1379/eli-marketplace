@@ -17,6 +17,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+# Skills live across sibling plugins (sdd core + sdd-<lang> packs); SOURCES.yaml
+# stays the central registry in core. Resolve each skill's actual home at update
+# time by searching the plugins dir, so a skill moving between packs needs no edit here.
+PLUGINS_DIR="$(dirname "$ROOT_DIR")"
 SOURCES_FILE="$ROOT_DIR/skills/SOURCES.yaml"
 TMP_DIR=$(mktemp -d)
 CLONE_DIR="$TMP_DIR/clones"
@@ -85,7 +89,10 @@ process_skill() {
     return
   fi
 
-  local skill_dir="$ROOT_DIR/skills/$current_skill"
+  # Locate the skill's current home across all plugins; new skills default to core.
+  local skill_dir
+  skill_dir=$(find "$PLUGINS_DIR" -maxdepth 3 -type d -path "*/skills/$current_skill" 2>/dev/null | head -1)
+  [[ -z "$skill_dir" ]] && skill_dir="$ROOT_DIR/skills/$current_skill"
   local skill_filename="${current_filename:-SKILL.md}"
 
   echo "Updating $current_skill ..."
