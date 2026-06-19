@@ -24,6 +24,9 @@ Detects the current version from project files (package.json, csproj, pyproject.
 
 Audits agent and skill prompt files (`.md`) for quality risks. Rates each finding as **SAFE**, **RISKY**, or **BROKEN**, then auto-fixes issues until all files pass.
 
-- Audits: instruction completeness, code examples, templates, guardrails, cross-agent consistency, context bloat, hardcoded values, reference path integrity
+**Claude-first review architecture.** Claude Code is the authoritative, primary target — the audit optimizes for Claude effectiveness and treats Claude-specific features (`${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_SKILL_DIR}`, bang-backtick context injection, `Task` / subagent dispatch, `$ARGUMENTS`, `hooks`, `model:` / `effort:`) as correct and intended — **not** as portability liabilities to genericize away. The [Agent Skills open standard](https://agentskills.io) (`name` + `description` + plain markdown) is the portable baseline you get for free; cross-harness support (Codex, etc.) is the job of a downstream build/compile step that transforms this authoritative source, never of degrading the source itself.
+
+- General audits: instruction completeness, code examples, templates, guardrails, cross-agent / cross-file consistency, context bloat, hardcoded values, reference path integrity
+- Claude-correctness checks: bundled-file read instructions must use `${CLAUDE_PLUGIN_ROOT}/` (plugin-level) or `${CLAUDE_SKILL_DIR}/` (skill-own) — a bare relative path resolves against the user's working directory, not the skill dir; `name:` must equal the skill's parent directory; `model:` / `effort:` belong only on *dispatched* subagents, not on an agent the main session adopts as a persona (it inherits the session)
 - Max 3 auto-fix rounds
 - Report language: Traditional Chinese (technical terms in English)
