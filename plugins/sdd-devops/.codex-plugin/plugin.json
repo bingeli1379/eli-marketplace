@@ -1,7 +1,7 @@
 {
   "name": "sdd-devops",
-  "version": "1.0.0-beta.1",
   "description": "SDD language pack: DevOps engineer and infrastructure skills",
+  "version": "1.0.0-beta.1",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
@@ -9,12 +9,21 @@
   "homepage": "https://github.com/bingeli1379/eli-claude-marketplace",
   "repository": "https://github.com/bingeli1379/eli-claude-marketplace",
   "license": "MIT",
-  "dependencies": [
-    "sdd"
-  ],
   "keywords": [
-    "sdd",
     "spec-driven",
-    "agents"
-  ]
+    "sdd",
+    "agents",
+    "skills"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "SDD \u2014 DevOps Pack",
+    "shortDescription": "SDD language pack: DevOps engineer and infrastructure skills",
+    "developerName": "Eli",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Skills",
+      "Files"
+    ]
+  }
 }
