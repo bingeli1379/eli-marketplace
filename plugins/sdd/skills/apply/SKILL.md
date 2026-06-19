@@ -133,7 +133,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    You are working on change "<change-name>", group "<group-heading>".
 
    ## Your Role
-   [auto-loaded by dispatching `subagent_type` (see references/agent-routing.md) — do NOT read/embed the agent file. Only the absent-pack fallback embeds the routing-table brief into a `general-purpose` dispatch.]
+   [auto-loaded by dispatching `subagent_type` (see `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md`) — do NOT read/embed the agent file. Only the absent-pack fallback embeds the routing-table brief into a `general-purpose` dispatch.]
 
    ## Project Context
    [full contents of feature-spec/config.yaml if it exists — tech stack, lint commands, and the architecture block (pattern, layers, entry_points). hard_rules are non-negotiable invariants; do not violate them even if a task description appears to ask for it. This is the only project context; omit if the file is missing.]

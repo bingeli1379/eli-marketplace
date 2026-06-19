@@ -179,7 +179,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    You are working on a quick task: "<task summary>"
 
    ## Your Role
-   [auto-loaded by dispatching `subagent_type` (see references/agent-routing.md) — do NOT read/embed the agent file. Only the absent-pack fallback embeds the routing-table brief into a `general-purpose` dispatch.]
+   [auto-loaded by dispatching `subagent_type` (see `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md`) — do NOT read/embed the agent file. Only the absent-pack fallback embeds the routing-table brief into a `general-purpose` dispatch.]
 
    ## Mandatory Checklists
    [include content of skills/engineering-checklist/SKILL.md for ALL agents]
