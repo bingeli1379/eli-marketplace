@@ -15,6 +15,16 @@ Combines **SDD** (Spec-Driven Development), **DDD** (Domain-Driven Design), and 
 
 > Already added the marketplace? Just run the `install` line. To pull updates later: `/plugin marketplace update titansoft-marketplace`.
 
+Then install the **language packs** for the stacks you work in (each pulls in core automatically):
+
+```
+/plugin install sdd-vue@titansoft-marketplace      # Vue / Nuxt frontend
+/plugin install sdd-dotnet@titansoft-marketplace   # ASP.NET / .NET backend
+# …also: sdd-python, sdd-godot, sdd-electron, sdd-database, sdd-devops
+```
+
+Skip the packs you don't need — sdd degrades gracefully (general-purpose agent + a hint to install the pack) when a task needs a missing one.
+
 ### 2. Enable Agent Teams (required)
 
 Multi-agent dispatch (`/apply`) needs the experimental Agent Teams flag:
@@ -114,19 +124,58 @@ Beyond the full `/setup → /propose → /apply → /complete` pipeline, three c
 
 ## Agents
 
-Agent role definitions live in [`agents/`](agents/). The orchestrator reads these at dispatch time.
+`sdd` (core) holds the always-present agents in [`agents/`](agents/): **orchestrator**,
+**architect**, the four cross-cutting reviewers (**review** / **security** /
+**performance** / **qa**), and **technical-writer**. Each **implementation specialist**
+ships in an optional `sdd-<lang>` pack (see *Language packs* below). The orchestrator
+dispatches every agent by its namespaced `subagent_type`; resolution, pack homes, and
+the absent-pack fallback are defined in [`references/agent-routing.md`](references/agent-routing.md).
+
+### Language packs
+
+| Pack | Agent | Stack |
+|---|---|---|
+| `sdd-vue` | vue-engineer | Vue / Nuxt frontend |
+| `sdd-dotnet` | dotnet-engineer | ASP.NET / .NET backend |
+| `sdd-python` | python-engineer | Python backend / ML |
+| `sdd-godot` | godot-engineer | Godot game dev |
+| `sdd-electron` | electron-engineer | Electron desktop / game |
+| `sdd-database` | database-engineer | schema / query / datastore |
+| `sdd-devops` | devops-engineer | Docker / K8s / CI-CD |
+
+Each pack declares `dependencies: ["sdd"]`, so installing a pack pulls in core. Install
+only the stacks you use. If a task needs a pack you haven't installed, sdd falls back to
+a general-purpose agent and tells you which pack to install (reduced quality — no
+stack-specific skills).
 
 ## Skill Updates
 
-Update all bundled skills from upstream:
+Bundled skills live in core (`skills/`, universal) and in each pack (`<pack>/skills/`,
+stack-specific). `skills/SOURCES.yaml` in core stays the **central registry for every
+skill across all packs**. Run the updater **once from core** — it locates each skill's
+actual pack automatically:
 
 ```bash
-./scripts/update-skills.sh          # update all non-frozen skills
+./scripts/update-skills.sh          # update all non-frozen skills, across every pack
 ./scripts/update-skills.sh --all    # include frozen skills
-./scripts/update-skills.sh vue      # update a specific skill
+./scripts/update-skills.sh vue      # update a specific skill (wherever it lives)
 ```
 
-All skill sources are tracked in `skills/SOURCES.yaml`. **When adding a new skill, you must also add its entry to `SOURCES.yaml`** so that `update-skills.sh` can keep it in sync with upstream.
+**When adding a new skill, add its entry to core `skills/SOURCES.yaml`** (even if the
+skill file lives in a pack) so `update-skills.sh` can sync it.
+
+## Maintenance — adding a new language pack
+
+1. Create `plugins/sdd-<lang>/` with `.claude-plugin/plugin.json` (`dependencies: ["sdd"]`),
+   an `agents/<lang>-engineer.md`, and `skills/`. Mirror an existing pack.
+2. The engineer's `skills:` frontmatter eager-loads core skills by **bare name**
+   (`agent-guidelines`, `engineering-checklist`, `test-driven-development`, …) — verified
+   to work cross-plugin, no duplication. Declare only its own stack skills beyond those.
+3. Add a row to [`references/agent-routing.md`](references/agent-routing.md)
+   (tag → `subagent_type` → home → fallback brief). This is the only core file to touch.
+4. Register the pack in the root `marketplace.json`. Add a `.codex-plugin/plugin.json`
+   if publishing to Codex.
+5. Add the pack's skills to core `skills/SOURCES.yaml`.
 
 See `skills/` for the full list of bundled skills.
 
@@ -158,7 +207,7 @@ After `/complete`, change artifacts are deleted. `feature-spec/config.yaml` pers
 
 ## Customization
 
-- Edit `agents/` to adjust role definitions, tech stack, or coding standards
+- Edit core `agents/` (orchestrator, architect, reviewers, writer) or a pack's `agents/` (the engineers) to adjust role definitions, tech stack, or coding standards
 - Edit `skills/propose/templates/` to customize artifact templates
 - Edit `feature-spec/config.yaml` in your project to set project-specific context and rules
 
