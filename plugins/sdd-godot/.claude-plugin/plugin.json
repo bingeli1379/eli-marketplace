@@ -1,0 +1,20 @@
+{
+  "name": "sdd-godot",
+  "version": "1.0.0-beta.1",
+  "description": "SDD language pack: Godot game engineer and skills",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "license": "MIT",
+  "dependencies": [
+    "sdd"
+  ],
+  "keywords": [
+    "sdd",
+    "spec-driven",
+    "agents"
+  ]
+}

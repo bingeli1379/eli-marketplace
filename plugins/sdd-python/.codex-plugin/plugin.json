@@ -1,7 +1,7 @@
 {
-  "name": "sdd",
-  "description": "Spec-driven workflow: requirements \u2192 specs \u2192 agent implementation",
-  "version": "3.0.0-beta.1",
+  "name": "sdd-python",
+  "description": "SDD language pack: Python backend/ML engineer and skills",
+  "version": "1.0.0-beta.1",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
@@ -13,17 +13,12 @@
     "spec-driven",
     "sdd",
     "agents",
-    "workflow",
-    "proposal",
-    "design",
-    "tasks",
-    "tdd",
-    "ddd"
+    "skills"
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Spec-Driven Development",
-    "shortDescription": "Spec-driven workflow: requirements \u2192 specs \u2192 agent implementation",
+    "displayName": "SDD \u2014 Python Pack",
+    "shortDescription": "SDD language pack: Python backend/ML engineer and skills",
     "developerName": "Eli",
     "category": "Developer Tools",
     "capabilities": [

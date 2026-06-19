@@ -19,7 +19,42 @@
     {
       "name": "sdd",
       "source": "./plugins/sdd",
-      "description": "Spec-driven AI development workflow plugin. Generates structured specs (proposal, design, tasks) from requirements, then dispatches specialized agents to implement, validate, and archive — turning ideas into code with minimal manual intervention."
+      "description": "Spec-driven AI development workflow core: workflow commands, orchestrator, architect, cross-cutting reviewers, and universal skills. Language/stack specialists ship as optional sdd-* packs."
+    },
+    {
+      "name": "sdd-vue",
+      "source": "./plugins/sdd-vue",
+      "description": "SDD language pack: Vue/Nuxt frontend engineer and frontend skills"
+    },
+    {
+      "name": "sdd-dotnet",
+      "source": "./plugins/sdd-dotnet",
+      "description": "SDD language pack: ASP.NET / .NET backend engineer and skills"
+    },
+    {
+      "name": "sdd-python",
+      "source": "./plugins/sdd-python",
+      "description": "SDD language pack: Python backend/ML engineer and skills"
+    },
+    {
+      "name": "sdd-godot",
+      "source": "./plugins/sdd-godot",
+      "description": "SDD language pack: Godot game engineer and skills"
+    },
+    {
+      "name": "sdd-electron",
+      "source": "./plugins/sdd-electron",
+      "description": "SDD language pack: Electron desktop/game engineer and skills"
+    },
+    {
+      "name": "sdd-database",
+      "source": "./plugins/sdd-database",
+      "description": "SDD language pack: database engineer and datastore skills"
+    },
+    {
+      "name": "sdd-devops",
+      "source": "./plugins/sdd-devops",
+      "description": "SDD language pack: DevOps engineer and infrastructure skills"
     }
   ]
 }

@@ -179,7 +179,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    You are working on a quick task: "<task summary>"
 
    ## Your Role
-   [agent role definition from agents/<agent>.md]
+   [auto-loaded by dispatching `subagent_type` (see references/agent-routing.md) — do NOT read/embed the agent file. Only the absent-pack fallback embeds the routing-table brief into a `general-purpose` dispatch.]
 
    ## Mandatory Checklists
    [include content of skills/engineering-checklist/SKILL.md for ALL agents]
@@ -241,7 +241,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    **Phase execution based on complexity:**
 
    **Trivial / Simple tasks (orchestrator implements inline — NO dispatch):**
-   - **First, borrow the specialist's skills (MANDATORY — do NOT skip).** Implementing inline means you do NOT get the mapped agent's eagerly-loaded skills automatically, so load them yourself: read `agents/<mapped-agent>.md`, take its `skills:` frontmatter list, and invoke each via the **Skill tool** before writing (e.g., a `(Frontend)` task → load `vue-best-practices`, `frontend-checklist`, `engineering-checklist`, `test-driven-development`; a `(Backend)` task → `dotnet-best-practices`, `clean-architecture`, `engineering-checklist`, `test-driven-development`). Then load any stack-/datastore-specific skill the task needs on demand, exactly as that agent would after its Stack Detection step. This gives inline work the same skill context a dispatched agent would have had — without it, inline output silently loses the specialist's best-practices.
+   - **First, borrow the specialist's skills (MANDATORY — do NOT skip).** Implementing inline means you do NOT get the mapped agent's eagerly-loaded skills automatically, so load them yourself: resolve the agent file per `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md` (*Agent-file resolution* — core agents in `agents/`, pack agents via `find ~/.claude/plugins -path "*/<pack>/agents/<role>.md"`), take its `skills:` frontmatter list, and invoke each via the **Skill tool** before writing (e.g., a `(Frontend)` task → load `vue-best-practices`, `frontend-checklist`, `engineering-checklist`, `test-driven-development`; a `(Backend)` task → `dotnet-best-practices`, `clean-architecture`, `engineering-checklist`, `test-driven-development`). Then load any stack-/datastore-specific skill the task needs on demand, exactly as that agent would after its Stack Detection step. If the mapped pack is not installed, the file resolution finds nothing → load only core skills (`engineering-checklist`, `test-driven-development`, …) and note the degradation. This gives inline work the same skill context a dispatched agent would have had — without it, inline output silently loses the specialist's best-practices.
    - Phase 1: **you (the orchestrator / main thread) implement it directly** — read the reference/sibling code, write the change, run the project's verification + lint, and commit it yourself following the same per-task → squash discipline. Do NOT spawn a background implementation agent; you are the single writer. (A background specialist here is overkill and its dominant failure mode is going idle mid-task without committing.)
    - Phase 2: review-engineer + security-engineer (parallel, read-only) — still mandatory; you wrote the code, so an independent review is the safeguard.
    - Done.

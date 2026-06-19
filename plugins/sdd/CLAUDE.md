@@ -2,6 +2,27 @@
 
 Spec-driven multi-agent development team plugin for Claude Code.
 
+## Plugin Topology (core + language packs)
+
+`sdd` is the **core** plugin: workflow commands, the orchestrator, the architect,
+the four cross-cutting reviewers (review/security/performance/qa), technical-writer,
+and the universal skills. Every **implementation specialist** ships as an optional
+`sdd-<lang>` pack (`sdd-vue`, `sdd-dotnet`, `sdd-python`, `sdd-godot`, `sdd-electron`,
+`sdd-database`, `sdd-devops`) bundling that stack's engineer agent + skills. Each
+pack declares `dependencies: ["sdd"]`, so installing a pack pulls in core.
+
+- **Dispatch** uses namespaced `subagent_type` (`sdd-vue:vue-engineer`). The Agent
+  registry is session-global, so core dispatches pack agents fine. Resolution and
+  the **absent-pack fallback** (dispatch `general-purpose` + brief + core skills,
+  notify the user) live in `references/agent-routing.md` — the single source of truth.
+- **Cross-plugin skill loading** is verified: a pack agent eager-loads core skills
+  (`agent-guidelines`, `engineering-checklist`, `test-driven-development`, …) by
+  **bare name** in its `skills:` frontmatter — no duplication, no namespacing needed.
+  On-demand `Skill` tool loads also work cross-plugin.
+- Adding a language = ship a new `sdd-<lang>` pack + register it in the root
+  `marketplace.json` + add a row to `references/agent-routing.md`. Core agents and
+  workflow skills are untouched.
+
 ## Workflow
 
 ```
@@ -56,30 +77,39 @@ After `/complete`, completed changes are deleted (not archived). `config.yaml` p
 
 ## Agent Definitions
 
-Agent role definitions live in `agents/`. The orchestrator reads these at dispatch time.
+Core agents live in this plugin's `agents/`; pack agents live in their `sdd-<lang>`
+plugin's `agents/`. The orchestrator does **not** read these files at dispatch — it
+dispatches by `subagent_type` and the harness auto-loads the definition. See
+`references/agent-routing.md` for `subagent_type` names, homes, and the fallback.
 
-| Agent | Role |
-|---|---|
-| `orchestrator` | Tech Lead — task analysis, agent dispatch, progress tracking |
-| `architect` | Software Architect — system design, API contracts, integration specs |
-| `vue-engineer` | Frontend — Vue ecosystem (Nuxt SSR, Vue 3 Vite SPA, Vue 2, single-spa), Atomic Design, Composable Pattern |
-| `dotnet-engineer` | Backend — ASP.NET (modern .NET Core + legacy .NET Framework), Clean/Layered Architecture, EF Core + Dapper |
-| `python-engineer` | Backend/ML — FastAPI, data pipelines, ML models, LLM, monitoring |
-| `review-engineer` | Code quality — architecture compliance, patterns, performance |
-| `security-engineer` | Security — OWASP, injection, auth, dependency risks |
-| `electron-engineer` | Electron — main process, IPC, preload, native OS, packaging |
-| `godot-engineer` | Godot — GDScript/C# game dev, scenes, nodes, autoloads, signals, resources, 2D game systems |
-| `database-engineer` | Database — schema design, migration strategy, query optimization, indexing |
-| `devops-engineer` | DevOps — Docker, Kubernetes, CI/CD (GitLab CI / GitHub Actions), infrastructure |
-| `performance-engineer` | Performance — cross-stack (FE Core Web Vitals/bundle, BE API/SP/query), static data-scale capacity review |
-| `qa-engineer` | QA — Playwright E2E acceptance testing, spec scenario verification |
-| `technical-writer` | Documentation — API docs, changelogs, README, ADRs |
+| Agent | Home | Role |
+|---|---|---|
+| `orchestrator` | core | Tech Lead — task analysis, agent dispatch, progress tracking |
+| `architect` | core | Software Architect — system design, API contracts, integration specs |
+| `review-engineer` | core | Code quality — architecture compliance, patterns, performance |
+| `security-engineer` | core | Security — OWASP, injection, auth, dependency risks |
+| `performance-engineer` | core | Performance — cross-stack (FE Core Web Vitals/bundle, BE API/SP/query), static data-scale capacity review |
+| `qa-engineer` | core | QA — Playwright E2E acceptance testing, spec scenario verification |
+| `technical-writer` | core | Documentation — API docs, changelogs, README, ADRs |
+| `vue-engineer` | `sdd-vue` | Frontend — Vue ecosystem (Nuxt SSR, Vue 3 Vite SPA, Vue 2, single-spa), Atomic Design, Composable Pattern |
+| `dotnet-engineer` | `sdd-dotnet` | Backend — ASP.NET (modern .NET Core + legacy .NET Framework), Clean/Layered Architecture, EF Core + Dapper |
+| `python-engineer` | `sdd-python` | Backend/ML — FastAPI, data pipelines, ML models, LLM, monitoring |
+| `electron-engineer` | `sdd-electron` | Electron — main process, IPC, preload, native OS, packaging |
+| `godot-engineer` | `sdd-godot` | Godot — GDScript/C# game dev, scenes, nodes, autoloads, signals, resources, 2D game systems |
+| `database-engineer` | `sdd-database` | Database — schema design, migration strategy, query optimization, indexing |
+| `devops-engineer` | `sdd-devops` | DevOps — Docker, Kubernetes, CI/CD (GitLab CI / GitHub Actions), infrastructure |
 
 ## Bundled Skills
 
-Skills in `skills/` provide domain knowledge that agents can reference. See `skills/SOURCES.yaml` for the full list and upstream sources.
+Skills provide domain knowledge that agents reference. **Universal** skills live in
+core `skills/`; **stack-specific** skills live in their `sdd-<lang>` pack's `skills/`.
+`skills/SOURCES.yaml` (in core) stays the **central registry for all skills across
+every pack** and lists their upstream sources.
 
-**When adding a new skill, you must also add its entry to `skills/SOURCES.yaml`** so that `scripts/update-skills.sh` can keep it in sync with upstream. Skills with `repo: original` are maintained in this plugin and are not pulled from upstream.
+**When adding a new skill, add its entry to core `skills/SOURCES.yaml`** (even if the
+skill file lives in a pack) so `scripts/update-skills.sh` can sync it — the script
+resolves each skill's actual home by searching `plugins/*/skills/<name>`. Skills with
+`repo: original` are maintained here and not pulled from upstream.
 
 **Skill loading is per-agent and eager.** A subagent's `skills:` frontmatter is injected in full at spawn (not progressive), so each declared skill costs its SKILL.md body on every dispatch (`references/` stay on-demand). To keep dispatches lean, agents declare only **cross-task-universal** skills eagerly and invoke **stack-/datastore-/infra-specific** skills **on demand via the Skill tool** after their Stack Detection step (see database/performance/dotnet/python engineers' "Load skills on demand" sections).
 

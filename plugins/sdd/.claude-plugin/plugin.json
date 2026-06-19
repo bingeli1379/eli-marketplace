@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "sdd",
   "displayName": "Spec-Driven Development",
-  "description": "Spec-driven workflow: requirements → specs → agent implementation",
-  "version": "2.7.0",
+  "description": "Spec-driven workflow: requirements \u2192 specs \u2192 agent implementation",
+  "version": "3.0.0-beta.1",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
@@ -11,5 +11,15 @@
   "homepage": "https://github.com/bingeli1379/eli-claude-marketplace",
   "repository": "https://github.com/bingeli1379/eli-claude-marketplace",
   "license": "MIT",
-  "keywords": ["spec-driven", "sdd", "agents", "workflow", "proposal", "design", "tasks", "tdd", "ddd"]
+  "keywords": [
+    "spec-driven",
+    "sdd",
+    "agents",
+    "workflow",
+    "proposal",
+    "design",
+    "tasks",
+    "tdd",
+    "ddd"
+  ]
 }
