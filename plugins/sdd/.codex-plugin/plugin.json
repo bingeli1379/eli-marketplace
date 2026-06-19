@@ -1,7 +1,7 @@
 {
   "name": "sdd",
   "description": "Spec-driven workflow: requirements \u2192 specs \u2192 agent implementation",
-  "version": "3.0.0-beta.1",
+  "version": "3.0.0",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
