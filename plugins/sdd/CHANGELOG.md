@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.0.0-beta.1] - 2026-06-19
+
+### Changed
+- Language specialists now ship as optional packs. The Vue, .NET, Python, Godot, Electron, database, and DevOps engineers — and their stack-specific skills — moved out of this core plugin into separate `sdd-<lang>` packs. Install only the stacks you work in; the core keeps the workflow commands, orchestrator, architect, reviewers, and shared skills. Installing any pack pulls in core automatically.
+- When a task needs a language pack you have not installed, sdd now runs the work with a general-purpose agent and tells you which pack to install for full specialist quality, instead of failing.
+
 ## [2.7.0] - 2026-06-19
 
 ### Added
