@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.1] - 2026-06-22
+
+### Changed
+- The DevOps engineer now loads GitLab CI guidance only when the project actually uses GitLab CI (and GitHub Actions guidance for GitHub projects), instead of always assuming GitLab.
+
 ## [1.0.0] - 2026-06-19
 
 ### Added
