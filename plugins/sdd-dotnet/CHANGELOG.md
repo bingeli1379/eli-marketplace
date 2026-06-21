@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.0] - 2026-06-22
+
+### Added
+- The pack now bundles the error-handling, caching, resilience, and authentication skills (moved here from core), and the .NET engineer loads them automatically when designing an error strategy, adding caching or Polly resilience, or wiring JWT/Identity authorization.
+
 ## [1.0.0] - 2026-06-19
 
 ### Added
