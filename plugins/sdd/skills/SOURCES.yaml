@@ -232,6 +232,11 @@ scope-contract:
 agent-guidelines:
   repo: original
 
+# Design Discipline (sdd original — deep-module vocabulary adapted from mattpocock/skills codebase-design;
+# rewritten to fit sdd's clean-architecture / ddd split. Not synced.)
+codebase-design:
+  repo: original
+
 # Checklists (sdd original — derived from real-world production bugs)
 engineering-checklist:
   repo: original
