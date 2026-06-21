@@ -61,11 +61,12 @@ You MUST complete each phase before proceeding to the next.
    - Read stack traces completely
    - Note line numbers, file paths, error codes
 
-2. **Reproduce Consistently**
+2. **Reproduce Consistently — build a tight feedback loop**
    - Can you trigger it reliably?
    - What are the exact steps?
    - Does it happen every time?
    - If not reproducible → gather more data, don't guess
+   - **This is the single highest-leverage move in debugging.** Before theorising, construct a *tight, red-capable* loop — one command you can run that goes red on THIS bug and green once fixed. With it, bisection/hypothesis-testing/instrumentation all just consume it; without it, no amount of staring at code will save you. For the construction taxonomy (failing test → curl → CLI snapshot → headless → replay → harness → fuzz → bisect → differential → HITL), how to tighten it, the perf-regression variant, and the completion gate, see `feedback-loop.md` in this directory.
 
 3. **Check Recent Changes**
    - What changed that could cause this?
@@ -150,10 +151,11 @@ You MUST complete each phase before proceeding to the next.
 
 **Scientific method:**
 
-1. **Form Single Hypothesis**
-   - State clearly: "I think X is the root cause because Y"
-   - Write it down
-   - Be specific, not vague
+1. **Generate 3–5 Ranked Hypotheses (NOT one)**
+   - Single-hypothesis generation anchors on the first plausible idea and blinds you to the real cause. Always produce a ranked list first.
+   - Each must be **falsifiable** — state the prediction it makes: "If X is the cause, then changing Y makes the bug disappear / changing Z makes it worse." If you can't state the prediction, it's a vibe — discard or sharpen it.
+   - **Show the ranked list to the user before testing.** They often re-rank instantly with domain knowledge ("we just deployed a change to #3") or rule one out. Cheap checkpoint, big time saver — but don't block: proceed with your ranking if the user is AFK.
+   - Test the top-ranked hypothesis first via the steps below; on a clean refutation, move to the next.
 
 2. **Test Minimally**
    - Make the SMALLEST possible change to test hypothesis
@@ -283,6 +285,7 @@ If systematic investigation reveals issue is truly environmental, timing-depende
 
 These techniques are part of systematic debugging and available in this directory:
 
+- **`feedback-loop.md`** - Construct, tighten, and gate the red-capable reproduction loop (Phase 1's core move)
 - **`root-cause-tracing.md`** - Trace bugs backward through call stack to find original trigger
 - **`defense-in-depth.md`** - Add validation at multiple layers after finding root cause
 - **`condition-based-waiting.md`** - Replace arbitrary timeouts with condition polling
