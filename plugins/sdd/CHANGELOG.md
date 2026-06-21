@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.1.0] - 2026-06-22
+
+### Added
+- New `codebase-design` skill that gives the architect and reviewers a shared vocabulary for shaping module interfaces — small surfaces over deep implementations, clean seams, and testability — so designs and reviews judge interface quality consistently.
+
+### Changed
+- Debugging now leads with building a tight, repeatable reproduction loop and weighs several ranked theories instead of committing to the first guess, making root-cause hunts faster and more reliable.
+- Test-first guidance now steers you away from writing every test up front, toward one-test-one-feature increments that catch real behaviour.
+- When applying review feedback, agents verify suggestions against the code, push back on incorrect ones, skip building unused "complete" versions, and ask for clarification instead of guessing when a comment is unclear.
+- The .NET-specific error-handling, caching, resilience, and authentication skills moved into the `sdd-dotnet` pack; install that pack to keep them.
+
 ## [3.0.0] - 2026-06-19
 
 ### Changed

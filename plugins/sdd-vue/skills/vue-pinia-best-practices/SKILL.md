@@ -1,6 +1,6 @@
 ---
 name: vue-pinia-best-practices
-description: "Pinia stores, state management patterns, store setup, and reactivity with stores."
+description: Use when deciding Pinia store design — store boundaries and when to split, state-shape patterns, getter/action anti-patterns, and reactivity pitfalls. For Pinia API syntax and how-to use the pinia skill.
 version: 1.0.0
 user-invocable: false
 license: MIT

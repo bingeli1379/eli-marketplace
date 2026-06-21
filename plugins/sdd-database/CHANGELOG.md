@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.1] - 2026-06-22
+
+### Changed
+- Sharpened when each SQL skill activates — PostgreSQL/MySQL tuning, SQL Server/Oracle tuning, and query authoring no longer overlap — so the guidance that loads matches your database.
+
 ## [1.0.0] - 2026-06-19
 
 ### Added

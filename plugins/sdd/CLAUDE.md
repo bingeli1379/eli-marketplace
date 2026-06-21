@@ -113,6 +113,21 @@ resolves each skill's actual home by searching `plugins/*/skills/<name>`. Skills
 
 **Skill loading is per-agent and eager.** A subagent's `skills:` frontmatter is injected in full at spawn (not progressive), so each declared skill costs its SKILL.md body on every dispatch (`references/` stay on-demand). To keep dispatches lean, agents declare only **cross-task-universal** skills eagerly and invoke **stack-/datastore-/infra-specific** skills **on demand via the Skill tool** after their Stack Detection step (see database/performance/dotnet/python engineers' "Load skills on demand" sections).
 
+## Fusing an External Skill (checklist)
+
+sdd is a **thin, fixed orchestration spine + a fat, lazily-loaded knowledge periphery.** The spine (propose→apply→complete choreography, single-writer serialization, mandatory review gates, NEEDS/CONFLICT/BLOCKED signaling, `config.yaml` as sole context, core+pack split) is what sdd *is* and stays closed. The periphery (reference skills agents pull) is what sdd *knows* and is open to growth. When importing someone else's skill, run this filter before adding it.
+
+**Cost lives in one place: eager vs on-demand.** An eager skill (in an agent's `skills:` frontmatter) costs its full body on **every** dispatch of that agent. An on-demand skill (loaded via the Skill tool) costs **zero** until invoked. So the periphery can grow to hundreds of skills for free — token cost is governed entirely by how many skills are *eager*, not by library size. Guard the frontmatter lists; stop worrying about the count.
+
+1. **Spine or periphery?** Default: periphery (a reference skill). Touching the spine (orchestrator / apply / propose / signaling) demands the change be load-bearing for the choreography — a high, rare bar. Most fusions are periphery.
+2. **Eager or on-demand?** Default: **on-demand**. Promote to a `skills:` frontmatter entry **only** when that agent needs it on essentially every task. This is the only question whose wrong answer burns tokens — answer it deliberately, per agent.
+   - **eager/on-demand is a *reliability* tradeoff, not only a token one.** Subagents are NOT auto-fed the full skill catalogue the way the main loop is — that is why engineers carry explicit "detect X → load skill Y" lists. So on-demand is only "free" when a **reliable trigger path** exists: a *named, signal-gated* pointer in the agent's prompt (gated on a concrete signal — a file like `.gitlab-ci.yml`, a `config.yaml` value, a detected framework). If no such pointer exists, demoting a skill out of frontmatter silently kills its triggering — the exact opposite of the goal.
+   - Decision rule: **demote ⟺ a named prose pointer exists or you add one in the same change.** Eager is the *correct* tool — not a failure — precisely when a skill is needed but cannot be reliably reached by a detection signal (e.g. a stack-agnostic design/review lens like `codebase-design`). The same skill can rightly be eager on one agent (its everyday baseline) and on-demand on another (conditional) — placement is judged per agent, not per skill.
+3. **Does it conflict with a spine principle?** Reject or rewrite anything that requires persistent prose docs (e.g. `CONTEXT.md`/ADR upkeep — `config.yaml` is the sole context), parallel writes, environment-specific lookup tools baked into the skill, asking the user questions during `/apply`, or blocking the git ops the pipeline relies on (`reset --soft` squash). These fight the architecture even when the skill itself is good.
+4. **Does its trigger overlap an existing skill?** Overlap → **merge into the existing skill** (as feedback-loop folded into `systematic-debugging`, horizontal-slicing into `test-driven-development`), don't create a rival with an ambiguous trigger. Only spin up a new skill when its trigger is genuinely distinct. Either way, the `description` must be triggering-conditions-only (start with "Use when…"); run `scripts/check-cso.sh` — precision of *triggering*, not skill count, is what keeps fusion from drifting into "四不像".
+
+Then register it in `skills/SOURCES.yaml`: `repo: <upstream>` if synced as-is, or `repo: original` (with an inspired-by comment) if rewritten enough that a sync would clobber the customization.
+
 ## Development Methodology
 
 - **SDD (Spec-Driven Development)**: `/propose` produces complete specs before any code is written

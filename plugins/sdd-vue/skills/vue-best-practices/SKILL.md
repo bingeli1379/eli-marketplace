@@ -1,6 +1,6 @@
 ---
 name: vue-best-practices
-description: MUST be used for Vue.js tasks. Strongly recommends Composition API with `<script setup>` and TypeScript as the standard approach. Covers Vue 3, SSR, Volar, vue-tsc. Load for any Vue, .vue files, Vue Router, Pinia, or Vite with Vue work. ALWAYS use Composition API unless the project explicitly requires Options API.
+description: Use when establishing or reviewing Vue idioms and standards — Composition-API-first with `<script setup>` + TypeScript, SSR / Volar / vue-tsc conventions, or deciding the idiomatic approach for new Vue code. For API syntax and how-to use the vue skill; for store / router / build specifics use pinia, vue-router-best-practices, or vite.
 user-invocable: false
 license: MIT
 metadata:

@@ -177,6 +177,26 @@ Keep tests green. Don't add behavior.
 
 Next failing test for next feature.
 
+## Anti-Pattern: Horizontal Slicing
+
+**DO NOT write all tests first, then all implementation.** Treating RED as "write every test" and GREEN as "write every impl" is *horizontal slicing*, and it produces crap tests:
+
+- Tests written in bulk verify *imagined* behaviour, not *actual* behaviour.
+- You end up testing the *shape* of things (data structures, signatures) rather than user-facing behaviour.
+- Tests become insensitive to real changes — they pass when behaviour breaks, fail when behaviour is fine.
+- You outrun your headlights, committing to test structure before understanding the implementation.
+
+```
+WRONG (horizontal):           RIGHT (vertical, tracer bullets):
+  RED:   test1..test5           RED→GREEN: test1→impl1
+  GREEN: impl1..impl5           RED→GREEN: test2→impl2
+                                RED→GREEN: test3→impl3
+```
+
+**Correct approach — vertical slices.** One test → one implementation → repeat. Each test responds to what the previous cycle taught you. Because you just wrote the code, you know exactly what behaviour matters and how to verify it. The first cycle is your **tracer bullet** — it proves the path works end-to-end before you widen coverage.
+
+This matters most in `/apply`, where an agent implementing a whole task group is tempted to batch all tests up front. Stay vertical: one behaviour at a time.
+
 ## Good Tests
 
 | Quality | Good | Bad |

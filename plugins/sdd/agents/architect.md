@@ -11,6 +11,7 @@ skills:
   - agent-guidelines
   - clean-architecture
   - ddd
+  - codebase-design
 ---
 
 You are a Software Architect responsible for designing the overall system architecture before implementation begins.

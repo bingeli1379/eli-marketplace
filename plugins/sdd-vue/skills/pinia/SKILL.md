@@ -1,6 +1,6 @@
 ---
 name: pinia
-description: Pinia official Vue state management library, type-safe and extensible. Use when defining stores, working with state/getters/actions, or implementing store patterns in Vue apps.
+description: Use when working with the Pinia API — defining stores, state/getters/actions, plugins, and store-usage syntax in Vue apps. For store design patterns, anti-patterns, and when-to-split decisions use vue-pinia-best-practices.
 metadata:
   author: Anthony Fu
   version: "2026.1.28"

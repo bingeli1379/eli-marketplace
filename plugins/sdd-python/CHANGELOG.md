@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0] - 2026-06-22
+
+### Added
+- New skills matched to real Python work — async/concurrency patterns, pytest testing patterns, common-mistake review, LLM prompt engineering, and LLM evaluation — loaded automatically when a task calls for them.
+
+### Removed
+- Dropped the Microsoft Dataverse skills, which did not apply to the FastAPI, data-pipeline, ML, and LLM work this pack targets.
+
 ## [1.0.0] - 2026-06-19
 
 ### Added
