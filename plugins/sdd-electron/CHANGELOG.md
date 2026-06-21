@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.1] - 2026-06-22
+
+### Changed
+- Made the TresJS 3D skill activate for any Vue + Three.js work, instead of being tied to a specific app.
+
 ## [1.0.0] - 2026-06-19
 
 ### Added
