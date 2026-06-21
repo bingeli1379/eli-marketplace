@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.1] - 2026-06-22
+
+### Changed
+- Sharpened when each Vue skill activates (API reference vs. best-practice standards vs. component testing), reducing overlap so the most relevant guidance loads.
+
 ## [1.0.0] - 2026-06-19
 
 ### Added
