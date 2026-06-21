@@ -4,7 +4,7 @@ version: 1.0.0
 user-invocable: false
 license: MIT
 author: github.com/vuejs-ai
-description: Use for Vue.js testing. Covers Vitest, Vue Test Utils, component testing, mocking, testing patterns, and Playwright for E2E testing.
+description: Use when testing Vue components with Vue Test Utils — mounting, props/events/slots, async updates, and component-level mocking. For Vitest runner mechanics use the vitest skill; for E2E and test-strategy decisions use frontend-testing-best-practices.
 ---
 
 Vue.js testing best practices, patterns, and common gotchas.

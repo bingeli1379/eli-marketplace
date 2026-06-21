@@ -1,6 +1,6 @@
 ---
 name: vue-jsx-best-practices
-description: JSX syntax in Vue (e.g., class vs className, JSX plugin config).
+description: Use when writing Vue with JSX/TSX — render functions, class vs className differences from React, and JSX / Babel plugin config in a Vue project.
 version: 2.0.0
 user-invocable: false
 license: MIT

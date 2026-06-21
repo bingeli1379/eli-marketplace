@@ -1,6 +1,6 @@
 ---
 name: tailwind-best-practices
-description: Use when writing, reviewing, or refactoring Tailwind CSS — applying utility classes, keeping design-system / token consistency, or cleaning up component styles. Triggers on Tailwind class usage, component styling, or design tokens.
+description: Use when reviewing or refactoring Tailwind CSS for quality — design-system / token consistency, extracting repeated utility clusters, and cleaning up component styles. For Tailwind v4 utility, config, and dark-mode how-to use the tailwindcss skill.
 user-invocable: false
 ---
 
