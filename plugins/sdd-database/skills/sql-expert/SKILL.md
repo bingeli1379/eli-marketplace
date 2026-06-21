@@ -1,6 +1,6 @@
 ---
 name: sql-expert
-description: Use when writing or debugging SQL queries — complex joins, subqueries, CTEs, window functions — or translating queries across PostgreSQL, MySQL, SQLite, and SQL Server dialects. For tuning slow queries use sql-query-optimization; for schema/normalization design use database-schema-design.
+description: Use when writing or debugging SQL queries — complex joins, subqueries, CTEs, window functions — or translating queries across PostgreSQL, MySQL, SQLite, and SQL Server dialects. For performance tuning use sql-query-optimization (PostgreSQL/MySQL) or sql-optimization (SQL Server/Oracle); for schema/normalization design use database-schema-design.
 user-invocable: false
 ---
 

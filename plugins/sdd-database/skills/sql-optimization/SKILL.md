@@ -1,11 +1,12 @@
 ---
 name: sql-optimization
 description: >
-  Universal SQL performance optimization across SQL Server, PostgreSQL, MySQL, Oracle — query tuning, indexing,
-  execution-plan analysis, pagination, batch operations, monitoring. Use for slow queries, stored-procedure
-  performance, missing indexes, large result sets, or "will this query scale" questions.
-  Keywords: sql server, t-sql, stored procedure performance, execution plan, index strategy, pagination,
-  OFFSET FETCH, keyset pagination, large result set, query tuning, SARGable.
+  Use when tuning SQL performance on SQL Server / T-SQL / Oracle — stored-procedure performance, execution-plan
+  analysis, index strategy, SARGable predicates, pagination (OFFSET FETCH / keyset), large result sets, or
+  "will this query scale" capacity questions. For PostgreSQL/MySQL query tuning use sql-query-optimization;
+  for authoring or debugging cross-dialect queries use sql-expert.
+  Keywords: sql server, t-sql, stored procedure performance, execution plan, index strategy, SARGable,
+  OFFSET FETCH, keyset pagination, large result set.
 user-invocable: false
 ---
 
