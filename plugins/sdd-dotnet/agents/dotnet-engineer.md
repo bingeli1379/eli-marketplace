@@ -37,6 +37,10 @@ When the project's real stack differs from the defaults below, follow the projec
 - EF Core data access (only when the repo uses EF, not Dapper/stored procedures) → `ef-core`
 - Legacy .NET Framework (WebForms / MVC5) → `legacy-aspnet`
 - Kafka consumers/producers → `kafka-consumer-patterns`
+- Designing the Result/exception strategy or ProblemDetails (RFC 9457) responses → `error-handling`
+- Adding caching (HybridCache, output/response/distributed, Redis) → `caching`
+- Adding Polly v8 resilience (retry, circuit breaker, timeout, fallback) → `resilience`
+- JWT Bearer, ASP.NET Identity, or policy-based authorization → `authentication`
 
 ## Tech Stack (defaults — override per project)
 - **Framework**: ASP.NET Core (.NET 8–10), C# 12–13 (modern repos); legacy .NET Framework 4.x where the repo is WebForms/MVC5
