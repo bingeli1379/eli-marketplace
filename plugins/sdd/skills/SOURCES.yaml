@@ -112,10 +112,27 @@ analyzing-dotnet-performance:
   repo: https://github.com/managedcode/dotnet-skills
   path: catalog/Tools/Official-DotNet-Diagnostics/skills/analyzing-dotnet-performance
 
-# Python (from wshobson/agents — python-development plugin)
+# Python (from wshobson/agents — python-development plugin, MIT)
 python-performance-optimization:
   repo: https://github.com/wshobson/agents
   path: plugins/python-development/skills/python-performance-optimization
+async-python-patterns:
+  repo: https://github.com/wshobson/agents
+  path: plugins/python-development/skills/async-python-patterns
+python-testing-patterns:
+  repo: https://github.com/wshobson/agents
+  path: plugins/python-development/skills/python-testing-patterns
+python-anti-patterns:
+  repo: https://github.com/wshobson/agents
+  path: plugins/python-development/skills/python-anti-patterns
+
+# LLM application (from wshobson/agents — llm-application-dev plugin, MIT)
+prompt-engineering-patterns:
+  repo: https://github.com/wshobson/agents
+  path: plugins/llm-application-dev/skills/prompt-engineering-patterns
+llm-evaluation:
+  repo: https://github.com/wshobson/agents
+  path: plugins/llm-application-dev/skills/llm-evaluation
 
 # Database
 sql-expert:
@@ -308,17 +325,6 @@ kubernetes-architect:
 gitlab-ci-patterns:
   repo: https://github.com/wshobson/agents
   path: plugins/cicd-automation/skills/gitlab-ci-patterns
-
-# Dataverse / Power Platform (from github/awesome-copilot)
-dataverse-python-production-code:
-  repo: https://github.com/github/awesome-copilot
-  path: skills/dataverse-python-production-code
-dataverse-python-advanced-patterns:
-  repo: https://github.com/github/awesome-copilot
-  path: skills/dataverse-python-advanced-patterns
-dataverse-python-usecase-builder:
-  repo: https://github.com/github/awesome-copilot
-  path: skills/dataverse-python-usecase-builder
 
 # Electron (from vercel-labs/agent-browser)
 electron:

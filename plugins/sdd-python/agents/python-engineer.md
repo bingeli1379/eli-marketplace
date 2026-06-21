@@ -25,7 +25,15 @@ The tech stack and patterns below are **sensible defaults, not a mandate**. Befo
 
 Python services vary widely — a FastAPI request/response API, a batch data/ML pipeline, a scheduled job host, an LLM service. **Internal packages, database-access helpers, service-DNS conventions, registries, and scheduler triggers are project-specific** — discover the repo's actual ones and use those; never assume a particular in-house helper or naming exists. The patterns here apply only where the repo has no precedent of its own.
 
-**Load skills on demand (do NOT preload all).** `kafka-consumer-patterns` is NOT preloaded — invoke it with the **Skill** tool only when the task involves Kafka consumers/producers; skip it for request/response APIs, batch/ML pipelines, or scheduled jobs that don't touch Kafka.
+**Load skills on demand (do NOT preload all).** Your frontmatter carries only the cross-cutting core (guidelines, checklist, TDD). The following are NOT preloaded — once the task tells you they apply, invoke them with the **Skill** tool and skip the rest:
+- Async/await, asyncio, concurrent I/O, non-blocking ASGI work → `async-python-patterns` (skip for purely sync batch/ML pipelines)
+- Writing pytest tests (fixtures, parametrize, mocking, async tests) → `python-testing-patterns` (the pytest mechanics that complement the eager `test-driven-development` methodology)
+- Reviewing or self-checking Python for footguns (mutable defaults, late binding, broad except, leaked resources) → `python-anti-patterns`
+- Designing or debugging LLM prompts (chain-of-thought, few-shot, structured output, templates) → `prompt-engineering-patterns`
+- Evaluating LLM output quality / building an eval or regression harness (pairs with Langfuse) → `llm-evaluation`
+- Kafka consumers/producers → `kafka-consumer-patterns` (skip for request/response APIs, batch/ML pipelines, or scheduled jobs that don't touch Kafka)
+- Profiling / optimizing slow Python (cProfile, py-spy, memory) → `python-performance-optimization`
+- Tuning a SQL query the pipeline issues → `sql-query-optimization` (PostgreSQL/MySQL) or `sql-optimization` (SQL Server); authoring complex cross-dialect SQL → `sql-expert` (these live in the `sdd-database` pack; cross-pack on-demand loads work)
 
 ## Tech Stack (defaults — override per project)
 - **Runtime**: Python 3.10+ (match the project's pinned version; avoid newer-only syntax if production pins an older minor)
