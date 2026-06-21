@@ -1,6 +1,6 @@
 ---
 name: threejs-tresjs
-description: 3D HUD rendering with Three.js and TresJS for JARVIS AI Assistant
+description: Use when rendering 3D scenes or HUDs in Vue with TresJS (declarative Three.js) — scene-graph components, reactive props, and integrating Three.js into a Vue / Electron UI.
 model: sonnet
 risk_level: MEDIUM
 version: 1.0.0
