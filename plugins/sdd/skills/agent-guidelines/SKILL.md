@@ -47,18 +47,19 @@ Self-check: *"Would a senior engineer call this overcomplicated?"*
 
 ## Match Existing Code Before Writing (MANDATORY)
 
-The spec tells you **WHAT** to build; the existing codebase tells you **HOW this project builds it**. Functionally-correct code that ignores local convention is a defect here — it makes the codebase feel inconsistent. Before writing any new code:
+The spec tells you **WHAT** to build; the existing codebase tells you **HOW this project builds it**. Functionally-correct code that ignores local convention is a defect here — it makes the codebase feel inconsistent. The anchor is **how the project performs each technical operation**, NOT "the nearest feature that looks like mine". Before writing any new code:
 
-1. **Find the nearest precedent.** If the task names a `Reference: <path>`, open it first to align on the project's overall approach. Treat it as a **starting anchor, not a cage** — it is picked at design altitude and may not be the closest match for every construct you write. For each specific construct (a query of this kind, a guard of this kind, a sibling class), still locate 1–3 existing implementations of the *same kind of thing* and mirror the closest one; if you find a clearly better-fitting analog than the named Reference, follow that instead. If no Reference is named, do this lookup from scratch.
-2. **Mirror their approach**, not just their formatting:
-   - **Data access** — if siblings go through stored procedures / a repository layer / a query helper (and never inline SQL or direct `DbContext`), do the same. If reads use a specific hint or pattern (e.g. a `WITH (NOLOCK)` / `unlock`-style convention), follow it.
-   - **Structure & layering** — same file layout, same separation (controller → service → repo, composable → store, etc.).
-   - **Naming** — class/method/file naming follows the sibling's scheme exactly.
-   - **Error handling, validation, logging, DI registration** — same mechanisms the neighbors use.
-3. **When 3+ siblings already implement a feature one way, implement the new one the same way** — do not introduce a "better" alternative pattern in isolation. If you genuinely believe the established pattern is wrong, flag it; do not silently diverge.
-4. **Only fall back to general best practice when no local precedent exists.** Local convention always wins over generic advice and over your own preferences.
+1. **Decompose the task into its technical operations.** List the concrete operations the code will perform — e.g. *hits the database*, *registers/injects a dependency*, *defines a domain class/aggregate*, *exposes an endpoint*, *splits a layer/module*, *places a new file*, *handles an error*, *logs*, *validates input*. This per-operation list — not a single feature-sibling — is your conformance checklist.
+2. **For EACH operation, find how this project already does THAT operation, and mirror the mechanism.** Search by the *operation*, not by feature name: to add DB access, grep how other code reaches the DB (stored procedure? repository? query helper?) and copy that mechanism; to inject a service, copy how DI is wired elsewhere; to write a class, mirror how sibling classes of that kind are structured; to place a file, follow where the same *kind* of file already lives. A `Reference:` line named in the task (it may map a precedent **per operation** — `DB access → …`, `DI → …`) is a useful starting point, but treat each pointer as one anchor among many — resolve every operation against the closest real precedent for *that operation*, even if it lives in an unrelated feature. Mirror the **approach**, not just formatting:
+   - **Data access** — same mechanism as existing data access (stored procedures / repository / query helper, never inline SQL or direct `DbContext` if the project avoids them); same read-query conventions (locking hints like `NOLOCK`/`unlock`, pagination shape).
+   - **Dependency injection / wiring** — registered and injected the same way the project wires its services (constructor injection via interface, the same DI registration site and style).
+   - **Class / type shape** — same structure, base types, immutability, and member organization as sibling classes of that kind.
+   - **Structure, layering & file placement** — same separation, and put a new file in the directory where the same *kind* of file already lives.
+   - **Naming, error handling, validation, logging** — same patterns the existing code uses for the same operation.
+3. **When 3+ places already do an operation one way, do it the same way** — do not introduce a "better" alternative in isolation. If you genuinely believe the established pattern is wrong, flag it (`CONFLICT:`); do not silently diverge.
+4. **Changing the architecture does NOT license a new coding style.** When the task restructures existing code there may be no feature-sibling doing the same job — that is expected and is NOT permission to fall back to generic style. The repo still performs every underlying operation (DB access, DI, class definition, file placement, error handling) *somewhere*; anchor each operation to those existing instances. **Fall back to general best practice per-operation, and only when THAT specific operation has no precedent anywhere in the repo** — never because "no sibling feature exists". Local convention always wins over generic advice and over your own preferences.
 
-Self-check before reporting done: *"If a reviewer put my file next to the nearest existing analog, would they look like the same author wrote them?"*
+Self-check before reporting done: *"For every technical operation my code performs — DB access, DI, class shape, file placement, error handling — does it match how this project already does that operation?"*
 
 ## Exhaustive Scanning (Zero Misses)
 
