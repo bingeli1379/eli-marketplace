@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1] - 2026-06-24
+
+### Changed
+- The .NET engineer reasons more deeply (higher reasoning effort) for more thorough implementation and review.
+
 ## [1.1.0] - 2026-06-22
 
 ### Added

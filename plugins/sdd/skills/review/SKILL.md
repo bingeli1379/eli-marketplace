@@ -71,7 +71,7 @@ Standalone review entry point. Unlike `/quick` (a **change** pipeline that dispa
    - The resolved target scope (file list, or `git diff BASE_SHA..HEAD_SHA`, or definition+callers)
    - `## Project Context` (config.yaml verbatim) when present + the project-knowledge directive
    - **Hard read-only constraint**: *"Review and report ONLY. Do NOT edit any file, do NOT create commits, do NOT dispatch other agents. Return findings as a structured report."*
-   - performance-engineer: reminder that capacity analysis is **static** and the output is a per-path verdict (SAFE / RISKY / WILL NOT SCALE)
+   - performance-engineer: capacity analysis is **static**; output is a per-path verdict (SAFE / RISKY / WILL NOT SCALE). **MANDATORY for any backend/data/batch code in scope — the primary OOM defense: exhaustively enumerate every point where an external store's data is loaded into memory and give each a boundedness verdict; do NOT report only the slow-looking ones. When a path's size is unknown, emit `NEEDS:` for the row count instead of guessing a threshold.**
 
    **Keep them alive.** Do NOT treat reviewers as one-shot. After they report, they stay backgrounded — follow-up questions and re-reviews go back to the **same** agent via **SendMessage** (its context, loaded skills, and the files it already read are intact), which avoids re-paying agent startup. Only spawn a fresh reviewer if its context was lost or the target changed substantially.
 

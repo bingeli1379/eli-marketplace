@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.2] - 2026-06-24
+
+### Changed
+- The Electron engineer reasons more deeply (higher reasoning effort) for more thorough implementation and review.
+
 ## [1.0.1] - 2026-06-22
 
 ### Changed

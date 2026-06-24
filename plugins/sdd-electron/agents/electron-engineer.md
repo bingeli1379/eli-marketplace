@@ -1,7 +1,7 @@
 ---
 name: electron-engineer
 model: sonnet
-effort: medium
+effort: high
 color: green
 description: >
   Senior Electron developer. Handles main process, preload scripts, IPC communication,

@@ -1,7 +1,7 @@
 ---
 name: dotnet-engineer
 model: sonnet
-effort: medium
+effort: high
 color: blue
 description: >
   Senior ASP.NET backend engineer across modern .NET Core and legacy .NET Framework.
