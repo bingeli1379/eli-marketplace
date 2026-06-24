@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.0] - 2026-06-24
+
+### Changed
+- New code now matches how your project already does each thing. Data access, dependency injection, class structure, and file placement are mirrored from the existing code for each operation, instead of just copying the nearest similar feature. This holds even when a change restructures existing architecture — the case where new code used to drift toward a generic style.
+- Performance reviews now catch out-of-memory (OOM) risks exhaustively. Every place that loads an unbounded amount of data into memory is flagged with a clear "will it scale" verdict, across any language — not only .NET and Python. When the real data size is unknown, the review asks for it rather than guessing.
+- Reviewers and engineers reason more deeply (higher effort) for more thorough analysis and implementation.
+
 ## [3.1.0] - 2026-06-22
 
 ### Added
