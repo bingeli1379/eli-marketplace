@@ -1,7 +1,7 @@
 ---
 name: godot-engineer
 model: sonnet
-effort: medium
+effort: high
 color: cyan
 description: >
   Senior Godot game engineer (GDScript-first, C# capable). Handles scenes, nodes,
