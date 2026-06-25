@@ -1,7 +1,7 @@
 {
   "name": "issue-tracing",
   "description": "On-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured Root Cause / Impact / How to Resolve / Unknowns report",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"

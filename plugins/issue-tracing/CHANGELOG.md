@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0] - 2026-06-25
+
+### Added
+- When investigating an internal system, the investigation now loads your environment's logging/monitoring conventions first — real host and index names, field quirks, and any services whose logs live somewhere other than the default place — so it queries the right source instead of guessing. It also turns unreadable log values (encoded message payloads, status codes, ids) into human-readable form when a tool for that is available.
+
+### Fixed
+- Investigations no longer freeze partway through. Checking logs or infrastructure metrics used to fire many queries at once and exhaust the backend's connection limit, leaving the run stuck; queries are now paced (and back off to one-at-a-time on errors) so they complete.
+
 ## [1.2.0] - 2026-06-03
 
 ### Fixed

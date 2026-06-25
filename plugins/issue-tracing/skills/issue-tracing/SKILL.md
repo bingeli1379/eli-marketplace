@@ -53,7 +53,19 @@ If unsure which mode, default to Look mode and ask.
    a. **Check `add-dir` paths** loaded in the session — if there's a plausible service repo under one, treat its parent (or the path itself) as the root.
    b. **Ask the user** — if (a) does not yield a root, ask: "請執行 `/add-dir <你的服務 repo 根目錄>`（例如 `/add-dir ~/Project`），讓我之後能讀 code 判斷使用者影響。" Wait for the user to add it, then re-check.
 
-   Cache the resolved root in conversation context. Then continue to step 2.
+   Cache the resolved root in conversation context. Then continue to step 1c.
+
+   ### 1c. Load environment knowledge if available (fills this skill's placeholders)
+
+   This skill is deliberately generic — it leaves host names, index / data-stream names, log field conventions, and dashboard UIDs as placeholders (`<svc>`, `<dc>`, `<internal-domain>`). If the URL points at an **internal / company system** and the session exposes a knowledge skill or doc describing **this organization's ELK / Grafana conventions**, load it now and pull the concrete values it gives you into the steps below:
+
+   - **Kibana / Grafana host + the real index / data-stream names** → step 4 (so you resolve the data view against the right indices, and know if one service's logs are split across multiple streams / clusters).
+   - **Log field conventions** (which fields exist, `.keyword` or not, env value casing) → step 4b-bis / step 7 (skips the trial-and-error that produces false `0` hits).
+   - **Any logging exceptions** (services whose logs do NOT land in the default index — e.g. routed to APM / a separate stack) → step 4c, BEFORE walking the 0-hits ladder, so you don't misread "different backend" as "wrong cluster / no data".
+   - **Dashboard UIDs + the metrics mental model** (per-project vs shared boards, template vars) → step 5 / step 11.
+   - **Decode / lookup tools** for opaque values in logs (base64 payloads, bitflags, id↔id mapping) → step 7 / step 8 (see the note in step 7).
+
+   If no such knowledge source exists, proceed with discovery as the steps describe — the placeholders get resolved live. Then continue to step 2.
 
 2. **Parse the input URL**
 
@@ -155,6 +167,8 @@ If unsure which mode, default to Look mode and ask.
 
    **First query = the URL's filters, verbatim (Look mode — always do this).** Run exactly the filters the URL carries (resolved per step 4: same index, same field paths, `match_phrase`), `sort @timestamp desc`, a small `size` (e.g. 5–10) to surface the matching logs, plus one `size: 0` + `track_total_hits` for the total. Read the dominant message pattern. **This is the primary deliverable** — for a tightly-scoped URL (e.g. already filtered to `level=error`) this is often the whole answer: report the hits + pattern and stop, per the operating principle.
 
+**Decode opaque values in the log before interpreting.** If a hit carries a value you can't read directly — a base64 / gzip / MessagePack message payload, a status bitflag integer, an id you need mapped to another id — and the environment knowledge from step 1c exposed a decode / lookup tool for it, use that tool to turn it into something readable rather than guessing or reporting the raw blob. (Generic: this skill ships no decoders; it relies on whatever the environment provides.)
+
    **Per-project counts, baselines, dominant-pattern weighting (Report mode only):** the rest of this step — per-candidate-project counts, pre-incident baseline ratios, pattern verification — runs only when you're producing a full Root Cause / Impact report, or when the first-pass logs don't explain the failure. Don't fan out by reflex.
 
    **GATE — Read `references/step7-es-query.md` NOW** (before any ES query) for filter requirements, aggs ban, token budget, and stack-trace dedupe — these apply to both the first query and any report-mode counts. Do not write any ES query before reading it; this content does not survive context dilution if you only read it once at the start of the conversation.
@@ -230,6 +244,7 @@ If unsure which mode, default to Look mode and ask.
 ## Guardrails
 
 - **No unbounded ES queries.** Every search MUST include `@timestamp` range + a project filter + a level filter + `size` cap.
+- **Cap concurrent ELK / Grafana MCP calls — do NOT fan out all at once.** These backends sit behind a connection / rate ceiling; firing many `mcp__elasticsearch__search` / `mcp__grafana__*` calls in one tool-use block exhausts it and the investigation hangs (calls never return). Send **at most 2–3 in parallel per block, wait for the batch, then send the next**; on any connection / timeout / rate error, drop to **sequential** (one at a time). Applies everywhere — step 7 ES queries and the step 11 infra batch (see `references/step11-infra-metrics.md`).
 - **Copy the URL's filter clause verbatim — do NOT default to `term .keyword`.** Replicate the URL's exact query: same field path (`project` or `project.keyword`, differs per data view) and `match_phrase` (never `term`). `term <field>.keyword` matches nothing when the field has no `.keyword` sub-field (common on data streams mapping `project`/`env`/`level` as `text`) → a false `0` with no error. Build your own `term <field>.keyword` only after confirming the sub-field exists (sample a doc / `get_mappings`). See step 4b-bis / step7 reference.
 - **Resolve the data view before trusting any count.** A Kibana `dataViewId` and a data view's display `name` are NOT index names. Read `.kibana*` (`index-pattern:<dataViewId>` → `index-pattern.title`) and query the `title` **verbatim — never append `*`** (a `<name>*` wildcard skips a data stream's hidden `.ds-` backing indices). The display `name` often differs from `title` (`foo-bar` → `bar-logs-foo`). Skipping this — or appending `*`, or assuming `.keyword` — is the #1 cause of false "not found" / false "wrong cluster" conclusions.
 - **Where `*` is dangerous vs fine** — the heap-killer is an unbounded full scan, not the character `*`:

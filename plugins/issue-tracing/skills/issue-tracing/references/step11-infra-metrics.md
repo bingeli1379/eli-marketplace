@@ -21,7 +21,7 @@ Infra query plan:
 - Total queries: <N>
 ```
 
-Then dispatch all independent calls **in a single parallel batch** (one tool-use block with N queries, one per host × metric). No Plan block → no queries. Iterating sequentially when the calls are independent is the single biggest source of wall-clock waste in this skill, and skipping the Plan block is how the agent ends up missing entire datasources or instances.
+Then dispatch the queries in **bounded-concurrency batches — at most 2–3 calls per tool-use block** — and wait for each batch to return before sending the next. **Do NOT fire all N in one block.** The ELK / Grafana MCP backends sit behind a connection / rate ceiling; a large parallel fan-out exhausts it and the whole investigation hangs (observed repeatedly — the symptom is calls that never return). If any query comes back with a connection / timeout / rate error, **drop to sequential (one call at a time)** for the remainder. The Plan block still enumerates all N up front so nothing is missed — it controls *pacing*, not a single mega-batch. No Plan block → no queries; skipping it is how the agent ends up missing entire datasources or instances.
 
 ## 11.0 Anchor on prod config FIRST
 
