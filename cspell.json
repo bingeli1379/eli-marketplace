@@ -1,0 +1,26 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "argmax",
+    "backtest",
+    "backtests",
+    "bettable",
+    "BTTS",
+    "overfitting",
+    "defence",
+    "defences",
+    "favourite",
+    "favourites",
+    "longshot",
+    "longshots",
+    "moneyline",
+    "overround",
+    "scorecast",
+    "sportsbook",
+    "sportslottery"
+  ],
+  "ignoreRegExpList": [
+    "/[\\u4e00-\\u9fff]+/"
+  ]
+}
