@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "worldcup-predict",
+  "displayName": "World Cup Predict",
+  "description": "Predict World Cup matches: pulls live fixtures, form, player/tactical data and multi-market odds, then outputs a multi-dimensional analysis and a betting board with value-bet calls",
+  "version": "1.0.0",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-claude-marketplace",
+  "license": "MIT",
+  "keywords": ["world-cup", "football", "soccer", "prediction", "odds"]
+}
