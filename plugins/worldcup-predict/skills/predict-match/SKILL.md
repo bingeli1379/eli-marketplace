@@ -18,7 +18,9 @@ Determine **which match(es)** to predict from `$ARGUMENTS`:
 - A team name only → that team's next scheduled World Cup fixture.
 - **Empty** → ask the user which fixture or date they want. Do not guess.
 
-State the resolved target in one line before proceeding (e.g. "Predicting: Brazil vs Argentina, 2026-07-02 03:00 GMT+8").
+**Verify the fixture is real before analyzing.** A user-named matchup can be plausible but non-existent — two teams on opposite sides of the bracket, a tie that needs an earlier result first, or a game not yet scheduled. With one WebSearch, confirm the fixture is actually scheduled or has been played; if it is **not** a real fixture, STOP and report the true bracket situation (who each side actually plays/played and when they could meet) instead of fabricating an analysis. Never invent data for a match that isn't on the schedule.
+
+State the resolved target in one line before proceeding (e.g. "Predicting: Brazil vs Argentina, 2026-07-02 03:00 GMT+8"). When **verifying a past result**, only a prediction you locked *before* kickoff counts as out-of-sample; scoring a match you never pre-committed to is retrospective only — say so.
 
 ## Flow
 
