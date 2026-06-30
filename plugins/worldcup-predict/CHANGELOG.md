@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.1] - 2026-06-30
+
+### Fixed
+- Corrected a Taiwan Sports Lottery odds-reading error that could pick the wrong favourite and flip a recommendation to the opposite side; the favourite is now confirmed against the correct-score board and outside odds before any bet is named.
+
+### Added
+- Every match now ends with at least one scoreline prediction (the best odds-value pick, honestly tagged), plus a reference list of all full-match odds priced 2.0 or higher — so you can see the longshot candidates and why most don't qualify.
+
+### Changed
+- Win/draw/loss odds are now built off the market as a baseline and only move when there's a stated reason the market is wrong, and are shown as ranges — so calls are steadier between runs and don't claim precision the data can't support.
+- Sharper team read: more weight on the current squad and star quality, playstyle and chance quality; less on years-old head-to-head and stats padded against weak opponents; a star everyone is hyping is treated as a reason to fade the price, not follow it.
+- Clearer guidance on where value survives the heavy 運彩 margin (team totals and contrarian sides), plus a new warning that a low-scoring bet can still lose to a late stoppage-time goal in tight knockouts — favour a team-total or lower line there.
+
 ## [1.0.0] - 2026-06-30
 
 ### Added
