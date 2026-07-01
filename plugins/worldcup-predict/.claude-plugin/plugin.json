@@ -3,7 +3,7 @@
   "name": "worldcup-predict",
   "displayName": "World Cup Predict",
   "description": "Predict World Cup matches: pulls live fixtures, form, player/tactical data and multi-market odds, then outputs a multi-dimensional analysis and a betting board with value-bet calls",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"

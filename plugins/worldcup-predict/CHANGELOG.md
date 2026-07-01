@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3] - 2026-07-01
+
+### Changed
+- Judges a team's attack by how its chances are actually created: repeatable passing moves count as real strength, while an impressive shot/xG tally built on rare counters or a single star's moments is discounted — so a flashy-but-hollow attack no longer inflates the read.
+- Stops assuming a wasteful, "can't finish" side will inevitably come good; when it has no genuine chance-creator or clinical finisher, its low scoring is treated as a real weakness rather than bad luck about to reverse.
+- Reads each team's defending against the specific opponent it faces — high pressing, man-marking, or sitting deep — instead of scoring "good defence" as a fixed trait, and shifts the goals, cards and draw lean to match.
+
 ## [1.0.2] - 2026-07-01
 
 ### Changed
