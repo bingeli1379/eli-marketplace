@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.2] - 2026-07-01
+
+### Changed
+- Only bets on a strong favourite scoring "under" a goal line when the underdog's defence is at full strength; if the underdog is missing a key defender (or the favourite's attack is elite and in form), it now expects a bigger win instead — so it stops backing a low score that a depleted defence won't deliver.
+
 ## [1.0.1] - 2026-06-30
 
 ### Fixed
