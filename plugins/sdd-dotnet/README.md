@@ -6,7 +6,7 @@
 ## What it adds
 
 - **Agent** `sdd-dotnet:dotnet-engineer` — ASP.NET across modern .NET Core and legacy .NET Framework: API endpoints, business logic, EF Core/Dapper, domain models, following Clean/Layered Architecture.
-- **Skills** (8): analyzing-dotnet-performance, dotnet-best-practices, dotnet-grpc, dotnet-nunit, dotnet-upgrade, ef-core, legacy-aspnet, minimal-api.
+- **Skills** (12): analyzing-dotnet-performance, authentication, caching, dotnet-best-practices, dotnet-grpc, dotnet-nunit, dotnet-upgrade, ef-core, error-handling, legacy-aspnet, minimal-api, resilience.
 
 ## Install
 
