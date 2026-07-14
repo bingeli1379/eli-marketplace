@@ -1,6 +1,6 @@
 {
   "name": "sdd",
-  "description": "Spec-driven workflow: requirements \u2192 specs \u2192 agent implementation",
+  "description": "Spec-driven AI development workflow core: workflow commands, orchestrator, architect, cross-cutting reviewers, and universal skills. Language/stack specialists ship as optional sdd-* packs.",
   "version": "3.3.0",
   "author": {
     "name": "Eli",
