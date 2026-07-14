@@ -1,4 +1,4 @@
-# Eli Claude Marketplace
+# Eli Marketplace
 
 A personal [Claude Code](https://claude.ai/code) plugin marketplace hosting custom skills and commands.
 
