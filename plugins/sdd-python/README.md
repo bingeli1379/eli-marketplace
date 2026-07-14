@@ -6,7 +6,7 @@
 ## What it adds
 
 - **Agent** `sdd-python:python-engineer` — FastAPI endpoints, data pipelines, ML model integration, database access, and testing.
-- **Skills** (4): dataverse-python-advanced-patterns, dataverse-python-production-code, dataverse-python-usecase-builder, python-performance-optimization.
+- **Skills** (6): async-python-patterns, llm-evaluation, prompt-engineering-patterns, python-anti-patterns, python-performance-optimization, python-testing-patterns.
 
 ## Install
 
