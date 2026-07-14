@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.10.0] - 2026-07-15
+
+### Changed
+- `/improve-skill` now works for a skill from *any* of your local plugin repos, not just a single marketplace. It maps the skill you name to the repo that owns it, edits that repo's working copy (never the installed cache or the auto-updated marketplace clone), confirms it found the right source by the skill file actually being there, and asks you how to proceed if it can't locate the source locally.
+
 ## [1.9.0] - 2026-07-12
 
 ### Added
