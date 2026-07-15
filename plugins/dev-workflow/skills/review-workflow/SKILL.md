@@ -16,7 +16,7 @@ Both need the same expensive cross-file read, so they share one pass. Keep the c
 
 ---
 
-**Input**: Optionally specify target files via `$ARGUMENTS`. If omitted, auto-detect changed files via git. Pass `--fix` in `$ARGUMENTS` to apply fixes after reporting (default is **report-only** — logic and consolidation fixes are design decisions, so they are surfaced, not auto-applied).
+**Input**: Optionally specify target files via `$ARGUMENTS`. If omitted, auto-detect changed files via git. Applying fixes after reporting is the **default**; pass `--report-only` in `$ARGUMENTS` to only surface findings without touching files. Even with the default, only **CONFIRMED, unambiguous** fixes are auto-applied — logic and consolidation fixes that involve a design choice are always surfaced for the user to decide, never guessed.
 
 **Steps**
 
@@ -79,9 +79,9 @@ Both need the same expensive cross-file read, so they share one pass. Keep the c
    ### Verdict: <N confirmed, M plausible | or "no defects found">
    ```
 
-6. **Fix (only if `--fix` was passed)**
+6. **Fix (default; skipped if `--report-only` was passed)**
 
-   Default is report-only. With `--fix`: apply the **CONFIRMED, unambiguous** fixes directly (e.g. reorder two steps so reconcile precedes the mutation; add the missing guard). For any fix that involves a **design choice** (which of two contradictory rules wins, what the safe default should be), do NOT guess — present the options and let the user decide. After applying, re-read the affected procedure to confirm the fix did not introduce a new ordering/edge defect. Never apply a fix to a PLAUSIBLE finding without confirming it first.
+   Applying fixes is the default. Apply the **CONFIRMED, unambiguous** fixes directly (e.g. reorder two steps so reconcile precedes the mutation; add the missing guard). For any fix that involves a **design choice** (which of two contradictory rules wins, what the safe default should be), do NOT guess — present the options and let the user decide. After applying, re-read the affected procedure to confirm the fix did not introduce a new ordering/edge defect. Never apply a fix to a PLAUSIBLE finding without confirming it first. With `--report-only`, skip this step entirely and surface all findings for the user to act on.
 
 ---
 
@@ -91,5 +91,5 @@ Both need the same expensive cross-file read, so they share one pass. Keep the c
 - **Trace, don't skim** — a finding is only real when you can name the input/interruption and the wrong outcome it produces.
 - **Behavior and structure, not single-file text** — removed rules, bloat, broken references, and wording are `/review-prompt`'s job (cheap, per-change). Stay on procedural correctness (Lens A) and whole-repo duplication/SSOT (Lens B) — the things that need expensive cross-file reasoning.
 - **Conservative bar** — a spec/workflow intentionally leaves room for agent judgment. Do not flag underspecification as a defect unless a concrete execution goes wrong.
-- **Report-only by default** — logic changes to a workflow are design decisions; surface them and fix only under `--fix`, and only the unambiguous ones without asking.
+- **Fix by default, but only the unambiguous ones** — apply CONFIRMED, unambiguous fixes without asking; a fix that involves a design choice is surfaced for the user, never guessed. Pass `--report-only` to surface everything without touching files.
 - **No tooling / environment assumptions** — a procedure that assumes git, a single repo, or a linter is itself a finding (edge class 5) if the skill is meant to run where those may be absent.
