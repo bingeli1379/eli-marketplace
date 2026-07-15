@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.11.0] - 2026-07-15
+
+### Changed
+- `/review-workflow` now fixes what it finds by default, applying the clear-cut fixes for you while still surfacing any change that's a judgment call for you to decide. Add `--report-only` if you just want the findings without touching files.
+
 ## [1.10.0] - 2026-07-15
 
 ### Changed
