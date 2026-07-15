@@ -78,7 +78,7 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 
    Validate the changed files at `<repo>`. **Caveat: `/review-prompt` and `/review-workflow` assume the current working directory IS the repo under audit and use its `git diff` to find "what changed" — but you are in another project, so their auto-detect points at the wrong repo (and `git diff HEAD -- <foreign-path>` may error).** Since you just made the edits and know exactly what changed, drive them explicitly:
    - `/review-prompt` — pass the changed `SKILL.md` / agent `.md` files as explicit path arguments, and tell it what you changed rather than relying on its `git diff` auto-detect; if it needs a diff, have it use `git -C <repo>`. (Prompt-text quality + intra-file contradiction.)
-   - `/review-workflow` — same handling, if a changed skill's procedure/logic (Lens A) or cross-file duplication / SSOT (Lens B) was affected.
+   - `/review-workflow` — same handling, if a changed skill's procedure/logic (Lens A) or cross-file duplication / SSOT (Lens B) was affected. Pass `--report-only` — it now applies fixes by default, but here it runs as a validation pass on a foreign repo, so surface findings and let this skill drive the edits.
    - If `<repo>` has a structure/lint validation script (e.g. `scripts/check-structure.sh`), run it directly — such scripts derive their own repo root from the script's location, so the current working directory does not matter. Skip if absent.
    Fix anything they flag until they pass.
 

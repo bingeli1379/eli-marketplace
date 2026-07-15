@@ -36,7 +36,7 @@ Audits agent and skill prompt files (`.md`) for quality risks. Rates each findin
 Companion to `/review-prompt`. Where `/review-prompt` judges prompt *text* quality, this audits a workflow / orchestration skill for *behavioral* correctness — it traces the described procedure as a state machine and finds where execution breaks: non-idempotent resume, step-ordering that destroys state a later step needs, cross-step contradictions, broken invariants, unhandled edge cases (crash mid-step, empty input, multi-repo, no-git), dependency-graph gaps, and destructive-op / data-loss paths.
 
 - Each finding is rated **CONFIRMED** (a concrete failing scenario was traced) or **PLAUSIBLE**, ranked by severity, with the input → wrong-outcome scenario spelled out
-- **Report-only by default** — logic fixes are design decisions; pass `--fix` to apply the unambiguous ones
+- **Fix by default** — applies the CONFIRMED, unambiguous fixes; design-choice fixes are surfaced for you to decide. Pass `--report-only` to only surface findings without touching files
 - Report language: Traditional Chinese (technical terms in English)
 
 ### `/improve-skill` — Improve Skills from Real Usage
