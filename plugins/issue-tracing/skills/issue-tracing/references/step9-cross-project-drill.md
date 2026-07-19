@@ -11,6 +11,17 @@ Triggers, in priority order — use the highest-priority signal available, do no
 
 Maximum 2 hops total. If exceeded, stop and list the call chain in Unknowns.
 
+## Slowed-but-not-broken hop is itself an upstream pointer
+
+The ladder above fires on a hop that **errors** (URL in the error, a `Failed to call <upstream>` log, a 502/timeout). A hop can also be the cause while returning **200-but-slow**: healthy infra (0 restart, normal CPU / mem), no error naming a downstream, only high latency / saturation. **That is not a root cause — a service that is slow but not erroring is blocked on its OWN downstream.** Do not stop there, and do not wait for the user to hand you the chain; keep drilling.
+
+When the hop didn't error, triggers 1–3 give you nothing to grep — so discover its downstream from **static topology, not logs**:
+
+- the **environment knowledge base's per-project dependency docs** (the knowledge source loaded in step 1c) — a project's upstreams / call topology are documented there;
+- the **service's own repo config** (`appsettings*`, outbound-host / base-URL keys) under the project root (step 10) — grep which hosts it calls.
+
+Topology is knowable even when that hop's prod logs / metrics are unreachable (e.g. its logs don't land in the default index) — **an observability gap blocks seeing a hop's _state_, never its _topology_.** Continue until you reach a hop that actually broke (5xx / resource-exhausted) or one that crosses an ownership / observability boundary (another product's stack) — stop there and note the boundary in Unknowns. A slowed-but-not-broken hop still counts toward the 2-hop limit above.
+
 ## Caller-direction drill — trigger source (who sent the request)
 
 The ladder above drills toward the **callee** (which dependency failed). When the question is **who / what triggered** the error — bot? human? surge? new data? — i.e. axis **C** in step12 HARD RULE #4 (code unchanged, no one released, but the incoming request changed), drill the OPPOSITE way: toward the **caller / ingress**.
