@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.0] - 2026-07-20
+
+### Changed
+- When a service in the call chain responds slowly but is otherwise healthy — no errors of its own, normal CPU and memory — the investigation no longer stops there and blames it. It now recognizes that a slow-but-healthy service is waiting on something further down, and keeps following the dependency chain (using your project/service docs and config to find the next hop) until it reaches the part that actually broke or crosses into another team's system — so you no longer have to hand it the causal chain yourself.
+
 ## [1.3.0] - 2026-06-25
 
 ### Added
