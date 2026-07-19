@@ -182,9 +182,9 @@ If unsure which mode, default to Look mode and ask.
    c. If a user-id field exists: pull `size: 100` hits, dedupe client-side, report as a lower bound (e.g. `~38+`). Note the cap.
    d. Do NOT spend extra effort if the field is absent — the report is useful without it.
 
-9. **Cross-project drill-down** *(Report mode; only if the failure points outside the filtered project)*
+9. **Cross-project drill-down** *(Report mode; when the failure points outside the filtered project — including a downstream hop that is slow / saturated but not itself erroring)*
 
-   **GATE — Read `references/step9-cross-project-drill.md` NOW** for the trigger priority ladder, hop limit, and the mandatory pre-incident baseline correlation check. Do not pull a sibling error pattern into Root Cause without the procedure in that file.
+   **GATE — Read `references/step9-cross-project-drill.md` NOW** for the trigger priority ladder (including the slowed-but-not-broken pointer + static-topology discovery), hop limit, and the mandatory pre-incident baseline correlation check. Do not pull a sibling error pattern into Root Cause without the procedure in that file, and do not stop at a slow-but-healthy hop without tracing its downstream.
 
 10. **Code inspection & scope check** *(Report mode)*
 
