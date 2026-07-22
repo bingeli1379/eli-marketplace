@@ -1,9 +1,9 @@
 # Step 11 — Verify infra metrics
 
-Once an upstream service is suspected (from step 9), use the scope table from step 10a AND the shape of the error:
+Once an upstream service is suspected (from the drill, `step9-cross-project-drill.md`), use its ownership classification (your team's readable service = in-scope; a service owned by another team = out-of-scope) AND the shape of the error:
 
 - **In-scope upstream + infra-shape signal in log** → REQUIRED. Infra-shape signals: HTTP `502/503/504`, `connection refused`, `timeout`, `TaskCanceledException`, `Polly TimeoutRejectedException`, `OOMKilled`, throttling, redis timeout, "No server is available", DB connection pool exhaustion, etc. These error shapes only get explained by infra metrics, so checking is required before writing Root Cause.
-- **In-scope upstream + app-level root cause clearly visible in log** → OPTIONAL. App-level signals: validation errors, auth misconfig, deserialization / parse errors, explicit business-logic exceptions, code bugs with stack traces pointing at app code only. Infra numbers do not explain these, so a CPU/Memory check is noise. The evidence dump in step 12 should mark infra as `n/a (app-level root cause)` for that service.
+- **In-scope upstream + app-level root cause clearly visible in log** → OPTIONAL. App-level signals: validation errors, auth misconfig, deserialization / parse errors, explicit business-logic exceptions, code bugs with stack traces pointing at app code only. Infra numbers do not explain these, so a CPU/Memory check is noise. The evidence dump in the report step (`step12-report.md`) should mark infra as `n/a (app-level root cause)` for that service.
 - **Out-of-scope upstream** → OPTIONAL. The default report can stop at "upstream `<svc>` returned 503/timeout"; deeper Root Cause (why `<svc>` failed) belongs to the owning team and may stay in Unknowns. Run 11 only if the user asks for a deeper dive or the log payload is too thin to confirm the upstream is the bottleneck.
 
 When in doubt about which category the error falls into, default to REQUIRED — it is cheaper to verify infra and find nothing than to ship a report that missed an infra-side root cause.
@@ -29,7 +29,7 @@ Before searching any datasource, read the calling service's source to find the u
 
 Use that hostname as the **primary seed** for datasource lookup. Do NOT start from the service name alone. Service names collide across clusters (RKE / GKE / VM / multi-region); the prod config is the only authoritative pointer to which deployment serves real traffic.
 
-When the upstream candidate came from log host extraction (step 9 trigger #1) you already have the hostname — still cross-check against prod config to make sure it matches.
+When the upstream candidate came from log host extraction (the drill's trigger #1, `step9-cross-project-drill.md`) you already have the hostname — still cross-check against prod config to make sure it matches.
 
 If the calling service is not in scope (no source code available), record this in the evidence dump as "anchor: log host only, prod config not verified" and proceed with extra caution at 11f.
 
