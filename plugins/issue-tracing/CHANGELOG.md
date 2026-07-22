@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1] - 2026-07-22
+
+### Fixed
+- The investigation now reliably identifies the most common error even on log streams where the message text can't be searched directly — previously it could wrongly conclude a dominant error "didn't exist".
+- When a service sends its logs through a newer (OTEL) pipeline, the investigation now finds them by service name instead of wrongly reporting the service had no logs and jumping to a cross-cluster guess.
+- Checking the infrastructure of a service with many instances is faster and no longer stalls on oversized metric queries.
+
 ## [1.5.0] - 2026-07-22
 
 ### Changed
