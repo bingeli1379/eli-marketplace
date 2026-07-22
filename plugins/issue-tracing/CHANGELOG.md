@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0] - 2026-07-22
+
+### Changed
+- Give it a log or Grafana link and it now runs the whole investigation on its own — from the filtered logs, down the call chain, to the root cause — and writes the report, instead of stopping after the first look to ask whether to keep going. It pauses only when a decision genuinely needs you.
+- A Grafana link now works as a starting point: it reads the panel filter or the alert's firing condition and investigates the matching logs for you, so you no longer have to turn an alert into a log search yourself.
+- When the cause is further down, it keeps following the chain through your own team's services until it reaches where the fault actually starts or crosses into another team's system — there is no longer a fixed two-hop limit.
+
+### Added
+- Alerts with no matching error logs (for example a pure CPU or memory spike) no longer dead-end — the investigation switches to checking that service's infrastructure metrics directly.
+
 ## [1.4.0] - 2026-07-20
 
 ### Changed
