@@ -14,7 +14,7 @@ Required filters on every query:
 - Total counts: `size: 0` **with `track_total_hits: true`** — then read the `Total results: N` line. WITHOUT `track_total_hits: true` the total is capped at 10000, so a real 72k count silently reads as "10000" and every baseline ratio / impact number built on it is wrong. Never use a `count` / `value_count` agg (stripped by the wrapper).
 - Top message patterns: `size: 5` sorted by `@timestamp desc`, read `message` field
 - First / last occurrence: two queries with `sort` `asc` and `desc`, `size: 1`
-- Distinct user counts: see step 8 (cannot use `cardinality` agg)
+- Distinct user counts: see the distinct-user handling in the log-analysis step (cannot use `cardinality` agg)
 
 **Token-budget rules** (the wrapper truncates large responses to a file when responses exceed its limit, costing extra `jq` round-trips):
 - **Always start with `size: 0`** to get the total. Only sample after that.

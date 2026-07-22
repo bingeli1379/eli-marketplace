@@ -2,9 +2,9 @@
 
 ## Pre-report evidence dump (NOT a checkbox list)
 
-Two upstream gates already enforced in chat output:
-- Step 10a: scope table written
-- Step 11: Plan block written + all planned queries dispatched
+Two notes already written in chat during the trace loop:
+- the running scope/chain note (each hop's role: erroring / slow-but-healthy / root cause / boundary)
+- the infra Plan block + all planned queries dispatched (whenever the infra check fired)
 
 Before writing the report, paste the evidence below in chat verbatim. **No ticking boxes — paste real numbers, queries, and excerpts.** Empty fields are visible; faking data is harder than checking a box.
 
@@ -62,7 +62,7 @@ If any block is empty or says "skipped", the work is incomplete — go back and 
      - **C. input / load 變了** → 同一段 code、沒人 release，但進來的 request 變了：bot / 暴量 / 新客戶資料 / 一直潛伏今天才被打中的 edge case（往 caller 鑽，step9 caller-direction drill）。
      - **D. 啥都沒變** → 本來就這個錯誤率 = chronic 背景 / by-design（step9 baseline ratio ≈ 1 即屬此類）。
      - ⚠️ 最常見的漏判：沒人 release 就直接跳 B/D，漏掉 **C**（code 沒變但觸發變了）。
-     佐證用可查、不可捏造的數字：git blame 意圖、IP 集中度、distinct customerId 集中度（step8）、incident/baseline 暴增倍率（step9 correlation check）。這層是使用者做後續決策（封 bot / 改 code / 接受）的依據，**必須優先查實**。查不到就明寫「觸發源未判定 + 還缺什麼資料」，**絕不能因為「還沒確定是不是 bug」就把觸發源丟進 Unknowns** — 事實層與判斷層獨立。
+     佐證用可查、不可捏造的數字：git blame 意圖、IP 集中度、distinct customerId 集中度（log 分析步驟）、incident/baseline 暴增倍率（`step9-cross-project-drill.md` correlation check）。這層是使用者做後續決策（封 bot / 改 code / 接受）的依據，**必須優先查實**。查不到就明寫「觸發源未判定 + 還缺什麼資料」，**絕不能因為「還沒確定是不是 bug」就把觸發源丟進 Unknowns** — 事實層與判斷層獨立。
    - **機制 / 判斷（看法層）**：agent 認為這是 bug / 預期行為 / 設計缺陷，**標明這是判斷**並給依據（stack trace、code、git blame）。注意 throw 的那行不一定是真因，可能是下游症狀（頂層 NullRef 源自上游 bad state）——先判這行是因還是果。
    - 兩層獨立：觸發是 bot 不代表沒有 code 問題；是設計意圖也要分清「意圖」與「實作後果」是否一致（例：刻意拒絕 token 是對的，但用 unhandled exception 回 500 仍是缺陷）。
 
