@@ -46,7 +46,7 @@ After anchoring on prod config (11.0), extract the service token from the resolv
 2. **For each Prometheus datasource**: `mcp__grafana__query_prometheus` to find which label carries the service token. **Try these labels in order, do NOT stop after a few empties**: `pod`, `container`, `hostname`, `instance`, `app`, `service`, `kubernetes_pod_name`, `exported_instance`. For each: `expr: label_values(up{<label>=~".*<token>.*"}, <label>)`. Empty on one label ≠ "no metrics here" — only after all 8 are empty may you mark this datasource as "no data for this service". Once a label hits, build queries:
    - CPU: `100 - rate(node_cpu_seconds_total{mode="idle",<label>=~"<svc>.*"}[1m]) * 100` (or whatever the export pattern is — discover via `list_prometheus_metric_names`)
    - Memory: `node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes`
-   - Use `query_prometheus` with `query_type: "range"` and `step: 60` for 1-min bins.
+   - Use `query_prometheus` with `query_type: "range"` and `step: 60` for 1-min bins — **but for a many-instance scan (11d requires every instance), a `range` query over many series routinely truncates; use the instant `max_over_time` / `avg_over_time` form from 11e instead, and keep `range` for a few instances or when you need the time-shape.**
 3. **For each InfluxDB datasource**: query via `mcp__grafana__grafana_api_request` proxy:
    - **Don't stop at `SHOW DATABASES`.** If it returns names like `icinga2`, `telegraf`, `metrics`, `nagios`, `collectd`, `sensu` (any non-`_internal` database), each is a likely VM-tier monitoring db. You MUST run the hostname-tag-values query inside EVERY non-`_internal` database before concluding "no VM metrics". Seeing a database name listed but never querying it is the most common miss in this skill.
    - Discover hostnames: `SHOW TAG VALUES FROM /.+/ WITH KEY = "hostname"` then grep for the service token, OR run `SHOW SERIES WHERE hostname =~ /<svc>/` (lighter).
@@ -88,6 +88,7 @@ Other signals to look for during the mandatory scan: pod restart, replica drop, 
 
 **Aggregate with both `mean` AND `max`, and keep bins ≤ 1 min.** A 5-min `mean` smooths away spikes — a chart visually showing 86% peak can read 50% under 5-min mean. Cite the **max** for spike detection, not the mean.
 
+- **Across many instances, get the peak with an INSTANT `max_over_time` query, not a `range` query.** `max_over_time(<expr>[<window>:<step>])` evaluated as `queryType: instant` returns one value per instance (its peak in the window, with `<step>` ≤ 1 min preserving the bin rule); a `range` query over many series × dozens of 1-min points routinely blows the response / token budget and truncates to a file, costing an extra round-trip. Use `range` only for a few instances or when you actually need the time-shape; get the window mean the same way with `avg_over_time(<expr>[<window>:<step>])` instant.
 - Brief findings into Root Cause **only when the data is verified**. Acceptable verification: Prometheus query that returned numbers, InfluxDB proxy query that returned numbers, panel image that actually rendered a chart, or a user-supplied screenshot. **A "No data" image, an empty Prometheus result that you didn't double-check, or "current metrics look normal" are NOT verification of incident-time state.**
 
 ## 11f. Reverse-signal sanity check (GATE before writing Root Cause)
