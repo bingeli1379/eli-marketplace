@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.7.1] - 2026-07-23
+
+### Changed
+- When chasing a slow-but-not-erroring service, the tool now confirms the exact log field names and types from the log source before searching — so it stops wasting attempts on searches that quietly return nothing (a wrong guess at a path, status, or severity field).
+
 ## [1.7.0] - 2026-07-23
 
 ### Added
