@@ -19,6 +19,8 @@ The ladder above fires on a hop that **errors** (URL in the error, a `Failed to 
 1. **Its own downstream service** — an outbound call to the next hop is slow. Follow the topology to that hop (below).
 2. **Its own shared infra** — its own Redis / DB / cache is slow, so *its* work (even cache reads, session lookups) drags, with no downstream service to blame. This is the trap: do not conclude "it is just a passthrough waiting on the next service" without ruling out its own datastore. If the slow hop's dependency is a **shared** datastore, run the **breadth classifier from SKILL.md step 5d** (same infra exception, window, `project` filter dropped) — if the same slowness/timeout hits several unrelated services at once, the root is the shared infra layer and you should stop chaining services (see step 5d's fleet-wide branch), not keep hopping.
 
+**Surface the slow requests by range-filtering the numeric latency field** (`>=` the caller's timeout, sorted descending) — one query yields the count, the worst offenders, and the endpoint spread. Do NOT hunt slow requests via `match_phrase` on a keyword path / status / severity field: those silently return `0` and burn round-trips. The latency field often lives in a separate access-log stream (a server-log stream may not carry latency at all) — take its exact field name and value casing from the environment knowledge (step 1c) rather than guessing.
+
 When the hop didn't error, triggers 1–3 give you nothing to grep — so discover its downstream from **static topology, not logs**:
 
 - the **environment knowledge base's per-project dependency docs** (the knowledge source loaded in step 1c) — a project's upstreams / call topology are documented there;
