@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.0] - 2026-07-23
+
+### Added
+- When a timeout points at shared infrastructure (a shared cache, database, or the network to it), the investigation now runs one quick cross-service check to tell a single-service problem apart from a fleet-wide infrastructure event — so it stops over-drilling one call chain and pinning the blame on the wrong downstream service.
+- When the cause is a shared datastore, it now works out whether the datastore itself or the connection to it is at fault, and tells you which team to confirm with (the network/IT team vs the database team) instead of leaving that open.
+
+### Changed
+- The user-facing impact is now read from the actual frontend code — with extra ways to locate it when the obvious search misses — so "what the user saw" is based on evidence instead of a guess.
+
 ## [1.5.1] - 2026-07-22
 
 ### Fixed
