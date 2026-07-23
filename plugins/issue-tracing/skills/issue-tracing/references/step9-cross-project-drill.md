@@ -13,14 +13,18 @@ Triggers, in priority order — use the highest-priority signal available, do no
 
 ## Slowed-but-not-broken hop is itself an upstream pointer
 
-The ladder above fires on a hop that **errors** (URL in the error, a `Failed to call <upstream>` log, a 502/timeout). A hop can also be the cause while returning **200-but-slow**: healthy infra (0 restart, normal CPU / mem), no error naming a downstream, only high latency / saturation. **That is not a root cause — a service that is slow but not erroring is blocked on its OWN downstream.** Do not stop there, and do not wait for the user to hand you the chain; keep drilling.
+The ladder above fires on a hop that **errors** (URL in the error, a `Failed to call <upstream>` log, a 502/timeout). A hop can also be the cause while returning **200-but-slow**: healthy infra (0 restart, normal CPU / mem), no error naming a downstream, only high latency / saturation. **That is not a root cause — a service that is slow but not erroring is blocked on something else.** Do not stop there, and do not wait for the user to hand you the chain; keep drilling.
+
+**Two things a 200-but-slow hop can be blocked on — check both, do not assume the first:**
+1. **Its own downstream service** — an outbound call to the next hop is slow. Follow the topology to that hop (below).
+2. **Its own shared infra** — its own Redis / DB / cache is slow, so *its* work (even cache reads, session lookups) drags, with no downstream service to blame. This is the trap: do not conclude "it is just a passthrough waiting on the next service" without ruling out its own datastore. If the slow hop's dependency is a **shared** datastore, run the **breadth classifier from SKILL.md step 5d** (same infra exception, window, `project` filter dropped) — if the same slowness/timeout hits several unrelated services at once, the root is the shared infra layer and you should stop chaining services (see step 5d's fleet-wide branch), not keep hopping.
 
 When the hop didn't error, triggers 1–3 give you nothing to grep — so discover its downstream from **static topology, not logs**:
 
 - the **environment knowledge base's per-project dependency docs** (the knowledge source loaded in step 1c) — a project's upstreams / call topology are documented there;
 - the **service's own repo config** (`appsettings*`, outbound-host / base-URL keys) under the project root (read in the code-reading step) — grep which hosts it calls.
 
-Topology is knowable even when that hop's prod logs / metrics are unreachable (e.g. its logs don't land in the default index) — **an observability gap blocks seeing a hop's _state_, never its _topology_.** Continue until you reach a hop that actually broke (5xx / resource-exhausted) or one that crosses an ownership / observability boundary (another product's stack) — stop there and note the boundary in Unknowns. A slowed-but-not-broken hop still counts toward the 2-hop limit above.
+Topology is knowable even when that hop's prod logs / metrics are unreachable (e.g. its logs don't land in the default index) — **an observability gap blocks seeing a hop's _state_, never its _topology_.** Continue until you reach a hop that actually broke (5xx / resource-exhausted) or one that crosses an ownership / observability boundary (another product's stack) — stop there and note the boundary in Unknowns. A slowed-but-not-broken hop still counts toward the ~5-hop runaway guard above.
 
 ## Caller-direction drill — trigger source (who sent the request)
 
