@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.6.1] - 2026-07-23
+
+### Changed
+- The investigation now stays on where each service is actually deployed: it keeps to the cluster your log link points at, checks each downstream service in its own cluster, and only runs a broad cross-service scan when a shared resource is genuinely implicated — so it stops wasting time querying clusters a service isn't on or chasing unrelated errors.
+
 ## [1.6.0] - 2026-07-23
 
 ### Added
