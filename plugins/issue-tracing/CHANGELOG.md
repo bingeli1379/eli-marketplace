@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.2] - 2026-07-23
+
+### Changed
+- Investigations now run leaner and faster: the tool follows the error's own stack trace from one service to the next and saves the heavy checks (baseline comparisons, infrastructure metrics, cross-service scans) for a single pass that confirms the suspected root cause — instead of re-querying logs and metrics at every step — so you get the answer sooner without losing rigor.
+- It also stops over-analyzing once the main error is clear (no longer tallies every minor error type) and reads exactly the log source your link points at before falling back to a broader list — cutting redundant queries.
+
 ## [1.6.1] - 2026-07-23
 
 ### Changed
