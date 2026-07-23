@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.7.0] - 2026-07-23
+
+### Added
+- When a service is slow but not erroring, the investigation now pulls up the slowest requests directly by the response-time number (biggest first) — giving you the count, the worst offenders, and which endpoints are affected in one shot, instead of a text search that quietly comes back empty.
+
 ## [1.6.2] - 2026-07-23
 
 ### Changed
