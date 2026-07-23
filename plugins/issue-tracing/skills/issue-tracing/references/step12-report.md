@@ -37,11 +37,11 @@ Infra metrics (one block per upstream named in the incident):
 <svc-B>:
   ... (same shape)
 
-Frontend behavior (when impact will describe user-visible behavior):
-- Repo: <path or "not found, listed in Unknowns">
-- Call site: <file:line of API call>
+Frontend behavior (when impact will describe user-visible behavior — MANDATORY to fill if the frontend repo is present, per SKILL.md step 5b):
+- Repo: <path or "genuinely absent — listed in Unknowns">
+- Call site: <file:line of API call>   # if an endpoint-name grep missed, you MUST have widened to route-path / client-method / component / i18n key / shared header-footer repo before writing "not found" — a single name-grep miss is NOT grounds to punt
 - Error handling: <caught? fallback? retry?>
-- User sees: <one-line plain-language description>
+- User sees: <one-line plain-language description — read from the call site, not guessed>
 
 === End evidence ===
 ```
@@ -65,6 +65,11 @@ If any block is empty or says "skipped", the work is incomplete — go back and 
      佐證用可查、不可捏造的數字：git blame 意圖、IP 集中度、distinct customerId 集中度（log 分析步驟）、incident/baseline 暴增倍率（`step9-cross-project-drill.md` correlation check）。這層是使用者做後續決策（封 bot / 改 code / 接受）的依據，**必須優先查實**。查不到就明寫「觸發源未判定 + 還缺什麼資料」，**絕不能因為「還沒確定是不是 bug」就把觸發源丟進 Unknowns** — 事實層與判斷層獨立。
    - **機制 / 判斷（看法層）**：agent 認為這是 bug / 預期行為 / 設計缺陷，**標明這是判斷**並給依據（stack trace、code、git blame）。注意 throw 的那行不一定是真因，可能是下游症狀（頂層 NullRef 源自上游 bad state）——先判這行是因還是果。
    - 兩層獨立：觸發是 bot 不代表沒有 code 問題；是設計意圖也要分清「意圖」與「實作後果」是否一致（例：刻意拒絕 token 是對的，但用 unhandled exception 回 500 仍是缺陷）。
+
+5. **根因觸底到共享基礎設施 → 明列「請使用者去找 infra owner 確認」，但判斷在先。** 當 Root Cause 是共享資料層 / 網路（Redis / DB / cache 叢集、DNS、LB）而非單一服務自身資源時（通常經 step 5d 廣度分類器判為 fleet-wide、step11 §11g 判定）：
+   - **先由你判定**「資料層本身 vs 到資料層的網路路徑」（依 §11g 的判別訊號）——**這是你的活，不可把判斷丟給使用者**。
+   - 判定為**網路/連線層** → How to Resolve / Unknowns 明列「需與 **網路 / IT** 確認 `<RKE→datastore 網段 / 交換器 / DNS>`」；判定為**資料層本身** → 明列「需與 **DBA / 資料層 owner** 確認 `<node、負載、blocked clients>`」。owner 名稱從環境知識（step 1c）取，保持通用。
+   - **判不出來**才並列兩個 owner + 兩個確認項，並寫明還缺什麼資料——不可因「還沒確定」就整包丟 Unknowns 讓使用者自己查。
 
 ## Output
 
