@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.4.0] - 2026-07-25
+
+### Added
+- **Walking Skeleton**: for a change whose integration path has never been proven — a new external system, a data flow with no precedent in the repo, an SSR/IPC/cross-process boundary — the architect can now choose to wire the whole path end-to-end with marked placeholders first, then fill in one layer at a time. Contract-First stays the default; this is only offered when the integration risk is real, and `/complete` refuses to finish while any placeholder is still in the code.
+- **`/research <area>`**: a read-only pass that explains how part of a codebase works and writes it to a document you can hand to someone else — entry points, the flow as a chain of named symbols, existing patterns, dependencies, real test coverage, risks, and the questions it could not answer. It never changes code and never proposes a plan; if the area is small enough that a conversation is cheaper, it says so instead of writing a file.
+- Maintainers can now see what changed upstream in a bundled skill that was customized locally (`update-skills.sh --drift`), instead of losing sight of the original once it diverged.
+
+### Changed
+- The test-driven-development guidance is 50 lines shorter with nothing removed, so every task that loads it costs less context.
+- Several bundled skills were refreshed from their upstream sources, and six that had diverged too far to sync are now maintained here — including the debugging skill, whose local version asks for several ranked, falsifiable theories before you start testing rather than committing to the first idea.
+
 ## [3.3.0] - 2026-07-12
 
 ### Added
