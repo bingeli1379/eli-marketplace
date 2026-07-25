@@ -2,6 +2,12 @@
 # Maps each bundled skill to its upstream repository and path within that repo.
 # This file is for maintenance only — agents do not read it.
 # path: relative path to the skill directory containing SKILL.md (from repo root)
+#
+# repo: original          — maintained here; the normal sync never touches it
+# upstream: / upstream_path:  — on an `original` entry, records where it was forked from so
+#   `update-skills.sh --drift` can still report what upstream changed since the fork
+#   (read-only) and `--snapshot` can reset the baseline in skills/.baselines/<skill>.md.
+#   Omit both when the upstream is gone for good — there is nothing left to track.
 
 # Vue / Frontend (from vuejs-ai/skills — Vue best-practices by core team)
 vue-best-practices:
@@ -153,6 +159,24 @@ sql-optimization:
 database-schema-design:
   repo: original
 
+# postgres-pro: PostgreSQL-specific operational depth (JSONB/GIN, replication, VACUUM/bloat,
+# extensions, pg_stat_*) that the portable PG/MySQL tuning skills do not cover. Local
+# description narrows the trigger so it does not compete with sql-query-optimization.
+postgres-pro:
+  repo: https://github.com/jeffallan/claude-skills
+  path: skills/postgres-pro
+
+# sqlserver-diagnostics: the DMV query set from vince-winkintel/sql-server-skills (MIT, bundled
+# LICENSE kept). `original` because we did NOT adopt it as-is — the upstream skill's index
+# maintenance guidance repeats the outdated 10%/30% reorganize-vs-rebuild rule of thumb that
+# current Microsoft docs contradict, so the body was rewritten to keep the (durable) DMV queries
+# and route every threshold / prescriptive fix to the official docs instead. `upstream:` is kept
+# so --drift still surfaces upstream changes worth re-reading.
+sqlserver-diagnostics:
+  repo: original
+  upstream: https://github.com/vince-winkintel/sql-server-skills
+  upstream_path: sqlserver-diagnostics
+
 # MongoDB (from mongodb/agent-skills — official MongoDB org)
 mongodb-schema-design:
   repo: https://github.com/mongodb/agent-skills
@@ -281,6 +305,8 @@ kafka-consumer-patterns:
 # Upstream: https://github.com/obra/superpowers → skills/systematic-debugging
 systematic-debugging:
   repo: original
+  upstream: https://github.com/obra/superpowers
+  upstream_path: skills/systematic-debugging
 # test-driven-development: forked from obra/superpowers, then extended with the
 # Walking Skeleton section (inspired by Integration-First / walking-skeleton practice)
 # and the workflow-granted skeleton-group exception. A sync would clobber both, so
@@ -288,12 +314,16 @@ systematic-debugging:
 # Upstream: https://github.com/obra/superpowers → skills/test-driven-development
 test-driven-development:
   repo: original
+  upstream: https://github.com/obra/superpowers
+  upstream_path: skills/test-driven-development
 # verification-before-completion: forked from obra/superpowers; local copy keeps the
 # "no shortcuts" bottom-line section and the GOOD/BAD wording this repo uses elsewhere.
 # Upstream has nothing we lack, so there is nothing to sync — see systematic-debugging.
 # Upstream: https://github.com/obra/superpowers → skills/verification-before-completion
 verification-before-completion:
   repo: original
+  upstream: https://github.com/obra/superpowers
+  upstream_path: skills/verification-before-completion
 
 # OWASP Security
 owasp-security:
