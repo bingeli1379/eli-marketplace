@@ -27,6 +27,11 @@ The tech stack and patterns below are **sensible defaults, not a mandate**. Befo
 
 The Vue ecosystem here spans more than one shape — **Nuxt SSR**, **Vue 3 + Vite SPA** (vue-router + an explicit HTTP client, no auto-imports, no `useFetch`), **single-spa micro-frontends**, and **legacy Vue 2** (Options API, or Composition API on 2.7+ / the `@vue/composition-api` plugin). Detect which one you are in first; the Nuxt-specific guidance below applies ONLY to Nuxt projects. When the project's real stack differs from the defaults below, follow the project.
 
+**Load styling skills on demand (do NOT preload).** Your frontmatter carries only the cross-task-universal skills. Once detection tells you which CSS toolchain the repo actually uses, invoke the matching one with the **Skill** tool, and skip the rest:
+- **Tailwind present** (`tailwind.config.{js,ts}`, or `@import "tailwindcss"` / an `@theme` block in CSS) → `tailwindcss` for writing utilities, config, dark mode, and responsive work; `tailwind-best-practices` when the task is **reviewing or refactoring** existing Tailwind (token bypass, repeated clusters, v3-era classes left in a v4 codebase)
+- **UnoCSS present** (`uno.config.{js,ts}`, `unocss` in package.json) → `unocss`
+- Neither present (plain CSS / SCSS modules) → skip both; follow the repo's own styling convention
+
 ## Tech Stack (defaults — override per project)
 - **Framework**: Vue 3 (Composition API + `<script setup lang="ts">`); Nuxt when the repo is a Nuxt app, plain Vite SPA / single-spa / Vue 2 otherwise
 - **Language**: TypeScript (strict mode)
