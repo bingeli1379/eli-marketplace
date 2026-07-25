@@ -240,6 +240,8 @@ complete:
   repo: original
 quick:
   repo: original
+research:
+  repo: original
 review:
   repo: original
 role:
@@ -271,10 +273,13 @@ systematic-debugging:
   repo: https://github.com/obra/superpowers
   path: skills/systematic-debugging
   frozen: true
+# test-driven-development: forked from obra/superpowers, then extended with the
+# Walking Skeleton section (inspired by Integration-First / walking-skeleton practice)
+# and the workflow-granted skeleton-group exception. A sync would clobber both, so
+# it is `original` now — the upstream path is kept here as a provenance note only.
+# Upstream: https://github.com/obra/superpowers → skills/test-driven-development
 test-driven-development:
-  repo: https://github.com/obra/superpowers
-  path: skills/test-driven-development
-  frozen: true
+  repo: original
 verification-before-completion:
   repo: https://github.com/obra/superpowers
   path: skills/verification-before-completion
