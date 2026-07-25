@@ -138,16 +138,20 @@ llm-evaluation:
 sql-expert:
   repo: https://github.com/QuestForTech-Investments/claude-code-skills
   path: sql-expert
+# sql-query-optimization: upstream restructured and this skill no longer exists there
+# under any name, so the local copy is now the only one. Was:
+# https://github.com/secondsky/claude-skills → plugins/sql-query-optimization/skills/...
 sql-query-optimization:
-  repo: https://github.com/secondsky/claude-skills
-  path: plugins/sql-query-optimization/skills/sql-query-optimization
+  repo: original
 # sql-optimization is SQL Server-focused; sql-query-optimization above is PG/MySQL-focused
 sql-optimization:
   repo: https://github.com/github/awesome-copilot
   path: skills/sql-optimization
+# database-schema-design: same upstream restructure as sql-query-optimization — the
+# path is gone upstream. Was:
+# https://github.com/secondsky/claude-skills → plugins/database-schema-design/skills/...
 database-schema-design:
-  repo: https://github.com/secondsky/claude-skills
-  path: plugins/database-schema-design/skills/database-schema-design
+  repo: original
 
 # MongoDB (from mongodb/agent-skills — official MongoDB org)
 mongodb-schema-design:
@@ -269,10 +273,14 @@ kafka-consumer-patterns:
   repo: original
 
 # Development Discipline (from obra/superpowers — customized, do not sync)
+# systematic-debugging: forked from obra/superpowers and since extended well past it —
+# the bundled feedback-loop.md reference plus its "build a red-capable loop first" step,
+# and Phase 3's 3-5 ranked falsifiable hypotheses (upstream still forms a single
+# hypothesis). `frozen` only skipped non-`--all` runs, so a sync could still clobber
+# these; `original` is the correct protection.
+# Upstream: https://github.com/obra/superpowers → skills/systematic-debugging
 systematic-debugging:
-  repo: https://github.com/obra/superpowers
-  path: skills/systematic-debugging
-  frozen: true
+  repo: original
 # test-driven-development: forked from obra/superpowers, then extended with the
 # Walking Skeleton section (inspired by Integration-First / walking-skeleton practice)
 # and the workflow-granted skeleton-group exception. A sync would clobber both, so
@@ -280,10 +288,12 @@ systematic-debugging:
 # Upstream: https://github.com/obra/superpowers → skills/test-driven-development
 test-driven-development:
   repo: original
+# verification-before-completion: forked from obra/superpowers; local copy keeps the
+# "no shortcuts" bottom-line section and the GOOD/BAD wording this repo uses elsewhere.
+# Upstream has nothing we lack, so there is nothing to sync — see systematic-debugging.
+# Upstream: https://github.com/obra/superpowers → skills/verification-before-completion
 verification-before-completion:
-  repo: https://github.com/obra/superpowers
-  path: skills/verification-before-completion
-  frozen: true
+  repo: original
 
 # OWASP Security
 owasp-security:
@@ -310,7 +320,7 @@ typescript-advanced-types:
 # E2E Testing (Playwright best practices — complements existing playwright skill)
 playwright-best-practices:
   repo: https://github.com/currents-dev/playwright-best-practices-skill
-  path: .
+  path: playwright-best-practices
 
 # Frontend Testing
 frontend-testing-best-practices:
@@ -318,10 +328,12 @@ frontend-testing-best-practices:
   path: skills/frontend-testing-best-practices
 
 # Tailwind (from mastra-ai — installed via npx skills, no direct git path)
+# tailwind-best-practices: upstream moved AND renarrowed this to .claude/skills/tailwind-v4
+# (Tailwind v4 only). Re-pointing would swap in a different-scope skill, so the local
+# version-agnostic copy is now ours. Was:
+# https://github.com/mastra-ai/mastra → skills/tailwind-best-practices
 tailwind-best-practices:
-  repo: https://github.com/mastra-ai/mastra
-  path: skills/tailwind-best-practices
-  frozen: true
+  repo: original
 
 # Kubernetes
 kubernetes-architect:
