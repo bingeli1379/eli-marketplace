@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.2] - 2026-07-25
+
+### Changed
+- Refreshed the bundled prompt-engineering and LLM-evaluation skills from upstream.
+
 ## [1.1.1] - 2026-06-24
 
 ### Changed
