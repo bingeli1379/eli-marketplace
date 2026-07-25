@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.3] - 2026-07-25
+
+### Changed
+- Refreshed the bundled Docker and CI/CD skills from upstream, including expanded Docker guidance.
+
 ## [1.0.2] - 2026-06-24
 
 ### Changed

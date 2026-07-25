@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.2] - 2026-07-25
+
+### Changed
+- Refreshed the bundled Godot skills from upstream. The physics and UI guidance was substantially rewritten, and new reference material was added on collision layers, physics interpolation, Jolt differences, raycasting, physics troubleshooting, and UI patterns.
+
 ## [1.0.1] - 2026-06-24
 
 ### Changed

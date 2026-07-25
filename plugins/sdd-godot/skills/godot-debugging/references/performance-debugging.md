@@ -49,7 +49,7 @@ GD.Print($"RunExpensiveOperation took: {elapsed} µs");
 ### Identifying Draw Call Bottlenecks
 
 ```gdscript
-# Reduce draw calls with VisibilityNotifier3D — pause processing when off-screen
+# Reduce draw calls with VisibleOnScreenNotifier3D — pause processing when off-screen
 @onready var _vis: VisibleOnScreenNotifier3D = $VisibleOnScreenNotifier3D
 
 func _ready() -> void:

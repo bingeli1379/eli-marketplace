@@ -10,10 +10,27 @@ set -euo pipefail
 # (e.g. to sharpen its trigger wording) and re-run this script without losing it.
 # `repo: original` skills are never synced; `frozen: true` skills sync only with --all.
 #
+# FORKED SKILLS (`repo: original` + an `upstream:` field): a skill we diverged from its
+# source stays out of the sync — but going `original` used to also mean going blind to
+# upstream improvements forever. Two modes fix that without ever risking the local body:
+#
+#   --drift    report what upstream changed since we forked (never touches a file)
+#   --snapshot record upstream's current body as the new fork baseline
+#
+# The baseline lives in skills/.baselines/<skill>.md (upstream body at fork time). `--drift`
+# diffs that baseline against upstream now, so it shows exactly the upstream changes we have
+# not yet considered — our own local edits never appear as noise. After you review a drift
+# report and fold in (or reject) what upstream did, run --snapshot to reset the baseline;
+# the next --drift then starts from there.
+#
 # Usage:
-#   ./scripts/update-skills.sh          # update all non-frozen skills
-#   ./scripts/update-skills.sh vue      # update a specific skill
-#   ./scripts/update-skills.sh --all    # update all including frozen
+#   ./scripts/update-skills.sh                 # update all non-frozen skills
+#   ./scripts/update-skills.sh vue             # update a specific skill
+#   ./scripts/update-skills.sh --all           # update all including frozen
+#   ./scripts/update-skills.sh --drift         # drift report for every forked skill
+#   ./scripts/update-skills.sh --drift tdd     # drift report for one skill
+#   ./scripts/update-skills.sh --snapshot tdd  # (re)record one skill's baseline
+#   ./scripts/update-skills.sh --snapshot      # record baselines for all forked skills
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -32,16 +49,22 @@ if [[ ! -f "$SOURCES_FILE" ]]; then
   exit 1
 fi
 
+BASELINE_DIR="$ROOT_DIR/skills/.baselines"
+
 FILTER="${1:-}"
 INCLUDE_FROZEN=false
-if [[ "$FILTER" == "--all" ]]; then
-  INCLUDE_FROZEN=true
-  FILTER=""
-fi
+MODE=sync
+case "$FILTER" in
+  --all)      INCLUDE_FROZEN=true; FILTER="" ;;
+  --drift)    MODE=drift;    FILTER="${2:-}" ;;
+  --snapshot) MODE=snapshot; FILTER="${2:-}" ;;
+esac
 
 updated=0
 skipped=0
 failed=0
+drifted=0
+no_baseline=0
 
 # Clone a repo (cached by hash of URL)
 get_clone() {
@@ -72,15 +95,97 @@ current_repo=""
 current_path=""
 current_frozen=""
 current_filename=""
+current_upstream=""
+current_upstream_path=""
+
+# Extract a SKILL.md-style body (everything after the second `---`), or the whole
+# file when it has no frontmatter. Used by both drift and snapshot so the two always
+# compare the same thing — body only, never frontmatter (ours is local by design).
+extract_body() {
+  local f="$1"
+  if head -1 "$f" | grep -q "^---$"; then
+    awk 'BEGIN{c=0} /^---$/{c++; if(c==2){found=1; next}} found{print}' "$f"
+  else
+    cat "$f"
+  fi
+}
+
+# drift / snapshot for a forked skill (repo: original + upstream: <url>).
+process_fork() {
+  local skill="$1" upstream="$2" upstream_path="$3" filename="$4"
+  local baseline="$BASELINE_DIR/$skill.md"
+
+  local clone_dir
+  clone_dir=$(get_clone "$upstream")
+  if [[ -f "$clone_dir/.clone_failed" ]]; then
+    echo "  FAILED: could not clone $upstream"
+    failed=$((failed + 1))
+    return
+  fi
+
+  local source="$clone_dir/$upstream_path/$filename"
+  if [[ ! -f "$source" ]]; then
+    echo "  FAILED: $filename not found at $upstream_path — upstream moved or removed it."
+    echo "          Drop the upstream: field if it is gone for good."
+    failed=$((failed + 1))
+    return
+  fi
+
+  if [[ "$MODE" == "snapshot" ]]; then
+    mkdir -p "$BASELINE_DIR"
+    extract_body "$source" > "$baseline"
+    echo "  baseline recorded ($(wc -l < "$baseline" | tr -d ' ') lines)"
+    updated=$((updated + 1))
+    return
+  fi
+
+  # drift
+  if [[ ! -f "$baseline" ]]; then
+    echo "  NO BASELINE — cannot tell what upstream changed since the fork."
+    echo "          Run: $(basename "$0") --snapshot $skill  (records upstream's body as of now)"
+    no_baseline=$((no_baseline + 1))
+    return
+  fi
+
+  local upstream_now="$TMP_DIR/$skill.upstream"
+  extract_body "$source" > "$upstream_now"
+
+  if diff -q "$baseline" "$upstream_now" >/dev/null 2>&1; then
+    echo "  no upstream change since fork"
+    skipped=$((skipped + 1))
+    return
+  fi
+
+  local added removed
+  added=$(diff "$baseline" "$upstream_now" | grep -c '^>' || true)
+  removed=$(diff "$baseline" "$upstream_now" | grep -c '^<' || true)
+  echo "  DRIFT: upstream +$added/-$removed lines since the fork baseline"
+  echo "  ----- upstream changes you have not considered yet -----"
+  diff -u "$baseline" "$upstream_now" | tail -n +3 | sed 's/^/  /'
+  echo "  -------------------------------------------------------"
+  drifted=$((drifted + 1))
+}
 
 process_skill() {
   [[ -z "$current_skill" || -z "$current_repo" ]] && return
-  [[ "$current_repo" == "original" ]] && return
 
   # Apply filter
   if [[ -n "$FILTER" && "$current_skill" != "$FILTER" ]]; then
     return
   fi
+
+  # Forked skills: sync skips them entirely; drift/snapshot handle only them.
+  if [[ -n "$current_upstream" ]]; then
+    if [[ "$MODE" != "sync" ]]; then
+      echo "Checking $current_skill (forked from $current_upstream) ..."
+      process_fork "$current_skill" "$current_upstream" "${current_upstream_path:-.}" "${current_filename:-SKILL.md}"
+    fi
+    return
+  fi
+
+  # No upstream: field. In drift/snapshot mode there is nothing to compare against.
+  [[ "$MODE" != "sync" ]] && return
+  [[ "$current_repo" == "original" ]] && return
 
   # Skip frozen unless --all
   if [[ "$current_frozen" == "true" && "$INCLUDE_FROZEN" == "false" ]]; then
@@ -188,6 +293,8 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     current_path="."
     current_frozen=""
     current_filename=""
+    current_upstream=""
+    current_upstream_path=""
     continue
   fi
 
@@ -201,6 +308,11 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     current_frozen="${BASH_REMATCH[1]}"
   elif [[ "$line" =~ ^[[:space:]]+filename:[[:space:]]+(.+)$ ]]; then
     current_filename="${BASH_REMATCH[1]}"
+  elif [[ "$line" =~ ^[[:space:]]+upstream:[[:space:]]+([^[:space:]#]+) ]]; then
+    # Provenance for a forked (`repo: original`) skill — used by --drift / --snapshot only.
+    current_upstream="${BASH_REMATCH[1]}"
+  elif [[ "$line" =~ ^[[:space:]]+upstream_path:[[:space:]]+(.+)$ ]]; then
+    current_upstream_path="${BASH_REMATCH[1]}"
   fi
 done < "$SOURCES_FILE"
 
@@ -208,4 +320,14 @@ done < "$SOURCES_FILE"
 process_skill
 
 echo ""
-echo "Done: $updated updated, $skipped skipped, $failed failed"
+if [[ "$MODE" == "drift" ]]; then
+  echo "Drift: $drifted with upstream changes, $skipped unchanged, $no_baseline without a baseline, $failed failed"
+  if [[ "$drifted" -gt 0 ]]; then
+    echo "Review each diff above, fold in what is worth taking, then re-run with --snapshot <skill>"
+    echo "to reset that skill's baseline. Nothing was modified by this run."
+  fi
+elif [[ "$MODE" == "snapshot" ]]; then
+  echo "Snapshot: $updated baseline(s) recorded, $failed failed"
+else
+  echo "Done: $updated updated, $skipped skipped, $failed failed"
+fi

@@ -264,6 +264,61 @@ CREATE INDEX idx_products_attributes ON products USING GIN(attributes);
 
 ---
 
+## Ship the Schema as Reviewable Artifacts
+
+A schema handed over as prose gets misread. Alongside the DDL, produce whichever of these the change warrants — they are what a reviewer actually checks against.
+
+### ERD (Mermaid — renders in most review tools)
+
+Emit the diagram from the schema you just designed, not from memory:
+
+```
+erDiagram
+    Organization ||--o{ Project : owns
+    Project      ||--o{ Task    : contains
+    User         ||--o{ Task    : "created by"
+
+    Task {
+        string    id         PK
+        string    project_id FK
+        string    status
+        timestamp deleted_at
+        int       version
+    }
+```
+
+Cardinality notation: `||--o{` one-to-many, `||--||` one-to-one, `}o--o{` many-to-many (name the junction table explicitly — an implicit M:N hides the join row's own columns).
+
+When the schema already exists in an ORM, generate rather than hand-write it (e.g. `prisma-erd-generator`, `@dbml/cli` → `dbml-to-mermaid`, `SchemaSpy` for a live DB). Hand-drawn diagrams drift from the DDL; generated ones cannot.
+
+### Row-Level Security policies (PostgreSQL)
+
+When the design is multi-tenant or role-scoped, the tenant boundary belongs in the database, not only in application code — an ORM query that forgets a `WHERE org_id = …` leaks across tenants, RLS does not.
+
+```sql
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+
+-- tenant isolation
+CREATE POLICY tasks_org_isolation ON tasks FOR ALL TO app_user
+  USING (project_id IN (
+    SELECT p.id FROM projects p
+    JOIN organization_members om ON om.organization_id = p.organization_id
+    WHERE om.user_id = current_setting('app.current_user_id')::text
+  ));
+
+-- soft delete must not be visible
+CREATE POLICY tasks_hide_deleted ON tasks FOR SELECT TO app_user
+  USING (deleted_at IS NULL);
+```
+
+Rules: enable RLS on **every** tenant-scoped table (one table missed is the leak); the policy predicate must be index-backed or every query pays a scan; the app must connect as a non-owner role — a table owner and `BYPASSRLS` roles ignore policies entirely, which is how RLS silently does nothing in staging.
+
+### Seed data
+
+Ship a seed script that exercises the constraints, not just the happy path: one row per enum value, a soft-deleted row, a row at each FK boundary, and a case that *should* violate a CHECK (kept commented, as the documented negative test). Seeds must be idempotent — `ON CONFLICT DO NOTHING` / `MERGE` — so re-running them on a shared dev DB is safe.
+
+---
+
 ## Configuration Summary
 
 ### PostgreSQL Recommended Types
