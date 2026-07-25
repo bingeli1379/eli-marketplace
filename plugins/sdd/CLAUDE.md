@@ -48,6 +48,7 @@ The workflow auto-detects, at the start of `/propose`, `/apply`, `/quick`, and `
 | `/validate <change-name>` | Validate spec artifacts against structural and content rules |
 | `/quick <description>` | Quick mode — orchestrator analyzes inline, no spec files. Trivial/simple work it implements inline (no dispatch); medium/complex it dispatches agents sequentially. Always followed by a read-only review pass |
 | `/review <target> [lens]` | Read-only standalone review by lens (quality/security/performance/e2e/all); auto-detects lens; no edits, no commits |
+| `/research <area> [out]` | Read-only understanding pass over an area → durable findings doc (entry points, flow, patterns, dependencies, boundaries, risks, open questions). Describes, never judges or proposes; writes only the findings file |
 | `/role [role]` | Become one specialist agent as an interactive persona on the session model (not the agent's sonnet/low); menu if no role given |
 | `/apply <change-name>` | Implement tasks using agent team dispatch (no questions asked) |
 | `/apply-all [names...]` | Batch apply multiple changes sequentially, unattended |
@@ -133,7 +134,8 @@ Then register it in `skills/SOURCES.yaml`: `repo: <upstream>` if synced as-is, o
 - **SDD (Spec-Driven Development)**: `/propose` produces complete specs before any code is written
 - **DDD (Domain-Driven Design)**: Domain model (aggregates, value objects, events) defined in `design.md` during propose
 - **TDD (Test-Driven Development)**: Frontend and backend agents write unit tests FIRST (Red → Green → Refactor)
-- **Contract-First**: API contracts and shared types defined in `design.md` enable parallel frontend/backend development
+- **Contract-First (default implementation strategy)**: API contracts and shared types defined in `design.md` enable parallel frontend/backend development
+- **Walking Skeleton (opt-in, high integration uncertainty only)**: when a change's integration path is genuinely unproven (new external system, cross-layer flow with no precedent, SSR/IPC/cross-process boundary, never-exercised contract), the architect may instead choose to wire the whole path end-to-end first with `SKELETON:`-marked placeholders (group 1), then harden layer by layer (groups 2..N, full TDD). The strategy is recorded in `design.md` `## Decisions`; rules live in `skills/test-driven-development/SKILL.md` → *Walking Skeleton*; `/validate` enforces harden coverage and `/complete` blocks on residual `SKELETON:` markers. Not for single-layer, precedented-CRUD, or refactor work — applying it there is ceremony gold-plating.
 - **No-guess signaling**: agents never invent facts they don't have. The `NEEDS` / `CONFLICT` / `BLOCKED` vocabulary (defined in `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*) lets an agent stop on an unobtainable external fact, a spec disagreement, or a genuine blocker; the orchestrator resolves `NEEDS` with whatever tools the environment provides and resumes the same agent with its context intact. sdd defines the protocol, not the lookup tools — keeping the plugin environment-agnostic.
 
 ## Implementation Pipeline
