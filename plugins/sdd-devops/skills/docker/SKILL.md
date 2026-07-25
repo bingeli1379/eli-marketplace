@@ -18,7 +18,7 @@ user-invocable: false
 1. **Multi-stage builds always** — Separate build and runtime stages. Build in the SDK image, run in the ASP.NET runtime image.
 2. **Non-root by default** — .NET container images support `USER app` by default since .NET 8. Never run as root in production.
 3. **Layer caching matters** — Copy `.csproj` files and restore before copying source code. This caches NuGet dependencies across builds.
-4. **Health checks in the container** — Use `HEALTHCHECK` in Dockerfile or configure in Docker Compose / orchestrator.
+4. **Health probes at the orchestrator level** — Expose a `/health/live` endpoint and let Kubernetes/Compose probe it. Chiseled and default aspnet images have no shell or curl, so in-image `HEALTHCHECK` commands have nothing to run with.
 
 ## Patterns
 
@@ -53,11 +53,34 @@ USER app
 COPY --from=build /app/publish .
 
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD ["dotnet", "MyApp.Api.dll", "--urls", "http://localhost:8080/health/live"]
 
 ENTRYPOINT ["dotnet", "MyApp.Api.dll"]
 ```
+
+### Container Health Probes
+
+Prefer orchestrator-level probes (Kubernetes `livenessProbe`, Compose
+`healthcheck`) over a Dockerfile `HEALTHCHECK` — the standard `aspnet` and
+chiseled images ship no shell, no curl, and no wget, so there is nothing inside
+the container to run the probe with. Point the orchestrator at `/health/live`:
+
+```yaml
+# docker-compose — probe from outside the app process
+services:
+  api:
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health/live || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+# Note: CMD-SHELL requires a shell + wget in the image. Use a non-chiseled
+# variant for this, or better: let Kubernetes httpGet probes do it —
+# they run from the kubelet, needing nothing inside the image.
+```
+
+If you must have an in-image HEALTHCHECK, base the runtime stage on a
+non-chiseled image that includes `wget` — never re-run the app binary as the
+probe command; that starts a second instance instead of checking the first.
 
 ### .dockerignore
 
@@ -177,5 +200,5 @@ ENTRYPOINT ["dotnet", "MyApp.Api.dll"]
 | Local development | Docker Compose with service dependencies |
 | CI builds | Multi-stage build (self-contained) |
 | Image size optimization | Use Alpine variant + trimming for small images |
-| Health monitoring | HEALTHCHECK instruction + /health endpoint |
+| Health monitoring | `/health` endpoint + orchestrator probe (K8s `httpGet` / Compose healthcheck) |
 | Secrets | Environment variables or mounted secrets, never in image |
