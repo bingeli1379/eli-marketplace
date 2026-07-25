@@ -73,6 +73,15 @@
 
 ## Decisions
 
+<!-- MUST include the implementation strategy as one decision: -->
+<!-- ### Implementation strategy: Contract-First | Walking Skeleton -->
+<!-- Contract-First is the default; the criteria for departing from it live in the -->
+<!-- architect's *Implementation Strategy Selection* section (do not restate them here). -->
+<!-- If Walking Skeleton, this decision MUST also state: -->
+<!-- - **Path proven by the skeleton**: <the concrete end-to-end route> -->
+<!-- - **Placeholdered per layer**: <what is faked where; all marked `SKELETON:`> -->
+<!-- - **Harden order**: <which layer becomes real first, and why> -->
+
 <!-- For each key decision, use this structure: -->
 <!-- ### N. Decision Title -->
 <!-- Description of the chosen approach. -->

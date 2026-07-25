@@ -46,6 +46,28 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
    - Use **AskUserQuestion** to confirm: "Complete with N incomplete tasks?" / "Cancel"
    - Proceed only if user confirms
 
+   **Walking-skeleton residue gate (MANDATORY — blocks completion):** search for residual `SKELETON:` markers in **tracked source only**. Use `git grep`, not plain `grep -r` — a recursive filesystem grep also hits `node_modules/`, build output, and vendored code, producing false blocks:
+
+   The marker is a **code comment** by convention, so the scan excludes documentation (`*.md`) — otherwise a project that merely *documents* the `SKELETON:` convention in its own docs would be blocked forever, including this workflow's own docs:
+
+   ```bash
+   # single-repo (cwd is the repo)
+   git grep -n "SKELETON:" -- . ':(exclude)feature-spec' ':(exclude)*.md'
+
+   # multi-repo: run per child repo THIS change touched (from tasks.md `<!-- repo: … -->`
+   # annotations) — never scan untouched sibling repos, their markers are not yours
+   git -C <repo> grep -n "SKELETON:" -- . ':(exclude)*.md'
+   ```
+
+   **no-git mode** (Step 0 detected no repo): fall back to `grep -rnI "SKELETON:" . --exclude="*.md" --exclude-dir=feature-spec --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build` (`-I` skips binaries), and say in the report that the scan is best-effort because there is no index to scope it.
+
+   **Attribute each hit to a change before blocking on it.** The working tree is shared, so a raw hit may belong to a *different* in-flight change — blocking `<name>` for someone else's placeholder is wrong. For each hit, decide ownership using this change's own scope: the files in its `design.md` `## Affected Files`, plus the files touched by its commits (`git log --name-only` over the change's commit range). Then:
+
+   - **Hit inside this change's scope** → this change is **unfinished regardless of checkbox state**. Report every residual location (`file:line`) and **stop**: do not delete artifacts, do not commit. Tell the user which harden tasks are effectively incomplete and to finish them (`/apply <name>`) before re-running `/complete`. This is not overridable by confirmation — a checked-off `tasks.md` with live `SKELETON:` markers is exactly the failure mode the gate exists to catch.
+   - **Hit outside this change's scope** → do NOT block. Report it as an informational note naming the file and, if identifiable, the other change that owns it.
+
+   In **batch mode**, apply the same attribution per change: a change with in-scope residue is skipped and listed with its residual count; the others still complete.
+
    **If no tasks.md exists (or it has zero tasks):** the change was never implemented — deleting it discards its proposal/design work. Use **AskUserQuestion** to confirm: "No tasks.md — delete un-implemented change `<name>`?" / "Cancel". Proceed only if the user confirms. (In batch mode this path is unreachable — such changes were already filtered out in Step 1.)
 
 3. **Delete change artifacts**
@@ -99,6 +121,7 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
 ## Guardrails
 
 - Batch mode (no name provided) only completes fully finished changes — never completes incomplete ones without explicit naming.
+- **Residual `SKELETON:` markers block completion unconditionally** (Step 2 gate) — in single-repo and in every touched child repo. Not overridable by user confirmation, and checked even when all tasks are `- [x]`; a shipped skeleton placeholder is a bug, not a completed change.
 - When a name is explicitly provided, allow completing incomplete changes with user confirmation.
 - **No knowledge extraction, no doc maintenance**: `/complete` does not write `knowledge.md`, sync `context.md`, or edit CLAUDE.md / README. Those artifacts are not part of this workflow anymore — the project owns its own docs.
 - Always keep `feature-spec/config.yaml` — never delete it.

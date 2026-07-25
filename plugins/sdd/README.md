@@ -116,10 +116,11 @@ Confirms the change's tasks are done, deletes the change artifacts, and commits 
 
 ## Standalone helpers
 
-Beyond the full `/setup → /propose → /apply → /complete` pipeline, three commands work on their own:
+Beyond the full `/setup → /propose → /apply → /complete` pipeline, four commands work on their own:
 
 - **`/quick <task>`** — inline analysis + review pipeline, no spec files. Trivial/simple work the orchestrator implements inline (no dispatch); medium/complex it dispatches agents sequentially (single-writer). For tasks where the spec ceremony is overkill but a review pass is still worth it.
 - **`/review <target> [lens]`** — read-only review of existing code, a diff, an API, or a stored procedure by lens (`quality` / `security` / `performance` / `e2e` / `all`); the lens is auto-detected from the target when omitted. No edits, no commits — findings only; fixes are delegated on request.
+- **`/research <area> [out]`** — read-only understanding pass over an area, producing a durable findings doc (entry points, the flow as symbol chains, existing patterns, inbound/outbound dependencies, boundary contracts, real test coverage, risks, open questions). One step earlier than `/review`: it explains how the area works instead of judging it, and proposes nothing. Worth it when the understanding must outlive the conversation (a handoff, onboarding, input to someone else's decision) — otherwise it says so and stops.
 - **`/role [role]`** — become one specialist agent as an interactive persona (architect, the engineers, the reviewers, …), running on your current session's model/effort rather than the agent's dispatch tier. Type a role name or pick from the listed set.
 
 ## Agents
@@ -185,7 +186,8 @@ See `skills/` for the full list of bundled skills.
 |---|---|---|
 | Propose | **SDD** | Specs written before code — WHEN/THEN acceptance criteria |
 | Propose | **DDD** | Domain model defined — aggregates, value objects, events |
-| Propose | **Contract-First** | API contract + shared types enable parallel development |
+| Propose | **Contract-First** | Default strategy — API contract + shared types enable parallel development |
+| Propose | **Walking Skeleton** | Opt-in alternative for unproven integration paths — wire the whole path end-to-end with `SKELETON:` placeholders first, then harden layer by layer. The architect picks it in `design.md` only for genuine integration uncertainty; `/complete` blocks while any placeholder survives |
 | Apply | **TDD** | Frontend/backend write unit tests FIRST (Red → Green → Refactor) |
 | Apply | **E2E** | QA writes Playwright tests from specs, runs after implementation |
 

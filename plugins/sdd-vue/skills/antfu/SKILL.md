@@ -31,6 +31,13 @@ user-invocable: false
 - **Explicit return types**: Declare return types explicitly when possible
 - **Avoid complex inline types**: Extract complex types into dedicated `type` or `interface` declarations
 
+### Explicitness
+
+Favor explicit, traceable code over implicit "magic". A reader (human or agent) should be able to follow where every name comes from without running tooling.
+
+- **Explicit imports**: Prefer explicit `import` statements. Avoid auto-imports — when a framework provides them (e.g. Nuxt/Nitro), turn them off for new projects (see [app-development](references/app-development.md)).
+- **No path aliases by default**: Use relative imports (`./foo`, `../bar`). Only use path aliases (`@/`, `~/`, `#imports`, etc.) when they are *already* configured in the project; don't introduce new ones for greenfield code.
+
 ### Comments
 
 - **Avoid unnecessary comments**: Code should be self-explanatory
@@ -140,6 +147,6 @@ Avoid the default catalog. Catalog names can be adjusted per project needs.
 |-------|-------------|-----------|
 | ESLint Config | Framework support, formatters, rule overrides, VS Code settings | [antfu-eslint-config](references/antfu-eslint-config.md) |
 | Project Setup | .gitignore, GitHub Actions, VS Code extensions | [setting-up](references/setting-up.md) |
-| App Development | Vue/Nuxt/UnoCSS conventions and patterns | [app-development](references/app-development.md) |
+| App Development | Vue/Nuxt/UnoCSS conventions, auto-import control, Storybook component testing | [app-development](references/app-development.md) |
 | Library Development | tsdown bundling, pure ESM publishing | [library-development](references/library-development.md) |
 | Monorepo | pnpm workspaces, centralized alias, Turborepo | [monorepo](references/monorepo.md) |

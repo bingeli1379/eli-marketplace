@@ -24,7 +24,7 @@ Four collision-object types (the last three extend `PhysicsBody2D`/`3D`):
 
 Every collision object needs at least one `CollisionShape2D`/`3D` (or `CollisionPolygon2D`/`3D`) child. **Jolt Physics is the default 3D engine since 4.4** (non-experimental from 4.6) — see Section 8. 2D always uses GodotPhysics.
 
-> **Critical rule:** NEVER scale collision shapes or physics bodies via `scale`. Use the shape's own size parameters (radius, extents, height) — scaled shapes produce incorrect collision results.
+> **Critical rule:** NEVER scale collision shapes or physics bodies via `scale`. Use the shape's own size parameters (radius, extents, height) — scaling breaks collision accuracy.
 
 ---
 
@@ -41,19 +41,19 @@ Every collision object needs at least one `CollisionShape2D`/`3D` (or `Collision
 | `apply_torque(torque)` | Continuous angular accel | Steering, spinning |
 | `apply_torque_impulse(impulse)` | Instant angular velocity change | Impact spin |
 
-> See [references/rigidbody-recipes.md](references/rigidbody-recipes.md) for a worked thrust-and-spin example (GDScript + C#) using `apply_force` + `apply_central_impulse` + `apply_torque`.
+> See [references/rigidbody-recipes.md](references/rigidbody-recipes.md) for a thrust-and-spin example (GDScript + C#) using `apply_force` + `apply_central_impulse` + `apply_torque`.
 
 ### _integrate_forces() — Safe Physics Modification
 
-Use `_integrate_forces(state)` instead of `_physics_process()` when you need to read/modify a RigidBody's transform, velocity, or angular velocity. Setting `position` or `linear_velocity` directly in `_physics_process()` fights the physics engine.
+Use `_integrate_forces(state)` instead of `_physics_process()` to read/modify a RigidBody's transform, velocity, or angular velocity. Setting `position` or `linear_velocity` directly in `_physics_process()` fights the physics engine.
 
-> **Warning:** `_integrate_forces()` is NOT called while the body is sleeping. Set `can_sleep = false` if you need continuous callbacks; otherwise prefer letting bodies sleep for performance.
+> **Warning:** `_integrate_forces()` is NOT called while the body is sleeping. Set `can_sleep = false` if you need continuous callbacks; otherwise let bodies sleep for performance.
 
-> See [references/rigidbody-recipes.md](references/rigidbody-recipes.md) for the full thrust + torque example using `state.apply_force` / `state.apply_torque` (GDScript + C#).
+> See [references/rigidbody-recipes.md](references/rigidbody-recipes.md) for the thrust + torque example using `state.apply_force` / `state.apply_torque` (GDScript + C#).
 
 ### Contact Monitoring, PhysicsMaterial, Freeze, look_at
 
-- **Contact signals** require `contact_monitor = true` + `max_contacts_reported > 0`. Then `body_entered`/`body_exited` fire as expected.
+- **Contact signals** require `contact_monitor = true` + `max_contacts_reported > 0`. Then `body_entered`/`body_exited` fire.
 - **`PhysicsMaterial`** resource controls `friction` (0 ice → 1 rubber) and `bounce` (0 → 1).
 - **Freeze modes:** `FREEZE_MODE_STATIC` (acts like a StaticBody) or `FREEZE_MODE_KINEMATIC` (code-moved, pushes others).
 - **RigidBody3D orientation:** never `look_at()` a RigidBody — use `_integrate_forces` and set `state.angular_velocity` from a cross-product steering term.
@@ -64,7 +64,7 @@ Use `_integrate_forces(state)` instead of `_physics_process()` when you need to 
 
 ## 3. StaticBody2D/3D
 
-`StaticBody` is not moved by the physics engine but can push other bodies via `constant_linear_velocity` (e.g. conveyor belts). For platforms that move via code AND push CharacterBodies, use **`AnimatableBody2D`/`3D`** — a plain `StaticBody` moved by code will not push CharacterBodies reliably.
+`StaticBody` is not moved by the physics engine but can push other bodies via `constant_linear_velocity` (e.g. conveyor belts). For platforms that move via code AND push CharacterBodies, use **`AnimatableBody2D`/`3D`** — a code-moved `StaticBody` won't push CharacterBodies reliably.
 
 > See [references/staticbody-recipes.md](references/staticbody-recipes.md) for the conveyor belt and moving-platform recipes (GDScript + C#, with Tween-driven AnimatableBody2D loop).
 
@@ -75,6 +75,8 @@ Use `_integrate_forces(state)` instead of `_physics_process()` when you need to 
 Areas detect overlaps and override physics properties within their bounds. They do NOT produce collision responses — bodies pass through them. Connect `body_entered` / `body_exited` for body overlaps; use `area_entered` / `area_exited` for Area-to-Area (hitbox vs hurtbox — see **component-system**). Areas can also override gravity (zero-G zones, point gravity / black holes), `linear_damp` / `angular_damp` (water, slow-mo), and redirect audio to a specific `AudioBus`. When multiple areas overlap, `priority` decides order; pick a `space_override` mode (`COMBINE`, `REPLACE`, `COMBINE_REPLACE`, `REPLACE_COMBINE`).
 
 > See [references/area-recipes.md](references/area-recipes.md) for the GDScript + C# overlap-detection canonical example, the space-override mode reference table, and zero-G + point-gravity recipes.
+
+> ⚠️ **Changed in Godot 4.7:** With Jolt Physics, `Area3D` now reports overlaps with `SoftBody3D` from its signals and methods. Configure collision layers/masks so any unwanted `Area3D` ↔ `SoftBody3D` interactions are ignored. See the [4.7 migration guide](https://docs.godotengine.org/en/latest/tutorials/migrating/upgrading_to_godot_4.7.html).
 
 ---
 
@@ -102,7 +104,23 @@ Areas detect overlaps and override physics properties within their bounds. They 
 
 ### Performance Rules
 
-Favor primitives for dynamic bodies; minimize shape count per body (each costs narrow-phase checks); never translate/rotate/scale CollisionShape nodes — a single non-transformed shape enables broad-phase optimization; concave shapes only on StaticBodies (O(n) triangle checks); multiple shapes on one body don't collide with each other (this is correct, not a bug); shapes must be direct children — indirect children are ignored.
+Favor primitives for dynamic bodies; minimize shape count per body (each costs narrow-phase checks); never translate/rotate/scale CollisionShape nodes (see §1) — a non-transformed shape enables broad-phase optimization; concave shapes only on StaticBodies (O(n) triangle checks); multiple shapes on one body don't collide with each other (expected, not a bug); shapes must be direct children — indirect children are ignored.
+
+### One-Way Collision Direction (Godot 4.7+)
+
+`CollisionShape2D.one_way_collision_direction: Vector2` (default `Vector2(0, 1)`) sets a custom pass-through direction for 2D one-way platforms. `PhysicsServer2D.body_set_shape_as_one_way_collision()` gains a matching optional `direction: Vector2 = Vector2(0, 1)` parameter.
+
+```gdscript
+var shape: CollisionShape2D = $CollisionShape2D
+shape.one_way_collision = true
+shape.one_way_collision_direction = Vector2(1, 0)  # Sideways one-way wall (default: Vector2(0, 1))
+```
+
+```csharp
+var shape = GetNode<CollisionShape2D>("CollisionShape2D");
+shape.OneWayCollision = true;
+shape.OneWayCollisionDirection = new Vector2(1, 0); // Sideways one-way wall (default: Vector2(0, 1))
+```
 
 ---
 
@@ -115,27 +133,9 @@ Godot provides 32 physics layers per dimension (2D and 3D separately).
 
 > **Mental model:** Layer = "I am", Mask = "I scan for". A collision happens when object A's mask includes object B's layer, OR vice versa.
 
-### Naming Layers
+Name layers in **Project Settings → Layer Names → 2D Physics** (or 3D Physics); set them in code with `set_collision_layer_value(N, true)` / `set_collision_mask_value(N, true)` (1-indexed).
 
-**Project Settings → Layer Names → 2D Physics** (or 3D Physics). Typical layer set: `Player / Enemy / World / Projectile / Pickup / Trigger`.
-
-### Setting Layers and Masks
-
-Use `set_collision_layer_value(N, true)` / `set_collision_mask_value(N, true)` (1-indexed) for readable code, or shorthand bitmasks `collision_mask = (1 << 2) | (1 << 4)` (layers 3 and 5). Expose layer selection in the Inspector via `@export_flags_2d_physics var scan_layers: int = 0` (GDScript) or `[Export(PropertyHint.Layers2DPhysics)]` (C#).
-
-```gdscript
-collision_layer = 0
-set_collision_layer_value(1, true)   # Add to layer 1 (Player)
-collision_mask = 0
-set_collision_mask_value(3, true)    # Scan layer 3 (World)
-```
-
-```csharp
-CollisionLayer = 0;
-SetCollisionLayerValue(1, true);
-CollisionMask = 0;
-SetCollisionMaskValue(3, true);
-```
+> See [references/collision-layers.md](references/collision-layers.md) for layer naming conventions, bitmask shorthand, Inspector export flags, and the GDScript + C# examples.
 
 ---
 
@@ -145,27 +145,7 @@ SetCollisionMaskValue(3, true);
 
 Add a `RayCast2D` / `RayCast3D` as a child node — it casts every physics frame automatically. Read with `is_colliding()` and `get_collider()` / `get_collision_point()` / `get_collision_normal()`.
 
-```gdscript
-@onready var ray: RayCast2D = $RayCast2D
-
-func _physics_process(_delta: float) -> void:
-    if ray.is_colliding():
-        var collider := ray.get_collider()
-        var point := ray.get_collision_point()
-```
-
-```csharp
-private RayCast2D _ray;
-public override void _Ready() => _ray = GetNode<RayCast2D>("RayCast2D");
-public override void _PhysicsProcess(double delta)
-{
-    if (_ray.IsColliding())
-    {
-        var collider = _ray.GetCollider();
-        var point = _ray.GetCollisionPoint();
-    }
-}
-```
+> See [references/raycasting-recipes.md](references/raycasting-recipes.md) for the GDScript + C# RayCast node example.
 
 ### Code-Based Raycasting (PhysicsDirectSpaceState)
 
@@ -183,9 +163,7 @@ The `intersect_ray` result dictionary contains `position`, `normal`, `collider`,
 
 ## 8. Jolt Physics
 
-Jolt is a built-in alternative physics engine available since Godot 4.4. It is the **default for new 3D projects** starting in 4.4. **(Godot 4.6+)** Jolt is no longer marked experimental and is the confirmed stable default for all new 3D projects.
-
-> **Note:** Godot 4.6 is in beta; verify behavior on stable release.
+Jolt is a built-in alternative physics engine, the **default for new 3D projects** since Godot 4.4. **(Godot 4.6+)** Jolt is no longer marked experimental and is the confirmed stable default for all new 3D projects.
 
 ### Enabling Jolt
 
@@ -193,8 +171,11 @@ Jolt is a built-in alternative physics engine available since Godot 4.4. It is t
 
 ### Why & Differences
 
-**Wins:** better stacking stability, reliable `CylinderShape3D`, better `SoftBody3D`, optional thread-safe mode, active-edge detection (fixes ghost collisions). **Differences from GodotPhysics:** position-only Baumgarte stabilization, convex-radius collision margins, single-body joints treat the unassigned slot as `node_a` (world — opposite of GodotPhysics), `face_index` returns `-1` unless **Enable Ray Cast Face Index** is on, and some joint properties (`bias`, `softness`, `relaxation`, `damping`) are unsupported on PinJoint / HingeJoint / SliderJoint / ConeTwistJoint.
+**Wins:** better stacking stability, reliable `CylinderShape3D`, better `SoftBody3D`, optional thread-safe mode, active-edge detection (fixes ghost collisions).
 
+> See [references/jolt-differences.md](references/jolt-differences.md) for the behavioral differences from GodotPhysics (stabilization, collision margins, single-body joints, `face_index`, unsupported joint properties).
+
+> ⚠️ **Changed in Godot 4.7:** With Jolt Physics, `WorldBoundaryShape3D.plane.d` now follows the same sign convention as Godot Physics — the plane distance is interpreted with the opposite sign compared to Godot 4.6. Flip the sign yourself to keep the 4.6 behavior. See the [4.7 migration guide](https://docs.godotengine.org/en/latest/tutorials/migrating/upgrading_to_godot_4.7.html).
 
 ---
 
@@ -208,23 +189,7 @@ Smooths visual motion between physics ticks, eliminating "staircase" jitter when
 2. **Tweens and AnimationPlayer** that move physics objects must use physics tick timing
 3. **Call `reset_physics_interpolation()`** after teleporting or initial placement to prevent "streaking"
 
-```gdscript
-func teleport_to(pos: Vector2) -> void:
-    global_position = pos
-    reset_physics_interpolation()
-```
-
-```csharp
-public void TeleportTo(Vector2 pos)
-{
-    GlobalPosition = pos;
-    ResetPhysicsInterpolation();
-}
-```
-
-### Per-Node Control & Tick Rate
-
-`node.physics_interpolation_mode` accepts `PHYSICS_INTERPOLATION_MODE_INHERIT` (default), `_ON`, or `_OFF`. Tick rate (Project Settings → Physics → Common → Physics Ticks per Second): 10–30 TPS for slow/turn-based, 30–60 (60 default) for most games, 60+ for fast-paced/racing/precision platformers. Temporarily set 10 TPS during dev to surface interpolation problems.
+> See [references/interpolation-tuning.md](references/interpolation-tuning.md) for the teleport-reset example (GDScript + C#), per-node `physics_interpolation_mode` control, and tick-rate guidance.
 
 ### Camera Interpolation
 
@@ -250,19 +215,15 @@ Godot 4.5+ adds `apply_central_impulse()` / `apply_central_force()` for `RigidBo
 
 > See [references/softbody-recipes.md](references/softbody-recipes.md) for the cloth/cape walk-through (PlaneMesh, BoneAttachment3D pinning, Parent Collision Ignore) and the 4.5+ force/impulse API with GDScript and C# (explosion knockback, continuous wind).
 
+> ⚠️ **Changed in Godot 4.7:** With Jolt Physics, `SoftBody3D` mass no longer defaults to `0` (which auto-calculated 1 kg *per point*, giving a very high total mass) — it now defaults to 1 kg for the entire body, matching Godot Physics. `linear_stiffness` is also applied differently, so re-tweak `linear_stiffness` and `damping_coefficient` after upgrading. See the [4.7 migration guide](https://docs.godotengine.org/en/latest/tutorials/migrating/upgrading_to_godot_4.7.html).
+
 ---
 
 ## 13. Troubleshooting Physics Issues
 
-| Symptom | Causes & fixes |
-|---|---|
-| **Tunneling** (fast objects pass through) | `continuous_cd = true` on RigidBody; thicken static colliders; raise tick rate (120–240 TPS) |
-| **Stacked objects wobble** | Raise tick rate; switch to Jolt (3D) for much better stacking |
-| **Scaled shapes don't collide** | Never use `scale` on bodies/shapes — set shape parameters directly (radius, extents). For shared shapes, `shape.duplicate()` to Make Unique |
-| **Tile collision bumps** | 4.5+: `TileMapLayer` auto-merges via Physics Quadrant Size (default 16). Pre-4.5: manual composite colliders |
-| **CylinderShape3D unstable** | Use Jolt (fully supported), or substitute CapsuleShape3D/BoxShape3D with GodotPhysics |
-| **Physics spiral of death** | Engine can't finish in one frame — raise Max Physics Steps per Frame, reduce TPS, or cut body count |
-| **Unreliable far from origin** | Float precision degrades past ~4 km. Use `precision=double` build or origin-shifting for planetary-scale games |
+Symptom → causes & fixes quick table covering tunneling, wobbly stacks, scaled shapes, tile collision bumps, unstable cylinders, the physics spiral of death, and float-precision issues far from origin.
+
+> See [references/troubleshooting.md](references/troubleshooting.md) for the full table.
 
 ---
 

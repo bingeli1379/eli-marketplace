@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.2] - 2026-07-25
+
+### Changed
+- Refreshed the bundled .NET skills from upstream — authentication, minimal APIs, resilience, and gRPC guidance are all current again.
+
 ## [1.1.1] - 2026-06-24
 
 ### Changed
