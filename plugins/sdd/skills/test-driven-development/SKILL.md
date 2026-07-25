@@ -30,6 +30,8 @@ Write the test first. Watch it fail. Write minimal code to pass.
 - Generated code
 - Configuration files
 
+**One exception you do not need to ask about, because it was already decided upstream:** a **walking-skeleton group** — a task group whose stated job is to prove a cross-layer integration path with placeholder data, explicitly marked `SKELETON:` and scheduled to be replaced by later harden groups. It is a disposable integration probe, not production code. The decision is recorded in `design.md` and visible to the user before implementation starts, so as the implementer you neither choose it nor re-confirm it. See *Walking Skeleton* below; everything outside such a group follows the Iron Law.
+
 Thinking "skip TDD just this once"? Stop. That's rationalization.
 
 ## The Iron Law
@@ -47,6 +49,8 @@ Write code before the test? Delete it. Start over.
 - Delete means delete
 
 Implement fresh from tests. Period.
+
+*(Scope note: this "no exceptions" list is about **not keeping test-less code you already wrote** — it is absolute. The one scope carve-out is the walking-skeleton group named in *When to Use*: its placeholders are a disposable integration probe, not production code, so the Iron Law does not reach them. Every line of real implementation, including all harden work replacing those placeholders, is fully governed by the Iron Law.)*
 
 ## Red-Green-Refactor
 
@@ -197,6 +201,29 @@ WRONG (horizontal):           RIGHT (vertical, tracer bullets):
 
 This matters most in `/apply`, where an agent implementing a whole task group is tempted to batch all tests up front. Stay vertical: one behaviour at a time.
 
+## Walking Skeleton (integration probe — a different axis, not an exception to vertical slicing)
+
+**Do not confuse this with the anti-pattern above.** They are orthogonal:
+
+| | axis | what it says |
+|---|---|---|
+| Horizontal slicing (anti-pattern) | tests vs implementation | never batch all tests, then all impl — go one behaviour at a time |
+| Walking skeleton (this section) | across architectural layers | when integration risk is unproven, first prove the whole path end-to-end with placeholder data, then fill each layer in |
+
+A walking skeleton is the *tracer bullet* above widened to the whole system: instead of proving one behaviour end-to-end inside one layer, it proves the **wiring across every layer** before any layer is real. It is chosen at design time (the architect's *Implementation Strategy Selection*, recorded in `design.md` `## Decisions`), not improvised mid-task.
+
+### When it applies
+
+**You do not decide this — `design.md` already did.** The strategy is picked at design time against the criteria in the architect's *Implementation Strategy Selection* (the single authority for that test; Contract-First is the default). If `design.md` does not name Walking Skeleton, this whole section does not apply and the Iron Law governs every line you write. If it does, the rules below are binding for the skeleton group only.
+
+### Rules inside a skeleton group
+
+1. **No unit TDD for the placeholder code.** The skeleton is a disposable probe; unit tests written against placeholder returns test nothing and get deleted with them. This is the exception named in *When to Use* above.
+2. **The integration path itself must be proven**, not assumed — the group is not done until the end-to-end path actually runs (a request reaching the UI, an IPC round-trip completing, a signal arriving). Proving it by hand is acceptable; proving it with one end-to-end test is better.
+3. **Every placeholder MUST carry a `SKELETON:` marker comment** (e.g. `// SKELETON: replace in harden phase`) — in the **source file's comment syntax**, never in markdown or docs (the completion gate excludes `*.md` precisely so documenting the convention does not trip it). This is what the harden groups and `/complete`'s completion gate locate.
+4. **Every `SKELETON:` site MUST have a harden task** that replaces it with the real implementation — and that harden work is **full TDD, no exception**: RED → GREEN → REFACTOR, vertical slices, per rules above.
+5. **Residual `SKELETON:` markers mean the change is unfinished.** `/complete` blocks on them. A skeleton that shipped is a bug, not a shortcut.
+
 ## Good Tests
 
 | Quality | Good | Bad |
@@ -289,6 +316,8 @@ Tests-first force edge case discovery before implementing. Tests-after verify yo
 
 **All of these mean: Delete code. Start over with TDD.**
 
+*(The sole non-rationalization is a group `design.md` designated a walking skeleton — see *Walking Skeleton*. "This is different because I decided it is" is a red flag; "this is the skeleton group the approved design defined" is not.)*
+
 ## Example: Bug Fix
 
 **Bug:** Empty email accepted
@@ -341,6 +370,8 @@ Before marking work complete:
 
 Can't check all boxes? You skipped TDD. Start over.
 
+*(A walking-skeleton group is checked against rule 2 of *Walking Skeleton* instead — "the end-to-end path actually runs" — not against this list. Every harden group and all other work is checked against this list in full.)*
+
 ## When Stuck
 
 | Problem | Solution |
@@ -370,4 +401,4 @@ Production code → test exists and failed first
 Otherwise → not TDD
 ```
 
-No exceptions without the user's permission.
+No exceptions without the user's permission. A walking-skeleton group does not breach this: its placeholders are not production code, and the strategy is stated in `design.md` for the user to see before implementation rather than improvised by you at commit time — see *Walking Skeleton*.

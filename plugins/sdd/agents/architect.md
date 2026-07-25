@@ -78,6 +78,20 @@ What the backend agent needs to implement:
 - Error handling strategy (how frontend should handle each error code)
 - Real-time communication needs (WebSocket, SSE) if applicable
 
+## Implementation Strategy Selection
+
+Every design MUST state which implementation strategy the change follows, in `design.md` `## Decisions`, with the reason. Two options:
+
+- **Contract-First (the default)** — the contract in this spec is the integration guarantee; layers are then built as vertical groups (backend group → frontend group), each layer fully implemented with TDD. Use this unless the test below says otherwise.
+- **Walking Skeleton (integration probe first)** — first a single thin group wires the whole path end-to-end with placeholder data, then later groups harden one layer at a time. Choose it **only** when the change carries genuine **integration uncertainty**: a new external system integration, a cross-layer data flow with no precedent in the repo, an SSR / IPC / cross-process boundary, or a contract that has never been exercised. Do **not** choose it for single-layer changes, CRUD that has a clear precedent, or refactor / format-migration work — applying skeleton ceremony to a low-risk change is gold-plating.
+
+When you choose Walking Skeleton, the design MUST also specify:
+- **Which path the skeleton proves** (the concrete end-to-end route, e.g. `UI action → IPC channel → main-process handler → response rendered`).
+- **What is placeholdered in each layer**, and that every placeholder is marked with a `SKELETON:` comment.
+- **The harden order** — which layer becomes real first and why (usually the one carrying the most uncertainty).
+
+The `test-driven-development` skill's *Walking Skeleton* section defines the rules the implementing agents follow (no unit TDD for placeholder code; full TDD for every harden group; residual `SKELETON:` markers block `/complete`). Do not restate those rules in `design.md` — reference the strategy and let the skill govern.
+
 ## Design Principles
 
 - **Contract-first**: Define the API contract before any implementation

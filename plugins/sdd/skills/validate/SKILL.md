@@ -78,6 +78,7 @@ Most rules are **ERROR** level — any ERROR causes FAIL. A few rules are marked
 | `## Shared Types` section | MUST exist when both Backend and Frontend are impacted |
 | `## Data Migration & Rollback` section | SHOULD exist when proposal.md signals a schema/data-model change (keywords in What Changes / Impact: migration, schema, column, table, index, alter, backfill, drop). WARN if missing — a schema change with no backfill/rollback plan is a common production incident |
 | `## Decisions` section | MUST exist with at least one decision |
+| Implementation strategy | `## Decisions` MUST state the implementation strategy — Contract-First or Walking Skeleton — with a reason. WARN if absent (the architect defaulted silently); ERROR if it states Walking Skeleton without naming the end-to-end path the skeleton proves, what is placeholdered per layer, and the harden order |
 | Decision alternatives | Each decision MUST mention at least one alternative considered |
 | `## Risks / Trade-offs` section | MUST exist and be non-empty |
 
@@ -96,6 +97,7 @@ Most rules are **ERROR** level — any ERROR causes FAIL. A few rules are marked
 | Empty groups | Groups MUST NOT be empty (no tasks under heading) |
 | Reference pointer | Each group SHOULD carry a `Reference:` line mapping its technical operations to the existing code that already performs each (DB access → …, DI → …, error handling → …), `none` only for an operation with no precedent anywhere. WARN if missing, or if it collapses to a bare `Reference: none` for the whole group — the implementing and reviewing agents lose their per-operation anchor and the change risks style drift. |
 | Repo annotation (multi-repo) | If a group heading carries a `<!-- repo: <path> -->` annotation, `<path>` MUST resolve to a directory on disk. ERROR if it does not. |
+| Walking-skeleton harden coverage | When `design.md` chose **Walking Skeleton**: group 1 MUST be the end-to-end skeleton group, every **harden** group (one that replaces a skeleton placeholder) MUST depend on group 1 directly or transitively, and **every placeholder site named in the skeleton group's tasks MUST be replaced by a specific harden task**. ERROR on an uncovered site, on a catch-all harden task ("replace remaining placeholders"), or when the skeleton group is not group 1. Also ERROR if the skeleton group contains RED/GREEN unit-test tasks (it is an integration probe — see `test-driven-development` → *Walking Skeleton*) or lacks a task proving the end-to-end path runs. A group that touches none of the skeleton's placeholders (an unrelated capability, a docs group) is NOT required to depend on group 1 — do not force a false dependency |
 
 ### specs/\*/spec.md
 
