@@ -7,7 +7,7 @@ description: Use when implementing save/load systems — ConfigFile, JSON, Resou
 
 Choose the right serialization strategy for your data type. All examples target Godot 4.3+ with no deprecated APIs.
 
-> **Related skills:** **resource-pattern** for custom Resource data containers, **inventory-system** for inventory serialization patterns, **godot-project-setup** for SaveManager autoload setup.
+> **Related skills:** **resource-pattern** for custom Resource data containers, **inventory-system** for inventory serialization patterns, **godot-project-setup** for SaveManager autoload setup, **popochiu** for adventure-framework saves.
 
 ---
 
@@ -37,6 +37,8 @@ Choose the right serialization strategy for your data type. All examples target 
 `JSON.stringify(dict)` to serialize, `JSON.parse_string(text)` to deserialize. Read/write through `FileAccess`. Best for game saves where you want human-readable files. Build a Dictionary that captures all gameplay state (player position, inventory, world flags), serialize, write to `user://save_<slot>.json`.
 
 > See [references/json-saves.md](references/json-saves.md) for the full GDScript + C# save/load implementation, including FileAccess wrapping and error handling.
+
+> ⚠️ **Changed in Godot 4.7:** `JSON.stringify(data, indent = "", sort_keys = true, full_precision = false)` now serializes an empty `Dictionary` compactly as `{}` even when an `indent` is passed ([GH-115883](https://github.com/godotengine/godot/pull/115883)). Save files written with an indent change formatting for empty-dict fields after upgrading — anything that diffs or hashes save output byte-for-byte must tolerate the new form. Parsing is unaffected.
 
 ---
 
