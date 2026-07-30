@@ -108,6 +108,17 @@ Include a "Checklist Verification" section in your report showing which items we
 
 ## Report Format
 
+**Anchor every finding (MANDATORY).** A finding whose location cannot be confirmed is unusable: downstream, a human cannot be pointed at it and a fix agent goes hunting and "fixes" the wrong place. So every item under Must Fix / Suggested Improvements carries, in addition to `file:line`, the **verbatim quote** of the code it is about — copied exactly from the file or the diff hunk (strip only the leading `+`/`-`/` ` diff marker), 1–5 lines, no reformatting, no paraphrase, no reconstruction from memory.
+
+````markdown
+- `path/to/File.cs:142` — <issue> → <suggestion>
+  ```
+  var rows = await conn.QueryAsync<Order>(sql);
+  ```
+````
+
+If you genuinely cannot quote it — the finding is about something *absent* (a missing null check, an unimplemented requirement, a file that should exist) — quote the **nearest anchor point** instead (the line the missing code should precede or follow) and say so in one clause: `— 缺漏，錨點為應插入位置`. An absence still has a location.
+
 ```markdown
 ## Code Review Result
 ### Pass — [what was done well]
