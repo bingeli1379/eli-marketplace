@@ -15,7 +15,7 @@ Read-only understanding pass over an area of the codebase, producing a **researc
 
 **Not this skill:**
 - Want a change planned or built → `/propose` (durable spec) or `/quick` (small, fileless).
-- Want code judged → `/sdd:review <target> [lens]`.
+- Want code judged → `/sdd:review [target] [lens]` (omit the target for an architecture health scan).
 - Debugging a specific failing behaviour → `systematic-debugging`.
 
 ---

@@ -2,14 +2,21 @@
 name: review
 description: >
   Use when you want a standalone, read-only review of existing code, a diff, an API/controller,
-  a stored procedure, or a page — without changing anything. Dispatches the matching review-family
-  agent(s) by lens (quality / security / performance / e2e), auto-detecting the lens from the target
-  when not specified. Read-only: no code edits, no commits, no implementation agents.
+  a stored procedure, or a page — without changing anything. Also use when you have no specific
+  target and want to know where the codebase is decaying ("哪裡爛了", architecture health check).
+  Dispatches the matching review-family agent(s) by lens (quality / security / performance / e2e),
+  auto-detecting the lens from the target when not specified. Read-only: no code edits, no commits,
+  no implementation agents.
 user-invocable: true
-argument-hint: "<target> [quality | security | performance | e2e | all]"
+argument-hint: "[target] [quality | security | performance | e2e | all]   — omit the target for an architecture health scan"
 ---
 
 Standalone review entry point. Unlike `/quick` (a **change** pipeline that dispatches implementation agents and commits), `/sdd:review` is **read-only**: it dispatches one or more review-family agents against a target you already have, collects their findings, and stops. It never edits code, never commits, and never dispatches implementation or fix agents — acting on findings is your call (use `/quick` for that).
+
+Two entry conditions, same read-only contract:
+
+- **You have a target** — the lens review below. Steps 1–7.
+- **You have no target** — the **architecture health scan**: the codebase picks the target for you. Agents accelerate entropy as much as they accelerate features, so decay accumulates in places nobody thought to point at. See *Health scan mode*.
 
 ## Lenses
 
@@ -29,7 +36,11 @@ Standalone review entry point. Unlike `/quick` (a **change** pipeline that dispa
 
 1. **Resolve the target**
 
-   Parse the first argument as the **target**. If none is given, use **AskUserQuestion** (open-ended): *"What do you want reviewed? (a path/glob, a diff like `HEAD~3..HEAD` or `staged`, an API/controller, or a stored-procedure name)"*. Do NOT proceed without a target.
+   Parse the first argument as the **target** — **except when it is a bare lens keyword.** If the first argument is exactly `quality` / `security` / `performance` / `e2e` / `all` and no other argument follows, the user named a lens and gave no target (`/sdd:review security`); treat this as the no-target case below and carry that lens into Step 2 as the chosen one. Do NOT resolve a lens keyword as a target — that sends Step 2's name-resolution branch hunting for a symbol called `security` and it either finds nothing or locks onto an unrelated file.
+
+   If no target is given, use **AskUserQuestion** to offer both entry conditions — do NOT silently demand a target, and do NOT silently start scanning:
+   - *"(1) 我給目標"* → open-ended follow-up: a path/glob, a diff like `HEAD~3..HEAD` or `staged`, an API/controller, or a stored-procedure name. Continue with Step 2.
+   - *"(2) 架構健檢 — 你去找哪裡爛了"* → jump to *Health scan mode*; Steps 2–7 do not apply. **A lens carried in from a bare-keyword invocation is dropped here** — the health scan has no lenses, so do not invent a lens-filtered variant of it. Say so in one line when it happens (`架構健檢不分 lens，<lens> 先忽略`) rather than dropping it silently.
 
    Resolve the target to a concrete scope to hand each agent:
    - **path / glob** → those files
@@ -112,6 +123,38 @@ Standalone review entry point. Unlike `/quick` (a **change** pipeline that dispa
 
    Reviewers and fix specialists are torn down only when the user ends the review session.
 
+## Health scan mode (no target given)
+
+Nobody points at the module that is quietly rotting — that is exactly why it rots. Here the codebase nominates its own targets, and the output is a **ranked shortlist of candidates to fix**, not a review of one thing.
+
+Load the `codebase-design` skill and use its vocabulary throughout (**module / interface / depth / seam / adapter / leverage / locality**). Do not drift into "component", "service", or "boundary" — the shared language is what makes the candidates comparable to each other and to the architect later.
+
+1. **Pick where to look — scope before you scan.** Deepening a module pays off only through *future* changes to it, so a beautiful refactor of code nobody touches returns nothing. Walk back a decent stretch of `git log --oneline --name-only` and let the **hot spots** — the files and directories that keep reappearing — pull your attention first. If the history is evenly scattered with no hot spot, widen the net and say so. Read `feature-spec/config.yaml` (`architecture`, `hard_rules`) first if present; in multi-repo mode, run this per repo and keep the results separated.
+
+2. **Explore for friction.** Dispatch the **Explore** agent over the hot spots. Do not go down a heuristic checklist — look for where the code *resists*:
+   - Understanding one concept requires bouncing between many small modules.
+   - A module is **shallow** — its interface is nearly as complex as its implementation.
+   - Pure functions were extracted for testability, but the real bugs live in how they are called (no **locality**).
+   - Tightly-coupled modules leaking across their seams.
+   - Code that is untested because it is untestable through its current interface.
+
+3. **Apply the deletion test to every suspect.** Imagine the module deleted. Does complexity *vanish* (it was a pass-through — the candidate is to remove it) or does it *reappear across N callers* (it was earning its keep — leave it alone)? A "yes, concentrates" is the signal worth reporting; anything failing this test is noise and does not go in the table.
+
+4. **Report candidates, ranked.** Do not propose interfaces yet — this step surfaces *what* is worth fixing, not *how*.
+
+   ```
+   ## 架構健檢: <repo> — 掃描範圍 <hot spots / 全域> · commits <range>
+
+   | # | 模組 / 檔案 | 現在的摩擦 | 改成 | 收益 (leverage / locality) | 強度 |
+   |---|---|---|---|---|---|
+
+   ### 最建議先動: #N — <one line why this one first>
+   ```
+
+   `強度` is `Strong` / `Worth exploring` / `Speculative`. Where a candidate contradicts an existing `design.md` decision or a `hard_rule`, surface it **only** if the friction is real enough to justify reopening that decision, and mark it `⚠ 與 <decision> 相衝 — 但值得重開，因為…`. Do not list every refactor a rule forbids.
+
+5. **Hand off — do not start fixing.** Ask which candidate the user wants to pursue. A chosen candidate is an *idea*, not a change: send it to `/propose` (or `/quick` if genuinely small), where the interface actually gets designed. Health scan mode stays read-only like the rest of this skill — no edits, no commits, no implementation agents.
+
 ## Guardrails
 
 - **Review side is read-only** — reviewers never edit, commit, change branches, or dispatch other agents. Fixes happen ONLY when the user explicitly asks, and ONLY by **dispatching the owning specialist** — the main loop never hand-edits code (no specialist skills / project grounding loaded). This delegation is what keeps `/sdd:review` consistent with sdd's "never self-implement, even trivial" rule.
@@ -119,6 +162,7 @@ Standalone review entry point. Unlike `/quick` (a **change** pipeline that dispa
 - **Reuse agents via SendMessage, don't re-spawn** — reviewers and fix specialists are backgrounded and kept alive; follow-ups and re-reviews continue the same agent (context intact) to avoid startup cost. Spawn fresh only on lost context or a substantially changed target.
 - **You ARE the dispatcher** — do NOT spawn a separate orchestrator agent.
 - **Default lens is the most-implied 1–2, never silently `all`** — running every lens is opt-in.
+- **No target ⇒ ask, never assume** — offer both the give-me-a-target path and the health scan; do not demand a target, and do not start scanning uninvited. Health scan mode ends at a ranked candidate list handed to `/propose` — it never designs the fix or edits code.
 - **e2e never guesses intended behaviour** — no spec ⇒ ask (criteria / smoke-only / skip), and label smoke runs as non-acceptance.
 - `feature-spec/config.yaml` (when present) is forwarded verbatim as `## Project Context`; `hard_rules` are binding. The project's own prose docs are never read or forwarded.
 - **Language**: all output in Traditional Chinese; code and comments in English.
