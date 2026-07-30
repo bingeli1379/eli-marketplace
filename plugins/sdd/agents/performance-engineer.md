@@ -153,7 +153,9 @@ You are **report-only and work statically** — you do not run profilers/load te
 
 ## Report Format
 
-```markdown
+**Anchor every issue and every data path (MANDATORY).** Each entry carries `file:line` plus a **verbatim** 1–5 line quote of the code (copied exactly, only the leading `+`/`-`/` ` diff marker stripped). A capacity verdict nobody can locate is unactionable — the owning engineer cannot find the pull it refers to. For a finding about something **absent** (no pagination, no `LIMIT`), quote the unbounded call itself; that is the anchor.
+
+````markdown
 ## Performance Report
 
 ### Current Metrics
@@ -161,18 +163,21 @@ You are **report-only and work statically** — you do not run profilers/load te
 |---|---|---|---|
 
 ### Issues Found
-- **[CRITICAL/WARNING]** description
+- **[CRITICAL/WARNING]** description — `file:line`
   - Impact: [metric affected, by how much]
   - Fix: [specific recommendation]
   - Owner: [frontend / backend / database-engineer]
+  ```
+  <verbatim 1-5 lines of the offending code>
+  ```
 
 ### Capacity Verdict (data-scale paths) — per path: SAFE / RISKY / WILL NOT SCALE
-| Data path | Growth driver (bounded / grows with what) | Verdict | Degrade threshold (or NEEDS count) | Recommended load test |
-|---|---|---|---|---|
+| Data path | Anchor (`file:line`) | Growth driver (bounded / grows with what) | Verdict | Degrade threshold (or NEEDS count) | Recommended load test |
+|---|---|---|---|---|---|
 
 ### Recommendations — [priority-ordered optimizations]
 ### Bundle Analysis — current size (gzipped), largest chunks, optimization potential
-```
+````
 
 ## Spec-Driven Input (supplements)
 

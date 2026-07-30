@@ -1,6 +1,17 @@
 # Changelog
 
-## [3.4.0] - 2026-07-25
+## [3.5.0] - 2026-07-30
+
+### Added
+- Every review finding now quotes the code it is about, so you can see exactly what it means without going looking — and when the quoted code is nowhere to be found, the finding is flagged as unlocatable instead of being acted on. Previously a finding whose line number had drifted could send the fix step off to change the wrong piece of working code.
+- Reviewing a large area no longer means one reviewer skimming most of it. The work is split into module-sized pieces reviewed in parallel, each one seeing the full file list so it does not mistake a file another reviewer is handling for a broken one.
+- Review findings are consolidated before you read them: a finding the code plainly contradicts is dropped (with the contradicting line shown, so you can overrule it), one problem reported by several reviewers or repeated across many files becomes one item, and the counts are always shown. Findings it cannot disprove are kept — the filter only removes what is demonstrably wrong, never what is merely minor.
+- `/review` now works with no target at all: it reads the git history to find where the code is being changed most, hunts for the places that actually resist being worked on, and hands back a ranked shortlist of what is worth fixing — for when you know something is rotting but not where.
+- Code review gained two axes: a baseline set of code smells that applies even to a project with no written conventions (your project's own conventions always win over it), and a walk through the spec's requirements one by one — which catches a requirement nobody implemented, something a diff-based review structurally cannot see.
+- `/propose` now checks the flow you describe against the actual code before designing, asks you the questions whose answers would change the design instead of guessing, and — when a change defines an interface others will depend on — sketches rival shapes before committing to one.
+
+### Changed
+- Reviewing a big directory no longer starts by asking you to narrow it down; it splits the work instead and just tells you how many reviewers it is spending.
 
 ### Added
 - **Walking Skeleton**: for a change whose integration path has never been proven — a new external system, a data flow with no precedent in the repo, an SSR/IPC/cross-process boundary — the architect can now choose to wire the whole path end-to-end with marked placeholders first, then fill in one layer at a time. Contract-First stays the default; this is only offered when the integration risk is real, and `/complete` refuses to finish while any placeholder is still in the code.
