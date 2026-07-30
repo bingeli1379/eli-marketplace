@@ -3,7 +3,7 @@
   "name": "sdd",
   "displayName": "Spec-Driven Development",
   "description": "Spec-driven AI development workflow core: workflow commands, orchestrator, architect, cross-cutting reviewers, and universal skills. Language/stack specialists ship as optional sdd-* packs.",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
