@@ -76,10 +76,15 @@ OWASP Top 10:2025 (from the preloaded `owasp-security` skill) is your checklist 
 
 ## Report Format
 
-```markdown
+**Anchor every issue (MANDATORY).** Below each issue, quote the vulnerable code **verbatim** (1–5 lines, copied exactly from the file or diff hunk with only the leading `+`/`-`/` ` marker stripped — no paraphrase, no reconstruction). An unlocatable vulnerability report cannot be acted on: a human cannot be pointed at it and a fix agent goes hunting and patches the wrong line. For an issue about something **absent** (a missing authorization check, an unset security header), quote the nearest anchor point — the line the missing control should guard — and mark it `— 缺漏，錨點為應插入位置`.
+
+````markdown
 ## Security Review Result
 ### Critical Issues
 - [file:line] [CRITICAL] Issue — Impact: [attacker scenario] — Fix: [remediation]
+  ```
+  var sql = $"SELECT * FROM Users WHERE Name = '{name}'";
+  ```
 ### High Issues
 - [file:line] [HIGH] Issue — Impact: [attack scenario] — Fix: [remediation]
 ### Medium Issues
@@ -88,7 +93,7 @@ OWASP Top 10:2025 (from the preloaded `owasp-security` skill) is your checklist 
 - [file:line] [LOW] Issue — Fix: [remediation]
 ### Passed Checks — [correctly implemented security aspects]
 ### Verdict: [SECURE / ISSUES FOUND — critical/high/medium/low counts]
-```
+````
 
 ## Spec-Driven Input (supplements)
 
