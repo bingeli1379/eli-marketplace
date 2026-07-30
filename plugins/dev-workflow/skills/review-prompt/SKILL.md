@@ -36,6 +36,7 @@ This is the cheap, per-change text pass. `/review-workflow` invokes it as its fi
    - **SAFE**: No quality risk
    - **RISKY**: Could cause the agent to produce lower quality output
    - **BROKEN**: Will definitely cause issues — must fix before using
+   - **NOTE**: An observation for the user to judge, never auto-applied. Reserved for findings that depend on something the file cannot settle — a model default you cannot observe (criterion w), a length trade-off only the author can weigh (criterion x), or the Claude-construct inventory under (s). A NOTE never affects a file's rating and never triggers the auto-fix loop.
 
    ### For Agent files (`**/agents/*.md`)
 
@@ -161,6 +162,31 @@ This is the cheap, per-change text pass. `/review-workflow` invokes it as its fi
    - Flag **BROKEN** if the two instructions cannot both be obeyed (the agent must violate one to follow the other); **RISKY** if reconcilable but ambiguous about which wins. **Fix:** reconcile them — carve the exception into the absolute rule, or state precedence explicitly.
    - Scope: this catches contradictions *in the wording*. It does NOT verify that a described procedure actually produces correct behavior when executed (step-ordering that destroys needed state, non-idempotent resume, unhandled crash mid-step) — that is a separate logic audit, `/review-workflow`, out of scope here.
 
+   ### Steering effectiveness (applies to ALL file types)
+
+   Criteria a–t ask whether the prompt still *says* the right thing. These four ask whether saying it that way actually *changes what the agent does*. A rule the agent would have followed anyway costs load and buys nothing; a rule phrased so the agent can slip past it is worse than no rule. All four judge wording against the model's default behavior, not against a style guide.
+
+   **u. Completion criteria — can the agent tell done from not-done?**
+   - For each step, find the condition that ends it. A step whose bound is vague ("understanding is reached", "the code is reviewed", "sufficient context gathered") lets the agent declare victory early and move on — attention slips to *being done* rather than to the work, and it slips hardest when later steps are visible and beckoning.
+   - Two properties to check per step: **checkable** (could the agent objectively tell whether it is met?) and, where it matters, **exhaustive** ("every modified file accounted for" bites; "produce a list of files" does not).
+   - The same demand binds a flat criteria list, not just numbered steps — "every criterion applied, N/A stated explicitly" is what stops an audit from silently covering half its rungs.
+   - Flag **RISKY** when a step's bound is unfalsifiable. **Fix by sharpening the criterion** — that is additive and safe. Do NOT restructure or split the skill to hide later steps; that is a design change, not a text fix, so surface it as a suggestion for the user instead.
+
+   **v. Positive steering over prohibition**
+   - A prohibition drags the forbidden behavior into context and makes it *more* available, not less: *don't think of an elephant* names the elephant. `never write verbose comments` leaves "verbose comments" as the pattern the agent just read, with a weak modifier in front of it.
+   - Flag **RISKY** when a rule is phrased purely as a ban and a positive target exists that implies the same constraint (`write one-line comments` for the above).
+   - **Reconciliation with (h) — h wins on force, v wins on phrasing.** Criterion h forbids *softening* a MUST / do-NOT rule, and this criterion must never be used to do that. The fix is to **add the positive target**, keeping the prohibition's force intact — never to delete a guardrail or downgrade it to a suggestion. Where a behavior genuinely cannot be phrased positively, the bare prohibition stays and is correct; pair it with what to do instead where possible, and leave it alone otherwise.
+
+   **w. No-ops — does this line change behavior versus the model's default?**
+   - A line can be perfectly relevant, perfectly true, and still buy nothing because the model already does it by default. `be thorough` when the agent is already thorough-ish is load spent to say nothing. This is a different test from (j): j asks whether prose is a *verbose explanation*; this asks whether an instruction — however concise — moves the agent at all.
+   - When a weak instruction is the problem, the fix is usually a **stronger word rather than a different technique** — `relentless` where `be thorough` was a no-op, a concrete named behavior where an adjective was floating. Sharpening is additive; prefer it to removal every time.
+   - **Report as a NOTE only — never RISKY, never BROKEN, never auto-removed.** Criterion k governs: every existing line is presumed battle-tested, the burden of proof is on removal, and "the model should know this" is exactly the reasoning k exists to refuse. Whether a line is a no-op depends on a model default you cannot observe from the file, so this criterion can suggest and must not act. Deletion is the user's call, made by running the skill without the line — not the auditor's.
+
+   **x. Information hierarchy — is each piece at the right depth?**
+   - A skill's content sits on a ladder: **steps** (in-file, primary — what the agent does, in order), **reference in-file** (definitions and rules consulted on demand), and **reference disclosed** (pushed into a linked file, loaded only when its pointer fires). Push too little down and the steps drown in material; push too much and the agent never sees what it needed.
+   - **Pointer wording is the reliability lever.** A pointer's *wording*, not its target, decides whether the agent actually reaches the material. A must-have behind a vague pointer ("see the reference for details") is a variance bug — it fires on some runs and not others. Flag **RISKY** and **fix the wording first** (name what is behind it and the condition for reaching it); only pull material back inline if sharpened wording still cannot be trusted. This extends (n), which decides *what* belongs in a reference file; this decides whether the pointer to it works.
+   - **Length itself is a finding, but disclosure is the cure — not deletion.** A file can be too long even when every line is live, unique, and battle-tested. Where that happens, the fix is to move **reference** behind a well-worded pointer so the steps stay legible, or to split by branch so each path carries only what it needs. **Report as a NOTE**; never resolve length by removing rules, and never at the cost of (k) or the "compression is not always good" guardrail.
+
 4. **Produce the audit report**
 
    **Language**: Audit report MUST be written in Traditional Chinese. Technical terms (file names, code, rating labels like SAFE/RISKY/BROKEN) remain in English.
@@ -184,6 +210,9 @@ This is the cheap, per-change text pass. `/review-workflow` invokes it as its fi
    #### BROKEN findings
    - [file:line] [what changed] — will cause: [specific failure] — required fix: [concrete action]
 
+   #### NOTES (advisory — not fixed, not counted in the rating)
+   - [file:line] [observation] — [why it is the user's call, not the auditor's]
+
    ### Summary
    | File | Rating |
    |------|--------|
@@ -195,6 +224,8 @@ This is the cheap, per-change text pass. `/review-workflow` invokes it as its fi
 5. **Auto-fix until ALL SAFE**
 
    If `--report-only` was passed in `$ARGUMENTS`, STOP after the Step 4 report — do not modify any files.
+
+   **NOTES are never auto-fixed.** They ride along in the report for the user to act on or ignore; a file whose only findings are NOTES is **ALL SAFE** and the loop below does not run for it. Acting on a NOTE without being asked would delete battle-tested content on an unobservable hunch — exactly what (k) and (w) forbid.
 
    Otherwise, if any BROKEN or RISKY findings exist:
    a. Fix them immediately — do NOT ask the user, just fix.
@@ -228,5 +259,6 @@ This is the cheap, per-change text pass. `/review-workflow` invokes it as its fi
 - **No tooling assumptions** — rules must not assume linter, formatter, test runner, or CI are always present
 - **Claude-first; defer cross-harness to a compile step** — Claude Code is the authoritative target. Use Claude features freely (bang-backtick, `${CLAUDE_PLUGIN_ROOT}`/`${CLAUDE_SKILL_DIR}`, `TodoWrite`/`Task`/subagent dispatch, `$ARGUMENTS`, `hooks`, `model:`/`effort:`); do NOT degrade them for portability — a downstream build step transforms the source for other harnesses. The only Claude-*correctness* fixes here: a read/load instruction with a bare relative path to a bundled file (→ prefix `${CLAUDE_PLUGIN_ROOT}/` or `${CLAUDE_SKILL_DIR}/`), `name` ≠ parent directory, and `model:`/`effort:` on a persona-adopted agent (→ remove; it inherits the session)
 - **Prefer generic over hardcoded** — prompts should work across projects. Hardcoded values (URLs, names, paths, versions) need justification; if a value could vary, parameterize or conditionalize it
+- **Steering must change behavior, and sharpening beats deleting** — a rule the agent would follow anyway buys nothing, and a step with no checkable done-condition invites an early exit. Fix both by making the wording stronger and the bound sharper, never by cutting the rule: sharpening a criterion and adding a positive target alongside a prohibition are additive and safe, so they auto-fix; judging a line a no-op or a file too long depends on what the file cannot show you, so those stay **NOTE** and the user decides. (h) keeps its force over (v) — never soften a MUST to satisfy phrasing — and (k) keeps its presumption over (w).
 - **Zero errors is the absolute principle** — when in doubt, rate as RISKY and fix it
 - **Auto-fix, don't ask** — fix BROKEN/RISKY issues immediately, re-audit, repeat until clean
