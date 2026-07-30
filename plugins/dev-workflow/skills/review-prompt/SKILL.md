@@ -7,6 +7,8 @@ description: Use when auditing or reviewing agent and skill prompt files for qua
 
 Audit agent and skill prompt files for quality risks. **Zero errors > speed > brevity.**
 
+This is the cheap, per-change text pass. `/review-workflow` invokes it as its first step and then adds the procedural-logic and duplication/SSOT lenses — so when running `/review-workflow`, do NOT run this skill separately. (Already ran this skill on the change and want the deep lenses afterwards? Run `/review-workflow --skip-prompt-pass` so the text pass is not repeated.)
+
 ---
 
 **Input**: Optionally specify files via `$ARGUMENTS`. If omitted, auto-detect changed files via `git diff`. Pass `--report-only` in `$ARGUMENTS` to stop after the report without auto-fixing.
