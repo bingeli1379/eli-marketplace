@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.11.1] - 2026-07-30
+
+### Changed
+- `/review-workflow` now runs the `/review-prompt` text check for you as its first step and gives you one combined report, so you no longer need to run both commands on the same change. If you already ran `/review-prompt`, add `--skip-prompt-pass` to skip that first step.
+
 ## [1.11.0] - 2026-07-15
 
 ### Changed
