@@ -103,7 +103,7 @@ Good interfaces make testing natural:
 
 ## How sdd roles use this
 
-- **architect** (`/propose`) — when defining a contract or choosing where to put a seam, prefer the deepest interface that satisfies the spec. Record a new seam in a Decision Record only when a *second* adapter justifies it (one adapter → inline, no seam).
+- **architect** (`/propose`) — when defining a contract or choosing where to put a seam, prefer the deepest interface that satisfies the spec. Record a new seam in a Decision Record only when a *second* adapter justifies it (one adapter → inline, no seam). When the change defines a **new** interface others will depend on, do not settle for the first shape: read `design-it-twice.md` in this skill's directory — the parallel fan-out that generates rival interfaces under opposed constraints and judges them on depth, locality, and seam placement. Skip it for precedented shapes.
 - **review-engineer** — apply the deletion test and the "shallow module" smell to changed code. A wrapper that only delegates (`wrapper` over-engineering tag) is a shallow module by another name; a leaking interface (caller must know internal ordering/state) is a depth failure even if it compiles.
 - **engineers** — when a test is hard to write, the interface is usually wrong (too many collaborators created inside, side effects instead of return values). Fix the shape, don't mock around it.
 

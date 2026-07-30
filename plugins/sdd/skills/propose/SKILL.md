@@ -100,7 +100,18 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
 6. **Clarify requirements and define feature boundaries**
 
-   Before generating any artifact, analyze the user's description and proactively clarify:
+   **First — verify the user's stated flow against the codebase. Treat their description as a hypothesis, not a specification.**
+
+   When the user describes the change as a flow ("A calls B, B writes to C", "the login page hits the auth service then redirects"), that description is how they *remember* the system, and memory goes stale: an endpoint was renamed, a service no longer exposes that method, the call already routes through a gateway. Designing on top of a flow that does not exist produces a design.md that cannot be implemented.
+
+   Take the stated flow apart into its individual hops and confirm each one against the code you scanned in Step 5 (in multi-repo mode, across every repo the flow crosses):
+   - The **caller** exists and really calls what the user says it calls.
+   - The **callee** exists and exposes that operation, with a matching signature / route / message shape.
+   - No **hop is missing** from their description (a middleware, gateway, queue, or adapter sitting between two hops they described as adjacent).
+
+   A hop that does not check out is **not yours to silently correct.** Do not quietly substitute the name you found, and do not design around it — the user may be describing an intent the code has not caught up with, which is a completely different change from the one you would infer. Emit a `NEEDS:` per `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns* and resolve it with the user before continuing, showing what they said versus what the code has.
+
+   Confirmed hops become the backbone of the 6e chain message. Once the flow holds up, continue:
 
    **a. Identify ambiguities and surface assumptions** — vague scope, undefined behavior, missing edge cases. **Enumerate every implicit assumption you are making** as you interpret the request (e.g., "assuming admin role is required", "assuming pagination reuses the existing pattern", "assuming no backfill is needed for existing data"). Hidden assumptions in your reasoning become silent bugs in design.md — externalize them so the user can correct them.
 
@@ -157,6 +168,20 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - **Approaches collapse to one line** when only one is viable. Multi-option list only when there's a real trade-off the user must arbitrate.
    - **Questions section is the ONLY place open clarifications go** — keep it short. If empty, omit the line.
    - If the input is detailed and the chain + defaults already cover everything, the message can be ~10 lines total. Long chain messages are a smell — the user can't read them.
+
+   **e2. Converge every unresolved fork before the Scope Contract**
+
+   The chain message is a **snapshot**: it asks what you knew to ask when you wrote it. But answers open doors. The user picks approach #2, and now there are three questions about #2 that did not exist a minute ago; they correct a default, and that correction cascades into a decision nobody has made yet. A one-shot card cannot reach those, and Step 6g's *One correction round only* rule names exactly this failure — it says that repeated correction there means **Step 6e was under-specified**. This is where that gets fixed, so 6g does not have to absorb it.
+
+   **The gate is consequence, not timing.** Enter this loop whenever **any** unresolved item could change `design.md` — whether it was already sitting in the chain message's 未定 list, was opened by the user's answer, or is a consequence of a correction that reaches past the line they corrected. Do not try to distinguish "pre-existing" from "newly opened"; that distinction has no bearing on whether the design comes out right, and drawing it is how a genuine fork gets waved through. An unresolved fork carried into 6g becomes a guess baked into `design.md`, and that costs far more to unwind than the round-trip costs to prevent. **Skip this step only when nothing left open can change the design** — then go straight to 6g.
+
+   When you enter it:
+   - **One question at a time**, and wait. A batch of questions is the snapshot problem again in miniature — the user cannot see which answers depend on each other, and question 3 is often void once question 1 is answered.
+   - **Every question carries your recommended answer**, with a one-line reason. The user should be able to reply `2` or `不對，是 X` and move on; make them compose a paragraph and they will start rubber-stamping.
+   - **Look facts up; ask only for decisions.** If the answer is discoverable in the repo, the config, or a tool you have, go get it. The user's time is for judgment calls only — and a fact you looked up beats an answer they half-remember.
+   - **Exit on consequence, not on count.** Stop when nothing still open can change `design.md` — not when the questions feel like enough. There is **no question budget**: correctness outranks the round-trips, so a fork that matters gets asked no matter how many came before it. If you find yourself well past a handful of genuine forks, that is a **signal about the change, not permission to stop asking** — the change is too large to spec in one pass, so say so and return to 6c to split it, carrying the answers you already have.
+
+   Everything resolved here folds into the Scope Contract below. Step 6g's one-correction-round limit is **unchanged** — this loop exists to make that limit hold, not to relax it.
 
    **f. If splitting — plan the sub-change chain (artifacts are written later in Step 7)**
 
@@ -265,6 +290,16 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    **c. design.md** (AFTER specs — architect receives specs as constraints)
 
    **Front-load external facts first (orchestrator).** Before dispatching, identify every fact the design will hinge on that is NOT obtainable from the repo or specs — a runtime/production config value (feature flags, rollout rates, limits), a cross-repo/service contract, live infrastructure state. For each one, **before you assume a value or let a plausible default stand, check whether your available tools can look it up** — a connected MCP server, a query/lookup tool, a project-knowledge skill — and **if such a tool exists you MUST use it rather than guess** (lookup tools often have no auto-trigger, so you must reach for them deliberately). Resolve what you can NOW, feed the values into the architect's context below, and record them in `design.md` with how/when they were obtained. sdd names no specific tool — use whatever the environment exposes; this front-loading is the primary thing that keeps the architect from designing on a guessed value. Anything you genuinely cannot resolve, leave for the architect to raise as a `NEEDS:` (handled in step d).
+
+   **Design it twice (conditional — run BEFORE dispatching the architect).** Your first idea for an interface is rarely your best one, and an architect working alone in one context tends to elaborate its first shape rather than genuinely compete alternatives against it. When this change **defines a new interface others will depend on** — a new API contract, a new shared type or module boundary, a new seam between layers or repos — spend one parallel round generating rival shapes first, then let the architect judge them.
+
+   **Skip it** when the shape is already determined: the change mirrors a Reference implementation found in Step 5, it is precedented CRUD, it is a refactor whose target shape is fixed, or it only touches interfaces that already exist. Running it there is ceremony — the same gold-plating the trade-off-depth rule below warns about.
+
+   **When it applies, read `${CLAUDE_PLUGIN_ROOT}/skills/codebase-design/design-it-twice.md` in full before dispatching anything.** That file is the single source for the method — how to frame the problem space, the exact set of opposed constraints to hand each designer (and the fourth one that applies only across a network or third-party boundary), the dispatch rules including **why these agents must NOT be given `mode: "bypassPermissions"`**, and the output contract each designer returns. Do NOT reconstruct any of it from memory or from this step: a constraint set half-remembered produces three designers that quietly agree with each other, which is the exact failure the fan-out exists to prevent.
+
+   Two things this step adds on top of that file: dispatch the designers with `subagent_type: "sdd:architect"`, and instruct all three to use the project's own domain vocabulary alongside the `codebase-design` terms, so the proposals are comparable to each other and to the specs.
+
+   Then feed **all three proposals verbatim** into the architect's prompt below, and instruct it to judge them as that file describes — compare on **depth, locality, and seam placement**, commit to one, hybridize where a rival's element is genuinely better, and record the chosen shape plus the rejected ones and why in `design.md` `## Decisions`. The architect decides; the fan-out only widens what it gets to decide between.
 
    Dispatch the **architect agent** — use the **Agent** tool with `run_in_background: true` and `mode: "bypassPermissions"`:
    - `subagent_type`: `"sdd:architect"`
@@ -460,7 +495,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 - **Exhaustive codebase scan is MANDATORY** — do NOT skip Step 5. Every file in scope must be inspected. Zero misses is the absolute principle.
 - **Do NOT override specialized agent output.** The architect agent has a dedicated system prompt with domain-specific checklists you don't have. WAIT for it to complete, then use its output as the baseline for tasks.md and cross-validation. If the architect found more affected files or made different design decisions than you expected, defer to the agent's analysis — it likely has reasons you can't see. **However**, if the architect's design contradicts spec THEN clauses without a `CONFLICT:` marker, that is a bug — escalate to user via AskUserQuestion.
 - **Feed pre-collected context to agents.** When dispatching the architect, include ALL file contents and scan results you already gathered in Step 5. Agents re-scanning the same files wastes time. Explicitly instruct agents NOT to re-read files you already provided.
-- **Use `mode: "bypassPermissions"` for background agents.** Background agents that write to `feature-spec/` cannot prompt the user for Write permission — they will hang silently. Always set `mode: "bypassPermissions"` when dispatching agents with `run_in_background: true`.
+- **Use `mode: "bypassPermissions"` for background agents that WRITE.** A background agent that writes to `feature-spec/` cannot prompt the user for Write permission — it hangs silently. Set `mode: "bypassPermissions"` whenever a `run_in_background: true` agent is expected to write a file. **The exception is a read-only agent dispatched as one of several in parallel** — the Step 7c design fan-out. Those return text and write nothing, so they never hit a prompt to bypass, and withholding the mode keeps a stray write from silently landing while its siblings write the same file. Grant the mode for writers; withhold it from parallel read-only agents.
 - **Every affected file in `design.md` must be covered by at least one task in `tasks.md`** — cross-check before finalizing
 - Capability names in proposal MUST match `specs/<name>/` directory names exactly
 - Each task group MUST contain a single agent type and describe a reviewable concern. Each task tagged by agent type in parentheses: `(Backend)`, `(Frontend)`, `(E2E)`, etc.
