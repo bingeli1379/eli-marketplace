@@ -1,6 +1,13 @@
 # Changelog
 
-## [1.11.1] - 2026-07-30
+## [1.12.0] - 2026-07-30
+
+### Added
+- `/review-prompt` now also judges whether a prompt's wording actually steers the agent, not just whether it says the right thing: a step whose "done" condition cannot be checked (so the agent can declare victory early), a rule phrased only as a prohibition (which makes the forbidden behaviour more likely, not less), an instruction the model already follows by default, and a must-have hidden behind a pointer too vague for the agent to follow.
+- A new NOTE rating for observations worth telling you about but not safe to change automatically. NOTEs are reported and never auto-fixed, so a file whose only findings are NOTEs still passes as ALL SAFE.
+
+### Changed
+- `/review-workflow` picks all of this up automatically — it runs the same text pass, so there is nothing extra to do.
 
 ### Changed
 - `/review-workflow` now runs the `/review-prompt` text check for you as its first step and gives you one combined report, so you no longer need to run both commands on the same change. If you already ran `/review-prompt`, add `--skip-prompt-pass` to skip that first step.

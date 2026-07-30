@@ -281,6 +281,12 @@ scope-contract:
 agent-guidelines:
   repo: original
 
+# Review consolidation (sdd original — the anchor / falsification-filter / root-cause-dedup gate is
+# modelled on alibaba/open-code-review's RE_LOCATION_TASK, REVIEW_FILTER_TASK and DEDUP_TASK prompt
+# stages, rewritten for sdd's lens-based dispatch and Must Fix / Suggested severity model. Not synced.)
+review-triage:
+  repo: original
+
 # Design Discipline (sdd original — deep-module vocabulary adapted from mattpocock/skills codebase-design;
 # rewritten to fit sdd's clean-architecture / ddd split. Not synced.)
 codebase-design:

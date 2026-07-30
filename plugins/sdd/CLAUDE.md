@@ -47,9 +47,10 @@ The workflow auto-detects, at the start of `/propose`, `/apply`, `/quick`, and `
 | `/propose <description>` | Generate spec artifacts (proposal, design, specs, tasks) for a new change |
 | `/validate <change-name>` | Validate spec artifacts against structural and content rules |
 | `/quick <description>` | Quick mode — orchestrator analyzes inline, no spec files. Trivial/simple work it implements inline (no dispatch); medium/complex it dispatches agents sequentially. Always followed by a read-only review pass |
-| `/review <target> [lens]` | Read-only standalone review by lens (quality/security/performance/e2e/all); auto-detects lens; no edits, no commits |
+| `/review [target] [lens]` | Read-only standalone review by lens (quality/security/performance/e2e/all); auto-detects lens; no edits, no commits. Scope > 15 files is **sharded by cohesion** (one agent per lens × shard) rather than skimmed; findings pass the `review-triage` gate before reporting. **No target → architecture health scan**: git-log hot spots + deletion test → ranked candidate list handed to `/propose` |
 | `/research <area> [out]` | Read-only understanding pass over an area → durable findings doc (entry points, flow, patterns, dependencies, boundaries, risks, open questions). Describes, never judges or proposes; writes only the findings file |
 | `/role [role]` | Become one specialist agent as an interactive persona on the session model (not the agent's sonnet/low); menu if no role given |
+| `/scope-contract` | Confirm intent as a single 現在 → 改成 list before any code or design. Standalone form of the `/propose` 6g gate; also usable before a native coding session. One message, one correction round, no artifacts |
 | `/apply <change-name>` | Implement tasks using agent team dispatch (no questions asked) |
 | `/apply-all [names...]` | Batch apply multiple changes sequentially, unattended |
 | `/complete <change-name>` | Complete change: confirm tasks done, delete artifacts, commit cleanup |
