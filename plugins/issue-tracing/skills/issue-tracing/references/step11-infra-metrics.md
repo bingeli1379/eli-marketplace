@@ -46,7 +46,8 @@ After anchoring on prod config (11.0), extract the service token from the resolv
 2. **Pick the right cluster's datasource FIRST — don't probe every one.** A large multi-cluster env commonly runs many Prometheus datasources, one per cluster / tier (e.g. RKE-a/-b, GKE, VM, VictoriaMetrics…); probing a cluster the service does NOT run on is pure waste. Resolve the serving cluster from what you ALREADY have, in order: the **`k8s.cluster.name` tag on `current`'s OTEL access logs** (the same access logs you pulled for the callee latency check — e.g. a `*-rke-a` value: strongest, free, it names the exact cluster); else the **env-knowledge per-project cluster (step 1c)** + the **datacenter token in the prod hostname** (11.0). Query THAT cluster's datasource first; widen to a sibling cluster's datasource only if the in-scope one is genuinely empty AND the env knowledge says the service is multi-cluster. Then, **on the chosen datasource**, `mcp__grafana__query_prometheus` to find which label carries the service token. **Try these labels in order, do NOT stop after a few empties**: `pod`, `container`, `hostname`, `instance`, `app`, `service`, `kubernetes_pod_name`, `exported_instance`. For each: `expr: label_values(up{<label>=~".*<token>.*"}, <label>)`. Empty on one label ≠ "no metrics here" — only after all 8 are empty may you mark this datasource as "no data for this service". Once a label hits, build queries:
    - CPU: `100 - rate(node_cpu_seconds_total{mode="idle",<label>=~"<svc>.*"}[1m]) * 100` (or whatever the export pattern is — discover via `list_prometheus_metric_names`)
    - Memory: `node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes`
-   - Use `query_prometheus` with `query_type: "range"` and `step: 60` for 1-min bins — **but for a many-instance scan (11d requires every instance), a `range` query over many series routinely truncates; use the instant `max_over_time` / `avg_over_time` form from 11e instead, and keep `range` for a few instances or when you need the time-shape.**
+   - Use `query_prometheus` with `queryType: "range"` and `stepSeconds: 60` for 1-min bins — **but for a many-instance scan (11d requires every instance), a `range` query over many series routinely truncates; use the instant `max_over_time` / `avg_over_time` form from 11e instead, and keep `range` for a few instances or when you need the time-shape.**
+   - **`query_prometheus` param names + required fields**: `queryType` (`"range"` / `"instant"`), `startTime`, `endTime`, `stepSeconds`. **`endTime` is required on EVERY call — including `queryType: "instant"`**, where `startTime` / `stepSeconds` are ignored (pass the same timestamp for `startTime` if you like; harmless). `range` needs all four. Omitting `endTime` fails with `parsing end time: syntax error`, which does not name the field it wants, so it reads as a malformed-expression error and sends you rewriting the query instead of adding the missing param.
 3. **For each InfluxDB datasource**: query via `mcp__grafana__grafana_api_request` proxy:
    - **Don't stop at `SHOW DATABASES`.** If it returns names like `icinga2`, `telegraf`, `metrics`, `nagios`, `collectd`, `sensu` (any non-`_internal` database), each is a likely VM-tier monitoring db. You MUST run the hostname-tag-values query inside EVERY non-`_internal` database before concluding "no VM metrics". Seeing a database name listed but never querying it is the most common miss in this skill.
    - Discover hostnames: `SHOW TAG VALUES FROM /.+/ WITH KEY = "hostname"` then grep for the service token, OR run `SHOW SERIES WHERE hostname =~ /<svc>/` (lighter).
@@ -60,7 +61,7 @@ Only when 11b returns no metrics across all datasources should you turn to dashb
 
 - `mcp__grafana__search_dashboards` — try generic terms (`vm`, `host`, `node`, `pod-info`, `resource`, plus the service token). **0 hits ≠ "no dashboard"** — broaden terms once before giving up.
 - **Tags / titles are unreliable filters.** A `["windows"]`-tagged dashboard may still hold the Linux host you need (templating regex inside the dashboard is what matters, not the tag). If `search_dashboards` returns ≤ 5 candidates, you MUST run `get_dashboard_summary` (or `get_dashboard_property` for templating) on **every** candidate before discarding.
-- When you find a panel with the right measurement, read the raw panel JSON (NOT `get_dashboard_panel_queries` — its `processedQuery` keeps unresolved `/^$var$/` for panel-level scopedVars). Use `mcp__grafana__get_dashboard_property` with `property: "$.panels[?(@.id==<panelId>)].targets"` and extract:
+- When you find a panel with the right measurement, read the raw panel JSON (NOT `get_dashboard_panel_queries` — its `processedQuery` keeps unresolved `/^$var$/` for panel-level scopedVars). Use `mcp__grafana__get_dashboard_property` with `jsonPath: "$.panels[?(@.id==<panelId>)].targets"` (the param is `jsonPath`; `property` is rejected) and extract:
   - `measurement` — literal name, use verbatim
   - `select` — field + aggregation (when `rawQuery=false`, UI uses this, not `query`)
   - `tags` — literal tag filters
@@ -71,18 +72,25 @@ Only when 11b returns no metrics across all datasources should you turn to dashb
 
 ## 11d. Mandatory metric scan
 
-Once you have a working datasource path, query ALL of these for the suspected service (one query per metric per instance, all instances):
+Once you have a working datasource path, query ALL of these for the suspected service, **every instance covered** — preferring 11e's instant form, which returns one value per instance from a SINGLE query; fall back to one-query-per-instance only when the instant form cannot express the metric:
 
 1. **CPU** (mean + max, 1-min bins) — every instance
 2. **Memory** (mean + max, 1-min bins) — every instance
 3. **Restart / replica count** (k8s tiers only) — every replica
-4. For VM tier: also check **disk I/O / network** if the data exists
+4. **CPU throttle ratio** (k8s tiers only) — every instance, ONE instant query, not per-instance loops:
+   `max_over_time((rate(container_cpu_cfs_throttled_periods_total{<label>=~"<svc>.*"}[<rate-win>]) / rate(container_cpu_cfs_periods_total{<label>=~"<svc>.*"}[<rate-win>]))[<window>:60s])` as `queryType: "instant"` — returns one peak ratio per instance (11e's instant rule). Set `<rate-win>` to the burst length, capped at 5m and floored at 1m — a `[5m]` rate over a 2-min burst dilutes the ratio the same way a 5-min mean hides a spike (11e). Anything non-trivial on a single instance while the others sit near zero is the isolated-throttle case below — average CPU will NOT show it.
+   **Empty result ≠ no throttling — it is usually the wrong label.** The label you resolved from `up` in 11b (often `instance` / `hostname`, node-exporter's naming) frequently does NOT exist on cAdvisor container metrics, which carry `pod` / `container` / `namespace` instead. On an empty return, re-resolve against the container family (`label_values(container_cpu_cfs_periods_total{<label>=~".*<token>.*"}, <label>)` over `pod`, `container`, `kubernetes_pod_name`) before anything else; then, if the metric names themselves are absent, discover the tier's throttle metric via `list_prometheus_metric_names` (grep `throttl`). Only after BOTH come up empty may you record throttle as unavailable.
+5. For VM tier: also check **disk I/O / network** if the data exists
 
-Do NOT report on memory while skipping CPU (or vice versa). If you only have data for one, the report is incomplete — go back and query the other before writing Root Cause. Report the **worst instance's max** value across all metrics.
+Do NOT report on memory while skipping CPU (or vice versa), and on a k8s tier do NOT skip throttle. Every applicable item above must come back either with numbers or with an explicit "unavailable, here is what I tried"; a partial set is an incomplete report — go back and query the rest before writing Root Cause. Report the **worst instance's max** value across all metrics.
 
 **Beyond the mandatory list above, drill into other panels (latency, GC, queue depth, thread pool, connection pool, etc.) only when one of the mandatory metrics shows an anomaly that needs further explanation.** Do not pre-emptively scan every panel.
 
-Other signals to look for during the mandatory scan: pod restart, replica drop, CPU/memory saturation, throttle, network drop, redis timeout.
+Other signals to look for during the mandatory scan (throttle is item 4, not an optional watch-item): pod restart, replica drop, CPU/memory saturation, network drop, redis timeout.
+
+**Throttling isolated to ONE instance while every instance's average CPU looks alike → compare the NODE, not the pod.** A CPU limit is a CFS quota — a time budget per ~100ms period, drained by all runnable threads together — so the *same* quota on a higher-core node is spent in less wall-clock time, and the cgroup sits frozen for a larger share of every period. Two instances can therefore show near-identical average CPU while only one is throttled. Pull each affected pod's node from the label set already on its container metrics, then compare `kube_node_status_capacity{resource="cpu"}` across those nodes; heterogeneous node fleets (a newer, higher-core batch alongside older machines) are the usual cause. Note the second-order effect when writing Root Cause: a frozen cgroup also stalls the client library's socket-read thread, so the payload arrives but goes unread — which surfaces as an apparent "slow datastore / upstream timeout" rather than as high CPU, and will mislead the drill toward a healthy downstream.
+
+**A one-instance throttle is also invisible to average-based autoscaling.** An HPA / KEDA CPU-utilization trigger averages across replicas, so one saturated instance stays hidden behind idle siblings and no scale-up fires. When throttling is isolated, check the observed replica count over the incident window and state plainly that autoscaling did not react and why — do not report "autoscaling was healthy" from a flat replica line alone.
 
 ## 11e. Aggregation rule
 
@@ -93,21 +101,23 @@ Other signals to look for during the mandatory scan: pod restart, replica drop, 
 
 ## 11f. Reverse-signal sanity check (GATE before writing Root Cause)
 
-A real upstream-shape outage always leaves SOME footprint somewhere. If your queried metrics are completely flat across CPU + Memory + restart + replica during a documented incident burst, do the following before concluding "infra is healthy":
+A real upstream-shape outage always leaves SOME footprint somewhere. If your queried metrics come back clean across the whole 11d list (CPU + Memory + restart / replica + throttle) during a documented incident burst, do the following before concluding "infra is healthy":
 
-**Trigger**: incident has a clear upstream-shape outage (503 burst / timeout flood / >100x error ratio over baseline) AND the metrics you pulled are dead-flat in the incident window.
+**Trigger**: incident has a clear upstream-shape outage (503 burst / timeout flood / >100x error ratio over baseline) AND the metrics you pulled show nothing in the incident window — dead-flat, *or* merely unremarkable while the numbers you looked at were aggregated across instances.
 
-**Three possible diagnoses** — distinguish by checking traffic / request-rate alongside resource metrics:
+**Four possible diagnoses** — distinguish by checking traffic / request-rate alongside resource metrics:
 
 1. **Wrong instance / wrong datasource** — flat metrics + traffic on this instance is normal (no drop): you're looking at a different deployment than the one that's actually serving prod. Most common when the same service name exists in multiple clusters / regions.
 2. **Network / LB / DNS failure between caller and service** — flat metrics + traffic on this instance dropped to zero (or near zero) during the burst: the service itself is fine, requests just couldn't reach it. Look at LB / ingress / DNS / network logs, not service infra.
 3. **Genuinely healthy and the incident root cause is elsewhere** — flat metrics + traffic normal + the upstream-shape signal is wrong (e.g. it was actually app-level after all, or noise).
+4. **Per-instance saturation hidden by an average** — CPU/memory read normal *because you looked at the mean across instances*, while one instance is throttled or pegged. Before accepting case (3), re-check per instance (not aggregated) and apply the isolated-throttle rules in 11d (node-capacity comparison + the average-based-autoscaling blind spot).
 
 **Required action**:
 1. Re-verify hostname / DNS / IP from prod config (11.0) matches the instance you queried — if you queried `<svc>-a01` but prod points at `<svc>-b01`, you're in case (1).
-2. Pull request rate / traffic on the queried instance for the same window. If it dropped, you're in case (2). If it stayed normal, you're in case (1) or (3).
+2. Pull request rate / traffic on the queried instance for the same window. If it dropped, you're in case (2). If it stayed normal, you're in case (1), (4) or (3) — rule out (4) before (3).
 3. If multiple deployments with the same service name exist, list them all in the evidence dump and explicitly note which one prod traffic actually hits.
-4. If you cannot rule out wrong-instance / network-side failure after the above, mark Root Cause as "infra: indeterminate" and put the question in Unknowns. Do NOT default to "infra healthy".
+4. Confirm the numbers you are calling flat are **per instance**, not an average across instances — an aggregated series hides case (4).
+5. If you cannot rule out wrong-instance / network-side / hidden-per-instance failure after the above, mark Root Cause as "infra: indeterminate" and put the question in Unknowns. Do NOT default to "infra healthy".
 
 ## 11g. Shared-datastore root cause — datastore-itself vs the path to it, and WHO owns each
 
@@ -118,5 +128,6 @@ When the root bottoms out at a **shared datastore / cache / message layer** (a R
 - **Inner-exception type on the failing calls.** A connection-level error (`RedisConnectionException`, `connection refused`, DNS resolution failure, TLS/handshake, connection-pool exhausted) points at the **path** (network / LB / DNS / transport) → **IT / network** owner. A server-side error (`RedisTimeoutException` where the command reached the server, `server is busy`, high server load, `OOM`, auth/`NOAUTH`) points at the **datastore itself** → **DBA / datastore** owner. Pull the inner exception from `_source` — do not stop at the top-of-stack `TaskCanceledException`.
 - **Breadth + simultaneity** (from the 5d classifier). Many *unrelated* clients timing out on the **same datastore node(s) at the same instant**, while those nodes' own host metrics (CPU / IO / memory / blocked-clients) look normal, is a strong **path/transport** signal (the clients can't reach a healthy datastore) → IT / network. The same clients failing while the datastore host metrics are saturated is a **datastore-itself** signal → DBA.
 - **Datastore host metrics if reachable.** If the datastore cluster exposes metrics you can query (11b), check the specific nodes the errors name: CPU / memory / blocked-clients / network retransmit-drop. Query them the same bounded way as any other instance.
+- **GATE before escalating either way — rule out the CLIENT first.** A timeout that reached the server is only a datastore signal if the *caller* was healthy. An isolated CPU-throttled instance (11d) produces exactly this shape: the response arrives but the frozen cgroup never runs the socket-read thread, so the client library raises a server-side-looking timeout against a datastore that is fine. Tell-tales that it is the client, not the datastore: the failures cluster on **one caller instance / pod** rather than across unrelated clients, and that instance's throttle ratio is non-trivial while its siblings' is ~0. Step 11 usually scans the *upstream*, so this number often does not exist yet — run 11d item 4 once more against the **calling** service's instances before judging the gate; skipping it is not the same as clearing it. If both hold, the owner is **your own team**, not DBA or IT — do NOT escalate. Only after this gate is clear may you name a datastore or path owner.
 
-**Output**: name the specific instance(s) (node IPs / host), state the datastore-vs-path verdict with its evidence, and name the matching owner for the report to escalate to (step12). If the tools genuinely cannot disambiguate, say so and list **both** candidates (datastore + network path) with **both** owners as confirm-with items in Unknowns — but only after actually trying the three narrowing signals above.
+**Output**: name the specific instance(s) (node IPs / host), state the datastore-vs-path verdict with its evidence, and name the matching owner for the report to escalate to (step12). If the tools genuinely cannot disambiguate, say so and list **both** candidates (datastore + network path) with **both** owners as confirm-with items in Unknowns — but only after actually trying every narrowing signal above and clearing the client-side gate.
