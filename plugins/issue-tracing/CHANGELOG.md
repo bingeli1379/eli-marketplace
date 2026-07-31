@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.8.0] - 2026-07-31
+
+### Added
+- Infra checks now catch a single overloaded instance hiding behind a healthy-looking average. One pod can be starved for CPU while every instance's average reads normal and autoscaling never reacts — the report now measures each instance separately and says so when that is what happened.
+- When a timeout looks like a slow database or cache, the investigation now checks the caller's own health first. A starved caller produces exactly the same symptom, so this stops the report from sending you to the database or network team over a problem on your own side.
+
+### Fixed
+- Searches that quietly returned "0 results" for data that was actually there. One query shape silently emptied the results with no error, which read as "this does not exist" and could end an investigation on the wrong answer — it is no longer used.
+- Metric queries that failed with a confusing parse error, and dashboard lookups rejected outright, both caused by wrong parameter names.
+
 ## [1.7.1] - 2026-07-23
 
 ### Changed
