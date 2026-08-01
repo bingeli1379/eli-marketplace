@@ -1,6 +1,15 @@
 # Changelog
 
-## [3.5.0] - 2026-07-30
+## [3.6.0] - 2026-08-01
+
+### Added
+- Before implementation starts, you are told when the spec looks old — how long since it was last touched, and which of the files it says it will modify are no longer there. It only warns and keeps going, so an out-of-date plan surfaces before the agents work from it rather than after.
+
+### Fixed
+- Across several repos at once, your project rules never reached the agents doing the work. The workflow looked for one settings file at the top folder, but settings live inside each repo, so agents were given nothing — including the rules you marked non-negotiable. Each agent now gets the settings of the repo it is working in, and the same fix applies to the pre-run formatting pass.
+- In a folder that is not under version control, a run could hang forever: agents were told to skip the "task finished" report along with the commits, leaving nothing to signal completion. The report is now always sent.
+- Finishing a change could be blocked by unfinished placeholder code that belonged to a *different* change you had in progress. Ownership is now worked out from the change's own history, and when that cannot be established with confidence the workflow says so instead of guessing.
+- Several instructions contradicted each other and could send a run either way: the spec check called every advisory note a blocker, the proposal step both required and forbade asking follow-up questions one at a time, and the batch runner disagreed with itself about when it inspects your folder layout.
 
 ### Added
 - Every review finding now quotes the code it is about, so you can see exactly what it means without going looking — and when the quoted code is nowhere to be found, the finding is flagged as unlocatable instead of being acted on. Previously a finding whose line number had drifted could send the fix step off to change the wrong piece of working code.

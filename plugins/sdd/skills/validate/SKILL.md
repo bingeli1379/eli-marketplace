@@ -7,7 +7,7 @@ description: >
 user-invocable: true
 ---
 
-Validate spec artifacts for a change. Checks structural completeness, content quality, and referential integrity. All violations are errors — any failure blocks implementation.
+Validate spec artifacts for a change. Checks structural completeness, content quality, and referential integrity. Most rules are ERROR level and block implementation; a few are WARN (advisory, non-blocking) — see *Validation Rules* below.
 
 ---
 

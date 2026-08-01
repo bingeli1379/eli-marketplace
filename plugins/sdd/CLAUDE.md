@@ -36,6 +36,7 @@ The workflow auto-detects, at the start of `/propose`, `/apply`, `/quick`, and `
 
 - **single-repo** — cwd is inside a git repo. Original behavior: all git ops and `feature-spec/` against that one repo.
 - **multi-repo** — cwd is a folder of independent repos. `feature-spec/` (planning artifacts) lives at the umbrella cwd; each task group is bound to one child repo, and its commits run inside that repo. A cross-repo change splits into one group per repo, ordered contract-first; groups in different repos may run in parallel.
+- **no-git** — cwd is not a repo and has no child repos. Everything runs, but the git-dependent steps (per-task commits, squash, resume-by-reconcile, cleanup commit) are skipped and the user commits later.
 
 `config.yaml` is always a per-project, optional artifact living inside a repo (`<repo>/feature-spec/config.yaml`). `/setup` is per-project — run it inside a repo. Where a touched repo has no config, the workflow scans its code instead.
 
