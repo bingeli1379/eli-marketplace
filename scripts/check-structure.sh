@@ -23,6 +23,9 @@ warns=0
 err()  { echo "ERROR: $*"; errors=$((errors + 1)); }
 warn() { echo "WARN:  $*"; warns=$((warns + 1)); }
 
+# the sdd-family skill registry — read by check 5 and check 7d
+SRC="plugins/sdd/skills/SOURCES.yaml"
+
 # name: value from a markdown file's YAML frontmatter
 get_name() {
   awk '/^---[[:space:]]*$/{c++; next}
@@ -76,7 +79,6 @@ done
 # ---- 5. SOURCES.yaml central registry coverage (WARN) ----
 # SOURCES.yaml is the registry for the sdd family ONLY (core + sdd-* packs),
 # not for unrelated plugins (dev-workflow, issue-tracing, ...).
-SRC="plugins/sdd/skills/SOURCES.yaml"
 if [[ -f "$SRC" ]]; then
   for s in plugins/sdd/skills/*/SKILL.md plugins/sdd-*/skills/*/SKILL.md; do
     [[ -f "$s" ]] || continue
