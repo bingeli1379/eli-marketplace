@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.13.0] - 2026-08-01
+
+### Added
+- `/improve-skill` now works on anything a plugin ships, not just skills — an output style or persona that talked wrong, a hook that misfired, an agent, a template, or a config file. Name the persona or style and it finds the file.
+- A persona or output-style complaint is now treated as a real defect to fix. Previously it could be filed as "just a preference" and quietly dropped, so nothing got patched.
+- Before editing, `/improve-skill` reads the owning repo's own maintenance rules — its `CLAUDE.md` and any dedicated maintenance skill for the file being changed — and follows them instead of its own instinct. Repos that keep authoring rules outside the edited file now get edits that match their house style.
+
+### Changed
+- Validation matches the kind of file being changed: prose goes through the prompt audit, while hooks, config, and templates get the repo's own checks plus a syntax check, and the report says which checks ran and which were skipped.
+
 ## [1.12.0] - 2026-07-30
 
 ### Added
