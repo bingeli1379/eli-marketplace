@@ -2,7 +2,7 @@
 
 Triggers, in priority order — use the highest-priority signal available, do not be misled by lower-priority hints:
 
-1. **URL / hostname inside an error message** (most reliable — actual call data). e.g. a log shows `Url: "http://<svc>-01.<dc>.<internal-domain>/api/..." ... TimeoutRejectedException` → upstream is `<svc>`. Extract the host's leading token before the first `-` or `.` as the **candidate service identity** — a candidate, not the stored value. Resolve it to the value the target stream actually stores using **SKILL.md step 3a's identity-resolution rule** (sample the stream's identity values, match ignoring separators and case; never transform one stream's spelling into another's). That rule is the single source for this; do not re-derive it here.
+1. **URL / hostname inside an error message** (most reliable — actual call data). e.g. a log shows `Url: "http://<svc>-01.<dc>.<internal-domain>/api/..." ... TimeoutRejectedException` → upstream is `<svc>`. Extract the host's leading token before the first `-` or `.` as the **candidate service identity** — a candidate, not the stored value. Resolve it to the value the target stream actually stores using **SKILL.md step 3a's identity-resolution rule** (probe candidate spellings against the stream's identity field; never transform one stream's spelling into another's). That rule is the single source for this; do not re-derive it here.
 2. **Log message** in the current project explicitly names another service (e.g. `Failed to call <upstream>`).
 3. **Reading code** (the code-reading step of the trace loop) reveals an outbound call to another service that failed in the same window.
 4. **Grafana panel title / sibling panel** mentions a service (lowest priority — may be unrelated). Treat as a hint only; verify by querying logs, then apply the correlation check below before pursuing.
@@ -30,7 +30,7 @@ Topology is knowable even when that hop's prod logs / metrics are unreachable (e
 
 ## Caller-direction drill — trigger source (who sent the request)
 
-The ladder above drills toward the **callee** (which dependency failed). When the question is **who / what triggered** the error — bot? human? surge? new data? — i.e. axis **C** in step12 HARD RULE #4 (code unchanged, no one released, but the incoming request changed), drill the OPPOSITE way: toward the **caller / ingress**.
+The ladder above drills toward the **callee** (which dependency failed). When the question is **who / what triggered** the error — bot? human? surge? new data? — i.e. axis **C** in `report.md` HARD RULE #4 (code unchanged, no one released, but the incoming request changed), drill the OPPOSITE way: toward the **caller / ingress**.
 
 - **Hop one level toward the edge** to a service that logs IP / User-Agent (gateway / proxy / auth). The originating service often lacks these fields; the caller-side one has them.
 - **Reuse two signals you already have — both queryable, neither fabricated**:

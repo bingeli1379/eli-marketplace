@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.1] - 2026-08-02
+
+### Fixed
+- A service is no longer reported as missing from a log stream while it is sitting right there. Whether a service appeared was judged from a sample of recent lines, which on a busy stream is filled by whichever service talks most — so a quieter service could be declared absent even with tens of thousands of lines in the same window. It is now checked by counting that service directly.
+- A shared-infrastructure outage is no longer pinned on one service. The "is this hitting many services or only this one?" check was read off that same kind of sample, so a loud caller could hide the other victims, the answer came back "only this one", and the report blamed a downstream service instead of the shared database, cache or network everything was waiting on.
+- Investigations no longer stall partway through. One step could fire more queries at once than the log backend accepts; past that limit the requests are not refused, they simply never come back, leaving the investigation waiting indefinitely.
+
 ## [1.9.0] - 2026-08-02
 
 ### Added
