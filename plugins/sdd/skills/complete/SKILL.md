@@ -61,7 +61,24 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
 
    **no-git mode** (Step 0 detected no repo): fall back to `grep -rnI "SKELETON:" . --exclude="*.md" --exclude-dir=feature-spec --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build` (`-I` skips binaries), and say in the report that the scan is best-effort because there is no index to scope it.
 
-   **Attribute each hit to a change before blocking on it.** The working tree is shared, so a raw hit may belong to a *different* in-flight change — blocking `<name>` for someone else's placeholder is wrong. For each hit, decide ownership using this change's own scope: the files in its `design.md` `## Affected Files`, plus the files touched by its commits (`git log --name-only` over the change's commit range). Then:
+   **Attribute each hit to a change before blocking on it.** The working tree is shared, so a raw hit may belong to a *different* in-flight change — blocking `<name>` for someone else's placeholder is wrong. Ownership is decided from two sources: the files in this change's `design.md` `## Affected Files` (always available), plus the files touched by its own commits — which requires a commit range, derived as follows:
+
+   ```bash
+   # single-repo: /propose Step 11 committed exactly "docs: propose <name>" — that is the change's start
+   CHANGE_BASE=$(git log --format=%H --grep="^docs: propose <name>$" -1)
+   # contamination check: any OTHER change proposed after this one shares the range
+   OTHERS=$(git log --format=%s "$CHANGE_BASE"..HEAD --grep="^docs: propose ")
+   [ -n "$CHANGE_BASE" ] && [ -z "$OTHERS" ] \
+     && git log --name-only --pretty=format: "$CHANGE_BASE"..HEAD | sort -u
+   ```
+
+   - **Anchor found AND range uncontaminated** → union those paths with `## Affected Files` and attribute against the union.
+   - **Range contaminated** (`OTHERS` non-empty — another change was proposed after this one, so `CHANGE_BASE..HEAD` also contains ITS commits) → the range cannot be attributed to `<name>` alone. Fall back to `## Affected Files` alone, exactly as below. Using the contaminated range would pull a sibling change's placeholder into this change's scope and block a change that is actually finished — the precise failure this attribution exists to prevent.
+   - **Anchor NOT found** — the propose commit was amended/rebased away, `/propose` ran in **no-git**, or this is **multi-repo** (the `docs: propose` commit lives at the umbrella, and child repos carry no change-named marker, so no honest per-repo range exists) → attribute on `## Affected Files` **alone**.
+
+   Whenever you fall back (not found OR contaminated), say so in the report: `ℹ SKELETON 歸屬僅依 design.md Affected Files（<找不到 commit 錨點 | 範圍含其他 change>）`. Never widen instead — no timestamps, no whole-branch history. An over-wide range attributes other changes' placeholders to this one and blocks completion wrongly.
+
+   Then:
 
    - **Hit inside this change's scope** → this change is **unfinished regardless of checkbox state**. Report every residual location (`file:line`) and **stop**: do not delete artifacts, do not commit. Tell the user which harden tasks are effectively incomplete and to finish them (`/apply <name>`) before re-running `/complete`. This is not overridable by confirmation — a checked-off `tasks.md` with live `SKELETON:` markers is exactly the failure mode the gate exists to catch.
    - **Hit outside this change's scope** → do NOT block. Report it as an informational note naming the file and, if identifiable, the other change that owns it.

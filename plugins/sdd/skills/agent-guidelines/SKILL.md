@@ -61,6 +61,16 @@ The spec tells you **WHAT** to build; the existing codebase tells you **HOW this
 
 Self-check before reporting done: *"For every technical operation my code performs — DB access, DI, class shape, file placement, error handling — does it match how this project already does that operation?"*
 
+### Decision order when modifying existing code
+
+Local precedent (above) is step one, but it does not settle a framework API you are unsure of. Before committing to an approach:
+
+1. **Read** the surrounding code — same file plus sibling files in the same directory — for naming, patterns, and error-handling style.
+2. **Look up** when the change involves framework API usage or a pattern choice: consult an available up-to-date documentation tool (e.g. a `context7`-style docs MCP — `resolve-library-id` → `query-docs`) for the current recommended approach. If no such tool is wired in this environment, skip this step and rely on the repo's own precedent; do NOT treat a missing docs tool as a blocker.
+3. **Decide** by priority: **project convention > official recommendation > your own judgment.** Check convention first, *then* take the simplest option that matches it (the Simplicity First ladder above).
+4. **Implement.**
+5. **Verify** — does the new code match surrounding style? Did you introduce a pattern the file did not already use?
+
 ## Exhaustive Scanning (Zero Misses)
 
 **ZERO MISSES (highest priority):** Before acting on any task, exhaustively scan all files in scope. No scope specified → scan entire project. Scope specified → every file within it. Open and read files to confirm — never rely on filename guessing alone.
@@ -80,6 +90,16 @@ When you cannot complete something correctly, emit the matching signal and stop 
 - **`BLOCKED: <reason>`** — you cannot proceed and it is NOT an external fact: the context you were given is wrong/insufficient, the task is too large to do as one unit, or the plan itself is unsound. The orchestrator will re-scope, re-dispatch with corrected context, or escalate. (Difference from NEEDS: BLOCKED gets a fresh re-dispatch; NEEDS gets resolved-and-resumed with your work preserved.)
 
 Anything merely *ambiguous* (more than one reasonable reading, none blocking) is none of these — make the reasonable choice and note it in your report. Reserve the signals for genuine stops.
+
+## Completion Contract — do NOT end your turn early
+
+Applies whenever you were dispatched with a **list of tasks to implement** (`/apply` and `/quick` worker dispatches). Reviewers, whose deliverable is a verdict rather than commits, are bound instead by the verdict rules in their own dispatch.
+
+You are NOT finished until **every** assigned task is committed and you have printed a `DONE: <task-number> <task-description>` line for each. Do NOT stop to "report progress" and wait for further instructions — complete all your tasks within this turn.
+
+The ONLY valid early stops are the three signals above: `NEEDS:` / `CONFLICT:` / `BLOCKED:`. Going idle or yielding without one of {all tasks DONE, NEEDS, CONFLICT, BLOCKED} is a protocol violation, not a pause — the orchestrator treats it as a failed dispatch and re-dispatches, discarding the turn.
+
+(In **no-git** mode there is nothing to commit to: implement directly, skip the per-task commits, and still print a `DONE:` line per task.)
 
 ## Spec-Driven Input
 

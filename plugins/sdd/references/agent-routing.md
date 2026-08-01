@@ -37,8 +37,14 @@ This file is the single source of truth consumed by `orchestrator.md` (dispatch)
    catchable tool error (`Agent type '…' not found`). On that error:
    - Dispatch `general-purpose` instead, embedding the **Fallback brief** from the
      table as its role, plus the same task prompt.
-   - The pack's stack skills do **not** exist either, so the fallback agent loads
-     only **core** universal skills on demand (`engineering-checklist`,
+   - **`general-purpose` has no `skills:` frontmatter, so it auto-loads nothing.**
+     Instruct the fallback dispatch to load `agent-guidelines` **first and
+     unconditionally** via the Skill tool — a real pack agent gets it eagerly, and it
+     carries the Implementation Protocol, the Completion Contract, and the
+     `NEEDS`/`CONFLICT`/`BLOCKED` vocabulary the orchestrator relies on. Without it the
+     fallback agent silently loses the whole worker protocol.
+   - The pack's stack skills do **not** exist either, so beyond that the fallback agent
+     loads only **core** universal skills on demand (`engineering-checklist`,
      `test-driven-development`, `clean-architecture`, etc.) — never a `sdd-<pack>:`
      skill.
    - **Tell the user, loudly:** e.g. `⚠️ sdd-vue 未安裝，前端任務改用通用 agent 執行（無 Vue 專屬 skill，品質下降）。建議 /plugin install sdd-vue。` This notice is per-run and live — never cached.

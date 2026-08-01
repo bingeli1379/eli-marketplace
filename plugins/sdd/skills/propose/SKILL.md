@@ -26,6 +26,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode.
    - **single-repo** — scan and plan against the one repo (the steps below, unchanged).
    - **multi-repo** — the change may span several child repos. The Step 5 codebase scan covers every repo the change plausibly touches; per-repo grounding is read per touched repo (Step 4); tasks are grouped so each group lands in exactly one repo (Step 7/design), ordered contract-first across repos. `feature-spec/` (the change artifacts) lives at the umbrella cwd.
+   - **no-git** — cwd is not a repo and has no child repos. Everything below runs unchanged except Step 11: there is nothing to commit to, so the artifacts stay un-committed on disk.
 
 1. **If no clear input provided, ask what they want to build**
 
@@ -200,53 +201,17 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
    **g. Confirm scope contract before generating artifacts**
 
-   This gate is also packaged as the standalone `scope-contract` skill (`skills/scope-contract/SKILL.md`) — the canonical definition of the format, depth rule, and rationale. The inline copy below is kept so `/propose` is self-contained; when editing the rules, keep both in sync (or trim this to a reference).
+   **Read `${CLAUDE_PLUGIN_ROOT}/skills/scope-contract/SKILL.md` in full before composing the contract.** That skill is the single source for this gate — the contract template, the depth rule (single-hop → one line; multi-execution-path → expanded 現在/改成 behavior chain), every format rule, and the one-correction-round limit. Do NOT reconstruct it from memory: the depth rule and the format-change tracing rule are exactly what stop this gate from degrading into an unreadable wall the user rubber-stamps.
 
-   After the user answers 6e (or immediately, if 6e had no Questions), synthesize everything into a **Scope Contract** — a single **現在 → 改成 (Before → After)** list where every modified area is shown as how it works now versus how it works after. Show it back as a regular chat message (NOT AskUserQuestion — this is a final sanity check, not an open clarification round). Then wait for the user's reply.
+   After the user answers 6e/6e2 (or immediately, if 6e had no Questions), synthesize everything into the Scope Contract that skill defines and show it back as a **regular chat message — NOT AskUserQuestion**; this is a final sanity check, not an open clarification round. Then wait for the user's reply.
 
-   **Depth scales with the item — this is the core rule:**
-   - **Single-hop swap or bulk replacement** (swap function A for B, batch import changes, replace one helper with a library) → **ONE line**: `<area>：現在 X → 改成 Y`. Do NOT inflate these into multi-step chains; padding a one-liner is the #1 way the report loses focus.
-   - **A change that alters several execution-path steps** (a login/locale-decision flow, a value-format change that cascades downstream) → **trace it as a full behavior chain**: write the 現在 chain and the 改成 chain step-by-step and mark the diff. These are the only items that earn the expanded form.
+   Three things this step adds on top of that skill:
 
-   The contract MUST let the user scan top-to-bottom and verify intent without reading code. **Concise first — highlight the key/high-risk items, keep everything else to one line.** The single most common cause of Phase 2 review blockers is **a downstream consumer being missed** — a callsite not updated (refactor) or a flow step unaccounted for (new feature). The expanded behavior chains exist specifically to surface those multi-hop ripples; the one-liners keep the bulk readable.
-
-   ```
-   ## 確認一下（每處 現在 → 改成，不對就講哪條，OK 就 go）
-
-   <change-name>
-
-   ### 變更（現在 → 改成）
-
-   - <區域 / 行為 1>：現在 <how it works now> → 改成 <how it works after>      ← 單跳 / 大量取代：一行
-   - <區域 / 行為 2>：現在 ... → 改成 ...
-
-   <只有「真正改到幾條執行路徑」的變動才展開成完整行為鏈：>
-
-   **【<關鍵流程名>】**
-   - 現在：A → B → C
-   - 改成：A → B′ → C′（標出差異）
-
-   ### 鎖定假設
-   - <假設 1>
-   - <假設 2>
-
-   ### 不做：<one line; 省略 if 無>
-   ### 影響範圍 / Reversibility：<one line; 省略 if "無">
-   ```
-
-   **Format rules:**
-
-   - **Concise first, key points stand out.** Whole contract SHOULD stay under 25 lines. Most items are one line; only the genuinely multi-step flows expand. Writing too much buries the items the user actually needs to check.
-   - **Concrete names are fine when the name IS the change** — a function-for-function swap, or a value-format migration (`ZH_CN` → `zh-CN`), reads clearest with the actual names/values. Use a concept name instead when a raw symbol would be noise (say "「語言 → 後端數字編號」橋接表" not the constant's identifier). **Never** write `file:line` or import paths — that detail lives in design.md after approval.
-   - **Format / shape changes MUST get the expanded chain (most error-prone)** — when a change alters the FORMAT or SHAPE of data flowing through the system (enum value renamed, cookie format change, type widened), it MUST be an expanded behavior chain with every downstream consumer traced (cookie / i18n / asset filenames / API body / string-literal comparisons / backend mapping keys / …). Reviewers miss these because they read for "what changes" not "what downstream assumes about the old shape".
-   - **New-feature user flows need a terminal state** — an expanded user-flow chain MUST end at a user-visible result (success page / email sent / data persisted / error message), not an internal handoff. A flow that stops mid-system leaves a feature half-built.
-   - **Use action verbs in expanded chains, readable for a non-engineer** — "元件拼 CSS class 名" not "`:class` binding"; "後端產生 token 寫 DB" not "`TokenService.generate()`".
-   - **Length signal**: if the contract can't fit under ~25 lines even after collapsing one-liners, the change is too large — split into sub-changes (return to 6c/6f).
    - **Split changes**: one combined Scope Contract, each sub-change under its own heading, ordered by the dependency chain from Step 6f.
+   - **Length signal → split**: when the contract cannot fit under ~25 lines even after collapsing one-liners, return to 6c/6f and split into sub-changes rather than shipping an oversized contract.
+   - **On confirmation (or one correction), proceed directly to Step 7** — do NOT loop on this checkpoint. More than one correction round means Step 6e was under-specified; treat it as self-feedback for future runs.
 
-   **Purpose**: catches interpretation mismatches BEFORE the architect agent writes design.md. A wrong design.md costs 5–10 minutes to regenerate; a wrong Scope Contract costs 10 seconds to correct here. The one-line 現在 → 改成 entries catch "you forgot to replace X" or "you changed it to the wrong thing"; the expanded behavior chains catch "you didn't trace this change to its terminal consumers" — the format-mismatch class of bug that otherwise surfaces only at Phase 2 review round 2+.
-
-   **One correction round only**: if the user pushes back, incorporate the corrections and proceed directly to Step 7 — do NOT loop on this checkpoint. More than one round of correction is a signal that Step 6e was under-specified; treat that as self-feedback for future runs, not a reason to keep asking.
+   **Purpose**: catches interpretation mismatches BEFORE the architect agent writes design.md. A wrong design.md costs 5–10 minutes to regenerate; a wrong Scope Contract costs 10 seconds to correct here.
 
 7. **Generate artifacts in dependency order**
 
@@ -310,8 +275,8 @@ After all artifacts are created, **automatically runs validation** (`validate` s
        3. **Explicitly justify rejections** — name each rejected alternative and why (cost, mismatch with constraints, unnecessary flexibility, etc.).
      - **Routine** = reversible, low blast-radius, or effectively determined by an existing project convention / the named Reference implementation. For these, **one line stating the choice and why is enough** — do NOT manufacture 2-3 candidates to compare. Naming the convention/Reference it follows IS the justification.
 
-     The bar: a high-stakes decision presented as a single option with no alternatives considered is incomplete; a routine decision padded into a 3-candidate comparison is over-engineered. Match the analysis to the decision. (Reversibility was already assessed per area in the Step 6b Scope Contract — reuse that classification here.)
-   - **CRITICAL — feed pre-collected context**: The prompt MUST include the **complete affected-files inventory from Step 5** (including the **Reference implementation pointers** found there), the proposal.md content, **all completed spec files from Step 7b**, the **full contents of `feature-spec/config.yaml`** (the `architecture` block and `hard_rules` are constraints the design MUST honor — surface `hard_rules` to the architect as non-negotiable), existing specs from `feature-spec/specs/`, and the design.md template from `templates/`. Include any file contents you already read during the codebase scan (store definitions, key interfaces, usage patterns, etc.). Do not forward the project's own docs — config.yaml is the only project context. If `config.yaml` does not exist, omit that section entirely — do not fabricate placeholder content.
+     The bar: a high-stakes decision presented as a single option with no alternatives considered is incomplete; a routine decision padded into a 3-candidate comparison is over-engineered. Match the analysis to the decision. (Reversibility was already assessed per area on the Step 6b Reversibility axis — reuse that classification here.)
+   - **CRITICAL — feed pre-collected context**: The prompt MUST include the **complete affected-files inventory from Step 5** (including the **Reference implementation pointers** found there), the proposal.md content, **all completed spec files from Step 7b**, the **full contents of the `config.yaml`(s) read in Step 4** — single-repo `feature-spec/config.yaml`, multi-repo one per touched child repo, each labelled with its repo (there is no umbrella config) — (the `architecture` block and `hard_rules` are constraints the design MUST honor — surface `hard_rules` to the architect as non-negotiable), existing specs from `feature-spec/specs/`, and the design.md template from `templates/`. Include any file contents you already read during the codebase scan (store definitions, key interfaces, usage patterns, etc.). Do not forward the project's own docs — config.yaml is the only project context. If `config.yaml` does not exist, omit that section entirely — do not fabricate placeholder content.
    - **CRITICAL — record patterns to mirror, per operation**: Instruct the architect: "For each new component, list the technical operations it performs (data access, DI/wiring, class/type shape, layering & file placement, error handling, logging) and, for each, name the existing **Reference implementation** it must mirror (from the affected-files inventory) plus the local approach to follow — data access mechanism (stored procedure / repository / query helper, never inline SQL or direct DbContext when the project avoids them), read-query conventions, DI wiring, class shape, file placement, naming, error handling. Anchor each operation to how the project already performs *that operation*, not to the nearest similar feature. A restructuring change often has no same-job sibling — that is not a reason to invent a new style; point each operation at existing code that performs it. Do not introduce a new pattern when an existing one covers the operation."
    - **CRITICAL — implementation strategy**: The prompt MUST instruct the architect to decide and record the implementation strategy — **Contract-First (the default)** or **Walking Skeleton** — in `design.md` `## Decisions`, with its reason. Do NOT restate the selection criteria here: they live in its own `agents/architect.md` → *Implementation Strategy Selection*, which the dispatch auto-loads. Instruct only the two things it cannot get from there: **Contract-First is the default, so a departure needs an explicit reason**, and if it picks Walking Skeleton the decision record MUST carry the three required specifics that section lists.
    - **CRITICAL — specs are constraints**: Explicitly instruct the architect: "The spec THEN clauses are acceptance criteria that your design MUST satisfy. If you believe a spec THEN clause should be different, do NOT silently override it. Instead, mark it as `CONFLICT:` in your design.md with your reasoning, so the orchestrator can resolve it with the user."
@@ -482,11 +447,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    ```
 
    - Do NOT push to remote
-   - If `feature-spec/config.yaml` was newly created (Step 2), include it in the commit:
-     ```bash
-     git add feature-spec/config.yaml feature-spec/changes/<name>/
-     git commit -m "docs: propose <change-name>"
-     ```
+   - `feature-spec/config.yaml` is never created by this skill (Step 2), so it is never part of this commit. Only `/setup` generates it.
 
 **Guardrails**
 
@@ -502,9 +463,9 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 - If two groups modify the same file, add a `<!-- depends: N -->` annotation so their edits land in a deterministic order (writes are serialized single-writer; the dependency fixes which group goes first)
 - Every spec requirement MUST have SHALL/MUST and at least 2 WHEN/THEN scenarios (happy path + edge case)
 - Proactively clarify ambiguities and define feature boundaries BEFORE generating artifacts — do NOT guess when scope is unclear
-- Ask all clarification questions in one structured message, not one at a time
+- The Step 6e chain message asks its clarifications in ONE structured message, not one at a time. This applies to 6e only — the Step 6e2 convergence loop that follows deliberately asks **one question at a time and waits**, because each answer can open or void the next; do not batch those.
 - Verify each artifact file exists after writing before proceeding to next
 - `config.yaml` context and rules are constraints for YOU, not content for artifact files
-- `config.yaml` is the first-class input for design.md generation: forward the full `config.yaml` verbatim to the architect agent in Step 7c. `hard_rules` are non-negotiable. Do not read or forward the project's own docs — config.yaml is the only project context. If `config.yaml` is missing, skip silently — the project may not have run `/setup`.
+- `config.yaml` is the first-class input for design.md generation: forward the full `config.yaml` verbatim to the architect agent in Step 7c — every one read in Step 4 (multi-repo forwards one per touched child repo, labelled by repo). `hard_rules` are non-negotiable. Do not read or forward the project's own docs — config.yaml is the only project context. If `config.yaml` is missing, skip silently — the project may not have run `/setup`.
 - Use Traditional Chinese for artifact content (matching user's communication language)
 - Code examples and technical terms remain in English

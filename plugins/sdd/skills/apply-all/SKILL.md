@@ -8,7 +8,7 @@ user-invocable: true
 
 Run `/apply` on multiple changes sequentially. The main Claude acts as orchestrator for the entire batch — dispatching worker agents in the background while remaining responsive to user messages.
 
-Repo topology (single-repo vs multi-repo) is handled by each per-change `/apply` invocation — it runs its own Step 0 detection and binds task groups to their target repos. `/apply-all` adds nothing topology-specific; it just sequences the changes.
+Repo topology (single-repo / multi-repo / no-git) is detected **once at batch start** — run `/apply` Step 0 against cwd before the first change, and reuse the result for every change in the batch (cwd does not move between changes). Per-change task groups are then bound to their target repos exactly as in `/apply`. `/apply-all` adds nothing topology-specific; it just sequences the changes.
 
 ---
 
@@ -68,8 +68,8 @@ Repo topology (single-repo vs multi-repo) is handled by each per-change `/apply`
 
    a. Announce: `[N/M] Applying: <change-name>` and record start time.
 
-   b. Execute the full `/apply` logic (Steps 3-9 from `apply/SKILL.md`):
-      - **Cache invariant files once at batch start**: Read `orchestrator.md` and `feature-spec/config.yaml` once before the first change. These are invariant across the batch — reuse them for all changes instead of re-reading each time.
+   b. Execute the full `/apply` logic (Steps 2–9 from `apply/SKILL.md` — Step 0 topology already ran once at batch start, and Step 1 change selection is this skill's Steps 1–2):
+      - **Cache invariant files once at batch start**: Read `orchestrator.md` and the project `config.yaml` once before the first change — single-repo `feature-spec/config.yaml`; **multi-repo** the per-child-repo `<repo>/feature-spec/config.yaml` of every repo the batch touches (there is no umbrella config — see `/apply` Step 4). These are invariant across the batch — reuse them for all changes instead of re-reading each time.
       - **Re-read change-specific files fresh for each change** (proposal.md, design.md, tasks.md, specs/). Each change has different specs — do NOT reuse these from the previous change. Prior context may also have been compressed.
       - Read context → parse tasks → act as orchestrator → sequential single-writer dispatch with in-place squash → all phases (implementation → review+QA parallel read-only → docs) → verify checkboxes and commit history
       - **Do NOT ask implementation questions** — make reasonable choices, flag ambiguities in report
