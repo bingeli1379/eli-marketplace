@@ -71,15 +71,15 @@ If any block is empty or says "skipped", the work is incomplete — go back and 
 4. **Root Cause 必須分兩層，「觸發源」永遠先寫**：
    - **觸發源（事實層，必填）= 先回答「什麼變了？」四選一**：
      - **A. code 變了** → 誰 release？（`git blame` 出事那行 + deploy timeline）→ 引入的 bug。
-     - **B. dependency 變了** → 第三方 / 別人的服務掛（往 callee 鑽，step9 callee ladder）。
-     - **C. input / load 變了** → 同一段 code、沒人 release，但進來的 request 變了：bot / 暴量 / 新客戶資料 / 一直潛伏今天才被打中的 edge case（往 caller 鑽，step9 caller-direction drill）。
-     - **D. 啥都沒變** → 本來就這個錯誤率 = chronic 背景 / by-design（step9 baseline ratio ≈ 1 即屬此類）。
+     - **B. dependency 變了** → 第三方 / 別人的服務掛（往 callee 鑽，`next-hop-drill.md` callee ladder）。
+     - **C. input / load 變了** → 同一段 code、沒人 release，但進來的 request 變了：bot / 暴量 / 新客戶資料 / 一直潛伏今天才被打中的 edge case（往 caller 鑽，`next-hop-drill.md` caller-direction drill）。
+     - **D. 啥都沒變** → 本來就這個錯誤率 = chronic 背景 / by-design（`next-hop-drill.md` baseline ratio ≈ 1 即屬此類）。
      - ⚠️ 最常見的漏判：沒人 release 就直接跳 B/D，漏掉 **C**（code 沒變但觸發變了）。
      佐證用可查、不可捏造的數字：git blame 意圖、IP 集中度、distinct customerId 集中度（log 分析步驟）、incident/baseline 暴增倍率（`next-hop-drill.md` correlation check）。這層是使用者做後續決策（封 bot / 改 code / 接受）的依據，**必須優先查實**。查不到就明寫「觸發源未判定 + 還缺什麼資料」，**絕不能因為「還沒確定是不是 bug」就把觸發源丟進 Unknowns** — 事實層與判斷層獨立。
    - **機制 / 判斷（看法層）**：agent 認為這是 bug / 預期行為 / 設計缺陷，**標明這是判斷**並給依據（stack trace、code、git blame）。注意 throw 的那行不一定是真因，可能是下游症狀（頂層 NullRef 源自上游 bad state）——先判這行是因還是果。
    - 兩層獨立：觸發是 bot 不代表沒有 code 問題；是設計意圖也要分清「意圖」與「實作後果」是否一致（例：刻意拒絕 token 是對的，但用 unhandled exception 回 500 仍是缺陷）。
 
-5. **根因觸底到共享基礎設施 → 明列「請使用者去找 infra owner 確認」，但判斷在先。** 當 Root Cause 是共享資料層 / 網路（Redis / DB / cache 叢集、DNS、LB）而非單一服務自身資源時（通常經 step 5d 廣度分類器判為 fleet-wide、step11 §11g 判定）：
+5. **根因觸底到共享基礎設施 → 明列「請使用者去找 infra owner 確認」，但判斷在先。** 當 Root Cause 是共享資料層 / 網路（Redis / DB / cache 叢集、DNS、LB）而非單一服務自身資源時（通常經 step 5d 廣度分類器判為 fleet-wide、`infra-metrics.md` §11g 判定）：
    - **先由你判定**「資料層本身 vs 到資料層的網路路徑」（依 §11g 的判別訊號）——**這是你的活，不可把判斷丟給使用者**。
    - 判定為**網路/連線層** → How to Resolve / Unknowns 明列「需與 **網路 / IT** 確認 `<RKE→datastore 網段 / 交換器 / DNS>`」；判定為**資料層本身** → 明列「需與 **DBA / 資料層 owner** 確認 `<node、負載、blocked clients>`」。owner 名稱從環境知識（step 1c）取，保持通用。
    - **判不出來**才並列兩個 owner + 兩個確認項，並寫明還缺什麼資料——不可因「還沒確定」就整包丟 Unknowns 讓使用者自己查。
