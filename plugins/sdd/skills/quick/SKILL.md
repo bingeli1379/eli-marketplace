@@ -48,7 +48,9 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    First, check `${CLAUDE_PLUGIN_ROOT}/company-conventions.md` for pre-lint skip rules. If the current project matches a skip condition (e.g., .NET project), skip this entire step silently.
 
-   Otherwise, if `lint_commands` are configured in `feature-spec/config.yaml`:
+   **Multi-repo**: there is no umbrella `feature-spec/config.yaml` — read `lint_commands` from `<repo>/feature-spec/config.yaml` for **each child repo this task touches**, and run + commit that repo's lint inside it (`git -C <repo> ...`). A touched repo with no config gets no pre-lint.
+
+   Otherwise, if `lint_commands` are configured (single-repo: `feature-spec/config.yaml`):
    1. Run all lint commands to fix pre-existing formatting issues
    2. If lint produced changes: stage and commit with `chore: pre-lint cleanup before quick`
    3. If no changes, skip silently
@@ -88,86 +90,44 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - Unclear integration points with existing code?
    - Design decisions that could go multiple ways?
 
-   **e. If ambiguities exist — ask the user ONCE:**
+   **e. Present the plan (one message, then dispatch):**
 
-   Use **AskUserQuestion** with a structured summary that follows the Scope Contract shape (canonical definition: the `scope-contract` skill, `skills/scope-contract/SKILL.md`), plus an explicit Questions block. Ask ALL questions in ONE message:
+   **Read `${CLAUDE_PLUGIN_ROOT}/skills/scope-contract/SKILL.md` in full before composing this message.** That skill is the single source for the 變更（現在 → 改成）block — its template, the depth rule (single-hop → one line; multi-execution-path → expanded behavior chain), the format-change tracing rule, and the terminal-state rule. Do NOT reconstruct it from memory.
+
+   Wrap that contract in quick mode's own envelope:
 
    ```
    ## Quick Task: <summary>
 
    **Scope:** <affected layers>   **Complexity:** <Simple/Medium/Complex>
 
-   ### 變更（現在 → 改成）
+   <the 變更（現在 → 改成）+ 鎖定假設 blocks, per the scope-contract skill>
 
-   - <區域 / 行為 1>：現在 <how it works now> → 改成 <how it works after>   ← 單跳 / 大量取代：一行
-   - <區域 / 行為 2>：現在 ... → 改成 ...
-
-   <只有真正改到幾條執行路徑的變動才展開成完整行為鏈：>
-   **【<關鍵流程名>】**
-   - 現在：A → B → C
-   - 改成：A → B′ → C′（標出差異）
-
-   ### 鎖定假設
-   - <假設 1>
-
-   ### Questions (need your input)
+   ### Questions (need your input)      ← include ONLY when there are genuine ambiguities; omit the whole section otherwise
    1. <specific question about unclear behavior>
    2. <specific question about edge case or design choice>
 
-   ### Planned Tasks (pending your answers)
-   - 1.1 (Backend) <task description>
-   - 1.2 (Frontend) <task description>
-   ...
-   ```
-
-   After the user responds, incorporate their answers into the plan.
-
-   **f. If NO ambiguities — present the plan and dispatch immediately:**
-
-   If the task description is clear and unambiguous, skip the question step. Show the same Scope Contract shape (without the Questions block) plus tasks + agents, then dispatch:
-
-   ```
-   ## Quick Task: <summary>
-
-   **Scope:** <affected layers>   **Complexity:** <Simple/Medium/Complex>
-
-   ### 變更（現在 → 改成）
-
-   - <區域 / 行為 1>：現在 <how it works now> → 改成 <how it works after>   ← 單跳 / 大量取代：一行
-   - <區域 / 行為 2>：現在 ... → 改成 ...
-
-   <只有真正改到幾條執行路徑的變動才展開成完整行為鏈：>
-   **【<關鍵流程名>】**
-   - 現在：A → B → C
-   - 改成：A → B′ → C′（標出差異）
-
-   ### 鎖定假設
-   - <假設 1>
-
-   ### Acceptance Criteria
-   - WHEN <condition> THEN <expected result>
+   ### Acceptance Criteria              ← omit while questions are outstanding
    - WHEN <condition> THEN <expected result>
 
    ### Tasks
    ## 1. <Group Name>
    - [ ] 1.1 (Backend) <task description>
    - [ ] 1.2 (Frontend) <task description>
-   ...
 
    ### Agents to Dispatch
    - <agent-1>: <task count> tasks
-   - <agent-2>: <task count> tasks
 
-   Dispatching now.
+   Dispatching now.                     ← omit while questions are outstanding
    ```
 
-   **Format rules (same as `/propose` Step 6g)**:
-   - **Depth scales with the item**: single-hop swap / bulk replacement → ONE `現在 X → 改成 Y` line (do NOT inflate); only a change that alters several execution-path steps gets an expanded 現在/改成 behavior chain.
-   - **Concise first, key points stand out** — most items are one line; only genuinely multi-step flows expand.
-   - Concrete names are fine when the name IS the change (function swap, value-format `ZH_CN`→`zh-CN`); use a concept name when a raw symbol is noise; never `file:line` or import paths.
-   - **Format / shape changes MUST get the expanded chain** with all downstream consumers traced (cookie / i18n / filenames / API body / string comparisons / backend mapping keys / …).
-   - User-flow entries (new feature) MUST end at a user-visible terminal state.
-   - Whole contract SHOULD stay under 20 lines for quick mode (smaller cap than full propose — if exceeded, the task is too big for quick and SHOULD be promoted to `/propose`).
+   - **Ambiguities exist** → send it via **AskUserQuestion** with the Questions section, ALL questions in ONE message, tasks labelled as pending. After the user responds, incorporate their answers and dispatch.
+   - **No ambiguities** → omit the Questions section, show it as a regular message with Acceptance Criteria + Tasks, and dispatch immediately without waiting.
+
+   Three deltas from the scope-contract skill, all quick-mode specific:
+   - The contract SHOULD stay under **20 lines** (smaller cap than `/propose`'s ~25) — if it exceeds that, the task is too big for quick and SHOULD be promoted to `/propose`.
+   - That skill forbids AskUserQuestion because the `/propose` gate it was written for is a final sanity check. **The ambiguity path here overrides that** — it carries real open questions, so it uses AskUserQuestion. The no-ambiguity path is a plain message, as the skill says.
+   - There is no correction-round loop here; a correction is folded in and dispatch proceeds.
 
    **Decision rule**: Only ask when there are genuine unknowns that would lead to wrong implementation. If you can make a reasonable decision, make it and note it — don't ask just to be safe.
 
@@ -188,7 +148,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    [include content of skills/frontend-checklist/SKILL.md for Frontend/Electron/review agents]
 
    ## Project Context
-   [full contents of feature-spec/config.yaml if it exists — tech stack, architecture block (pattern, layers, entry_points), and hard_rules. hard_rules are non-negotiable. This is the only project context; omit the section if config.yaml is missing.]
+   [full contents of the config.yaml governing THIS agent's repo, if it exists — single-repo: `feature-spec/config.yaml`; multi-repo: `<this agent's child repo>/feature-spec/config.yaml` (there is no umbrella config). Tech stack, architecture block (pattern, layers, entry_points), and hard_rules. hard_rules are non-negotiable. This is the only project context; omit the section if config.yaml is missing.]
 
    ## Design Decisions
    [from your inline analysis in step 5]
@@ -205,19 +165,14 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    ## Instructions
    - Implement each task in order
    - Follow the design decisions — do NOT deviate
-   - **Implementation Protocol — MUST follow when modifying existing code:**
-     1. **Read** — Read surrounding code (same file + similar files in same directory) to identify existing conventions (naming, patterns, error handling style)
-     2. **Look up** — If the change involves framework API usage or pattern choices, use context7 (resolve-library-id → query-docs) to check the current recommended approach
-     3. **Decide** — Choose approach by priority: project convention > official recommendation > your own judgment. Check convention first, *then* prefer the simplest option that matches it (standard library / native platform feature / an already-installed dependency over new custom code or a new dependency). Never reach for a leaner-but-foreign pattern over an established local one, and never trade away correctness, trust-boundary validation, security, or accessibility for brevity.
-     4. **Implement** — Write the code
-     5. **Verify** — After implementing, confirm: does the new code match surrounding style? Did you introduce any inconsistent patterns?
-   - **CRITICAL — Committing is EXPLICITLY REQUIRED by the user as part of this workflow. You are authorized and expected to commit after every task. This is NOT optional.** (**No-git mode** — only when Step 0 detected no git repo: there is nothing to commit to, so implement directly and skip every per-task commit; the user commits later. The rest of this clause assumes a git repo is present.) After completing each task, you MUST:
+   - **Implementation Protocol** — follow *Match Existing Code Before Writing* → *Decision order when modifying existing code* in `skills/agent-guidelines/SKILL.md` (Read → Look up → Decide → Implement → Verify). That skill is in your eager `skills:` list, so it is already in your context — apply it, do not re-derive it.
+   - **CRITICAL — Committing is EXPLICITLY REQUIRED by the user as part of this workflow. You are authorized and expected to commit after every task. This is NOT optional.** (**No-git mode** — only when Step 0 detected no git repo: there is nothing to commit to, so implement directly and skip every per-task commit; the user commits later. **Still print the `DONE:` line per task** — with no git history to verify against, it is the orchestrator's only completion signal. The rest of this clause assumes a git repo is present.) After completing each task, you MUST:
      1. Stage all changed files with `git add` (specify files by name)
      2. Run all lint commands listed above (if any) — stage any changes they produce
      3. Commit following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`). Format: `<type>[optional scope]: <task-number> <description>` (e.g., `fix: 1.1 resolve login redirect loop`)
    - Do NOT batch multiple tasks into one commit — one commit per task
    - After the commit, report back: "DONE: <task-number> <task-description>"
-   - **Completion contract — do NOT end your turn early.** You are NOT finished until **every** assigned task is committed and you have printed a `DONE:` line for each. Do NOT stop to "report progress" and wait — complete all your tasks within this turn. The ONLY valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:`. Going idle or yielding without one of {all tasks DONE, NEEDS, CONFLICT, BLOCKED} is a protocol violation, not a pause — the orchestrator treats it as a failed dispatch and re-dispatches.
+   - **Completion contract** — binding, per *Completion Contract — do NOT end your turn early* in `skills/agent-guidelines/SKILL.md` (already in your context): not finished until every assigned task is committed with a `DONE:` line each; the only valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:`.
    - Only add code comments for business logic that is not obvious from the code
    - **Signaling a genuine stop (`NEEDS` / `CONFLICT` / `BLOCKED`)** — follow the **Signaling Unknowns** rules in `skills/agent-guidelines/SKILL.md`. In short: do NOT guess an external fact you can't obtain from the repo + this context — commit what is safely done, emit `NEEDS: <question + why blocked + options>`, stop that task; the orchestrator resolves it and resumes you with your context intact. Aside from those signals, do NOT ask questions — if merely ambiguous, make a reasonable decision and flag it.
    - **Language**: All output and reports MUST be in Traditional Chinese. Code and code comments MUST be in English.
@@ -230,20 +185,12 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - **Writes single-threaded**: dispatch implementation/fix agents **one at a time** in dependency order, each committing before the next starts. Only read-only reviewers (Phase 2) are dispatched simultaneously. (Multi-repo exception: agents in *different* child repos may run concurrently.)
    - You will be **automatically notified** when each background agent completes — do NOT poll
    - **Handling a NEEDS return**: if an agent's report contains a `NEEDS:` line, treat it as *paused awaiting an external fact*, not done. Resolve it with whatever tools/knowledge you (the orchestrator) have, then **resume the SAME agent with `SendMessage`** (context intact — do NOT re-dispatch). Because agents run in the background you can service several concurrently. `CONFLICT:` → resolve with the user; `BLOCKED:` → re-scope or re-dispatch with corrected context. See `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns* for the vocabulary.
-   - **Enforce analytical depth for reviewer agents only**: For `review-engineer`, `security-engineer`, and `qa-engineer` dispatches, the dispatched prompt MUST include an "Analytical depth requirement" section instructing the agent to:
-     1. **Enumerate coverage BEFORE findings** — list the categories/dimensions examined:
-        - `review-engineer` → architecture compliance, correctness, performance, readability, test quality
-        - `security-engineer` → each applicable OWASP Top-10 category, authN/authZ, input validation, secrets/config, dependency risks
-        - `qa-engineer` → every spec scenario (or every affected user-facing flow if no spec), happy path + edge cases + error paths + authorization cases (if applicable)
-     2. **Confirm non-findings explicitly** — for every category examined, state the result. "No issues found in category X" is a valid outcome. Silence on a category is treated as "agent skipped it" and fails the review.
-     3. **Severity-rank every finding** — `blocker` / `major` / `minor`, each with one-line rationale. Raw observations without severity are rejected.
-
-     Do NOT apply this structure to implementation agents (Backend/Frontend/Python/Godot/Electron/Database/DevOps/Performance/Documentation) — they are executors; category enumeration produces over-engineered code. Rationale: structural enforcement of exhaustive scanning and auditable coverage is the primary safeguard.
+   - **Enforce analytical depth for reviewer agents only**: read `${CLAUDE_PLUGIN_ROOT}/references/reviewer-depth.md` and include its block verbatim in every `review-engineer` / `security-engineer` / `qa-engineer` dispatch. Quick mode usually has no specs, so the `qa-engineer` line resolves to "every affected user-facing flow" — that conditional is in the file. It also names who must NOT receive it (implementation and fix agents, `performance-engineer`, technical-writer) and why; honor that exclusion.
 
    **Phase execution based on complexity:**
 
    **Trivial / Simple tasks (orchestrator implements inline — NO dispatch):**
-   - **First, borrow the specialist's skills (MANDATORY — do NOT skip).** Implementing inline means you do NOT get the mapped agent's eagerly-loaded skills automatically, so load them yourself: resolve the agent file per `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md` (*Agent-file resolution* — core agents in `agents/`, pack agents via `find ~/.claude/plugins -path "*/<pack>/agents/<role>.md"`), take its `skills:` frontmatter list, and invoke each via the **Skill tool** before writing (e.g., a `(Frontend)` task → load `vue-best-practices`, `frontend-checklist`, `engineering-checklist`, `test-driven-development`; a `(Backend)` task → `dotnet-best-practices`, `clean-architecture`, `engineering-checklist`, `test-driven-development`). Then load any stack-/datastore-specific skill the task needs on demand, exactly as that agent would after its Stack Detection step. If the mapped pack is not installed, the file resolution finds nothing → load only core skills (`engineering-checklist`, `test-driven-development`, …) and note the degradation. This gives inline work the same skill context a dispatched agent would have had — without it, inline output silently loses the specialist's best-practices.
+   - **First, borrow the specialist's skills (MANDATORY — do NOT skip).** Implementing inline means you do NOT get the mapped agent's eagerly-loaded skills automatically, so load them yourself: resolve the agent file per `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md` (*Agent-file resolution* — core agents in `agents/`, pack agents via `find ~/.claude/plugins -path "*/<pack>/agents/<role>.md"`), take its `skills:` frontmatter list, and invoke each via the **Skill tool** before writing (e.g., a `(Frontend)` task → load `vue-best-practices`, `frontend-checklist`, `engineering-checklist`, `test-driven-development`; a `(Backend)` task → `dotnet-best-practices`, `clean-architecture`, `engineering-checklist`, `test-driven-development`). Then load any stack-/datastore-specific skill the task needs on demand, exactly as that agent would after its Stack Detection step. If the mapped pack is not installed, the file resolution finds nothing → load `agent-guidelines` first (it is on every agent's list and carries the Implementation Protocol you are about to apply), then the other core skills (`engineering-checklist`, `test-driven-development`, …), and note the degradation. This gives inline work the same skill context a dispatched agent would have had — without it, inline output silently loses the specialist's best-practices.
    - Phase 1: **you (the orchestrator / main thread) implement it directly** — read the reference/sibling code, write the change, run the project's verification + lint, and commit it yourself following the same per-task → squash discipline. Do NOT spawn a background implementation agent; you are the single writer. (A background specialist here is overkill and its dominant failure mode is going idle mid-task without committing.)
    - Phase 2: review-engineer + security-engineer (parallel, read-only) — still mandatory; you wrote the code, so an independent review is the safeguard.
    - Done.
@@ -326,7 +273,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 - **You ARE the orchestrator** — do NOT spawn a separate orchestrator agent
 - **All worker agents run in background** (`run_in_background: true`, `mode: "bypassPermissions"`)
 - **No spec files are written** — analysis stays in-memory and is passed to agents via prompts
-- `feature-spec/config.yaml` (when present) MUST be forwarded verbatim into every worker agent's prompt as `## Project Context`. `hard_rules` are binding. The project's own docs are never read or forwarded — config.yaml is the only project context. Skip the section silently if config.yaml is missing.
+- `config.yaml` (when present) MUST be forwarded verbatim into every worker agent's prompt as `## Project Context` — the cwd repo's in single-repo mode, and in multi-repo the config of the child repo that agent is bound to (there is no umbrella config). `hard_rules` are binding. The project's own docs are never read or forwarded — config.yaml is the only project context. Skip the section silently if config.yaml is missing.
 - **Execute first, report after** — show the plan and dispatch immediately, do NOT wait for user confirmation
 - **Code review + security review are MANDATORY** for all complexity levels — never skip them
 - If review/QA fails → auto-dispatch fix → **full fresh review** (not just verify original issues) → loop until clean (max 3 rounds) → only then pause

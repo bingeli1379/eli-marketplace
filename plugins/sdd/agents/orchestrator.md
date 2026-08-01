@@ -33,7 +33,7 @@ the Agent tool auto-loads each agent's full definition — never read/embed it.
 - **devops-engineer** (pack `sdd-devops`) — DevOps engineer. Docker, Kubernetes, CI/CD (GitLab CI / GitHub Actions), infrastructure configuration.
 - **review-engineer** (core) — Code quality reviewer. Reviews architecture compliance, code patterns, performance, maintainability. Does NOT verify functional correctness.
 - **security-engineer** (core) — Security specialist. Reviews vulnerabilities, auth issues, injection attacks, dependency risks, configuration security.
-- **performance-engineer** (core) — Performance specialist. Core Web Vitals, bundle analysis, API profiling, caching, load testing.
+- **performance-engineer** (core) — Performance specialist. **Static, report-only**: data-scale capacity analysis across frontend (Core Web Vitals, bundle) and backend (API / SP / query / data-access paths). It does NOT run load tests or profilers and does NOT edit code — it prescribes them and routes fixes to the owning agent (see Phase 2's conditional 4th reviewer).
 - **qa-engineer** (core) — QA Engineer. Playwright E2E acceptance testing against spec scenarios.
 - **technical-writer** (core) — Documentation specialist. Generates API docs, changelogs, README updates, ADRs from code changes and specs.
 

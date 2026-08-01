@@ -47,9 +47,13 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
 3. **Pre-lint and commit (clean slate — runs in background)**
 
+   In **no-git** mode (Step 0), skip this entire step — there is no repo to commit the cleanup to.
+
    First, check `${CLAUDE_PLUGIN_ROOT}/company-conventions.md` for pre-lint skip rules. If the current project matches a skip condition (e.g., .NET project), skip this entire step silently.
 
-   Otherwise, if `lint_commands` are configured in `feature-spec/config.yaml`:
+   **Multi-repo**: there is no umbrella `feature-spec/config.yaml` (per `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md`, config is per-project only) — read `lint_commands` from `<repo>/feature-spec/config.yaml` for **each child repo this change touches**, and run + commit that repo's lint inside it (`git -C <repo> ...`). A touched repo with no config gets no pre-lint.
+
+   Otherwise, if `lint_commands` are configured (single-repo: `feature-spec/config.yaml`):
    1. Run all lint commands **in the background** (`run_in_background: true`) to fix any pre-existing formatting issues
    2. **Do NOT wait for lint to finish** — proceed to Step 4 (read context) and Step 5 (parse tasks) immediately
    3. **Before dispatching Phase 1 agents**, check if lint has completed:
@@ -69,8 +73,10 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - `tasks.md` — implementation checklist
    - `specs/*/spec.md` — all capability specs (acceptance criteria)
 
-   Also read:
-   - `feature-spec/config.yaml` — `lint_commands` plus the `architecture` block (pattern, layers, entry_points, hard_rules). Forwarded to every worker agent in Step 7 so they make changes in the right place and respect `hard_rules`. This is the only project context — do not read the project's own docs (CLAUDE.md, README, etc.).
+   Also read `config.yaml` — `lint_commands` plus the `architecture` block (pattern, layers, entry_points, hard_rules). Forwarded to every worker agent in Step 7 so they make changes in the right place and respect `hard_rules`. This is the only project context — do not read the project's own docs (CLAUDE.md, README, etc.). Config is **per-project**, so where it lives depends on the mode (`${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md`):
+
+   - **single-repo** — `feature-spec/config.yaml`.
+   - **multi-repo** — there is no umbrella config. Read `<repo>/feature-spec/config.yaml` for **each child repo this change touches**, and in Step 7 forward each repo's own config to the agents bound to that repo. Never forward one repo's config to an agent working in another.
 
    `config.yaml` is optional — skip silently if missing (project may not have run `/setup`).
 
@@ -80,6 +86,15 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - Show which files are missing
    - Suggest: "Run `/validate <name>` to check completeness, or `/propose` to generate missing artifacts."
    - Stop.
+
+   **Spec drift check (cheap, non-blocking)**: the spec may have been written long before this run, and the worker agents dispatched in Step 7 cannot see that. Two cheap signals — warn once, then proceed:
+
+   - **Age**: `git log -1 --format=%cr -- feature-spec/changes/<name>/`. Report it only when it is ≥ 14 days, or as context alongside a structure hit. Skip when there is no git — and in **multi-repo** that includes the usual case where `feature-spec/` sits at an umbrella cwd that is not itself a repo. Never substitute a child repo here: `feature-spec/` does not live in one, so `git -C <child> log` would return nothing and read as a false "very old".
+   - **Structure**: from `design.md` `## Affected Files`, take **`### Files to Modify` only** and test each backticked path on disk. Do NOT scan `Files to Create` (absent by definition — scanning it false-positives on every fresh spec) or `Files to Delete` (absence means the deletion already landed). `tasks.md` carries no file paths, so there is nothing to scan there. Skip this signal silently when `## Affected Files` or that subsection is absent — the sub-headings are optional in the template. **Multi-repo**: resolve each path against its owning child repo (the same path→repo binding Step 0 uses), not the umbrella cwd.
+
+   If either signal fires, warn once and continue: `⚠ spec may be stale — last updated <age>; N of M "Files to Modify" paths missing (<list>); confirm before continuing or re-run /propose`
+
+   **This check itself never edits and never blocks** — dispatching against a stale design is the risk being surfaced, and the call is the user's. (Step 5b's reconcile does legitimately write `- [x]` back to `tasks.md`; that is a separate mechanism and is unaffected by this rule.) Environment drift is already covered by the config.yaml staleness check above; do not duplicate it. Task-completion drift (a `- [x]` whose commit is gone) is deliberately NOT checked: Step 5c (squash un-squashed per-task commits) strips task-number prefixes, so a healthy completed group has no numbered commit to find and the check would fire on every clean run.
 
 5. **Parse tasks, detect interrupted state, and show progress**
 
@@ -136,7 +151,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    [auto-loaded by dispatching `subagent_type` (see `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md`) — do NOT read/embed the agent file. Only the absent-pack fallback embeds the routing-table brief into a `general-purpose` dispatch.]
 
    ## Project Context
-   [full contents of feature-spec/config.yaml if it exists — tech stack, lint commands, and the architecture block (pattern, layers, entry_points). hard_rules are non-negotiable invariants; do not violate them even if a task description appears to ask for it. This is the only project context; omit if the file is missing.]
+   [full contents of the config.yaml governing THIS agent's repo, if it exists — single-repo: `feature-spec/config.yaml`; multi-repo: `<this group's child repo>/feature-spec/config.yaml`. Tech stack, lint commands, and the architecture block (pattern, layers, entry_points). hard_rules are non-negotiable invariants; do not violate them even if a task description appears to ask for it. This is the only project context; omit if the file is missing.]
 
    ## Full Design Context
    [complete design.md — so the agent understands the full picture even though it only implements its own group]
@@ -159,20 +174,15 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - Implement each task in order
    - Follow the spec scenarios as acceptance criteria
    - Follow the design decisions — do NOT deviate
-   - **Implementation Protocol — MUST follow when modifying existing code:**
-     1. **Read** — Read surrounding code (same file + similar files in same directory) to identify existing conventions (naming, patterns, error handling style)
-     2. **Look up** — If the change involves framework API usage or pattern choices, use context7 (resolve-library-id → query-docs) to check the current recommended approach
-     3. **Decide** — Choose approach by priority: project convention > official recommendation > your own judgment. Check convention first, *then* prefer the simplest option that matches it (standard library / native platform feature / an already-installed dependency over new custom code or a new dependency). Never reach for a leaner-but-foreign pattern over an established local one, and never trade away correctness, trust-boundary validation, security, or accessibility for brevity.
-     4. **Implement** — Write the code
-     5. **Verify** — After implementing, confirm: does the new code match surrounding style? Did you introduce any inconsistent patterns?
-   - **CRITICAL — Committing is EXPLICITLY REQUIRED by the user as part of this workflow. You are authorized and expected to commit after every task. This is NOT optional.** (Multi-repo mode: all staging and committing for this group happen inside the group's target child repo — `git -C <repo> ...` — never at the umbrella root. **No-git mode** — only when Step 0 detected no git repo at all: there is nothing to commit to, so implement the code directly and skip every per-task commit and the `DONE:`-after-commit requirement; the user commits later. Everything below assumes a git repo is present.) After completing each task, you MUST:
+   - **Implementation Protocol** — follow *Match Existing Code Before Writing* → *Decision order when modifying existing code* in `skills/agent-guidelines/SKILL.md` (Read → Look up → Decide → Implement → Verify). That skill is in your eager `skills:` list, so it is already in your context — apply it, do not re-derive it.
+   - **CRITICAL — Committing is EXPLICITLY REQUIRED by the user as part of this workflow. You are authorized and expected to commit after every task. This is NOT optional.** (Multi-repo mode: all staging and committing for this group happen inside the group's target child repo — `git -C <repo> ...` — never at the umbrella root. **No-git mode** — only when Step 0 detected no git repo at all: there is nothing to commit to, so implement the code directly and skip every per-task commit; the user commits later. **Still print the `DONE:` line per task** — with no git history to verify against, it is the orchestrator's only completion signal. Everything below assumes a git repo is present.) After completing each task, you MUST:
      1. Stage all changed files with `git add` (specify files by name)
      2. Run all lint commands listed above (if any) to fix formatting — stage any changes they produce
      3. Commit code + lint fixes following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`). **Read the skill for type list, description rules, and format.** The only sdd-specific addition: prefix the description with the task number — `<type>[optional scope]: <task-number> <description>` (e.g., `feat: 1.1 add UserSearch entity`, `test: 2.3 add unit tests for search service`).
    - Do NOT modify `tasks.md` — the orchestrator handles checkbox updates after merging your work.
    - Do NOT batch multiple tasks into one commit — one commit per task, no exceptions
    - After the commit, report back: "DONE: <task-number> <task-description>"
-   - **Completion contract — do NOT end your turn early.** You are NOT finished until **every** assigned task is committed and you have printed a `DONE:` line for each. Do NOT stop to "report progress" and wait for further instructions — complete all your tasks within this turn. The ONLY valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:` (below). Going idle or yielding without one of {all tasks DONE, NEEDS, CONFLICT, BLOCKED} is a protocol violation, not a pause — the orchestrator treats it as a failed dispatch and re-dispatches.
+   - **Completion contract** — binding, per *Completion Contract — do NOT end your turn early* in `skills/agent-guidelines/SKILL.md` (already in your context): not finished until every assigned task is committed with a `DONE:` line each; the only valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:` (below).
    - Only add code comments for business logic that is not obvious from the code — if good naming makes it clear, skip the comment
    - Do NOT narrate your actions ("Now I will...", "Let me..."). Report only structured output: task status, files changed, test results.
    - **Signaling a genuine stop (`NEEDS` / `CONFLICT` / `BLOCKED`)** — follow the **Signaling Unknowns** rules in `skills/agent-guidelines/SKILL.md`. In short: do NOT guess an external fact you can't obtain from the repo + this context — commit what is safely done, emit `NEEDS: <question + why blocked + options>`, and stop that task; the orchestrator resolves it and resumes you with your context intact. Aside from those signals, do NOT ask questions — specs should be complete; if merely ambiguous, make a reasonable decision and flag it.
@@ -189,15 +199,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - Give each agent a descriptive `name` (e.g., `"dotnet-search-api"`, `"vue-search-page"`)
    - Dispatch implementation/fix (write) agents **sequentially** — wait for one to commit before dispatching the next. Only read-only reviewers (Phase 2) are dispatched simultaneously.
    - You will be **automatically notified** when each background agent completes — do NOT poll or sleep
-   - **Enforce analytical depth for reviewer agents only**: For every `review-engineer`, `security-engineer`, and `qa-engineer` dispatch (Phase 2 initial run AND all fresh-review retry rounds), the dispatched prompt MUST include an "Analytical depth requirement" section instructing the agent to:
-     1. **Enumerate coverage BEFORE findings** — list the categories/dimensions examined:
-        - `review-engineer` → architecture compliance, correctness, performance, readability, test quality
-        - `security-engineer` → each applicable OWASP Top-10 category, authN/authZ, input validation, secrets/config, dependency risks
-        - `qa-engineer` → every spec WHEN/THEN scenario, happy path + edge cases + error paths + authorization cases
-     2. **Confirm non-findings explicitly** — for every category examined, state the result. "No issues found in category X" is a valid and expected outcome. Silence on a category is treated as "agent skipped it" and fails the review.
-     3. **Severity-rank every finding** — `blocker` / `major` / `minor`, each with one-line rationale. Raw observations without severity are rejected.
-
-     Do NOT apply this structure to Phase 1 implementation agents or Phase 2 fix agents (Backend/Frontend/Python/Godot/Electron/Database/DevOps/Performance) — they are executors; category enumeration produces over-engineered code. Do NOT apply to Phase 3 technical-writer either — documentation is executional. Rationale: structural enforcement of exhaustive scanning and auditable coverage is the primary safeguard.
+   - **Enforce analytical depth for reviewer agents only**: read `${CLAUDE_PLUGIN_ROOT}/references/reviewer-depth.md` and include its block verbatim in every `review-engineer` / `security-engineer` / `qa-engineer` dispatch — Phase 2 initial run AND all fresh-review retry rounds. That file also names who must NOT receive it (Phase 1 implementation agents, Phase 2 fix agents, `performance-engineer`, Phase 3 technical-writer) and why; honor that exclusion.
 
    **Handling a NEEDS return (orchestrator) — applies to every phase:**
 
@@ -304,7 +306,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 - **One write agent at a time**: writes are single-threaded. Do NOT dispatch a second implementation or fix agent while one is still running — concurrent edits on the same branch diverge and collide. Only read-only reviewers (Phase 2) run simultaneously. (Multi-repo exception: agents in *different* child repos may run concurrently.)
 - **Specs are the single source of truth** — avoid asking questions unless something is truly blocking and cannot be reasonably inferred. When in doubt, make a reasonable decision and flag it in the report.
 - Always read ALL context files before dispatching agents
-- `feature-spec/config.yaml` (when present) MUST be forwarded verbatim into every worker agent's prompt as the `## Project Context` section. `hard_rules` from config.yaml are non-negotiable. The project's own docs are never read or forwarded — config.yaml is the only project context. Skip the section silently if config.yaml is missing — never fabricate placeholder content.
+- `config.yaml` (when present) MUST be forwarded verbatim into every worker agent's prompt as the `## Project Context` section — the cwd repo's in single-repo mode, and in multi-repo the config of the child repo that agent is bound to (there is no umbrella config). `hard_rules` from config.yaml are non-negotiable. The project's own docs are never read or forwarded — config.yaml is the only project context. Skip the section silently if config.yaml is missing — never fabricate placeholder content.
 - Only dispatch agents for PENDING tasks (skip completed `- [x]` tasks)
 - Agents do NOT modify `tasks.md` — the orchestrator updates checkboxes after squashing each group
 - **Safe tasks.md commits**: When committing tasks.md checkbox updates, ALWAYS: (1) `git status --short` to check for unexpected staged files, (2) stage ONLY tasks.md by exact path (`git add <path>`), (3) NEVER `git add .` for metadata-only commits. Lint-staged or stale index entries can silently stage unrelated files — a `git status` check before commit prevents catastrophic reverts.
