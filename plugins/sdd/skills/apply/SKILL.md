@@ -81,6 +81,15 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - Suggest: "Run `/validate <name>` to check completeness, or `/propose` to generate missing artifacts."
    - Stop.
 
+   **Spec drift check (cheap, non-blocking)**: the spec may have been written long before this run, and the worker agents dispatched in Step 7 cannot see that. Two cheap signals — warn once, then proceed:
+
+   - **Age**: `git log -1 --format=%cr -- feature-spec/changes/<name>/`. Report it only when it is ≥ 14 days, or as context alongside a structure hit. Skip when there is no git — and in **multi-repo** that includes the usual case where `feature-spec/` sits at an umbrella cwd that is not itself a repo. Never substitute a child repo here: `feature-spec/` does not live in one, so `git -C <child> log` would return nothing and read as a false "very old".
+   - **Structure**: from `design.md` `## Affected Files`, take **`### Files to Modify` only** and test each backticked path on disk. Do NOT scan `Files to Create` (absent by definition — scanning it false-positives on every fresh spec) or `Files to Delete` (absence means the deletion already landed). `tasks.md` carries no file paths, so there is nothing to scan there. Skip this signal silently when `## Affected Files` or that subsection is absent — the sub-headings are optional in the template. **Multi-repo**: resolve each path against its owning child repo (the same path→repo binding Step 0 uses), not the umbrella cwd.
+
+   If either signal fires, warn once and continue: `⚠ spec may be stale — last updated <age>; N of M "Files to Modify" paths missing (<list>); confirm before continuing or re-run /propose`
+
+   **This check itself never edits and never blocks** — dispatching against a stale design is the risk being surfaced, and the call is the user's. (Step 5b's reconcile does legitimately write `- [x]` back to `tasks.md`; that is a separate mechanism and is unaffected by this rule.) Environment drift is already covered by the config.yaml staleness check above; do not duplicate it. Task-completion drift (a `- [x]` whose commit is gone) is deliberately NOT checked: Step 5c (squash un-squashed per-task commits) strips task-number prefixes, so a healthy completed group has no numbered commit to find and the check would fire on every clean run.
+
 5. **Parse tasks, detect interrupted state, and show progress**
 
    Parse `tasks.md`:
