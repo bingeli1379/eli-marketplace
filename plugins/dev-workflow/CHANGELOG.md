@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.14.0] - 2026-08-02
+
+### Added
+- `/review-workflow` now hunts the defect that only edits produce: text added into a step invalidating something already stated beside it. A stated limit the addition pushes past, a value a later step still expects after the change stopped producing it, or a "do this first" instruction that inserted paragraphs quietly pushed below the thing it was supposed to come before. Every sentence still reads correct on its own — which is exactly why re-reading does not find these — so the audit now checks four specific things around an insertion instead of relying on a general pass.
+- The audit also catches a rule you changed in one place while the summary table, the checklist line, or the role that has to carry it out still describe the old version. It finds these by grepping a distinctive word from the changed rule across the repo rather than by re-reading, so the copies that live far from the edit surface too.
+- After it applies fixes, `/review-workflow` runs that same sweep over its own edits and reports it — which word it grepped, how many places it checked, what else it had to update. A fix that landed in one of six places now shows up in the same run instead of coming back as a finding on the next one. The sweep covers the text-pass fixes as well.
+- Every report now ends with a convergence line telling you whether it is worth running again: whether the findings are pre-existing problems still being uncovered, or leftovers from the previous run's own fixes getting shallower each round. When the run cannot see whether an earlier pass happened — the usual case when you rerun in a fresh session — it says so instead of claiming this is the first pass.
+
 ## [1.13.0] - 2026-08-01
 
 ### Added
