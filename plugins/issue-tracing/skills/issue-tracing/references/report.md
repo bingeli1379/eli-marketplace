@@ -1,4 +1,4 @@
-# Step 12 — Produce the report
+# Report production (loaded at step 6's GATE)
 
 ## Pre-report evidence dump (NOT a checkbox list)
 
@@ -13,6 +13,17 @@ Before writing the report, paste the evidence below in chat verbatim. **No ticki
 
 Time window (GMT+8): <from> ~ <to>
 Burst window (if narrower than the URL range): <from> ~ <to>
+
+Chain visibility (one line per hop, in call order):
+# How each hop became visible, and — for the LAST hop — which of 5f's three visibility-end
+# forms you excluded. A hop marked "trace" is one you SAW; a hop marked "navigated" is one you
+# INFERRED from a host / log / code / dependency doc. If the last hop reads "chain simply ended",
+# the root cause is not established — go back to 5f before writing Root Cause.
+- <svc-1>: trace | navigated (<how>)   role: entry / pass-through / root cause / boundary
+- <svc-2>: ...
+- Not trace-covered on this chain: <svc, svc>  (or "none")
+  # A factual note, not a recommendation. Accumulated across investigations it is the
+  # evidence for which services are worth instrumenting next.
 
 Per-project error counts (size:0 + track_total_hits:true — raw log-line count):
 # NOTE: one failed request can emit multiple log lines (e.g. AccessLog + Connection + Unhandled + fatal = 4 lines per failure). Sample one failure, count its lines, and state both raw lines AND estimated request count so the Impact number isn't inflated.
@@ -50,6 +61,8 @@ If any block is empty or says "skipped", the work is incomplete — go back and 
 
 ## HARD RULES (read before writing)
 
+0. **憑證絕對不可原文引用——這條在寫任何一段之前先套用。** auth / token / session 失敗的 log，**訊息本體常常就是憑證本身**（完整 bearer / JWT、api key、簽章 cookie、帶密碼的連線字串）。而報告會逐字引用 dominant pattern 的原文，所以 auth 類事故是**預設會外洩**，不是失手才外洩。做法：用 **exception type + 角色**描述（「access token 驗證失敗」），值本身截斷或遮蔽。適用範圍包含報告、pre-report evidence dump、chain note、以及任何貼到 ticket / 對話的內容。看起來已過期也不例外——從 log 行判斷不出來，而報告的壽命比 token 長。
+
 1. **Impact 的「使用者體驗」禁止出現任何 code 元素**：函式名、變數名、語法（`await`、`try/catch`、`.then()`、`Promise`）、file path、line number 都不行。只能寫**使用者眼睛看到什麼**。違反這條請重寫，不要送出。
    - ❌ 反例：「`<funcName>` 的 `await` 拋例外後 `<varName>` 沒被更新且未被 catch」
    - ✅ 正例：「使用者進入 `<頁面>` 後 `<某區塊>` 顯示空白或維持上一次值，頁面其餘正常，因為 error 沒被 catch」
@@ -62,7 +75,7 @@ If any block is empty or says "skipped", the work is incomplete — go back and 
      - **C. input / load 變了** → 同一段 code、沒人 release，但進來的 request 變了：bot / 暴量 / 新客戶資料 / 一直潛伏今天才被打中的 edge case（往 caller 鑽，step9 caller-direction drill）。
      - **D. 啥都沒變** → 本來就這個錯誤率 = chronic 背景 / by-design（step9 baseline ratio ≈ 1 即屬此類）。
      - ⚠️ 最常見的漏判：沒人 release 就直接跳 B/D，漏掉 **C**（code 沒變但觸發變了）。
-     佐證用可查、不可捏造的數字：git blame 意圖、IP 集中度、distinct customerId 集中度（log 分析步驟）、incident/baseline 暴增倍率（`step9-cross-project-drill.md` correlation check）。這層是使用者做後續決策（封 bot / 改 code / 接受）的依據，**必須優先查實**。查不到就明寫「觸發源未判定 + 還缺什麼資料」，**絕不能因為「還沒確定是不是 bug」就把觸發源丟進 Unknowns** — 事實層與判斷層獨立。
+     佐證用可查、不可捏造的數字：git blame 意圖、IP 集中度、distinct customerId 集中度（log 分析步驟）、incident/baseline 暴增倍率（`next-hop-drill.md` correlation check）。這層是使用者做後續決策（封 bot / 改 code / 接受）的依據，**必須優先查實**。查不到就明寫「觸發源未判定 + 還缺什麼資料」，**絕不能因為「還沒確定是不是 bug」就把觸發源丟進 Unknowns** — 事實層與判斷層獨立。
    - **機制 / 判斷（看法層）**：agent 認為這是 bug / 預期行為 / 設計缺陷，**標明這是判斷**並給依據（stack trace、code、git blame）。注意 throw 的那行不一定是真因，可能是下游症狀（頂層 NullRef 源自上游 bad state）——先判這行是因還是果。
    - 兩層獨立：觸發是 bot 不代表沒有 code 問題；是設計意圖也要分清「意圖」與「實作後果」是否一致（例：刻意拒絕 token 是對的，但用 unhandled exception 回 500 仍是缺陷）。
 
@@ -76,6 +89,8 @@ If any block is empty or says "skipped", the work is incomplete — go back and 
 Output **two versions**: Traditional Chinese first (full detail, the user reads it), then English (super-short, the user pastes to Jira / shares with others who only ask "what happened" + "how bad").
 
 **All times in the report use GMT+8 (Asia/Taipei) ONLY.** Convert UTC from URLs / logs to GMT+8 internally; do not show UTC alongside (the user does not need it). Show the timezone tag once: `(GMT+8)` or `+08:00`.
+
+**Normalize the timestamp to an absolute instant BEFORE converting — do not assume the log's timestamp is an ISO date string.** A stream's timestamp storage format comes from 1c's per-stream mapping (step 1c / step 3's family classification): one family stores ISO 8601, another can store an **epoch-millis value carrying sub-millisecond digits, as a string** (e.g. `"1785595083661.277400"`). Range-filtering and sorting work on both, so the format never surfaces as an error during the investigation — it surfaces **in the report**, as a burst window that is off by decades or renders as a raw number. Parse to an instant, then shift to GMT+8. If you cannot determine a timestamp's format with confidence, say so in Unknowns rather than printing a time you have not verified — a wrong incident window is worse than a missing one, because everyone downstream correlates against it.
 
 ### Chinese version — full
 
