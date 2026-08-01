@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.9.0] - 2026-08-02
+
+### Added
+- The whole call chain behind one failing request now comes back in a single lookup, where your logs carry an id shared across services, instead of one lookup per service. It also works when you start from an ordinary log URL — the request id on that log line is matched to the shared id — so the faster path is available from the entry point you already use, not only from a tracing tool.
+- Investigations now work on logs that name things differently. Which field holds the service, the environment, the severity, the message text and the timestamp is read from your own environment notes instead of assumed, so a service whose logs land in a second stream under a different naming scheme no longer reads as "no data".
+
+### Fixed
+- A trail that simply runs out is no longer reported as the cause. When the last service you can see is where your logging coverage ends rather than where the fault began, the report says that, instead of blaming whichever service happened to be last.
+- Reports no longer repeat credentials found in log text. A failed sign-in can log the entire token, and that value used to travel into the report word for word; it is now described by type and left out.
+- Incident times are now correct on logs that store the timestamp in an unusual format. Such a window could previously come out wrong by years, or print as a raw number.
+- A dashboard panel's "ignore this known noise" filters are now carried into the investigation, and checked that they actually applied — so the error reported as most common is not counted over noise the panel was deliberately hiding.
+
 ## [1.8.0] - 2026-07-31
 
 ### Added
