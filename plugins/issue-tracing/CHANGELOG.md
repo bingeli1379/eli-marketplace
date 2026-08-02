@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.10.0] - 2026-08-02
+
+### Added
+- Impact now reports each outcome separately instead of a single "failed requests" number: how many failed, how many succeeded but were slow enough to hurt, and how many were unaffected. Slow-but-successful requests previously had nowhere to appear at all, so a login that eventually worked after thirteen seconds read as no impact. Where the logs carry timings, the report also gives the spread — median, worst, and how many landed in each band — with the cut-off chosen from the data rather than guessed in advance.
+- When the cause turns out to be shared infrastructure, the report now covers the other services hit by it, not just the one you started from. Blaming a shared layer while naming a single casualty is the first thing anyone reading the report will question. If one of those services could not be counted, the report says the impact figure is a floor and names who is missing from it.
+- Investigations that correctly conclude "nothing is wrong" get their own report shape. The old template assumed there was damage to describe, so a run that found only benign noise had to fill it with zeroes; the new one answers the question actually worth answering — why this alert is noisy and how to stop it firing.
+
+### Fixed
+- An error count is no longer reported as a failure count. Libraries routinely log an exception before something upstream catches it and returns a perfectly good response, so the two numbers can be completely unrelated — one investigation would have reported 149 errors breaking logout for requests that all succeeded. The request's actual result is now established before anything reaches the report.
+- Searching for an exception by its short name no longer comes back empty while the text is sitting right there. A dotted name like `Some.Namespace.SomeException` is stored as a single unit, so asking for the last part of it matches nothing — and nothing about the result tells you the question was wrong. Affects essentially every .NET exception, namespace and logger name.
+- A common error pattern can no longer be dismissed from the conclusion on reasoning alone. Anything above the significance threshold now needs a measured comparison to be set aside; without one it is listed as excluded-but-unmeasured, so you can see which part of the conclusion rests on an argument rather than a number.
+
+### Changed
+- The confidentiality rule now covers what the investigation produces, not only the skill itself. A real report collects internal hostnames, pod names, internal IPs, customer ids and tokens, so before any of it is written to a file the destination's visibility has to be established — writing it into an open repository is the easy mistake.
+
 ## [1.9.1] - 2026-08-02
 
 ### Fixed
