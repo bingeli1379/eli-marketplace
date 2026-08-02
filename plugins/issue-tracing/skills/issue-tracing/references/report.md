@@ -25,8 +25,35 @@ Chain visibility (one line per hop, in call order):
   # A factual note, not a recommendation. Accumulated across investigations it is the
   # evidence for which services are worth instrumenting next.
 
+Request outcome (HARD RULE 6 — error count is not failure count). Impact needs a number for
+EACH of the three outcomes, so each has a line here; "n/a" is allowed, silence is not:
+- Status of the traced request(s): <200 / 5xx / not obtained>
+- Structured access fields available? <yes → count of status>=500 in window | no → how outcome was established>
+- Failed: <N> (<statuses>, <paths>)
+- Succeeded but degraded: <N>  | latency spread: median <x>s, max <y>s, bands <…>  | n/a + why
+  # Pulled and bucketed client-side; the cut is chosen FROM the distribution, not guessed
+  # in advance — a guessed threshold sweeps in whatever slowness the service always has.
+- Unaffected in the same window: <N> or "rest of the window normal"
+- If 200: the errors were logged before an upper layer caught them — say so here, and Impact is not
+  a failure count. If not obtained: it goes in Unknowns; do NOT substitute the error count.
+
+Co-affected callers (fill whenever the breadth classifier returned fleet-wide — SKILL.md 5d):
+- <svc>: <N> failed / <N> degraded / <N> distinct users     (same signature, same window)
+- Peeled until the breadth query returned 0? <yes → all callers accounted for | no → who is missing>
+- Any caller NOT quantified ⇒ Impact is a LOWER BOUND and must say so, naming who is missing.
+# A shared-layer root cause with one named victim contradicts itself; this block is what stops
+# the report scoping Impact to the anchor by default.
+
+Lines-per-request ratio (REQUIRED before any count reaches Impact):
+- Traced request emitted <N> lines matching the anchor filter → ratio 1:<N>
+- Raw line count <M> ÷ <N> ≈ <M/N> requests
+# One failure routinely emits several lines — an access log, a connection error, the unhandled
+# exception, a fatal. Reporting lines as requests inflates Impact by exactly that factor (an
+# observed run: 2 lines per request, so the honest number was half the count). This costs
+# nothing: the trace you already pulled in 5.0 IS the sample — count its lines for this filter.
+# If no trace was available, sample one failing request's lines by correlation id instead.
+
 Per-project error counts (size:0 + track_total_hits:true — raw log-line count):
-# NOTE: one failed request can emit multiple log lines (e.g. AccessLog + Connection + Unhandled + fatal = 4 lines per failure). Sample one failure, count its lines, and state both raw lines AND estimated request count so the Impact number isn't inflated.
 - <project-A>: <N> errors  | top message: "<first line of dominant pattern>"
 - <project-B>: <N> errors  | top message: "..."
 
@@ -84,6 +111,13 @@ If any block is empty or says "skipped", the work is incomplete — go back and 
    - 判定為**網路/連線層** → How to Resolve / Unknowns 明列「需與 **網路 / IT** 確認 `<RKE→datastore 網段 / 交換器 / DNS>`」；判定為**資料層本身** → 明列「需與 **DBA / 資料層 owner** 確認 `<node、負載、blocked clients>`」。owner 名稱從環境知識（step 1c）取，保持通用。
    - **判不出來**才並列兩個 owner + 兩個確認項，並寫明還缺什麼資料——不可因「還沒確定」就整包丟 Unknowns 讓使用者自己查。
 
+6. **Error level ≠ 請求失敗。把任何 error log 寫進 Impact 之前，先拿到那個請求的 HTTP status。**
+   Library 常在例外被上層 handler 接住**之前**就先用 Error 記一筆——ORM、HTTP client、gRPC interceptor 都會。所以「N 筆 error」跟「N 個請求失敗」之間**沒有必然關係**，而報告的嚴重度整個掛在這個差別上。
+   - 判法是機械的，而且成本為零：**拿一筆 hit 的 trace-correlation id 撈整條鏈（5.0 已經做過），看最後那筆 access log 的 status code。** 200 就是被接住了、使用者沒事；5xx 才是真的失敗。
+   - 若該 stream 有結構化 access 欄位（status / path / 耗時），**直接查 `status_code >= 500` 的清單**——那是「誰真的失敗、失敗在哪個 endpoint、等了幾秒」的唯一直接來源，不是補充色彩。
+   - 兩個方向都要防：**全 200 卻報成事故**（假警報，把良性噪音寫成「N 筆錯誤影響某流程」），以及**有 5xx 卻因為「大多數看起來還好」而漏報**。
+   - 拿不到 status 就明寫「未取得請求結果」並列進 Unknowns——**不可用 error 筆數代替失敗數**。
+
 ## Output
 
 Output **two versions**: Traditional Chinese first (full detail, the user reads it), then English (super-short, the user pastes to Jira / shares with others who only ask "what happened" + "how bad").
@@ -112,7 +146,12 @@ No "中文版" / "English" headings. Output the report blocks directly. Separate
 
 **Impact**
 - 受影響使用者：~<N>（distinct customerId）or n/a
-- 失敗 request：<N> / <duration>
+- 請求結果（三類都要有數字，缺的寫 n/a + 原因）：
+  - 失敗：<N> 筆（<主要 status>），端點：<path…>
+  - 成功但顯著變慢：<N> 筆，<延遲分佈，見下>
+  - 未受影響：<N> 筆 or「同窗其餘請求正常」
+- 延遲（只在有「慢但成功」時）：中位數 <x>s、最大 <y>s；區間：<<5s: N>、<5–10s: N>、<10–20s: N>、<>20s: N>
+- 其他同樣中招的 caller：<service: N 筆 / N 人> or「已確認僅此服務」
 - 時間：<from> ~ <to> (GMT+8)
 - 使用者體驗：使用者進入 <產品> 後 <看到什麼>，<其他部分如何>，因為 <error 處理>。
 
@@ -124,6 +163,35 @@ No "中文版" / "English" headings. Output the report blocks directly. Separate
 - <事項 1>
 - <事項 2>
 ```
+
+### 變體：查完發現沒有事故（benign noise）
+
+**當 HARD RULE 6 的結果是「請求全部成功」時，用這個形狀，不要硬填上面的模板。** 硬填會逼你在「受影響使用者」寫 0、在「使用者體驗」寫「沒有異常」——讀起來像在閃避，而且把真正該講的事擠掉了。這種結論**不是失敗的調查**，它回答的是一個不同但同樣有價值的問題，所以主題要換掉：**為什麼這條 alert 在吵，以及怎麼讓它不要再吵。**
+
+Heading 順序：**Root Cause → 為什麼無影響 → 噪音組成 → How to Resolve → Unknowns**。
+
+```
+**Root Cause**
+- 觸發源：<多半是 D 啥都沒變 —— 附 incident/baseline 倍率與背景率>
+- 機制（判斷）：<這些 error 是什麼、誰記的、為什麼是良性>
+
+**為什麼無影響**
+- 請求結果：<N> 筆請求全部 <200 / 3xx>，證據：<trace 末端的 access log / status>=500 查詢回 0>
+- error 是在例外被上層接住**之前**由 <哪一層 library> 記的 → level 反映不了實際結果
+
+**噪音組成**（這條 filter 到底在吵什麼）
+- 總計 <N> 筆 → <pattern A> <n1> 筆（<x1>%）、<pattern B> <n2> 筆（<x2>%）…
+- 良性佔比：<~X>%
+
+**How to Resolve**
+- 讓它不再吵：<具體的排除條件 / alert 門檻調整 —— 寫成可以直接照做的形式>
+- 若要根治噪音源：<可選，通常優先度低>
+
+**Unknowns**
+- <沒有量測就排除的 pattern，以及還缺什麼數字>
+```
+
+英文版兩行照舊，但 `Impact:` 要明說沒有影響，例如 `Impact: none, all N requests succeeded; ~X% of this filter is benign noise`。**不要省略 Impact 行** —— 讀的人需要看到「有人查過而且確認沒事」，那跟沒查過完全是兩回事。
 
 ### English version — super short
 
