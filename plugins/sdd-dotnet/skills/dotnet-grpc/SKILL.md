@@ -2,7 +2,7 @@
 name: dotnet-grpc
 version: "1.0.0"
 category: "Web"
-description: "Build or review gRPC services and clients in .NET with correct contract-first design, streaming behavior, transport assumptions, and backend service integration."
+description: "Use when building or reviewing gRPC services and clients in .NET — contract-first design, streaming behavior, transport assumptions, and backend service integration."
 compatibility: "Requires ASP.NET Core gRPC or gRPC client projects."
 ---
 

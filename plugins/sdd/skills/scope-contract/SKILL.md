@@ -1,12 +1,12 @@
 ---
 name: scope-contract
 description: >
-  Confirm a change's intent with the user as a single 現在 → 改成 (Before → After) list
-  BEFORE writing any code or design. The highest-ROI gate in the sdd workflow: it catches
-  the missed-downstream-consumer class of bug (a callsite not updated, a flow step
-  unaccounted for) that otherwise only surfaces at review. Use standalone before a native
-  coding session, inside /quick, or as the propose checkpoint. Lightweight — one chat
-  message, one correction round, no artifacts.
+  Use when a change's intent should be confirmed with the user BEFORE any code or design
+  is written — standalone before a native coding session, inside /quick, or as the propose
+  checkpoint. Presents the intent as a single 現在 → 改成 (Before → After) list, the
+  highest-ROI gate in the sdd workflow: it catches the missed-downstream-consumer class of
+  bug (a callsite not updated, a flow step unaccounted for) that otherwise only surfaces at
+  review. Lightweight — one chat message, one correction round, no artifacts.
 user-invocable: true
 ---
 
