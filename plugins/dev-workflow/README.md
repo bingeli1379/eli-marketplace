@@ -41,9 +41,9 @@ Companion to `/review-prompt`. Where `/review-prompt` judges prompt *text* quali
 
 ### `/improve-skill` — Improve Skills from Real Usage
 
-Usage-driven and cross-repo. When a marketplace skill (`/sdd`, `/commit`, `/review`, `/issue-tracing`, …) misbehaves, misses a case, or feels clunky while you use it as a tool in *another* project, `/improve-skill` reads what went wrong in the session and patches that skill's source in your local marketplace repo — the git working copy, **not** the installed cache — then validates the edits via `/review-prompt`, `/review-workflow`, and the structure check.
+Usage-driven and cross-repo. When anything a plugin ships — a skill, an output style or persona, an agent, a hook — misbehaves, misses a case, or feels clunky while you use it as a tool in *another* project, `/improve-skill` reads what went wrong in the session and patches that target's source in the local marketplace repo that owns it — the git working copy, **not** the installed cache — then validates the edits via `/review-prompt`, `/review-workflow`, and the structure check.
 
-- Resolves the marketplace repo path from your global `~/.claude/CLAUDE.md` (asks once and offers to record it if missing)
+- Resolves each target's owning marketplace repo path from your global `~/.claude/CLAUDE.md` (asks once and offers to record it if missing); one run may span several repos, and each is edited, validated, and handed off separately
 - Proposes a changeset for review before applying; routes durable preferences to memory / `CLAUDE.md` instead of editing a skill
 - Evidence-driven — only fixes things that actually went wrong when the skill was used, not speculative polish
 - Does **not** commit, push, or reinstall the plugin — you do those afterward so the fix goes live
