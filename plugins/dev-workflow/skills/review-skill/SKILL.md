@@ -1,6 +1,6 @@
 ---
 name: review-skill
-description: Use when auditing or reviewing a skill or agent prompt file — its text quality (removed rules, broken references, bloat, hardcoded values, cross-file consistency, contradictory wording) and its procedural logic (resume/idempotency, step ordering, broken invariants, unhandled edge cases, dependency graphs, destructive-op safety), plus duplication and single-source-of-truth drift across the repo. Audits prompt files — SKILL.md, agent .md, output styles, bundled references — NOT application code. Triggers on review, audit, or check a skill, a prompt, an agent file, or a workflow's logic; --report-only to surface findings without fixing; or /review-skill.
+description: Use when auditing or reviewing a skill or agent prompt file — its text quality (removed rules, broken references, bloat, hardcoded values, cross-file consistency, contradictory wording) and its procedural logic (resume/idempotency, step ordering, broken invariants, unhandled edge cases, dependency graphs, destructive-op safety), plus duplication and single-source-of-truth drift across the repo. Audits prompt files — SKILL.md, agent .md, output styles, bundled references — NOT application code. Triggers on review, audit, or check a skill, a prompt, an agent file, or a workflow's logic; --report-only to surface findings without fixing; or /review-skill. A bare "review" with no target named also means this inside a plugin or marketplace repo — one whose content is plugins, skills, and agents: there the changed skill and agent files ARE the target.
 ---
 
 # Skill Audit
@@ -74,49 +74,59 @@ Audit agent and skill prompt files on two levels: whether the prompt still **say
    - **Severity**, most-severe first: data loss / state corruption > silent wrong result that ships > recoverable stall / degraded behavior > cosmetic.
    - **Be conservative.** A workflow deliberately leaves judgment to the executing agent — flag genuine logic defects, not "this could be more explicit." Every finding must carry a concrete failure scenario; if you cannot state one, it is not a finding.
 
-6. **Produce the audit report** (Traditional Chinese; technical terms, file names, and rating labels stay English)
+6. **Produce the audit report**
 
-   **Finding format is MANDATORY structured** — every finding carries a location (`file:line`), what changed, and the risk / failure / rationale. A bare description is not acceptable output.
+   **Language: Traditional Chinese prose, English ONLY for identifiers** — file paths, section names as they appear in the audited file, rating labels (`RISKY` / `BROKEN` / `NOTE` / `CONFIRMED` / `PLAUSIBLE`), severity literals, criteria letters, lens class numbers. **Section headings are Chinese too**; a half-English heading set reads as an inconsistency rather than a convention.
 
-   One combined report. Do not print the text pass as its own separate report; fold its verdict into the block:
+   **One format, whatever the file count.** The shape below is multi-file native and is the only shape — with a single target the per-file overview is one line and nothing else changes.
 
-   ```
-   ## Skill Audit
+   **Order by what the reader must do**, never by how the audit works: what needs them, what is already handled, what was not covered. The text-pass / lens split is internal machinery and must not appear as report structure.
 
-   ### Targets: <files requested or detected> — pulled in as an owner: <files added by the reference→owner rule, or "none">
+   **Cite by name, not by number** — `<file> › <section or rule name>`. A line number appears in parentheses **only** on a finding the reader still has to act on, and it is the number **re-read after the fixes land** (step 7, fix and sweep). A fixed finding carries no line number at all: the edit already moved it, so the number captured during the trace points at the wrong text.
 
-   ### Text pass: <ALL SAFE / HAS RISKS / HAS BROKEN> — <one line per file: what was fixed, or what remains>
+   **Severity is one of exactly four literals**, most severe first: `data-loss` › `silent-wrong` › `stall` › `cosmetic`. Nothing else — a free-text severity cannot be compared between runs.
 
-   ### Text-pass findings still open (every RISKY / BROKEN not fixed — always populated under --report-only, since nothing was fixed; omit only when there are none)
-   - **[RISKY|BROKEN]** `file:line` <what changed> — risk / will cause: <the consequence> — 修法: <concrete action>
+````
+   ## 審查報告
+   <N> 檔（in-scope <M>）· <總數> 個問題，修掉 <X> · **<Y> 個要你決定** · <本輪改動造成 | 既有缺陷被翻出來 | 前一輪的修改帶出來的>
 
-   ### Text-pass NOTES (advisory — never fixed, never counted in a rating; omit the section when there are none)
-   - `file:line` <observation> — <why it is the user's call, not the auditor's>
+   ### 各檔
+   | 檔 | 問題 | 已修 | 待決定 |
+   |---|---|---|---|
+   | ⚠️ `<path>` | <n> | <x> | <y> |
+   | ✅ `<path>` | <n> | <x> | — |
 
-   ### Findings (most severe first)
-   - **[SEVERITY] [CONFIRMED/PLAUSIBLE] [Lens A|B] `file:line`** — <the defect>
-     - Lens A → 失敗情境: <concrete inputs/state → wrong outcome> | Lens B → 重複/漂移: <the copies and how they drift>
-     - 修法方向: <how to fix — note when it is a design choice, e.g. DRY vs deliberate self-containment>
+   其餘 <k> 檔無 finding。
 
-   ### Categories judged sound
-   - <class>: <one line why it holds>
+   ### 要你決定（<Y>｜無）
+   - **<file>** › <section name>（`:<current line>`）
+     <what is wrong, one or two sentences> → 沒自動修的原因：<a design choice between two valid rules, or it changes another skill's behavior, or the finding is PLAUSIBLE and unconfirmed> → 建議 <the option you would take>
 
-   ### Convergence: <first pass on this change | N of M findings trace to fixes applied in an earlier pass of this same change — <what shape they were> | earlier passes not visible from here — <what you could still infer from the diff>>
+   ### 已修（<X>）
+   - **<file>** › <section name> — <what was wrong> → <what changed>　`<severity>`
 
-   ### Verdict: <N confirmed, M plausible | or "no defects found">
+   ### 看似違規但正確（optional — only when it would mislead the next pass into "fixing" it）
+   - **<file>** › <section name> — <why it holds>
 
-   ### Fix sweep: <tokens grepped — N hits — what changed as a result, one line per applied fix; plus anything the sweep could not cover | no fixes applied>
-   ```
+   ### 沒審到
+   - <what the sweep structurally cannot see — e.g. duplication between two files neither of which changed>
+   - <anything skipped, and why: an upstream-synced body, an absent tool, a target outside scope>
+````
 
-   The `Fix sweep` line is filled in by step 7 and appended after the fixes land; with `--report-only` write "no fixes applied".
+   Three sections are **mandatory on every run**, because a missing section is indistinguishable from a clean one:
+   - `### 要你決定` — write `無` when there is nothing. It comes first; it is the only part that costs the reader work.
+   - `### 各檔` — a table, only files that have findings, `⚠️` rows first; close with one sentence counting the clean files instead of listing them. **The status glyph prefixes the path inside the file cell** — `⚠️` when the file still needs the reader, `✅` when everything in it is fixed — which keeps the glyphs in one scannable column without spending a column on them. Terminal output renders markdown, not ANSI colour, so the glyph is what carries the at-a-glance grouping: **two glyphs only, never a third**, and an em dash for a zero count so the eye does not read `0` as a finding.
+   - `### 沒審到` — carries the blast-radius sweep's own blind spot (Lens B's token grep sees only what the change touched) plus anything skipped. Silence here reads as full coverage.
 
-   **The convergence line is what tells the user whether to run again**, so state it on every pass. Only claim "first pass on this change" when you can see it is one — the change is uncommitted and nothing in this session already audited it. **A second pass is usually run in a fresh session, where the earlier pass left no trace**, so do not default to "first pass": say the earlier passes are not visible, then infer what you can from the change itself (fix-shaped commits on top of the original change, or findings that land on text the diff just added). When findings keep appearing across repeated runs, say plainly whether they are **pre-existing defects being uncovered** (keep going — coverage is still growing) or **defects the previous pass's own fixes introduced** (the rounds are converging on shallower shapes; name the trend and say whether it is worth another run). Without it a user reading a third round of findings can only conclude the code is hopeless, when the truth is usually that each round is smaller and shallower than the last.
+   **The header's last clause is the convergence signal, and it decides whether the user runs again.** Do not default to "本輪改動造成": a second pass usually runs in a fresh session where the earlier one left no trace, so when the history is not visible, judge by the findings' shape instead — fix-shaped commits sitting on top of the change, or findings landing on text the diff just added. Say plainly which of the three it is: the change's own doing, pre-existing defects being uncovered (keep going, coverage is still growing), or defects an earlier pass's fixes introduced (the rounds are converging on shallower shapes). Without it, a reader on the third round can only conclude the code is hopeless, when the truth is usually that each round is smaller than the last.
 
 7. **Fix and sweep the blast radius** (skipped entirely if `--report-only` was passed)
 
    Text-pass fixes already happened in step 2; the *finding* work here covers the Lens A / Lens B findings. Apply the **CONFIRMED, unambiguous** ones directly (e.g. reorder two steps so reconcile precedes the mutation; add the missing guard). For any fix resting on a **design choice** (which of two contradictory rules wins, what the safe default should be), do NOT guess — present the options and let the user decide. Never apply a fix to a PLAUSIBLE finding without confirming it first. After applying, re-read the affected procedure to confirm the fix did not introduce a new ordering/edge defect.
 
-   **Then sweep each fix's blast radius before calling the pass done — this is what stops the next run from re-finding your own work.** This sweep covers **every fix applied in this pass, the step 2 text fixes included**, because a text fix leaves the same stale copies behind as a logic fix and step 2's own loop does not sweep for them. A fix to a rule almost never lives alone: the same rule is usually also stated in a summary table, a checklist line, a template comment, a pointer, or a per-role contract. So run Lens B's token grep against **what you just wrote** instead of against the diff — same mechanic — and every hit must now state the new version, state the *other* branch of the rule correctly, or be unrelated. A fix that landed in one of six places is class 12, and finding it here costs one grep; finding it on the next pass costs a whole audit round. **Report the sweep** in the `### Fix sweep` line: which tokens you grepped, how many hits, what you changed, and what the sweep could not cover.
+   **Then sweep each fix's blast radius before calling the pass done — this is what stops the next run from re-finding your own work.** This sweep covers **every fix applied in this pass, the step 2 text fixes included**, because a text fix leaves the same stale copies behind as a logic fix and step 2's own loop does not sweep for them. A fix to a rule almost never lives alone: the same rule is usually also stated in a summary table, a checklist line, a template comment, a pointer, or a per-role contract. So run Lens B's token grep against **what you just wrote** instead of against the diff — same mechanic — and every hit must now state the new version, state the *other* branch of the rule correctly, or be unrelated. A fix that landed in one of six places is class 12, and finding it here costs one grep; finding it on the next pass costs a whole audit round. The sweep's own **blind spot** goes in the report's `### 沒審到` section: the token grep sees only what the change touched, so duplication between two untouched files does not surface.
+
+   **Last, re-read the line numbers for every finding left in `### 要你決定`.** The fixes just applied moved everything below them, so a number captured during the trace now points at the wrong text — resolve each open finding's current line from the file as it stands, and cite the section name alongside it so the reference survives the next edit too.
 
 ---
 
