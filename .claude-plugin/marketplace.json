@@ -9,7 +9,7 @@
     {
       "name": "dev-workflow",
       "source": "./plugins/dev-workflow",
-      "description": "Daily dev workflow skills: commit, release, prompt & workflow audit, usage-driven skill refinement"
+      "description": "Daily dev workflow skills: commit, release, skill audit (prompt text + workflow logic), usage-driven skill refinement"
     },
     {
       "name": "issue-tracing",
