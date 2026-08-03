@@ -1,6 +1,6 @@
 {
   "name": "sdd-dotnet",
-  "description": "SDD language pack: ASP.NET / .NET backend engineer and skills",
+  "description": "SDD stack pack: ASP.NET / .NET backend engineer and skills",
   "version": "1.1.2",
   "author": {
     "name": "Eli",
@@ -18,7 +18,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "SDD \u2014 .NET Pack",
-    "shortDescription": "SDD language pack: ASP.NET / .NET backend engineer and skills",
+    "shortDescription": "SDD stack pack: ASP.NET / .NET backend engineer and skills",
     "developerName": "Eli",
     "category": "Developer Tools",
     "capabilities": [

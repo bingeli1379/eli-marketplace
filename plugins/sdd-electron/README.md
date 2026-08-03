@@ -1,6 +1,6 @@
 # sdd-electron
 
-**SDD language pack — Electron desktop / game.** Extends the [`sdd`](../sdd) core plugin with the
+**SDD stack pack — Electron desktop / game.** Extends the [`sdd`](../sdd) core plugin with the
 `electron-engineer` agent and Electron desktop / game skills. Part of the spec-driven multi-agent workflow.
 
 ## What it adds

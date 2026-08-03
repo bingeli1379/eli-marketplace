@@ -2,12 +2,12 @@
 
 Spec-driven multi-agent development team plugin for Claude Code.
 
-## Plugin Topology (core + language packs)
+## Plugin Topology (core + stack packs)
 
 `sdd` is the **core** plugin: workflow commands, the orchestrator, the architect,
 the four cross-cutting reviewers (review/security/performance/qa), technical-writer,
 and the universal skills. Every **implementation specialist** ships as an optional
-`sdd-<lang>` pack (`sdd-vue`, `sdd-dotnet`, `sdd-python`, `sdd-godot`, `sdd-electron`,
+`sdd-<stack>` pack (`sdd-vue`, `sdd-dotnet`, `sdd-python`, `sdd-godot`, `sdd-electron`,
 `sdd-database`, `sdd-devops`) bundling that stack's engineer agent + skills. Each
 pack declares `dependencies: ["sdd"]`, so installing a pack pulls in core.
 
@@ -19,7 +19,7 @@ pack declares `dependencies: ["sdd"]`, so installing a pack pulls in core.
   (`agent-guidelines`, `engineering-checklist`, `test-driven-development`, …) by
   **bare name** in its `skills:` frontmatter — no duplication, no namespacing needed.
   On-demand `Skill` tool loads also work cross-plugin.
-- Adding a language = ship a new `sdd-<lang>` pack + register it in the root
+- Adding a stack = ship a new `sdd-<stack>` pack + register it in the root
   `marketplace.json` + add a row to `references/agent-routing.md`. Core agents and
   workflow skills are untouched.
 
@@ -80,7 +80,7 @@ After `/complete`, completed changes are deleted (not archived). `config.yaml` p
 
 ## Agent Definitions
 
-Core agents live in this plugin's `agents/`; pack agents live in their `sdd-<lang>`
+Core agents live in this plugin's `agents/`; pack agents live in their `sdd-<stack>`
 plugin's `agents/`. The orchestrator does **not** read these files at dispatch — it
 dispatches by `subagent_type` and the harness auto-loads the definition. See
 `references/agent-routing.md` for `subagent_type` names, homes, and the fallback.
@@ -105,7 +105,7 @@ dispatches by `subagent_type` and the harness auto-loads the definition. See
 ## Bundled Skills
 
 Skills provide domain knowledge that agents reference. **Universal** skills live in
-core `skills/`; **stack-specific** skills live in their `sdd-<lang>` pack's `skills/`.
+core `skills/`; **stack-specific** skills live in their `sdd-<stack>` pack's `skills/`.
 `skills/SOURCES.yaml` (in core) stays the **central registry for all skills across
 every pack** and lists their upstream sources.
 

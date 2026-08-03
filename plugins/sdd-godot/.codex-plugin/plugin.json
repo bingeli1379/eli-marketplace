@@ -1,6 +1,6 @@
 {
   "name": "sdd-godot",
-  "description": "SDD language pack: Godot game engineer and skills",
+  "description": "SDD stack pack: Godot game engineer and skills",
   "version": "1.0.2",
   "author": {
     "name": "Eli",
@@ -18,7 +18,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "SDD \u2014 Godot Pack",
-    "shortDescription": "SDD language pack: Godot game engineer and skills",
+    "shortDescription": "SDD stack pack: Godot game engineer and skills",
     "developerName": "Eli",
     "category": "Developer Tools",
     "capabilities": [

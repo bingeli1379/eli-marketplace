@@ -1,6 +1,6 @@
 # sdd-database
 
-**SDD language pack — Database.** Extends the [`sdd`](../sdd) core plugin with the
+**SDD stack pack — Database.** Extends the [`sdd`](../sdd) core plugin with the
 `database-engineer` agent and Database skills. Part of the spec-driven multi-agent workflow.
 
 ## What it adds

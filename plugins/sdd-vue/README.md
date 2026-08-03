@@ -1,6 +1,6 @@
 # sdd-vue
 
-**SDD language pack — Vue / Nuxt frontend.** Extends the [`sdd`](../sdd) core plugin with the
+**SDD stack pack — Vue / Nuxt frontend.** Extends the [`sdd`](../sdd) core plugin with the
 `vue-engineer` agent and Vue / Nuxt frontend skills. Part of the spec-driven multi-agent workflow.
 
 ## What it adds
