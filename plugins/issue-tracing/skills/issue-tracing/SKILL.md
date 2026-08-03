@@ -54,6 +54,8 @@ Everything in between — resolving data views, running counts, reading code, fo
 
    Load everything else on demand (Grafana panel/alert queries, Prometheus/Loki/InfluxDB queries, code-host / decode / id-lookup MCP tools, panel image). `ToolSearch` is cheap; preloading unused schemas is not.
 
+   **If one of those tools does not resolve, that whole capability is absent — say so here, not mid-query.** Name what is missing and what it costs: no `mcp__elasticsearch__*` means no log queries at all (stop, and say which server has to be wired); no `mcp__grafana__*` means panel, alert, and metric reading are unavailable, so an ELK-only investigation can still proceed on a Kibana URL. Discovering it three steps later reads as an empty result rather than a missing tool.
+
    ### 1b. Resolve the project root (reading code is part of the normal flow)
 
    You will read service code in step 5 to confirm root cause and user impact, so resolve where the repos live up front:
