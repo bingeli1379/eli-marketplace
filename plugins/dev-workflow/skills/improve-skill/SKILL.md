@@ -1,6 +1,6 @@
 ---
 name: improve-skill
-description: Use when ANY asset shipped by a plugin you maintain in a LOCAL marketplace/plugin repo — a skill, an output style or persona, an agent, a hook, a template — misbehaved, missed a case, or felt clunky while you used it during real work in ANOTHER project, and you want to feed that back into its source. It maps EACH named target to its owning plugin/marketplace, resolves that marketplace's own LOCAL git working copy (never the installed cache, never the Claude-managed marketplace clone), patches the target's files there, and validates — one run may span several repos, and targets owned by different repos are each resolved, edited, validated, and handed off against their own. If it cannot locate the local source, it asks you how to proceed. Report-and-confirm before applying. You commit, push, and reinstall the plugin yourself afterward. Use when the user asks to improve, refine, patch, or fix a skill they just used, or run /improve-skill.
+description: Use when ANY asset shipped by a plugin you maintain in a LOCAL marketplace/plugin repo — a skill, an output style or persona, an agent, a hook, a template — misbehaved, missed a case, or felt clunky while you used it during real work in ANOTHER project, and you want to feed that back into its source instead of working around it again. Triggers on improve, refine, patch, or fix a skill you just used, feed a problem back into a skill, or /improve-skill.
 ---
 
 # Improve Skills from Real Usage

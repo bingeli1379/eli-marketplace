@@ -2,11 +2,10 @@
 name: review
 description: >
   Use when you want a standalone, read-only review of existing code, a diff, an API/controller,
-  a stored procedure, or a page — without changing anything. Also use when you have no specific
-  target and want to know where the codebase is decaying ("哪裡爛了", architecture health check).
-  Dispatches the matching review-family agent(s) by lens (quality / security / performance / e2e),
-  auto-detecting the lens from the target when not specified. Read-only: no code edits, no commits,
-  no implementation agents.
+  a stored procedure, or a page — without changing anything, by lens (quality / security /
+  performance / e2e). Also use when you have no specific target and want to know where the
+  codebase is decaying ("哪裡爛了", architecture health check). Read-only: no code edits, no
+  commits.
 user-invocable: true
 argument-hint: "[target] [quality | security | performance | e2e | all]   — omit the target for an architecture health scan"
 ---
