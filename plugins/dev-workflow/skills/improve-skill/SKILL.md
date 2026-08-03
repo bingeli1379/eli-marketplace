@@ -7,7 +7,7 @@ description: Use when ANY asset shipped by a plugin you maintain in a LOCAL mark
 
 Feed real-usage problems back into your own skills. You were working in **another project** and used a skill you maintain — shipped by a plugin from one of your local marketplace/plugin repos — as a tool; it did something wrong, missed a case, or was clunky. You already handled it and finished your task — this skill turns that experience into a concrete fix to the skill's **source** in whichever local repo owns it.
 
-**How it differs from `/review-prompt` and `/review-workflow`:** those statically audit skill *files* when you are deliberately editing a skill. This one is **usage-driven and cross-repo** — the signal is what happened when you *used* the skill in a different project, and the target source lives in a *different* repo than your current working directory. It composes those audits to validate its own edits.
+**How it differs from `/review-skill`:** that one statically audits skill *files* when you are deliberately editing a skill. This one is **usage-driven and cross-repo** — the signal is what happened when you *used* the skill in a different project, and the target source lives in a *different* repo than your current working directory. It composes that audit to validate its own edits.
 
 **Scope — this skill does exactly ONE thing: patch the target's source in the local working copy of whichever repo owns it.** It does NOT commit, push, or reinstall the plugin. Those are your follow-up steps.
 
@@ -86,13 +86,12 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 
 6. **Validate the edits — compose the existing audits, do not re-implement them**
 
-   Validate the changed files at `<repo>`, **one invocation per repo** — never a single audit call mixing paths from two repos, since each audit reads the cwd's git state and each repo has its own conventions and its own verdict. **Caveat: `/review-prompt` and `/review-workflow` assume the current working directory IS the repo under audit and use its `git diff` to find "what changed" — but you are in another project, so their auto-detect points at the wrong repo (and `git diff HEAD -- <foreign-path>` may error).** Since you just made the edits and know exactly what changed, drive them explicitly:
-   - `/review-prompt` — pass the changed `SKILL.md` / agent `.md` files as explicit path arguments, and tell it what you changed rather than relying on its `git diff` auto-detect; if it needs a diff, have it use `git -C <repo>`. (Prompt-text quality + intra-file contradiction.)
-   - `/review-workflow` — same handling, if a changed skill's procedure/logic (Lens A) or cross-file duplication / SSOT (Lens B) was affected. Pass `--report-only` — it now applies fixes by default, but here it runs as a validation pass on a foreign repo, so surface findings and let this skill drive the edits.
+   Validate the changed files at `<repo>`, **one invocation per repo** — never a single audit call mixing paths from two repos, since each audit reads the cwd's git state and each repo has its own conventions and its own verdict. **Caveat: `/review-skill` assumes the current working directory IS the repo under audit and uses its `git diff` to find "what changed" — but you are in another project, so its auto-detect points at the wrong repo (and `git diff HEAD -- <foreign-path>` may error).** Since you just made the edits and know exactly what changed, drive it explicitly:
+   - `/review-skill` — pass the changed `SKILL.md` / agent `.md` files as explicit path arguments, and tell it what you changed rather than relying on its `git diff` auto-detect; if it needs a diff, have it use `git -C <repo>`. Pass `--report-only`: it applies fixes by default, but here it runs as a validation pass on a foreign repo, so surface findings and let this skill drive the edits.
    - If `<repo>` has a structure/lint validation script (e.g. `scripts/check-structure.sh`), run it directly — such scripts derive their own repo root from the script's location, so the current working directory does not matter. Skip if absent. **Run each touched repo's own script**, and only over that repo: one repo's validator knows nothing about another's layout, so a pass there says nothing about the edits here.
 
    **Route by what the target actually is** — the two audits above audit *prompt prose*:
-   - **Prose targets** (`SKILL.md`, `agents/*.md`, `output-styles/*.md`, `references/*.md`) → pass them to `/review-prompt` as explicit paths, as above. An output style is prose and gets the same audit as a skill.
+   - **Prose targets** (`SKILL.md`, `agents/*.md`, `output-styles/*.md`, `references/*.md`) → pass them to `/review-skill` as explicit paths, as above. An output style is prose and gets the same audit as a skill.
    - **Non-prose targets** (`hooks/*` scripts, `config/*`, `templates/*` data) → do NOT feed them to the prompt audits; that produces noise, not findings. Validate them by their own nature instead: the repo's structure/lint script, a syntax check for the language (e.g. `bash -n` for a shell hook, a JSON/YAML parse for data), and the conventions `0c` turned up. State in the step-7 report which validation you ran and which you skipped, with the reason.
 
    Fix anything the applicable checks flag until they pass.
@@ -107,7 +106,7 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 
 ## Guardrails
 
-- **Evidence over speculation** — every edit must trace to something that actually happened when the target was used this session (or a problem the user concretely describes). Generic "this could read better" improvements are `/review-prompt`'s job, not this.
+- **Evidence over speculation** — every edit must trace to something that actually happened when the target was used this session (or a problem the user concretely describes). Generic "this could read better" improvements are `/review-skill`'s job, not this.
 - **One run can span several repos** — treat multi-repo as the normal case, not an edge case: resolve, edit, validate, and hand off per repo (step 0b, "`<repo>` is per target, not per run"). Anything reported or run against the wrong `<repo>` is a wrong answer, not a near miss.
 - **Working copy, never the cache or the marketplace clone** — edits under `~/.claude/plugins/cache/…` or `~/.claude/plugins/marketplaces/…` are auto-overwritten on update and never version-controlled. Always target the resolved git working copy `<repo>`.
 - **Confirm the source by the file, not the URL** — a local repo is the right source only when the target's file actually exists in it; remote URLs can drift. When no local source is found, ask — do not guess or fall back to a cache path.
