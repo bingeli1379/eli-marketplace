@@ -1,11 +1,11 @@
 ---
 name: improve-skill
-description: Use when ANY skill you installed from a local marketplace/plugin repo you maintain (/sdd, /commit, /release, /review, /issue-tracing, or any other plugin skill) — or any other asset such a plugin ships, including an output style or persona — misbehaved, missed a case, or felt clunky while you used it during real work in ANOTHER project, and you want to feed that back into its source. It maps the named target to its owning plugin/marketplace, resolves that marketplace's LOCAL git working copy (never the installed cache, never the Claude-managed marketplace clone), patches the target's files there, and validates. If it cannot locate the local source, it asks you how to proceed. Report-and-confirm before applying. You commit, push, and reinstall the plugin yourself afterward. Use when the user asks to improve, refine, patch, or fix a skill they just used, or run /improve-skill.
+description: Use when ANY asset shipped by a plugin you maintain in a LOCAL marketplace/plugin repo — a skill, an output style or persona, an agent, a hook, a template — misbehaved, missed a case, or felt clunky while you used it during real work in ANOTHER project, and you want to feed that back into its source. It maps EACH named target to its owning plugin/marketplace, resolves that marketplace's own LOCAL git working copy (never the installed cache, never the Claude-managed marketplace clone), patches the target's files there, and validates — one run may span several repos, and targets owned by different repos are each resolved, edited, validated, and handed off against their own. If it cannot locate the local source, it asks you how to proceed. Report-and-confirm before applying. You commit, push, and reinstall the plugin yourself afterward. Use when the user asks to improve, refine, patch, or fix a skill they just used, or run /improve-skill.
 ---
 
 # Improve Skills from Real Usage
 
-Feed real-usage problems back into your own skills. You were working in **another project** and used a skill you maintain (from any of your local marketplace/plugin repos — `/sdd`, `/commit`, `/review`, `/issue-tracing`, …) as a tool; it did something wrong, missed a case, or was clunky. You already handled it and finished your task — this skill turns that experience into a concrete fix to the skill's **source** in whichever local repo owns it.
+Feed real-usage problems back into your own skills. You were working in **another project** and used a skill you maintain — shipped by a plugin from one of your local marketplace/plugin repos — as a tool; it did something wrong, missed a case, or was clunky. You already handled it and finished your task — this skill turns that experience into a concrete fix to the skill's **source** in whichever local repo owns it.
 
 **How it differs from `/review-prompt` and `/review-workflow`:** those statically audit skill *files* when you are deliberately editing a skill. This one is **usage-driven and cross-repo** — the signal is what happened when you *used* the skill in a different project, and the target source lives in a *different* repo than your current working directory. It composes those audits to validate its own edits.
 
@@ -44,9 +44,11 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
    4. **Confirm the candidate really is the source**: `git -C <candidate> rev-parse --is-inside-work-tree` succeeds AND the target file exists under it — `<candidate>/plugins/<plugin>/skills/<name>/SKILL.md` for a skill, or the corresponding `output-styles/` / `agents/` / `hooks/` / `templates/` path for a non-skill target. The file-exists check is authoritative — remote URLs drift (a repo gets renamed or mirrored), the on-disk skill file does not.
    5. **If no local source is found, STOP and ask (AskUserQuestion):** how to proceed — supply the absolute path, or skip that target. Suggest recording the resolved path in `~/.claude/CLAUDE.md` so future runs skip discovery. Never fall back to editing the cache or the marketplace clone.
 
-   Everything below targets this confirmed repo (call it `<repo>`) via absolute paths or `git -C <repo>`. If several named targets resolve to different repos, handle each against its own `<repo>`.
+   Everything below targets the confirmed repo (call it `<repo>`) via absolute paths or `git -C <repo>`.
 
-   **0c. Load `<repo>`'s own maintenance conventions before editing anything in it.** A repo you maintain may keep its authoring rules *outside* the files being edited — precisely so the edited files stay free of authoring meta. Those rules are not optional context; they are the house style for the edit you are about to make, and the target file will not restate them. So:
+   **`<repo>` is per target, not per run.** When you maintain more than one marketplace/plugin repo, a single run's targets routinely resolve to *different* ones (e.g. a public marketplace and a private plugin repo) — so never assume one run means one repo, even if the first target you resolved happens to be the only one. Resolve `0a`–`0b` for each target independently, then carry every step below **per repo**: its own conventions (`0c`), its own edits, its own validation, its own handoff line. Never let a path, a convention, or a validation script from one repo apply to another, and never collapse the run onto whichever repo you resolved first. Where a step says `<repo>` below, read it as "that target's repo".
+
+   **0c. Load the maintenance conventions of EVERY `<repo>` you are about to edit, before editing anything in it.** A repo you maintain may keep its authoring rules *outside* the files being edited — precisely so the edited files stay free of authoring meta. Those rules are not optional context; they are the house style for the edit you are about to make, and the target file will not restate them. So:
    - Read `<repo>/CLAUDE.md` (and `<repo>/plugins/<plugin>/CLAUDE.md` if present) — repo structure, sync obligations, version-bump rules, language conventions.
    - List `<repo>/.claude/skills/` and read the `SKILL.md` of any whose frontmatter `description` covers the file you are about to change (a maintenance skill for that plugin's persona, data, or prompt files). Follow it for the edit.
    - **Read them as files, do not try to invoke them.** They are project-level skills of a *foreign* repo, so they are not registered in this session — `/<name>` will not resolve. Load the file with Read and comply with its content.
@@ -84,10 +86,10 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 
 6. **Validate the edits — compose the existing audits, do not re-implement them**
 
-   Validate the changed files at `<repo>`. **Caveat: `/review-prompt` and `/review-workflow` assume the current working directory IS the repo under audit and use its `git diff` to find "what changed" — but you are in another project, so their auto-detect points at the wrong repo (and `git diff HEAD -- <foreign-path>` may error).** Since you just made the edits and know exactly what changed, drive them explicitly:
+   Validate the changed files at `<repo>`, **one invocation per repo** — never a single audit call mixing paths from two repos, since each audit reads the cwd's git state and each repo has its own conventions and its own verdict. **Caveat: `/review-prompt` and `/review-workflow` assume the current working directory IS the repo under audit and use its `git diff` to find "what changed" — but you are in another project, so their auto-detect points at the wrong repo (and `git diff HEAD -- <foreign-path>` may error).** Since you just made the edits and know exactly what changed, drive them explicitly:
    - `/review-prompt` — pass the changed `SKILL.md` / agent `.md` files as explicit path arguments, and tell it what you changed rather than relying on its `git diff` auto-detect; if it needs a diff, have it use `git -C <repo>`. (Prompt-text quality + intra-file contradiction.)
    - `/review-workflow` — same handling, if a changed skill's procedure/logic (Lens A) or cross-file duplication / SSOT (Lens B) was affected. Pass `--report-only` — it now applies fixes by default, but here it runs as a validation pass on a foreign repo, so surface findings and let this skill drive the edits.
-   - If `<repo>` has a structure/lint validation script (e.g. `scripts/check-structure.sh`), run it directly — such scripts derive their own repo root from the script's location, so the current working directory does not matter. Skip if absent.
+   - If `<repo>` has a structure/lint validation script (e.g. `scripts/check-structure.sh`), run it directly — such scripts derive their own repo root from the script's location, so the current working directory does not matter. Skip if absent. **Run each touched repo's own script**, and only over that repo: one repo's validator knows nothing about another's layout, so a pass there says nothing about the edits here.
 
    **Route by what the target actually is** — the two audits above audit *prompt prose*:
    - **Prose targets** (`SKILL.md`, `agents/*.md`, `output-styles/*.md`, `references/*.md`) → pass them to `/review-prompt` as explicit paths, as above. An output style is prose and gets the same audit as a skill.
@@ -97,15 +99,16 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 
 7. **Hand off (do NOT commit, push, or reinstall)**
 
-   Report the applied changeset and the `<repo>` path(s), then state the remaining steps are the user's:
-   - commit (run `/commit` from that repo, or `git -C <repo> …`), and `/release` if the target's behavior changed;
-   - `git push`;
-   - reinstall / update the plugin so the fix goes live.
+   Report the applied changeset and the `<repo>` path(s), then state the remaining steps are the user's. **Group the handoff by repo — one block per touched repo, each listing its own files and its own three steps.** Separate repos mean separate git histories and separate plugin installs; a merged handoff loses which commit belongs where:
+   - commit (run `/commit` from that repo, or `git -C <repo> …`), and `/release` if the target's behavior changed — never one commit spanning two repos, that is not even possible;
+   - `git push` in that repo;
+   - reinstall / update that repo's plugin so the fix goes live — reinstalling one marketplace does nothing for the other's edits.
    Flag explicitly: **the fix is NOT active in the current environment until that reinstall** — the running copy (skill, output style, hook) still comes from the old installed cache.
 
 ## Guardrails
 
 - **Evidence over speculation** — every edit must trace to something that actually happened when the target was used this session (or a problem the user concretely describes). Generic "this could read better" improvements are `/review-prompt`'s job, not this.
+- **One run can span several repos** — treat multi-repo as the normal case, not an edge case: resolve, edit, validate, and hand off per repo (step 0b, "`<repo>` is per target, not per run"). Anything reported or run against the wrong `<repo>` is a wrong answer, not a near miss.
 - **Working copy, never the cache or the marketplace clone** — edits under `~/.claude/plugins/cache/…` or `~/.claude/plugins/marketplaces/…` are auto-overwritten on update and never version-controlled. Always target the resolved git working copy `<repo>`.
 - **Confirm the source by the file, not the URL** — a local repo is the right source only when the target's file actually exists in it; remote URLs can drift. When no local source is found, ask — do not guess or fall back to a cache path.
 - **Never commit, push, or reinstall** — this skill stops at editing the working copy; the user does the rest (they asked for it that way).
