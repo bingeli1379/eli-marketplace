@@ -1,6 +1,6 @@
 {
   "name": "sdd-devops",
-  "description": "SDD language pack: DevOps engineer and infrastructure skills",
+  "description": "SDD stack pack: DevOps engineer and infrastructure skills",
   "version": "1.0.3",
   "author": {
     "name": "Eli",
@@ -18,7 +18,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "SDD \u2014 DevOps Pack",
-    "shortDescription": "SDD language pack: DevOps engineer and infrastructure skills",
+    "shortDescription": "SDD stack pack: DevOps engineer and infrastructure skills",
     "developerName": "Eli",
     "category": "Developer Tools",
     "capabilities": [

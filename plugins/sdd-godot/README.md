@@ -1,6 +1,6 @@
 # sdd-godot
 
-**SDD language pack — Godot game development.** Extends the [`sdd`](../sdd) core plugin with the
+**SDD stack pack — Godot game development.** Extends the [`sdd`](../sdd) core plugin with the
 `godot-engineer` agent and Godot game development skills. Part of the spec-driven multi-agent workflow.
 
 ## What it adds

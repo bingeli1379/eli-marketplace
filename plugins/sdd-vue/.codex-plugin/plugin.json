@@ -1,6 +1,6 @@
 {
   "name": "sdd-vue",
-  "description": "SDD language pack: Vue/Nuxt frontend engineer and frontend skills",
+  "description": "SDD stack pack: Vue/Nuxt frontend engineer and frontend skills",
   "version": "1.0.3",
   "author": {
     "name": "Eli",
@@ -18,7 +18,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "SDD \u2014 Vue / Frontend Pack",
-    "shortDescription": "SDD language pack: Vue/Nuxt frontend engineer and frontend skills",
+    "shortDescription": "SDD stack pack: Vue/Nuxt frontend engineer and frontend skills",
     "developerName": "Eli",
     "category": "Developer Tools",
     "capabilities": [

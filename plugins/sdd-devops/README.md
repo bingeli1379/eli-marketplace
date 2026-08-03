@@ -1,6 +1,6 @@
 # sdd-devops
 
-**SDD language pack — DevOps / infrastructure.** Extends the [`sdd`](../sdd) core plugin with the
+**SDD stack pack — DevOps / infrastructure.** Extends the [`sdd`](../sdd) core plugin with the
 `devops-engineer` agent and DevOps / infrastructure skills. Part of the spec-driven multi-agent workflow.
 
 ## What it adds
