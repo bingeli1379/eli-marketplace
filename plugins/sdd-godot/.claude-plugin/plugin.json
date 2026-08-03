@@ -1,7 +1,9 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "sdd-godot",
+  "displayName": "SDD Godot",
   "version": "1.0.2",
-  "description": "SDD language pack: Godot game engineer and skills",
+  "description": "SDD stack pack: Godot game engineer and skills",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"

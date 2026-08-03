@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "sdd",
-  "displayName": "Spec-Driven Development",
-  "description": "Spec-driven AI development workflow core: workflow commands, orchestrator, architect, cross-cutting reviewers, and universal skills. Language/stack specialists ship as optional sdd-* packs.",
+  "displayName": "SDD Core",
+  "description": "Spec-driven AI development workflow core: workflow commands, orchestrator, architect, cross-cutting reviewers, and universal skills. Stack specialists ship as optional sdd-* packs.",
   "version": "3.6.0",
   "author": {
     "name": "Eli",

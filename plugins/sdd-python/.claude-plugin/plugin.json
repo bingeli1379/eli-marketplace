@@ -1,7 +1,9 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "sdd-python",
+  "displayName": "SDD Python",
   "version": "1.1.2",
-  "description": "SDD language pack: Python backend/ML engineer and skills",
+  "description": "SDD stack pack: Python backend/ML engineer and skills",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
