@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Use when committing staged changes or when the user asks to commit, write a commit message, or run /commit.
+description: Use when committing staged changes, or whenever the user asks to commit in ANY phrasing — "commit", "ai commit", "commit 一下", "幫我 commit", asks for a commit message to be written, or runs /commit. Applies even when the commit looks trivial enough to just run `git commit` directly — do not hand-roll the message, invoke this skill.
 allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git commit:*), Bash(git reset:*)
 ---
 
