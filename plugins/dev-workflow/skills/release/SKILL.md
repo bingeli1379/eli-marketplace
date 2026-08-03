@@ -1,6 +1,6 @@
 ---
 name: release
-description: Use when creating a release, bumping a version, generating a changelog, or when the user asks to release or run /release.
+description: Use when cutting a release, bumping a version, or generating a changelog — or whenever the user asks to release in ANY phrasing: "release", "release 一下", "幫我 release", "發版", "bump 版本", "更新 changelog", or runs /release. Applies even when the bump looks trivial enough to hand-edit the version file — do not hand-roll the version or changelog, invoke this skill. A complaint ABOUT a skill named /release is not this skill; that is /improve-skill.
 ---
 
 # Release Changelog & Version Bump
