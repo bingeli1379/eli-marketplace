@@ -1,6 +1,6 @@
 {
   "name": "dev-workflow",
-  "description": "Daily dev workflow skills: commit, release, skill audit (prompt text + workflow logic), usage-driven skill refinement",
+  "description": "Daily dev workflow skills: commit, release, skill authoring rules, skill audit (prompt text + workflow logic), usage-driven skill refinement",
   "version": "1.14.0",
   "author": {
     "name": "Eli",
@@ -9,11 +9,11 @@
   "homepage": "https://github.com/bingeli1379/eli-marketplace",
   "repository": "https://github.com/bingeli1379/eli-marketplace",
   "license": "MIT",
-  "keywords": ["commit", "release", "review-skill", "improve-skill", "workflow"],
+  "keywords": ["commit", "release", "review-skill", "skill-authoring", "improve-skill", "workflow"],
   "skills": "./skills/",
   "interface": {
     "displayName": "Dev Workflow",
-    "shortDescription": "Daily dev workflow skills: commit, release, skill audit (prompt text + workflow logic), usage-driven skill refinement",
+    "shortDescription": "Daily dev workflow skills: commit, release, skill authoring rules, skill audit (prompt text + workflow logic), usage-driven skill refinement",
     "developerName": "Eli",
     "category": "Developer Tools",
     "capabilities": ["Skills", "Files"]
