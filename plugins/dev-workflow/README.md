@@ -20,6 +20,18 @@ Detects the current version from project files (package.json, csproj, pyproject.
 - Changelog written from end-user perspective
 - Internal refactors, CI tweaks, dependency bumps are omitted unless user-facing
 
+### `skill-authoring` — Write-Time Rules for Skills
+
+**Not a command** (`user-invocable: false`) — it has nothing to run. It loads itself before you write or edit a skill, an agent file, or the prose they bundle, and carries the authoring rules in **positive** form — how to write so the defect never lands. Derived from what audits and real use kept catching: descriptions that summarize instead of trigger, an example list quietly becoming the agent's whole permitted set, position-shaped names (`step1`, `notes.md`) that die on the first reorder, bare relative paths that resolve against the user's cwd, `name:` drifting from its directory, step handoffs nobody wrote down, an edit that never reached the rule's other five homes, and synonym drift that makes one concept read as three.
+
+- **Cost has an order** — restructure the flow so the words are unnecessary, then merge near-duplicate wording, then extract what is not always needed, then cut the lecture; never shorten a rule into ambiguity. Trimming prose is the last and smallest lever, not the first
+- **Structure over prose** — a sequence gets numbered steps, repeated items get fixed fields, so a missing field shows up as an empty cell instead of hiding inside a paragraph
+- **State and dependencies** — a skill that writes files or runs git says what a second run does and guards destructive ops; anything it leans on from outside (an argument, a tool or MCP server, a sibling skill, a file) needs a stated absence plan, announced rather than silently skipped
+- **Behavior-preserving vs behavior-changing** — a restructure keeps every decision identical; if a behavior changes, the edit has to say which and why, because the diff will not
+- Deliberately short — it loads on every skill edit, so every line has to earn its place
+- Pairs with `/review-skill` through one shared file: the rules live in the plugin's `references/authoring-rules.md`, which this skill follows while writing and `/review-skill` audits against — each entry carries the rule, what breaks without it, and how the violation is visible (or a `process` mark when it governs the author rather than the file). A rule added there is enforced on both sides with no second copy
+- Ends where the work ends: run the repo's structure script, then `/review-skill` on what changed
+
 ### `/review-skill` — Skill Audit
 
 Audits agent and skill prompt files (`.md`) on two levels: whether the prompt still **says** the right thing (the text pass) and whether the procedure it describes actually **behaves** correctly, without duplicated or drifting content around it (the deep lenses).
