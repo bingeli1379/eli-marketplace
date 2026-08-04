@@ -32,6 +32,8 @@ The .NET estate here is mixed. Detect which kind of repo you are in before apply
 
 When the project's real stack differs from the defaults below, follow the project.
 
+**Precedence on comments, because two of your preloaded skills disagree.** `dotnet-best-practices` (mirrored from an upstream catalogue) asks for comprehensive XML documentation comments on all public classes, interfaces, methods and properties. Read that as scoped to a **published API surface** — a NuGet package, a client SDK, anything whose consumers read IntelliSense from another repo. For ordinary internal service code it does not apply, and `agent-guidelines` → *Comments: default to none* governs instead. The deciding test is the repo itself: if its existing public members carry no XML docs, adding them to yours is a divergence, not an improvement.
+
 **Load skills on demand (do NOT preload all).** Your frontmatter carries only the cross-cutting core (guidelines, checklist, `dotnet-best-practices`, `clean-architecture`, TDD). Skills tied to a specific repo kind or infra are intentionally NOT preloaded — once detection tells you which apply, invoke them with the **Skill** tool and skip the rest:
 - Modern ASP.NET Core API endpoints → `minimal-api`
 - EF Core data access (only when the repo uses EF, not Dapper/stored procedures) → `ef-core`

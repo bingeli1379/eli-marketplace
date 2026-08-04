@@ -67,7 +67,13 @@ Draft the four `architecture` fields that go into `config.yaml`. Keep everything
   - read queries use a specific convention (a locking hint like `NOLOCK`, a shared query helper, a standard pagination shape)
   - a specific result/error type is always returned instead of throwing
 
-  Only record one when the codebase actually follows it consistently (grep shows ~no counter-examples). A convention with mixed adherence is not a hard_rule — leave it for per-task precedent-mirroring instead. Classification of every candidate:
+  Only record one when the codebase actually follows it consistently (grep shows ~no counter-examples). A convention with mixed adherence is not a hard_rule — leave it for per-task precedent-mirroring instead.
+
+  **A rule asserting an absence ("never X", "no X anywhere") MUST be established from the positive side.** Enumerate the actual data-access call sites and read what each one does; never conclude an absence from a negative grep of framework-specific markers. Micro-ORMs and in-house DAL wrappers call stored procedures by **bare name string** — `QueryAsync("[dbo].[Foo_25.01.02]", …)` — with no `CommandType.StoredProcedure`, no `EXEC`, no `sp_` prefix, so a grep for those comes back clean on a codebase built entirely on stored procedures. The same trap applies to raw SQL behind a query-builder and to context access behind a helper. A wrong `hard_rule` is worse than a missing one: `/propose` forwards it to the architect as non-negotiable, so it actively steers the design wrong and the error is only caught (if at all) after a design already depends on it.
+
+  Where two mechanisms coexist — e.g. EF Core for one database, Dapper + stored procedures for another — record the **split and the axis it divides on**, not one blanket rule.
+
+  Classification of every candidate:
   - **Structural** (true a year from now, layer/dependency invariants) → keep in `hard_rules`.
   - **Historical** (version-pinned migration leftovers, "do not use the old X", upgrade recipes) → **drop**. These age out; the project's own docs can carry them if it cares.
   - **Lint-enforceable** (anything an existing ESLint / dotnet-format / Ruff / Stylelint config already enforces — naming conventions, import order, `consistent-type-imports`, etc.) → **drop**. `hard_rules` is for invariants linters cannot express (layer boundaries, allowed call directions, cross-component contracts).
