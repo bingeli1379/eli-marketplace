@@ -1,6 +1,6 @@
 # sdd-python
 
-**SDD language pack — Python backend / ML.** Extends the [`sdd`](../sdd) core plugin with the
+**SDD stack pack — Python backend / ML.** Extends the [`sdd`](../sdd) core plugin with the
 `python-engineer` agent and Python backend / ML skills. Part of the spec-driven multi-agent workflow.
 
 ## What it adds

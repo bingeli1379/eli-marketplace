@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.6.1] - 2026-08-04
+
+### Fixed
+- `/sdd:review` opened by saying it never dispatches implementation or fix agents, while its own follow-up step says to always dispatch the owning specialist when you ask for a fix. The exception is now written into the rule, so a fix you asked for does not read as forbidden.
+- Recovering from an interrupted run no longer decides on its own whether to keep a leftover worktree. It checks each one for uncommitted or unpushed work first; clean ones are removed, and anything holding work stops the run and is shown to you with what is in it.
+- In no-git mode, the file the workflow actually reads at start-up described the run as "read-only where possible" and listed only commits as skipped. Everything runs — artifacts are written and code is implemented as usual — and exactly four git steps are skipped.
+- Several workflow-command descriptions were summarising what they do instead of when they apply, which is how the wrong one loads or a summary gets followed instead of the actual steps.
+
+### Changed
+- The plugin is labelled **SDD Core** in the plugin list, and the optional add-ons are called stack packs, so the family reads as one set instead of eight unrelated entries.
+
+### Removed
+- The internal skill-authoring guidelines are gone. Nothing loaded them, the description competed with another skill's trigger, and the checks that enforce them still run from the script.
+
 ## [3.6.0] - 2026-08-01
 
 ### Added

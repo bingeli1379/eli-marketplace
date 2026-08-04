@@ -1,9 +1,10 @@
 ---
 name: complete
 description: >
-  Complete a change: confirm its tasks are done, then clean up the change
-  artifacts and commit. If a name is given, complete that specific change.
-  If omitted, auto-scan and batch-complete all fully finished changes.
+  Use when a change's implementation is finished and it should be closed out —
+  confirm its tasks are done, then clean up the change artifacts and commit.
+  If a name is given, complete that specific change. If omitted, scan for and
+  batch-complete every fully finished change.
 user-invocable: true
 ---
 

@@ -1,16 +1,15 @@
 ---
 name: scope-contract
 description: >
-  Confirm a change's intent with the user as a single 現在 → 改成 (Before → After) list
-  BEFORE writing any code or design. The highest-ROI gate in the sdd workflow: it catches
-  the missed-downstream-consumer class of bug (a callsite not updated, a flow step
-  unaccounted for) that otherwise only surfaces at review. Use standalone before a native
-  coding session, inside /quick, or as the propose checkpoint. Lightweight — one chat
-  message, one correction round, no artifacts.
+  Use when a change's intent should be confirmed with the user BEFORE any code or design
+  is written — standalone before a native coding session, inside /quick, or as the propose
+  checkpoint. Presents the intent as a single 現在 → 改成 (Before → After) list, so a missed
+  downstream consumer — a callsite not updated, a flow step unaccounted for — surfaces here
+  instead of at review.
 user-invocable: true
 ---
 
-Produce a **Scope Contract** for a change and show it back to the user as a regular chat message (NOT AskUserQuestion — this is a final sanity check, not an open clarification round), then wait for their reply. This is the cheapest place to catch an interpretation mismatch: a wrong contract costs 10 seconds to correct here; a wrong implementation costs minutes-to-hours to unwind.
+Produce a **Scope Contract** for a change and show it back to the user as a regular chat message (NOT AskUserQuestion — this is a final sanity check, not an open clarification round), then wait for their reply. **Lightweight by design: one message, one correction round, no artifacts written** — this gate never produces a file. This is the cheapest place to catch an interpretation mismatch: a wrong contract costs 10 seconds to correct here; a wrong implementation costs minutes-to-hours to unwind.
 
 **Prerequisite — you must already understand the change.** Before composing the contract, scan the affected code enough to know every area the change touches and trace its ripples. If you have not done that scan yet, do it first (or run it as part of `/propose` / `/quick`, which call this gate after their codebase scan). A contract built on a shallow read just relocates the guess.
 

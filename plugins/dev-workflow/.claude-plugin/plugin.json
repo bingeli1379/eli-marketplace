@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "dev-workflow",
   "displayName": "Dev Workflow",
-  "description": "Daily dev workflow skills: commit, release, prompt & workflow audit, usage-driven skill refinement",
-  "version": "1.14.0",
+  "description": "Daily dev workflow skills: commit, release, skill authoring rules, skill audit (prompt text + workflow logic), usage-driven skill refinement",
+  "version": "2.0.0",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
@@ -11,5 +11,5 @@
   "homepage": "https://github.com/bingeli1379/eli-marketplace",
   "repository": "https://github.com/bingeli1379/eli-marketplace",
   "license": "MIT",
-  "keywords": ["commit", "release", "review-prompt", "review-workflow", "improve-skill", "workflow"]
+  "keywords": ["commit", "release", "review-skill", "skill-authoring", "improve-skill", "workflow"]
 }

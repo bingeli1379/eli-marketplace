@@ -1,7 +1,7 @@
 {
   "name": "sdd-python",
-  "description": "SDD language pack: Python backend/ML engineer and skills",
-  "version": "1.1.2",
+  "description": "SDD stack pack: Python backend/ML engineer and skills",
+  "version": "1.1.3",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
@@ -18,7 +18,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "SDD \u2014 Python Pack",
-    "shortDescription": "SDD language pack: Python backend/ML engineer and skills",
+    "shortDescription": "SDD stack pack: Python backend/ML engineer and skills",
     "developerName": "Eli",
     "category": "Developer Tools",
     "capabilities": [

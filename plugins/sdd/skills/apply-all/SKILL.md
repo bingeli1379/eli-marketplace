@@ -1,8 +1,8 @@
 ---
 name: apply-all
 description: >
-  Run /apply sequentially on multiple changes. Use when the user has
-  several prepared changes and wants to batch-implement them unattended.
+  Use when the user has several prepared changes and wants to batch-implement
+  them unattended, running /apply on each of them sequentially.
 user-invocable: true
 ---
 

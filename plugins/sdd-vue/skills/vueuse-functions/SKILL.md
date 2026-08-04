@@ -1,6 +1,6 @@
 ---
 name: vueuse-functions
-description: Apply VueUse composables where appropriate to build concise, maintainable Vue.js / Nuxt features.
+description: Use when building Vue.js / Nuxt features that an existing VueUse composable already covers, instead of hand-rolling the same reactive utility.
 user-invocable: false
 license: MIT
 metadata:

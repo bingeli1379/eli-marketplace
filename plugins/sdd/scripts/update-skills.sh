@@ -34,7 +34,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-# Skills live across sibling plugins (sdd core + sdd-<lang> packs); SOURCES.yaml
+# Skills live across sibling plugins (sdd core + sdd-<stack> packs); SOURCES.yaml
 # stays the central registry in core. Resolve each skill's actual home at update
 # time by searching the plugins dir, so a skill moving between packs needs no edit here.
 PLUGINS_DIR="$(dirname "$ROOT_DIR")"
