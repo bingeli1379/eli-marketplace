@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.3] - 2026-08-04
+
+### Fixed
+- The gRPC guidance described what it covers instead of when it applies, so it competed with its neighbours for the same request. It now states the situation that should reach it, which is what decides whether the right one loads.
+
+### Changed
+- The pack carries a name in the plugin list and is described as a stack pack, so the sdd family reads as one set rather than separate entries.
+
 ## [1.1.2] - 2026-07-25
 
 ### Changed
