@@ -115,7 +115,7 @@ Most rules are **ERROR** level — any ERROR causes FAIL. A few rules are marked
 | Check | Rule |
 |-------|------|
 | Capability → spec mapping | Every capability in proposal.md `## Capabilities` MUST have a corresponding `specs/<capability-name>/spec.md` |
-| Spec → capability mapping | Every `specs/<name>/` directory MUST correspond to a capability in proposal.md |
+| Spec → capability mapping | Every `specs/<name>/` directory MUST correspond to a capability in proposal.md. **Enumerate directories, not `specs/*/spec.md` files** — an orphan left by an abandoned naming attempt is usually *empty*, so a file-glob walk never sees it while `/apply` still reads it as a capability with no acceptance criteria. An empty `specs/<name>/` is an ERROR whether or not its name matches a capability |
 | Spec → task coverage | Every spec Requirement MUST be traceable to at least one task in tasks.md (by keyword or description overlap) |
 
 ---
