@@ -45,6 +45,24 @@ Before writing custom code, stop at the first rung that holds:
 
 Self-check: *"Would a senior engineer call this overcomplicated?"*
 
+### 3. Comments: default to none
+
+Write a comment only for business logic that the code cannot carry on its own. If naming makes the intent clear, there is no comment to write. Never restate what the line does.
+
+**The failure mode to avoid is over-commenting, not under-commenting.** When you are working from a design document, its rationale is the strongest pull toward writing too much: the decisions feel important, so they get copied into the code as defensive paragraphs. Resist it — **the design document is where rationale lives, and it is already written down.** In code, state the constraint in one line and point at the document (`(see design.md D4)`) instead of reproducing the argument for it.
+
+Concretely, do NOT write:
+- the *reasoning* behind a decision — why an alternative was rejected, what the numbers were, what would break otherwise;
+- history — what the code used to do, what a review round changed, why a limit was chosen;
+- a summary of the block that follows it.
+
+DO write, in one or two lines:
+- a constraint that is invisible in the code and would be undone by an innocent-looking edit (e.g. a parameter deliberately absent, a property deliberately nullable);
+- a domain rule the reader cannot infer (e.g. why a status is excluded);
+- a deliberate deviation from the obvious approach, when the reader would otherwise "fix" it.
+
+Self-check: *"If I deleted every comment I just wrote, what would a reader actually get wrong?"* Keep only those.
+
 ## Match Existing Code Before Writing (MANDATORY)
 
 The spec tells you **WHAT** to build; the existing codebase tells you **HOW this project builds it**. Functionally-correct code that ignores local convention is a defect here — it makes the codebase feel inconsistent. The anchor is **how the project performs each technical operation**, NOT "the nearest feature that looks like mine". Before writing any new code:
