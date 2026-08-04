@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.2.0] - 2026-08-04
+
+### Added
+- A review with more files than one pass can carry now works through them a few at a time and keeps going until every one is done, instead of reviewing some and listing the rest as not covered. Each round is a full review of its own files, and the report says which round it is and how many files are still waiting — so the same list also tells a later session exactly where to pick up.
+
+### Changed
+- `沒審到` no longer accepts "I did not get to it". It now reports only what the review genuinely cannot reach — something its method structurally cannot see, a file this repo does not own, a check that was unavailable — so a long list there means the run is unfinished rather than thorough. A file that simply has not been looked at yet is listed as pending, not as a gap.
+- A finding the review is unsure about now gets verified rather than filed away. Recording it as unconfirmed is only allowed when you are told what blocked the verification.
+
+### Fixed
+- Two descriptions in this plugin's README promised a confirmation step that both skills stopped doing back in 3.0.0.
+
 ## [3.1.0] - 2026-08-04
 
 ### Added
