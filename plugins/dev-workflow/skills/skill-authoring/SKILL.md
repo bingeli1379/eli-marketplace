@@ -1,6 +1,6 @@
 ---
 name: skill-authoring
-description: Use BEFORE writing or editing any skill or agent prompt file — a SKILL.md, an agent .md, an output style, a bundled references/ or templates/ file — or any part of one: a description, a step, a guardrail, a flag. Covers trivial-looking edits and authoring done inside a larger task. Triggers on create, add, write, edit, refine, restructure, shorten, optimize a skill or agent, and their everyday forms: "make a skill for this", "tweak that skill", "clean this up", "add a rule to it", "why doesn't it trigger". Write-time side only — judging an existing file against criteria is the audit pass.
+description: "Use BEFORE writing or editing any skill or agent prompt file — a SKILL.md, an agent .md, an output style, a bundled references/ or templates/ file — or any part of one: a description, a step, a guardrail, a flag. Covers trivial-looking edits and authoring done inside a larger task. Triggers on create, add, write, edit, refine, restructure, shorten, optimize a skill or agent, and their everyday forms: \"make a skill for this\", \"tweak that skill\", \"clean this up\", \"add a rule to it\", \"why doesn't it trigger\". Write-time side only — judging an existing file against criteria is the audit pass."
 user-invocable: false
 ---
 
