@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.0.0] - 2026-08-04
+
+### Removed
+- `/review-prompt` and `/review-workflow` are gone. One command, `/review-skill`, replaces both and always runs the text check *and* the deeper logic and duplication passes. There is no cheap mode by design: a change that looks like pure wording is exactly the shape whose damage lands in another file, so the old "just the text pass" option skipped the checks precisely where they pay. It costs less than running both commands did, because it reads each file once for both layers instead of twice.
+
+### Added
+- A new write-time skill loads by itself before you create or edit a skill, an agent, or the prose they bundle. The rules now arrive while you write instead of after a review finds the mistake — descriptions that never trigger, an example list quietly becoming the whole permitted set, position-shaped names that die on the first reorder, an edit that never reached the rule's other five homes.
+- Those rules and the ones the audit checks against are the same file, so a rule added once is enforced on both sides and cannot drift apart.
+- The audit now covers files it used to skip in silence: output styles and personas, a plugin's own convention prose wherever it keeps it, and `CLAUDE.md` — which no skill reads but the harness always loads, making it the most expensive prompt in a repo rather than an exempt one.
+
+### Changed
+- The audit report is written for the normal case of several files at once, ordered by what you have to do: what needs your decision first, then what was already fixed, then what could not be covered. Sections that would be empty still appear and say so, because a missing section looks exactly like a clean one.
+- `/commit` and `/release` now fire on the way you actually ask — "release 一下", "幫我 commit", "發版" — instead of only the tidy formal phrasing.
+
+### Fixed
+- `/improve-skill` handles several marketplace repos in one run: each target resolves to its own repo, and each gets its own edits, its own validation, and its own hand-off. It also no longer names example skills in its trigger, which used to collide with those skills' own triggers.
+- The audit no longer waves through a block duplicated inside one repo as a "DRY versus self-containment" judgement for you to settle. Same repo means one home; the genuine exception is across plugins, where each has to stand alone.
+
 ## [1.14.0] - 2026-08-02
 
 ### Added
