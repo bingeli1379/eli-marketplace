@@ -19,7 +19,7 @@ Audit prompt files — a skill, an agent, an output style, or the references and
 
 **Two finding vocabularies, deliberately not merged** — they carry different fix policies, so keep each finding in its own:
 - Text-pass findings are rated **SAFE / RISKY / BROKEN / NOTE** and are **auto-fixed without asking** (RISKY and BROKEN, loop to ALL SAFE; NOTEs never).
-- Lens findings are rated **CONFIRMED / PLAUSIBLE** with a severity, and only **CONFIRMED, unambiguous** ones are auto-fixed — anything resting on a design choice is surfaced for the user to decide, never guessed.
+- Lens findings are rated **CONFIRMED / PLAUSIBLE** with a severity. **CONFIRMED** ones are fixed — *including* the ones resting on a design choice: pick the option you would recommend, apply it, and report the call in `### 我做的抉擇`. Handing the user a menu of findings is not a review, it is the review's work left undone. **PLAUSIBLE** ones are never fixed on a guess — verify one up to CONFIRMED, or record it in `### 沒審到` naming what you could not confirm (it is a coverage gap, not a question for the user).
 
 **Steps**
 
@@ -95,19 +95,22 @@ Audit prompt files — a skill, an agent, an output style, or the references and
 
 ````
    ## 審查報告
-   <N> 檔（in-scope <M>）· <總數> 個問題，修掉 <X> · **<Y> 個要你決定** · <本輪改動造成 | 既有缺陷被翻出來 | 前一輪的修改帶出來的>
+   <N> 檔（in-scope <M>）· <總數> 個問題，修掉 <X>（其中 <D> 個是抉擇）· **<Y> 個要你回答** · <本輪改動造成 | 既有缺陷被翻出來 | 前一輪的修改帶出來的>
 
    ### 各檔
-   | 檔 | 問題 | 已修 | 待決定 |
+   | 檔 | 問題 | 已修 | 待回答 |
    |---|---|---|---|
    | ⚠️ `<path>` | <n> | <x> | <y> |
    | ✅ `<path>` | <n> | <x> | — |
 
    其餘 <k> 檔無 finding。
 
-   ### 要你決定（<Y>｜無）
+   ### 要你回答（<Y>｜無）
    - **<file>** › <section name>（`:<current line>`）
-     <what is wrong, one or two sentences> → 沒自動修的原因：<a design choice between two valid rules, or it changes another skill's behavior, or the finding is PLAUSIBLE and unconfirmed> → 建議 <the option you would take>
+     <what is wrong, one or two sentences> → 只有你答得出來：<the fact that lives outside every file you can read> → 我會選 <the option you would take>
+
+   ### 我做的抉擇（<D>｜無）
+   - **<file>** › <section name> — <the call> → 選 <what you applied>、不選 <the option you rejected>：<why, one sentence>
 
    ### 已修（<X>）
    - **<file>** › <section name> — <what was wrong> → <what changed>　`<severity>`
@@ -120,20 +123,27 @@ Audit prompt files — a skill, an agent, an output style, or the references and
    - <anything skipped, and why: an upstream-synced body, an absent tool, a target outside scope>
 ````
 
-   Three sections are **mandatory on every run**, because a missing section is indistinguishable from a clean one:
-   - `### 要你決定` — write `無` when there is nothing. It is the **first finding section**, ahead of `已修` and everything after it, because it is the only part that costs the reader work. `### 各檔` sits above it as the at-a-glance table, not as a finding section — that is the order in the block above and it is the order to emit.
+   Four sections are **mandatory on every run**, because a missing section is indistinguishable from a clean one:
+   - `### 要你回答` — write `無` when there is nothing, **and it usually is `無`**. It is the **first finding section**, ahead of `已修` and everything after it, because it is the only part that costs the reader work — which is exactly why the bar for putting something here is so high. **The only admissible reason is a fact that lives outside every file you can read**: whether the user wants the capability at all, a business or product requirement, a constraint they hold and you do not. **"Two valid designs" is NOT that** — that is `### 我做的抉擇`, decided and applied. A finding parked here that you could have resolved by reading one more file is the failure this section exists to prevent.
+   - `### 我做的抉擇` — write `無` when there is nothing. Every judgement call you resolved: what you picked, what you rejected, one line of why. This is what keeps the user in the loop **after** the work instead of blocking on them before it; a run that decides things and does not list them here is worse than one that asked. It sits **above `### 已修`** for that reason — a call they might overrule outranks a mechanical fix they will just accept. **Each one is listed here and nowhere else**, and it still counts inside `已修 <X>`: `<D>` is a subset of `<X>`, not a total beside it, so the same fix is never printed twice.
    - `### 各檔` — a table, only files that have findings, `⚠️` rows first; close with one sentence counting the clean files instead of listing them. **The status glyph prefixes the path inside the file cell** — `⚠️` when the file still needs the reader, `✅` when everything in it is fixed — which keeps the glyphs in one scannable column without spending a column on them. Terminal output renders markdown, not ANSI colour, so the glyph is what carries the at-a-glance grouping: **two glyphs only, never a third**, and an em dash for a zero count so the eye does not read `0` as a finding.
-   - `### 沒審到` — carries the blast-radius sweep's own blind spot (Lens B's token grep sees only what the change touched) plus anything skipped. Silence here reads as full coverage.
+   - `### 沒審到` — carries the blast-radius sweep's own blind spot (Lens B's token grep sees only what the change touched), any PLAUSIBLE finding you could not raise to CONFIRMED, plus anything skipped. Silence here reads as full coverage.
 
    **The header's last clause is the convergence signal, and it decides whether the user runs again.** Do not default to "本輪改動造成": a second pass usually runs in a fresh session where the earlier one left no trace, so when the history is not visible, judge by the findings' shape instead — fix-shaped commits sitting on top of the change, or findings landing on text the diff just added. Say plainly which of the three it is: the change's own doing, pre-existing defects being uncovered (keep going, coverage is still growing), or defects an earlier pass's fixes introduced (the rounds are converging on shallower shapes). Without it, a reader on the third round can only conclude the code is hopeless, when the truth is usually that each round is smaller than the last.
 
 7. **Fix and sweep the blast radius** (skipped entirely if `--report-only` was passed)
 
-   Text-pass fixes already happened in step 2; the *finding* work here covers the Lens A / Lens B findings. Apply the **CONFIRMED, unambiguous** ones directly (e.g. reorder two steps so reconcile precedes the mutation; add the missing guard). For any fix resting on a **design choice** (which of two contradictory rules wins, what the safe default should be), do NOT guess — present the options and let the user decide. Never apply a fix to a PLAUSIBLE finding without confirming it first. After applying, re-read the affected procedure to confirm the fix did not introduce a new ordering/edge defect.
+   Text-pass fixes already happened in step 2; the *finding* work here covers the Lens A / Lens B findings. Apply the **CONFIRMED** ones directly (e.g. reorder two steps so reconcile precedes the mutation; add the missing guard).
+
+   **A fix resting on a design choice — which of two contradictory rules wins, what the safe default should be — is still yours to make.** Pick the option you would recommend, apply it, and record the call for `### 我做的抉擇`. Do not park it for the user: a list of findings handed back is the review's own work left undone, and it arrives at the moment they have least context to judge it. Two traps that make a decision *look* like theirs when it is not:
+   - **A constraint you proposed earlier in the conversation is not their requirement.** If the correct fix needs it dropped, drop it and say so in the 抉擇 list. Defending your own earlier framing is the most common reason a run stalls on a question nobody asked.
+   - **Blast radius is not a veto.** "This changes another file / another skill" is a reason to sweep further, not to stop — the sweep below is exactly that step.
+
+   Escalate to `### 要你回答` **only** when the answer lives outside every file you can read (does the user want this capability at all; a product or business constraint they hold and you do not). **Never apply a fix to a PLAUSIBLE finding** — verify it up to CONFIRMED first, or record it in `### 沒審到` as something you could not confirm. It does **not** go to `### 要你回答`: "I am not sure" is your gap to close or declare, not a decision the user can make for you. After applying, re-read the affected procedure to confirm the fix did not introduce a new ordering/edge defect.
 
    **Then sweep each fix's blast radius before calling the pass done — this is what stops the next run from re-finding your own work.** This sweep covers **every fix applied in this pass, the step 2 text fixes included**, because a text fix leaves the same stale copies behind as a logic fix and step 2's own loop does not sweep for them. A fix to a rule almost never lives alone: the same rule is usually also stated in a summary table, a checklist line, a template comment, a pointer, or a per-role contract. So run Lens B's token grep against **what you just wrote** instead of against the diff — same mechanic — and every hit must now state the new version, state the *other* branch of the rule correctly, or be unrelated. A fix that landed in one of six places is class 12, and finding it here costs one grep; finding it on the next pass costs a whole audit round. The sweep's own **blind spot** goes in the report's `### 沒審到` section: the token grep sees only what the change touched, so duplication between two untouched files does not surface.
 
-   **Last, re-read the line numbers for every finding left in `### 要你決定`.** The fixes just applied moved everything below them, so a number captured during the trace now points at the wrong text — resolve each open finding's current line from the file as it stands, and cite the section name alongside it so the reference survives the next edit too.
+   **Last, re-read the line numbers for every finding left in `### 要你回答`.** The fixes just applied moved everything below them, so a number captured during the trace now points at the wrong text — resolve each open finding's current line from the file as it stands, and cite the section name alongside it so the reference survives the next edit too.
 
 ---
 
@@ -153,4 +163,4 @@ Audit prompt files — a skill, an agent, an output style, or the references and
 - **Prefer generic over hardcoded** — prompts should work across projects. Hardcoded values (URLs, names, paths, versions) need justification; if a value could vary, parameterize or conditionalize it
 - **Steering must change behavior, and sharpening beats deleting** — fix a weak rule by strengthening it, never by cutting it. The precedence that settles the conflicts lives with the criteria: (h) over (v) on force, (k) over (w) on the burden of proof, and (w)/(x) stay **NOTE** because they rest on what the file cannot show you.
 - **Zero errors is the absolute principle** — when in doubt on the text layer, rate as RISKY and fix it
-- **Auto-fix the text layer, don't ask; ask on a design choice** — RISKY/BROKEN text findings are fixed immediately and re-audited until clean, while a logic or consolidation fix that picks between two valid designs is surfaced for the user. Pass `--report-only` to surface everything without touching files.
+- **Fix it, don't hand over a menu** — RISKY/BROKEN text findings are fixed immediately and re-audited until clean, and a logic or consolidation fix that picks between two valid designs is **yours to decide**: apply what you would recommend and list it in `### 我做的抉擇`. Escalate only what the user alone can answer (see step 7, fix and sweep). The report keeps them in the loop after the work; a confirmation gate before it just moves the work onto them. Pass `--report-only` to surface everything without touching files.
