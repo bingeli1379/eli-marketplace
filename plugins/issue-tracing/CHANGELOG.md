@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.11.0] - 2026-08-04
+
+### Added
+- The question of what actually triggered an incident is now answered across every deployment of the service, not just the one the alert points at. A service often runs a second deployment for automated traffic, and when a surge lands there the alerted deployment's own volume can be flat or even lower — which used to read as "no surge" and sent the conclusion to the wrong cause. The report now names which deployment carried the increase.
+- Runtime settings are looked up instead of inferred from code. That settles two things code alone cannot: whether the behaviour you are looking at is deliberate (a configured delay or throttle, so its slowness is not evidence of anything), and whether the switch that would have prevented the incident is already turned off — usually the real fix.
+- An alert's own first-response instruction and its definitions are treated as leads to check rather than facts. They are written for an earlier incident and go stale quietly, so a "scale out first" that your own numbers disprove gets called out instead of repeated back to you as the recommendation.
+
+### Fixed
+- Traffic is no longer counted over a window that contains the slowdown. Access logs record a request when it finishes, so a window overlapping the incident leaves out everything still in flight and undercounts arrivals — which made a real surge look like a dip.
+- The "is this actually related?" check now covers any number about to be quoted, latency and slow-request share included, and compares proportions rather than raw counts. A service that is slow by design stops being cited as evidence of pressure.
+
+### Changed
+- How to Resolve now says when the alert's prescribed action was disproved by the measurements taken during the investigation, and names any preventive setting found switched off, instead of leaving both out of the report.
+
 ## [1.10.1] - 2026-08-04
 
 ### Fixed
