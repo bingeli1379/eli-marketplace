@@ -44,7 +44,7 @@ Audits prompt files (`.md`) — a skill, an agent, an output style, or the refer
 - **Lens A — procedural logic**: traces the described procedure as a state machine and finds where execution breaks — non-idempotent resume, step-ordering that destroys state a later step needs, cross-step contradictions, broken invariants, unhandled edge cases (crash mid-step, empty input, multi-repo, no-git), dependency-graph gaps, destructive-op / data-loss paths, and an insertion that invalidates its own neighbour
 - **Lens B — duplication & SSOT**: substantial blocks copied across files, concepts with no canonical home, and a changed rule left half-applied. Swept grep-first from distinctive tokens in the change — cheaper and more accurate than reading every sibling
 - Lens findings are rated **CONFIRMED** (a concrete failing scenario was traced) or **PLAUSIBLE**, ranked by severity, with the input → wrong-outcome scenario spelled out
-- **Fix by default** — text findings are fixed without asking; a lens fix resting on a design choice is surfaced for you to decide. Pass `--report-only` to only surface findings without touching files
+- **Fix by default** — text findings are fixed without asking, and a lens fix resting on a design choice is decided and applied too, then reported under `我做的抉擇` for you to overrule; only a fact living outside every readable file is escalated as a question. Pass `--report-only` to only surface findings without touching files
 - Claude-correctness checks: bundled-file read instructions must use `${CLAUDE_PLUGIN_ROOT}/` (plugin-level) or `${CLAUDE_SKILL_DIR}/` (skill-own) — a bare relative path resolves against the user's working directory, not the skill dir; `name:` must equal the skill's parent directory; `model:` / `effort:` belong only on *dispatched* subagents, not on an agent the main session adopts as a persona (it inherits the session)
 - Report language: Traditional Chinese (technical terms in English)
 
@@ -53,7 +53,7 @@ Audits prompt files (`.md`) — a skill, an agent, an output style, or the refer
 Usage-driven and cross-repo. When anything a plugin ships — a skill, an output style or persona, an agent, a hook — misbehaves, misses a case, or feels clunky while you use it as a tool in *another* project, `/improve-skill` reads what went wrong in the session and patches that target's source in the local marketplace repo that owns it — the git working copy, **not** the installed cache — then validates the edits via `/review-skill` and the structure check.
 
 - Resolves each target's owning marketplace repo path from your global `~/.claude/CLAUDE.md` (asks once and offers to record it if missing); one run may span several repos, and each is edited, validated, and handed off separately
-- Proposes a changeset for review before applying; routes durable preferences to memory / `CLAUDE.md` instead of editing a skill
+- Ranks the changeset and applies it — no confirm gate; the report says what it decided. Routes durable preferences to memory / `CLAUDE.md` instead of editing a skill
 - Evidence-driven — only fixes things that actually went wrong when the skill was used, not speculative polish
 - Does **not** commit, push, or reinstall the plugin — you do those afterward so the fix goes live
 - Report language: Traditional Chinese (technical terms in English)
