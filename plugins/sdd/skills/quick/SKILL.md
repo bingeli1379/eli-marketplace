@@ -165,16 +165,16 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    ## Instructions
    - Implement each task in order
    - Follow the design decisions — do NOT deviate
-   - **Implementation Protocol** — follow *Match Existing Code Before Writing* → *Decision order when modifying existing code* in `skills/agent-guidelines/SKILL.md` (Read → Look up → Decide → Implement → Verify). That skill is in your eager `skills:` list, so it is already in your context — apply it, do not re-derive it.
+   - **Implementation Protocol** — follow *Match Existing Code Before Writing* → *Decision order when modifying existing code* from `agent-guidelines` (Read → Look up → Decide → Implement → Verify). **It is already in your context — apply it; do NOT load it again.**
    - **CRITICAL — Committing is EXPLICITLY REQUIRED by the user as part of this workflow. You are authorized and expected to commit after every task. This is NOT optional.** (**No-git mode** — only when Step 0 detected no git repo: there is nothing to commit to, so implement directly and skip every per-task commit; the user commits later. **Still print the `DONE:` line per task** — with no git history to verify against, it is the orchestrator's only completion signal. The rest of this clause assumes a git repo is present.) After completing each task, you MUST:
      1. Stage all changed files with `git add` (specify files by name)
      2. Run all lint commands listed above (if any) — stage any changes they produce
      3. Commit following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`). Format: `<type>[optional scope]: <task-number> <description>` (e.g., `fix: 1.1 resolve login redirect loop`)
    - Do NOT batch multiple tasks into one commit — one commit per task
    - After the commit, report back: "DONE: <task-number> <task-description>"
-   - **Completion contract** — binding, per *Completion Contract — do NOT end your turn early* in `skills/agent-guidelines/SKILL.md` (already in your context): not finished until every assigned task is committed with a `DONE:` line each; the only valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:`.
+   - **Completion contract** — binding, per *Completion Contract — do NOT end your turn early* in `agent-guidelines` (already in your context): not finished until every assigned task is committed with a `DONE:` line each; the only valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:`.
    - Only add code comments for business logic that is not obvious from the code
-   - **Signaling a genuine stop (`NEEDS` / `CONFLICT` / `BLOCKED`)** — follow the **Signaling Unknowns** rules in `skills/agent-guidelines/SKILL.md`. In short: do NOT guess an external fact you can't obtain from the repo + this context — commit what is safely done, emit `NEEDS: <question + why blocked + options>`, stop that task; the orchestrator resolves it and resumes you with your context intact. Aside from those signals, do NOT ask questions — if merely ambiguous, make a reasonable decision and flag it.
+   - **Signaling a genuine stop (`NEEDS` / `CONFLICT` / `BLOCKED`)** — follow the **Signaling Unknowns** rules in `agent-guidelines`. In short: do NOT guess an external fact you can't obtain from the repo + this context — commit what is safely done, emit `NEEDS: <question + why blocked + options>`, stop that task; the orchestrator resolves it and resumes you with your context intact. Aside from those signals, do NOT ask questions — if merely ambiguous, make a reasonable decision and flag it.
    - **Language**: All output and reports MUST be in Traditional Chinese. Code and code comments MUST be in English.
    ```
 
