@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.1.0] - 2026-08-04
+
+### Added
+- Reviewing a skill now runs the mechanical checks before reading any prose, so a broken skill file can no longer come back clean. A frontmatter block that fails to parse looks perfectly fine when you read it, but the skill loads with no name or description at all and simply never triggers — the review reported nothing because nothing in the text was wrong.
+- Whichever mechanical check could not run is now named in the report instead of passing silently, so an unavailable tool reads as a gap in coverage rather than a clean bill of health.
+
+### Fixed
+- A description containing a colon followed by a space no longer silently disables the skill it belongs to. Three skills in this plugin — including the reviewer itself — were loading with empty metadata. Writing a new skill now warns you about it up front, and the review catches it if it slips through.
+
 ## [3.0.0] - 2026-08-04
 
 ### Changed
