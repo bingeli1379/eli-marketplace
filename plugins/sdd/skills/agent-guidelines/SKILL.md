@@ -109,6 +109,8 @@ When you cannot complete something correctly, emit the matching signal and stop 
 
 Anything merely *ambiguous* (more than one reasonable reading, none blocking) is none of these — make the reasonable choice and note it in your report. Reserve the signals for genuine stops.
 
+**A missing backing service is a `NEEDS`, and provisioning one is not your job.** When a command needs infrastructure that is not up — a database, a broker, a container stack — make **one** attempt with whatever the project documents, and if it does not come up, emit `NEEDS` naming the service and the actual error. Do not retry the bring-up, and do not go debugging image tags, credentials, or ports: a stale image reference or an unreachable registry is environment state you cannot fix from inside the repo, so each retry spends minutes and changes nothing. Then **do not run the command that needs it anyway** — a suite whose dependency is down retries the connection instead of failing, so it hangs with no output and looks merely slow. Verify what you can without the dependency (a filtered run that needs none of it, a build), report those results plainly as partial, and say which check is still owed. **Never report a suite as passing when you did not see it pass.**
+
 ## Completion Contract — do NOT end your turn early
 
 Applies whenever you were dispatched with a **list of tasks to implement** (`/apply` and `/quick` worker dispatches). Reviewers, whose deliverable is a verdict rather than commits, are bound instead by the verdict rules in their own dispatch.
@@ -116,6 +118,10 @@ Applies whenever you were dispatched with a **list of tasks to implement** (`/ap
 You are NOT finished until **every** assigned task is committed and you have printed a `DONE: <task-number> <task-description>` line for each. Do NOT stop to "report progress" and wait for further instructions — complete all your tasks within this turn.
 
 The ONLY valid early stops are the three signals above: `NEEDS:` / `CONFLICT:` / `BLOCKED:`. Going idle or yielding without one of {all tasks DONE, NEEDS, CONFLICT, BLOCKED} is a protocol violation, not a pause — the orchestrator treats it as a failed dispatch and re-dispatches, discarding the turn.
+
+**"Waiting to be notified" is not a fourth signal.** Yielding on the belief that something will wake you — a backgrounded command, a monitor, a watcher — ends your turn with the work uncommitted, and the orchestrator has no way to tell that from a crash. If you genuinely cannot proceed, one of the three signals says so; nothing else does.
+
+**Never hold a commit hostage to a verification.** Commit the work first, then verify, and report what the verification said — in that order. Gating the commit on a check that turns out not to finish is how completed, correct work is lost: the run ends with a passing edit sitting uncommitted in the tree, and only luck recovers it. A verification that cannot complete is a `NEEDS` **with the work already committed**, never a reason to sit on it. And do not poll a hung command hoping it resolves — a run producing no output for many times its known duration has lost a dependency, which no amount of waiting restores.
 
 (In **no-git** mode there is nothing to commit to: implement directly, skip the per-task commits, and still print a `DONE:` line per task.)
 
