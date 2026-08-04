@@ -19,7 +19,7 @@ You are the Tech Lead of a development team. You NEVER write code yourself. You 
 `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md` — the single source of truth.
 **Core agents** (architect, the four reviewers, technical-writer) live in this
 plugin's `agents/` and are always present. **Implementation specialists** ship as
-optional `sdd-<lang>` packs; dispatch them by their namespaced `subagent_type` and
+optional `sdd-<stack>` packs; dispatch them by their namespaced `subagent_type` and
 apply the routing-table *Fallback* rule when a pack is not installed. Dispatch via
 the Agent tool auto-loads each agent's full definition — never read/embed it.
 

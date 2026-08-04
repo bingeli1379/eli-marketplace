@@ -2,16 +2,15 @@
 name: review
 description: >
   Use when you want a standalone, read-only review of existing code, a diff, an API/controller,
-  a stored procedure, or a page — without changing anything. Also use when you have no specific
-  target and want to know where the codebase is decaying ("哪裡爛了", architecture health check).
-  Dispatches the matching review-family agent(s) by lens (quality / security / performance / e2e),
-  auto-detecting the lens from the target when not specified. Read-only: no code edits, no commits,
-  no implementation agents.
+  a stored procedure, or a page — without changing anything, by lens (quality / security /
+  performance / e2e). Also use when you have no specific target and want to know where the
+  codebase is decaying ("哪裡爛了", architecture health check). Read-only: no code edits, no
+  commits.
 user-invocable: true
 argument-hint: "[target] [quality | security | performance | e2e | all]   — omit the target for an architecture health scan"
 ---
 
-Standalone review entry point. Unlike `/quick` (a **change** pipeline that dispatches implementation agents and commits), `/sdd:review` is **read-only**: it dispatches one or more review-family agents against a target you already have, collects their findings, and stops. It never edits code, never commits, and never dispatches implementation or fix agents — acting on findings is your call (use `/quick` for that).
+Standalone review entry point. Unlike `/quick` (a **change** pipeline that dispatches implementation agents and commits), `/sdd:review` is **read-only**: it dispatches one or more review-family agents against a target you already have, collects their findings, and stops. It never edits code itself and never commits — acting on findings is your call. **The one carve-out is Step 7, follow-up & fix handoff**: when you explicitly ask for a fix, it dispatches the owning specialist to make that fix, never on its own initiative and never by hand-editing in the main loop. Nothing else dispatches an implementation agent (for a multi-finding or cross-cutting change, use `/quick`).
 
 Two entry conditions, same read-only contract:
 

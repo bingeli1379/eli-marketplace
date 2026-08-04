@@ -1,6 +1,6 @@
 ---
 name: conventional-commits
-description: When writing a git commit message. When task completes and changes need committing. When choosing between feat/fix/chore/docs types. When indicating breaking changes.
+description: Use when an sdd workflow step is already committing — a per-group commit during /apply, the cleanup commit at /complete — and needs the Conventional Commits format rules for feat/fix/chore/docs type choice, scope, and BREAKING CHANGE notation. Format reference only; NOT a trigger to start committing, and not for a standalone user request to commit.
 user-invocable: false
 ---
 

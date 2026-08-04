@@ -15,7 +15,7 @@ Combines **SDD** (Spec-Driven Development), **DDD** (Domain-Driven Design), and 
 
 > Already added the marketplace? Just run the `install` line. To pull updates later: `/plugin marketplace update eli-marketplace`.
 
-Then install the **language packs** for the stacks you work in (each pulls in core automatically):
+Then install the **stack packs** for the stacks you work in (each pulls in core automatically):
 
 ```
 /plugin install sdd-vue@eli-marketplace      # Vue / Nuxt frontend
@@ -129,11 +129,11 @@ Beyond the full `/setup → /propose → /apply → /complete` pipeline, five co
 `sdd` (core) holds the always-present agents in [`agents/`](agents/): **orchestrator**,
 **architect**, the four cross-cutting reviewers (**review** / **security** /
 **performance** / **qa**), and **technical-writer**. Each **implementation specialist**
-ships in an optional `sdd-<lang>` pack (see *Language packs* below). The orchestrator
+ships in an optional `sdd-<stack>` pack (see *Stack packs* below). The orchestrator
 dispatches every agent by its namespaced `subagent_type`; resolution, pack homes, and
 the absent-pack fallback are defined in [`references/agent-routing.md`](references/agent-routing.md).
 
-### Language packs
+### Stack packs
 
 | Pack | Agent | Stack |
 |---|---|---|
@@ -166,9 +166,9 @@ actual pack automatically:
 **When adding a new skill, add its entry to core `skills/SOURCES.yaml`** (even if the
 skill file lives in a pack) so `update-skills.sh` can sync it.
 
-## Maintenance — adding a new language pack
+## Maintenance — adding a new stack pack
 
-1. Create `plugins/sdd-<lang>/` with `.claude-plugin/plugin.json` (`dependencies: ["sdd"]`),
+1. Create `plugins/sdd-<stack>/` with `.claude-plugin/plugin.json` (`dependencies: ["sdd"]`),
    an `agents/<lang>-engineer.md`, and `skills/`. Mirror an existing pack.
 2. The engineer's `skills:` frontmatter eager-loads core skills by **bare name**
    (`agent-guidelines`, `engineering-checklist`, `test-driven-development`, …) — verified

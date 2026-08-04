@@ -1,7 +1,9 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "sdd-devops",
-  "version": "1.0.3",
-  "description": "SDD language pack: DevOps engineer and infrastructure skills",
+  "displayName": "SDD DevOps",
+  "version": "1.0.4",
+  "description": "SDD stack pack: DevOps engineer and infrastructure skills",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"

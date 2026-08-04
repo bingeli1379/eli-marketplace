@@ -21,7 +21,7 @@ fi
 
 - **single-repo** — cwd is within a git repo (at its root or below). The original mode. Everything (git ops, `feature-spec/`) happens against that one repo.
 - **multi-repo** — cwd is NOT in a git repo, but has one or more immediate child directories that are git repos. Each child repo is an independent project; a change may span several of them.
-- **no-git** — cwd is not in a repo and has no child repos. Proceed read-only where possible; warn that git-dependent steps (commits) cannot run.
+- **no-git** — cwd is not in a repo and has no child repos. **Everything runs** — artifacts are written and code is implemented exactly as usual; only the four git-dependent steps are skipped: per-task commits, squash, resume-by-reconcile, and the cleanup commit. Say so once, and tell the user they commit afterwards. It is not a read-only mode.
 
 Child-repo detection is **immediate children only** — nested repos deeper in the tree are out of scope. Announce the detected mode (and, in multi-repo, the list of child repos) before proceeding.
 

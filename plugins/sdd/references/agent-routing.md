@@ -3,7 +3,7 @@
 Authoritative map from a task tag / role name to the agent that handles it.
 The sdd **core** plugin owns the orchestrator, architect, the four cross-cutting
 reviewers, and technical-writer. Every **implementation** specialist ships as an
-optional `sdd-<lang>` pack. Packs are NOT guaranteed to be installed — dispatch
+optional `sdd-<stack>` pack. Packs are NOT guaranteed to be installed — dispatch
 tolerates their absence (see *Fallback*).
 
 This file is the single source of truth consumed by `orchestrator.md` (dispatch),

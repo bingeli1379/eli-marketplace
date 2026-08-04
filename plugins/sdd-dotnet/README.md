@@ -1,6 +1,6 @@
 # sdd-dotnet
 
-**SDD language pack — ASP.NET / .NET backend.** Extends the [`sdd`](../sdd) core plugin with the
+**SDD stack pack — ASP.NET / .NET backend.** Extends the [`sdd`](../sdd) core plugin with the
 `dotnet-engineer` agent and ASP.NET / .NET backend skills. Part of the spec-driven multi-agent workflow.
 
 ## What it adds

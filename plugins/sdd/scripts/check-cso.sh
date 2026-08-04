@@ -12,7 +12,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-# Skills live across sibling plugins (sdd core + sdd-<lang> packs). Mirror
+# Skills live across sibling plugins (sdd core + sdd-<stack> packs). Mirror
 # update-skills.sh and scan EVERY plugin's skills, not just core — the synced
 # pack skills are exactly the ones this check exists to police.
 PLUGINS_DIR="$(dirname "$ROOT_DIR")"
@@ -21,11 +21,15 @@ FILTER="${1:-}"
 issues=0
 checked=0
 
-# Dangerous patterns: action verbs at start of description that Claude may follow
-# as instructions instead of reading the full SKILL.md
-DANGEROUS_PATTERNS=(
-  "^  (Run|Execute|Perform|Create|Build|Generate|Scaffold|Deploy|Configure|Write|Produce|Detect|Analyze|Scan)"
-  "^description: (Run|Execute|Perform|Create|Build|Generate|Scaffold|Deploy|Configure|Write|Produce|Detect|Analyze|Scan)"
+# Action verbs OPENING the description, which Claude may follow as an instruction
+# instead of reading the full SKILL.md. Checked against the first line of the
+# description value only — a folded block's continuation lines are prose, and
+# matching them flagged API names such as "ExecuteDeleteAsync" as action verbs.
+# The trailing space anchors the match to a real verb, not a longer identifier.
+OPENING_VERB_PATTERN="^(Run|Execute|Perform|Create|Build|Generate|Scaffold|Deploy|Configure|Write|Produce|Detect|Analyze|Scan)[[:space:]]"
+
+# Vague capability claims, flagged anywhere in the description.
+SOFT_PATTERNS=(
   "(Auto-detect|Automatically|Adapts|Handles|Manages)"
 )
 
@@ -59,20 +63,39 @@ for skill_dir in "$PLUGINS_DIR"/*/skills/*/; do
 
   found_issue=false
 
-  # Check for dangerous action-verb patterns
-  for pattern in "${DANGEROUS_PATTERNS[@]}"; do
+  # First line of the description VALUE: the text after "description:", or for a
+  # folded/literal block the line below it. Leading quotes are stripped so a
+  # quoted description is measured on its first word, not on the quote.
+  first_line=$(echo "$desc" | head -1 | sed 's/^description:[[:space:]]*//')
+  if [[ -z "$first_line" || "$first_line" == ">" || "$first_line" == "|" ]]; then
+    first_line=$(echo "$desc" | sed -n '2p')
+  fi
+  first_line=$(echo "$first_line" | sed 's/^[[:space:]]*//; s/^["'"'"']//')
+
+  # Check for an action verb opening the description
+  if echo "$first_line" | grep -qE "$OPENING_VERB_PATTERN"; then
+    echo "WARN: $skill_name"
+    found_issue=true
+    match=$(echo "$first_line" | grep -oE "$OPENING_VERB_PATTERN" | head -1)
+    echo "  Action verb opens description: \"${match% }\""
+  fi
+
+  # Check for vague capability claims anywhere in the description
+  for pattern in "${SOFT_PATTERNS[@]}"; do
     if echo "$desc" | grep -qE "$pattern"; then
       if [[ "$found_issue" == "false" ]]; then
         echo "WARN: $skill_name"
         found_issue=true
       fi
       match=$(echo "$desc" | grep -oE "$pattern" | head -1)
-      echo "  Action verb in description: \"$match\""
+      echo "  Vague capability claim: \"$match\""
     fi
   done
 
-  # Check if description lacks "Use when" or "MUST be loaded when" trigger
-  if ! echo "$desc" | grep -qiE "(Use when|Use for|MUST be loaded when|Load this skill when)"; then
+  # Check if description lacks a trigger phrase
+  # `Use BEFORE …` is the same trigger-phrase family, stated as timing rather than condition —
+  # a write-time skill fires ahead of an action, not on a symptom. Trigger-only either way.
+  if ! echo "$desc" | grep -qiE "(Use when|Use before|Use for|Use this skill when|MUST be loaded when|Load this skill when)"; then
     if [[ "$found_issue" == "false" ]]; then
       echo "WARN: $skill_name"
       found_issue=true
@@ -92,5 +115,4 @@ else
   echo "DONE: $checked skills checked, $issues with CSO warnings"
   echo ""
   echo "Fix: Rewrite description to start with \"Use when...\" and remove workflow/action verbs."
-  echo "See: skills/skill-authoring-guidelines/SKILL.md for CSO rules."
 fi

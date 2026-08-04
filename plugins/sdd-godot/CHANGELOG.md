@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.3] - 2026-08-04
+
+### Changed
+- The pack carries a name in the plugin list and is described as a stack pack, so the sdd family reads as one set rather than separate entries.
+
 ## [1.0.2] - 2026-07-25
 
 ### Changed

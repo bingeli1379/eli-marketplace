@@ -1,7 +1,9 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "sdd-database",
-  "version": "1.1.0",
-  "description": "SDD language pack: database engineer and datastore skills",
+  "displayName": "SDD Database",
+  "version": "1.1.1",
+  "description": "SDD stack pack: database engineer and datastore skills",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
