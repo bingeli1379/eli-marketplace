@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.1] - 2026-08-04
+
+### Fixed
+- Missing tooling is named at the start instead of surfacing as an empty result three steps in. Without the Elasticsearch connection the run stops and tells you which server has to be wired; without Grafana a Kibana-only investigation still goes ahead, and says what it cannot reach.
+- The skill now starts from the way an alert actually arrives — "查一下這個 alert", "這個錯誤是什麼原因", "這個噴什麼" — rather than only the formal wording.
+- Handing over an alert with no URL used to leave the run without a scope. It now asks once; if there genuinely is no URL it rebuilds the scope from the alert's own condition and labels it reconstructed in the report, so you can see the whole investigation inherits that uncertainty.
+
 ## [1.10.0] - 2026-08-02
 
 ### Added
