@@ -34,7 +34,7 @@ Detects the current version from project files (package.json, csproj, pyproject.
 
 ### `/review-skill` — Skill Audit
 
-Audits agent and skill prompt files (`.md`) on two levels: whether the prompt still **says** the right thing (the text pass) and whether the procedure it describes actually **behaves** correctly, without duplicated or drifting content around it (the deep lenses).
+Audits prompt files (`.md`) — a skill, an agent, an output style, or the references and templates they bundle — on two levels: whether the prompt still **says** the right thing (the text pass) and whether the procedure it describes actually **behaves** correctly, without duplicated or drifting content around it (the deep lenses).
 
 **One pass, both layers, always — there is no cheap mode.** A change that looks like pure wording is exactly the shape whose blast radius lands in another file, so a pre-judged "text-only" run would skip the lenses precisely where they pay. Cost is controlled by method instead: one read per file serving both layers, Lens B swept grep-first rather than by reading every sibling, and a report that carries findings rather than narration. `--report-only` surfaces findings without applying fixes.
 
