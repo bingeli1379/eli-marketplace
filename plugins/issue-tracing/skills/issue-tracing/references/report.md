@@ -118,6 +118,8 @@ If any block is empty or says "skipped", the work is incomplete — go back and 
    - 兩個方向都要防：**全 200 卻報成事故**（假警報，把良性噪音寫成「N 筆錯誤影響某流程」），以及**有 5xx 卻因為「大多數看起來還好」而漏報**。
    - 拿不到 status 就明寫「未取得請求結果」並列進 Unknowns——**不可用 error 筆數代替失敗數**。
 
+7. **止血建議要對得起你自己量到的數字，而且「擋得住這件事的開關是關的」永遠是一條 How to Resolve。** 這兩件事在調查途中就已經拿到，卻最容易在寫報告時掉——因為此刻眼前只有這份模板：告警／SOP 附的第一時間處置（step 2b「Alert URL / alert context」已要求驗證而非照抄），以及能擋住這類事件的設定現值（step 1c 的 config / settings lookup）。收尾前檢查兩項：**你的 infra 數字有沒有否證掉告警指定的動作**（有 → 明說哪一項無效與依據，不可把它原文寫成建議），以及**那顆旋鈕現在是什麼值**（關著／設錯 → 指名設定與現值，那通常就是真正的長期解）。查不到值就進 Unknowns，**不可寫「建議調整相關設定」這種沒有受詞的句子**——它讀起來像有結論，實際沒有。
+
 ## Output
 
 Output **two versions**: Traditional Chinese first (full detail, the user reads it), then English (super-short, the user pastes to Jira / shares with others who only ask "what happened" + "how bad").
@@ -158,6 +160,8 @@ No "中文版" / "English" headings. Output the report blocks directly. Separate
 **How to Resolve**
 - 短期：<止血>
 - 長期：<根治>
+- <只在成立時：告警／SOP 指定的處置與你的數據矛盾 → 明說哪一項無效、依據是什麼>
+- <只在成立時：能擋住這件事的開關目前是關的／值設錯 → 指名該設定與現值>
 
 **Unknowns**
 - <事項 1>
