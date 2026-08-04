@@ -93,7 +93,9 @@ for skill_dir in "$PLUGINS_DIR"/*/skills/*/; do
   done
 
   # Check if description lacks a trigger phrase
-  if ! echo "$desc" | grep -qiE "(Use when|Use for|Use this skill when|MUST be loaded when|Load this skill when)"; then
+  # `Use BEFORE …` is the same trigger-phrase family, stated as timing rather than condition —
+  # a write-time skill fires ahead of an action, not on a symptom. Trigger-only either way.
+  if ! echo "$desc" | grep -qiE "(Use when|Use before|Use for|Use this skill when|MUST be loaded when|Load this skill when)"; then
     if [[ "$found_issue" == "false" ]]; then
       echo "WARN: $skill_name"
       found_issue=true
@@ -113,5 +115,4 @@ else
   echo "DONE: $checked skills checked, $issues with CSO warnings"
   echo ""
   echo "Fix: Rewrite description to start with \"Use when...\" and remove workflow/action verbs."
-  echo "See: skills/skill-authoring-guidelines/SKILL.md for CSO rules."
 fi

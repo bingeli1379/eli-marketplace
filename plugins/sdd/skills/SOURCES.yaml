@@ -336,9 +336,6 @@ owasp-security:
   repo: https://github.com/agamm/claude-code-owasp
   path: .claude/skills/owasp-security
 
-# Skill Quality (sdd original — derived from obra/superpowers CSO insights)
-skill-authoring-guidelines:
-  repo: original
 
 # .NET (from github/awesome-copilot)
 dotnet-best-practices:
