@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.7.0] - 2026-08-05
+
+### Added
+- After a fix round, the fix is now checked against the finding it was meant to close before the round is accepted. A fix agent can address part of a two-part finding, report everything done in good faith, and leave the tests passing — nothing else in the run could see that, because the tests were green beforehand too.
+
+### Changed
+- A review round no longer repeats just because minor findings came back. Minor items get fixed and recorded, and the loop ends; only a blocker, a major, a failed test run, or a critical capacity regression buys another full review. Previously two minor notes could cost a third round of three reviewers that found nothing.
+- Code comes back with far fewer comments. When the work is driven by a design document, its reasoning was being copied into the source as paragraph-long comments — and the review praised that as thorough. The reasoning now stays in the design document, the code carries a line naming the constraint, and the review flags the bloat instead of crediting it.
+- Task groups are now checked for being too small as well as too large. Several three-task groups each cost a full agent hand-off and a re-read of the design, so adjacent small groups covering one concern are merged.
+
+### Fixed
+- Work is no longer lost when a check cannot finish. An agent that had completed and verified its edits sat waiting on a test suite whose database had died, then ended its turn with everything uncommitted. Commits now land before verification, a stalled command is treated as a lost dependency rather than something to keep waiting on, and bringing up missing services is not the agent's job.
+- Names and values in specs, designs and documentation are read from the code that declares them. One invented level name in a design example travelled into every task instruction, into test data, and finally into operator documentation as a sample file that would be rejected on upload.
+- A rule saying "this project never does X" is no longer concluded from a search that cannot see X, and an empty capability folder left by a renamed spec is now reported instead of silently skipped.
+
 ## [3.6.1] - 2026-08-04
 
 ### Fixed
