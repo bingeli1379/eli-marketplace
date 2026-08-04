@@ -1,6 +1,6 @@
 ---
 name: issue-tracing
-description: Use when the user provides a Grafana or Kibana/ELK URL and asks to investigate an alert, error, incident, or anomaly, or when the user runs /issue-tracing.
+description: Use when the user hands over a Grafana or Kibana/ELK URL, or an alert they were paged with, and wants to know what is wrong — investigate, trace, dig into, or find the root cause of an alert, error, incident, spike, or anomaly. Covers the everyday phrasings too — 「查一下這個 alert」、「這個錯誤是什麼原因」、「幫我看一下這個 log」、「這個噴什麼」、「on-call 收到告警」、"look into this alert", "what is causing this". Also when the user runs /issue-tracing.
 ---
 
 # Issue Tracing
@@ -84,6 +84,8 @@ Everything in between — resolving data views, running counts, reading code, fo
 2. **Recover the filter from the input**
 
    The output of this step is a concrete query scope — index / stream (to resolve in step 3), time range, and field filters by role (environment / service / severity / free-text query) — **regardless of whether the input was ELK or Grafana**. Record each filter as the role it fills *plus* the literal field path and value the input gave you; the literals are what you replicate in step 4, the roles are what let step 3 re-resolve them if the stream turns out to use different names.
+
+   **No URL at all** (the plain-alert-description input) — there is nothing to recover, so **ask once** for the Kibana / Grafana URL they are looking at and wait for it. Do not invent a scope from the description: a symptom in prose is not a filter, and substituting your own is the one thing the operating principle above forbids. If they genuinely have no URL, build the scope explicitly from the alert's own condition (service + error / metric + time window), then say in the report that the scope was **reconstructed, not recovered** — everything downstream inherits that uncertainty.
 
    ### 2a. ELK / Kibana URL (`*/app/discover#/...` or `.../view/<savedSearchId>`)
 
