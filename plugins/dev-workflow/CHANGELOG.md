@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0] - 2026-08-04
+
+### Changed
+- `/review-skill` and `/improve-skill` now make the call and tell you afterwards instead of stopping to ask. A judgement call — which of two valid rules wins, how far a fix should reach — gets decided and applied, then listed so you can overrule anything you disagree with. A list of findings handed back was the work left undone, and it reached you at the moment you had the least context to judge it.
+- The audit report's `要你決定` section is replaced by two. `我做的抉擇` shows what was decided and why, placed ahead of the mechanical fixes because a call you might overrule matters more than one you will just accept. `要你回答` is reserved for the rare thing no file can settle — whether you want the capability at all.
+- A finding the audit could not confirm is no longer put to you as a question. It is recorded in `沒審到` as a gap in coverage, because "not sure" is the auditor's problem to close, not yours to rule on.
+- `/improve-skill` now treats "I want this skill to behave differently" as a fix to the skill itself instead of filing it away as a personal preference. That kind of request changes how the skill runs every time it runs, for anyone who uses it.
+
+### Removed
+- `/improve-skill`'s confirmation step and its `--apply` flag are gone — the flag only ever existed to skip a gate that no longer exists. If you want findings surfaced without anything being touched, pass `--report-only` to `/review-skill`.
+
 ## [2.0.0] - 2026-08-04
 
 ### Removed
