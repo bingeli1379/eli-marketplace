@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.0] - 2026-08-05
+
+### Changed
+- The .NET engineer no longer adds XML documentation comments to ordinary internal service code. Two of the guides it always loads disagreed — one asked for full XML docs on every public member, the other says comments default to none — with nothing saying which wins. XML docs are now for a published API surface, where someone in another repo reads them; for internal code the project's own habit decides, and if its existing public members have none, yours do not get them either.
+
 ## [1.1.3] - 2026-08-04
 
 ### Fixed
