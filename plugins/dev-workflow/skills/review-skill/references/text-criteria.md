@@ -74,7 +74,7 @@ Rate each finding as:
 **n. Reference file separation** — rule: catalogue *Where content lives*.
 - Audit adds: **RISKY** when the main prompt inlines project-specific, platform-specific, or per-entity detail that duplicates — or belongs in — an existing reference file.
 
-**o. Hardcoded values** — audit-only: only a reader outside the file can tell whether a literal will vary.
+**o. Hardcoded values** — audit-only for the general literal (only a reader outside the file can tell whether a project name or a path will vary). Two kinds now have a write-time rule in the catalogue and this criterion supplies their rating: a fact that lives in another system — a version, a CLI flag, an API or payload shape — is *A fact that rots somewhere else is cited, not copied in*; a literal that scripts a route through the target — a line range, a file list, a count — is *Be exact about the destination, never the route*.
 - Scan for hardcoded URLs, names, paths, versions, counts, or other literals.
 - For each: **"Could this value differ across projects, environments, or over time?"** If yes, parameterize, derive, or conditionalize it.
 - Truly fixed values (an RFC-defined name, a tool's canonical CLI name) are acceptable — but justify why they must be literal.
