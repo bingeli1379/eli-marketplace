@@ -12,7 +12,7 @@ Rate each finding as:
 - **SAFE**: No quality risk
 - **RISKY**: Could cause the agent to produce lower quality output
 - **BROKEN**: Will definitely cause issues — must fix before using
-- **NOTE**: An observation for the user to judge, never auto-applied. Reserved for findings that depend on something the file cannot settle — a model default you cannot observe (criterion w), a length trade-off only the author can weigh (criterion x), or the Claude-construct inventory under (s). A NOTE never affects a file's rating and never triggers the auto-fix loop.
+- **NOTE**: An observation for the user to judge, never auto-applied. Reserved for findings that depend on something the file cannot settle — a model default you cannot observe (criterion w), or a length trade-off only the author can weigh (criterion x). A NOTE never affects a file's rating and never triggers the auto-fix loop.
 
 ## For Agent files (`**/agents/*.md`)
 
@@ -105,8 +105,6 @@ These prompts target **Claude Code as the authoritative, primary harness** — a
 - Claude tool names in the body — `TodoWrite`, the `Task` / Agent subagent dispatch, `SendMessage`, `AskUserQuestion`.
 - `$ARGUMENTS`, `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_SKILL_DIR}`, and frontmatter `allowed-tools` / `disallowed-tools` / `argument-hint` / `model:` / `effort:` (on a *dispatched* subagent — see RISKY below for the persona case) / `context: fork` / `disable-model-invocation` / `user-invocable` / `hooks`.
 - Subagent / orchestration constructs (`subagent_type`, companion `agents/*.md`, `context: fork` for isolation) — first-class Claude design, not a liability.
-
-(Optional, non-blocking: you MAY emit a one-line NOTE listing which Claude-only constructs a file uses, to inform the future cross-harness compile step — but NEVER rate them RISKY/BROKEN and NEVER auto-rewrite them.)
 
 **BROKEN — Claude *correctness* bugs (not portability), must fix.** Both rules live in the catalogue's *Names and paths that resolve*; the ratings are here:
 - **Bare relative path in a read/load instruction** → **BROKEN**. Fix per the catalogue: `${CLAUDE_PLUGIN_ROOT}/` for plugin-level files, `${CLAUDE_SKILL_DIR}/` for the skill's own. (Referencing another skill *by name* for the Skill tool is fine bare — that's a name, not a path read.)
