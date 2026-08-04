@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.4] - 2026-08-04
+
+### Fixed
+- The Electron skill's description was a tour of everything it can do, twice the length it needed and competing with unrelated requests. It now states when to use it — you want to drive, automate or test a running Electron app — so it loads on the right ask and stays quiet otherwise.
+
+### Changed
+- The pack carries a name in the plugin list and is described as a stack pack, so the sdd family reads as one set rather than separate entries.
+
 ## [1.0.3] - 2026-07-12
 
 ### Changed
