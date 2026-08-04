@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.3.0] - 2026-08-04
+
+### Added
+- Writing a skill now separates the destination from the route. A step still has to say what done looks like, what it hands on, and anything the agent could not work out for itself — but it no longer spells out which files to open, which lines to read, or how to recover from one specific error. Those break the moment the thing being worked on differs from whatever it was written against. Leaving the route open means the sentence is simply absent, not softened into "視情況" — and a path to the skill's own bundled files is still named exactly.
+- A fact that belongs to something else — a version, a CLI flag, an API or payload shape — is now pointed at where it actually lives instead of copied in, since a copy quietly goes wrong while the source moves on. When a decision really needs it written down, where it came from gets written down too, so the next reader can re-check it.
+- A section that has collected more corrections than structure now gets rewritten from its stable base instead of taking another qualifier on the end. Three signs it is past patching: a rule you can only understand if you know the incident behind it, a rule whose job is to correct the one above it, or a heading that no longer says what its section decides.
+
+### Changed
+- The audit's hardcoded-values check now points at the two new rules for the cases they cover, so the same rule is not stated twice and cannot drift between writing and reviewing.
+
 ## [3.2.0] - 2026-08-04
 
 ### Added
