@@ -116,6 +116,39 @@ resolves each skill's actual home by searching `plugins/*/skills/<name>`. Skills
 
 **Skill loading is per-agent and eager.** A subagent's `skills:` frontmatter is injected in full at spawn (not progressive), so each declared skill costs its SKILL.md body on every dispatch (`references/` stay on-demand). To keep dispatches lean, agents declare only **cross-task-universal** skills eagerly and invoke **stack-/datastore-/infra-specific** skills **on demand via the Skill tool** after their Stack Detection step (see database/performance/dotnet/python engineers' "Load skills on demand" sections).
 
+## Routing a defect back to its source
+
+Covers the whole family — core and every `sdd-<stack>` pack, which ship no `CLAUDE.md` of
+their own. Feedback from real usage arrives as a symptom ("it never asked X", "it flagged something
+pointless", "the design missed Y"), not as a filename. Route by **which phase produced the
+artifact**, not by which file the words look like they belong in — the file that *mentions*
+a topic is usually not the one that *decided* it.
+
+**Find the phase first.** The commit that introduced the bad output names it: a
+`fix(...): address review, security, and qa findings` commit means a reviewer round, so the
+defect is in that reviewer's agent file, not in the implementation. `feature-spec/changes/<name>/`
+holds the same trail — `proposal.md` (the chain message and what was asked), `design.md`
+(what the architect decided), `tasks.md` (how it was cut up).
+
+| Symptom | Home |
+|---|---|
+| A question never asked, or asked too late / without its consequence | `skills/propose/SKILL.md` (chain message + Scope Contract); `skills/quick/SKILL.md` if the work never went through propose |
+| A fact guessed instead of looked up | `references/grounding.md` |
+| The design chose wrong, or recorded a number that changed no decision | `agents/architect.md` |
+| A finding raised that should not have been, or missed | that reviewer's agent file — `review-engineer` / `security-engineer` / `qa-engineer` / `performance-engineer` |
+| Wrong agent dispatched, or dispatched with too little context | `agents/orchestrator.md` + `references/agent-routing.md` |
+| Bad code in a stack the packs cover | that pack's `agents/<stack>-engineer.md` |
+| Behaviour every agent should share (signalling, comments, YAGNI) | `skills/agent-guidelines/SKILL.md` |
+
+**Two rules that decide the final landing spot:**
+
+- **A preloaded checklist that fires wrongly is fixed at the agent, not in the checklist**, whenever
+  `skills/SOURCES.yaml` shows the skill is upstream-synced — a body edit there is reverted by the next
+  sync. State the precedence in the agent that loads it.
+- **A rule belongs to whoever performs the act, once.** The rule for writing `design.md` lives with the
+  architect even when propose has an opinion about it; a duty asserted for a role that role's own file
+  never gained is a rule nobody runs.
+
 ## Fusing an External Skill (checklist)
 
 sdd is a **thin, fixed orchestration spine + a fat, lazily-loaded knowledge periphery.** The spine (propose→apply→complete choreography, single-writer serialization, mandatory review gates, NEEDS/CONFLICT/BLOCKED signaling, `config.yaml` as sole context, core+pack split) is what sdd *is* and stays closed. The periphery (reference skills agents pull) is what sdd *knows* and is open to growth. When importing someone else's skill, run this filter before adding it.
