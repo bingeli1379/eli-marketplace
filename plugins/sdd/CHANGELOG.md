@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.8.0] - 2026-08-06
+
+### Added
+- Code review now catches free-text input landing in a fixed-width place — a database column, a fixed upstream field — and reports the real width it has to fit, instead of suggesting a cap someone guessed.
+- Quick mode now points you at the full spec flow for batch writes, mass updates, migrations and backfills. It never asks how much data or how long the request may run, and those two answers decide the whole shape of the thing.
+
+### Changed
+- When asked how much data is involved, the question now comes with what breaks at which size and what would be built differently — so an answer is possible even when the row count is not something you know. It also asks for the number the machine ends up holding, which is what a query fans out to, not the rows you upload.
+- A size answer now has to show up in the design: the execution model it picked, the mitigation it forced, or a risk written down as knowingly accepted with the size that trips it. A ceiling recorded and then ignored used to leave the design reading as scale-aware while nothing consulted it.
+- Security review works out who can actually reach an endpoint before judging it, and needs a named attacker on a real path. Internal admin surfaces stop collecting length caps, branches and tests on fields nobody can abuse — while anything crossing a trust boundary keeps its full severity everywhere.
+
 ## [3.7.0] - 2026-08-05
 
 ### Added
