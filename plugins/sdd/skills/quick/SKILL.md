@@ -288,6 +288,7 @@ If during analysis (step 5) you determine the task is:
 - Touching 3+ independent capabilities
 - Would produce 15+ tasks
 - Requires significant architectural decisions
+- Iterates an unbounded population or performs bulk external mutation (batch API writes, mass updates, migrations, backfills) — quick mode never asks for data volume or hard runtime limits, and those decide the execution model
 - Needs cross-team coordination
 
 Then suggest: "This task looks complex enough for the full spec flow. Want me to run `/propose` instead?"
