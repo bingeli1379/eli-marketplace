@@ -18,7 +18,7 @@ Contains:
 - **dev-workflow** — daily workflow skills: commit, release, review-skill, skill-authoring
 - **issue-tracing** — on-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured incident report
 - **sdd** — spec-driven AI development workflow core (proposal, design, tasks → implement, validate, archive): workflow commands, orchestrator, architect, cross-cutting reviewers, universal skills
-- **sdd-\<stack\> packs** — optional stack packs that extend sdd with one stack's engineer agent + skills: `sdd-vue`, `sdd-dotnet`, `sdd-python`, `sdd-godot`, `sdd-electron`, `sdd-database`, `sdd-devops`. Each declares `dependencies: ["sdd"]`. See `plugins/sdd/CLAUDE.md` → *Plugin Topology* and `plugins/sdd/references/agent-routing.md`.
+- **sdd-\<stack\> packs** — optional stack packs that extend sdd with one stack's engineer agent + skills: `sdd-vue`, `sdd-dotnet`, `sdd-python`, `sdd-godot`, `sdd-electron`, `sdd-database`, `sdd-devops`. Each declares `dependencies: ["sdd"]`. See `plugins/sdd/CLAUDE.md` → *Plugin Topology* and `plugins/sdd/references/agent-routing.md`. **The packs ship no `CLAUDE.md` of their own** — core's is the family's, so read it before editing anything in a pack too, in particular *Routing a defect back to its source* when you are feeding a real-usage problem back in.
 
 ## Adding a New Plugin
 
