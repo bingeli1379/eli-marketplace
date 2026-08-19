@@ -17,7 +17,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "SDD \u2014 Electron Pack",
+    "displayName": "SDD Electron",
     "shortDescription": "SDD stack pack: Electron desktop/game engineer and skills",
     "developerName": "Eli",
     "category": "Developer Tools",

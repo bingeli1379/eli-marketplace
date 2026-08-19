@@ -17,7 +17,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "SDD \u2014 Python Pack",
+    "displayName": "SDD Python",
     "shortDescription": "SDD stack pack: Python backend/ML engineer and skills",
     "developerName": "Eli",
     "category": "Developer Tools",

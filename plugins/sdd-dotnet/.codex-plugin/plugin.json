@@ -17,7 +17,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "SDD \u2014 .NET Pack",
+    "displayName": "SDD .NET",
     "shortDescription": "SDD stack pack: ASP.NET / .NET backend engineer and skills",
     "developerName": "Eli",
     "category": "Developer Tools",
