@@ -17,7 +17,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "SDD \u2014 DevOps Pack",
+    "displayName": "SDD DevOps",
     "shortDescription": "SDD stack pack: DevOps engineer and infrastructure skills",
     "developerName": "Eli",
     "category": "Developer Tools",

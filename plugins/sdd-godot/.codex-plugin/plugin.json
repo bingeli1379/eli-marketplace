@@ -17,7 +17,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "SDD \u2014 Godot Pack",
+    "displayName": "SDD Godot",
     "shortDescription": "SDD stack pack: Godot game engineer and skills",
     "developerName": "Eli",
     "category": "Developer Tools",

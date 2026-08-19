@@ -22,7 +22,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Spec-Driven Development",
+    "displayName": "SDD Core",
     "shortDescription": "Spec-driven workflow: requirements \u2192 specs \u2192 agent implementation",
     "developerName": "Eli",
     "category": "Developer Tools",

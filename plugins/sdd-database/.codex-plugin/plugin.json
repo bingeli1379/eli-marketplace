@@ -17,7 +17,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "SDD \u2014 Database Pack",
+    "displayName": "SDD Database",
     "shortDescription": "SDD stack pack: database engineer and datastore skills",
     "developerName": "Eli",
     "category": "Developer Tools",
