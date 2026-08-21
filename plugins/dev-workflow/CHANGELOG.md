@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.3.1] - 2026-08-21
+
+### Fixed
+- The prompt audit now catches hedges written in English, not only the Chinese ones. It was told to grep for 盡量／視情況／留意 while the files it audits are written in English, so a rule saying two things are "plainly the same" was reported as clean by an audit that had the anti-hedge rule loaded. Words that sound decisive while naming no condition — plainly, clearly, obviously, simply — are caught too.
+- Releasing something for the first time no longer bumps its version. A package that was never published had a number assigned to work nobody could install, leaving a gap in its history. Whether a previous release exists is now settled before anything looks for a baseline, and on a first release the version on disk stands and you are not asked to pick a baseline that does not exist.
+
 ## [3.3.0] - 2026-08-04
 
 ### Added

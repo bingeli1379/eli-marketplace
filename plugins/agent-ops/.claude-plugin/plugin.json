@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "agent-ops",
+  "displayName": "Agent Ops",
+  "description": "Look after the AI setup itself: audit which installed MCP servers, tools, and skills actually get used, and keep the ones that stay in good shape",
+  "version": "0.1.0",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-marketplace",
+  "license": "MIT",
+  "keywords": [
+    "agent-ops",
+    "mcp",
+    "skills",
+    "usage-audit",
+    "context",
+    "prune"
+  ]
+}
