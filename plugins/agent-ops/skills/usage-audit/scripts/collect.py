@@ -208,6 +208,14 @@ for name, meta in tools_observed.items():
 for name, meta in declared.items():
     if meta.get("scope") != "project":
         continue
+    # Ask first whether the project itself still exists. A declaration pointing at a directory
+    # that is absent cannot load while it stays absent, so its zero is a verdict — dead config left
+    # behind in ~/.claude.json — not a measurement gap. It says nothing about WHY the path is gone:
+    # a deleted project and an unmounted volume look identical from here, so the report states the
+    # absence and leaves the cause to the user who knows it. Without this
+    # the run reports "cannot be measured" for something decidable by one stat call, and hands
+    # over a removal command that cannot even run (there is no directory to cd into).
+    meta["project_exists"] = os.path.isdir(meta["where"])
     # The transcript directory is the project path with its separators replaced, so build the
     # slug from whatever separator this platform uses rather than assuming "/". When no such
     # directory exists the count is unknowable, NOT zero: reporting 0 there is indistinguishable
@@ -218,9 +226,10 @@ for name, meta in declared.items():
         meta["project_sessions"] = len(glob.glob(os.path.join(project_dir, "*.jsonl")))
     else:
         meta["project_sessions"] = None
-        out["unavailable"].append(
-            f"no transcript directory for {meta['where']} — server '{name}' cannot be measured, "
-            "so it gets no verdict")
+        if meta["project_exists"]:
+            out["unavailable"].append(
+                f"no transcript directory for {meta['where']} — server '{name}' cannot be measured, "
+                "so it gets no verdict")
 
 out["mcp_servers"] = {
     s: {
