@@ -11,6 +11,9 @@ Counts what your installed MCP servers and skills actually did across the sessio
 this machine, then gives each one a verdict. MCP is judged per server, never per tool — which
 tools a server offers can only be learned by connecting to it.
 
+**Command only** (`disable-model-invocation: true`) — a passing remark about your setup never
+reaches it. The run reads your whole session history, so starting it is your call.
+
 - **Keep** — what the setup is actually buying, ranked by call count, each with what its own
   description still costs per turn: firing is not the same as being worth the charge
 - **Remove** — a declared MCP server with zero calls (server level, never per tool), including one
