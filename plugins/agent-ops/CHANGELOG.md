@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.1] - 2026-08-21
+
+### Added
+- A project's MCP server whose folder is no longer on your machine is now called out as leftover config rather than skipped as unmeasurable — it can never load again, and the report names the `~/.claude.json` entry to delete. It says only that the folder is missing, never why: a check like this cannot tell a deleted project from one on a drive you have not plugged in.
+- The list of skills that DID fire now shows what each one's description costs you per turn. A skill you called once that carries a long description is the one worth rewriting, and a table of call counts alone made it look no different from a cheap one.
+
+### Fixed
+- A project's MCP server the history never covered could be recommended for removal off the summary table alone, retiring something on evidence that was never collected. The summary now carries the same exception the detailed rules already had.
+- Removing a project server whose folder is gone used to hand you a command that cannot run, because it has to change into that folder first. You now get the config entry to edit instead.
+- Every zero-call server is shown with where it actually loads, which now includes "nowhere" for one whose folder is missing.
+
 ## [0.1.0] - 2026-08-21
 
 ### Added
