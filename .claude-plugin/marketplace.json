@@ -55,6 +55,11 @@
       "name": "sdd-devops",
       "source": "./plugins/sdd-devops",
       "description": "SDD stack pack: DevOps engineer and infrastructure skills"
+    },
+    {
+      "name": "agent-ops",
+      "source": "./plugins/agent-ops",
+      "description": "Look after the AI setup itself: audit which installed MCP servers, tools, and skills actually get used, and keep the ones that stay in good shape"
     }
   ]
 }
