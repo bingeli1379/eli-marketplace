@@ -1,0 +1,31 @@
+{
+  "name": "agent-ops",
+  "description": "Look after the AI setup itself: audit which installed MCP servers, tools, and skills actually get used, and keep the ones that stay in good shape",
+  "version": "0.1.0",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-marketplace",
+  "license": "MIT",
+  "keywords": [
+    "agent-ops",
+    "mcp",
+    "skills",
+    "usage-audit",
+    "context",
+    "prune"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Agent Ops",
+    "shortDescription": "Audit installed MCP servers, tools, and skills against what you actually use",
+    "developerName": "Eli",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Skills",
+      "Files"
+    ]
+  }
+}
