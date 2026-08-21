@@ -11,8 +11,11 @@ Counts what your installed MCP servers and skills actually did across the sessio
 this machine, then gives each one a verdict. MCP is judged per server, never per tool — which
 tools a server offers can only be learned by connecting to it.
 
-- **Keep** — what the setup is actually buying, ranked by call count
-- **Remove** — a declared MCP server with zero calls (server level, never per tool)
+- **Keep** — what the setup is actually buying, ranked by call count, each with what its own
+  description still costs per turn: firing is not the same as being worth the charge
+- **Remove** — a declared MCP server with zero calls (server level, never per tool), including one
+  whose project directory is no longer there: dead config that cannot load while the path is gone.
+  A project-scoped server the session window never covered gets no verdict instead of a wrong one
 - **該處理** — a plugin whose skills never fired and which nothing else reaches either: its whole
   per-turn description cost buys nothing
 - **保留** — a plugin whose skills never fired but which is reached another way — another of its
