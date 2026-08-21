@@ -41,7 +41,9 @@ Record: **current version**, **all version file paths** (every parallel manifest
 
 ### 2. Find the previous version baseline
 
-Use the following strategy to determine what changed since the last release:
+**First, settle whether there is a previous release at all** — the strategies below all assume one, and each will manufacture a false baseline when there is none. It is a first release when no commit ever changed the package's version file AND no tag names an earlier version AND `CHANGELOG.md` either does not exist or its newest heading already equals the version on disk. Then the range is the whole of the package's history, step 4 (determine version bump) keeps the version as it stands, and nothing is asked — there is no earlier version for the user to pick. **Check this before strategy 2 in particular**: a first release's newest changelog heading IS the current version, so that strategy would report a baseline equal to what is being released.
+
+Otherwise use the following strategy to determine what changed since the last release:
 
 1. **Git log of the version file**: `git log --oneline -10 -- <version-file>` — find the commit that last changed the version, use it as baseline
 2. **CHANGELOG.md**: parse the most recent `## [x.y.z]` heading to find the last documented version
@@ -69,6 +71,7 @@ Prefer a package-path baseline (`git log --oneline -1 --grep='release v' -- <pac
 - Compute the new number from the current version: major → `(x+1).0.0`, minor → `x.(y+1).0`, patch → `x.y.(z+1)`
 - **Pre-1.0 (`0.y.z`)**: shift down one level — a breaking change bumps minor (`0.(y+1).0`), a `feat` bumps patch (`0.y.(z+1)`). Never auto-promote a `0.x` package to `1.0.0`; do that only if the user explicitly asks
 - Apply the suggested bump automatically without asking for confirmation
+- **A package that has never been released does not get bumped.** When step 2 (find the previous version baseline) took its never-released branch, the version on disk *is* this release: keep it, bring the changelog entry up to what actually ships, and commit `chore(<pkg>): release vX.Y.Z` at that same number. Bumping instead assigns a version to work that was never published, and leaves a gap nobody can install.
 
 ### 5. Generate changelog entry
 
