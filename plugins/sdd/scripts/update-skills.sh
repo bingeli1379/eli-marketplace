@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Update bundled skills from their upstream sources.
-# Reads skills/SOURCES.yaml and pulls the latest SKILL.md + references/ for each.
+# Reads skills/SOURCES.yaml and pulls the latest SKILL.md + references/ (or reference/) + assets/ for each.
 #
 # LOCAL FRONTMATTER IS PRESERVED: only the SKILL.md body (after the second `---`)
 # is replaced from upstream. The local frontmatter block — name, description,
@@ -275,6 +275,13 @@ process_skill() {
   if [[ -d "$source_dir/reference" ]]; then
     rm -rf "$skill_dir/reference"
     cp -r "$source_dir/reference" "$skill_dir/reference"
+  fi
+
+  # Copy assets/ if exists — the synced BODY links to these files (google/skills ships example
+  # manifests as assets/*.yaml), so leaving them behind syncs a body pointing at nothing.
+  if [[ -d "$source_dir/assets" ]]; then
+    rm -rf "$skill_dir/assets"
+    cp -r "$source_dir/assets" "$skill_dir/assets"
   fi
 
   echo "  OK"
