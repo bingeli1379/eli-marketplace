@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.4] - 2026-08-22
+
+### Changed
+- `/usage-audit` now opens with what your setup costs, not with how it measured. Three figures lead the report: what your skills charge every turn, how much of that never fires, and how much of *that* you would actually get back by removing something. The third one is new and it is the one that matters — the never-fired total includes silent skills sitting inside plugins you are keeping for another reason, which no uninstall reaches, so reading it as the saving overstated what a cleanup returns by more than half. The old Coverage block is gone: the session window moved under the MCP table it justifies, and anything the run could not read stays a line beside the cost figures.
+
+### Fixed
+- Every installed plugin now appears in the plugin table. It used to list only the ones that ship skills, so a plugin you reach entirely through its MCP server was missing from the inventory and got no verdict at all — on a real setup that quietly left out a server with 41 calls behind it.
+- A plugin the run cannot measure is now left unjudged instead of being recommended for removal. One that ships only commands or agents, or whose install folder has gone missing, says which of the two it is. Treating "nothing recognised on disk" as "ships nothing" would have told you to remove three plugins that were working fine.
+- The session window is read from the messages instead of from file timestamps. A transcript keeps being written to, so its file timestamp is when the session *ended* — the window looked like it began when the oldest session finished, hiding 24 of 55 days. A server with no calls over that window is the whole case for removing it, so a short window made that case look weaker than it was.
+- The per-turn cost total no longer reads as your whole cost. The skills built into Claude Code charge their descriptions every turn as well and cannot be counted from disk, so the report now states which skills its totals cover and how many it had to leave out.
+
 ## [0.2.3] - 2026-08-22
 
 ### Changed
