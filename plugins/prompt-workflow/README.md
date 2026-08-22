@@ -1,4 +1,4 @@
-# agent-ops
+# prompt-workflow
 
 Everything else here helps the AI work on your code. This plugin works on the AI itself —
 what it has loaded, what it never uses, and whether the parts you added are any good.

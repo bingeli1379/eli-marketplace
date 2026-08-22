@@ -1,6 +1,6 @@
 {
-  "name": "agent-ops",
-  "description": "Look after the AI setup itself: audit which installed MCP servers, tools, and skills actually get used, write and audit skill/agent prompt files, and feed real-usage problems back into their source",
+  "name": "prompt-workflow",
+  "description": "Look after the AI setup itself: write and audit the prompt files that steer it, feed real-usage problems back into their source, and audit which installed MCP servers and skills actually get used",
   "version": "0.1.1",
   "author": {
     "name": "Eli",
@@ -10,7 +10,7 @@
   "repository": "https://github.com/bingeli1379/eli-marketplace",
   "license": "MIT",
   "keywords": [
-    "agent-ops",
+    "prompt-workflow",
     "mcp",
     "skills",
     "usage-audit",
@@ -22,8 +22,8 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Agent Ops",
-    "shortDescription": "Audit the AI setup: what actually gets used, and whether the prompts you added are well written",
+    "displayName": "Prompt Workflow",
+    "shortDescription": "Write and audit the prompt files that steer your AI setup, and prune what never fires",
     "developerName": "Eli",
     "category": "Developer Tools",
     "capabilities": [
