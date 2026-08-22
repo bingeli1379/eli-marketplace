@@ -19,9 +19,11 @@ pack declares `dependencies: ["sdd"]`, so installing a pack pulls in core.
   (`agent-guidelines`, `engineering-checklist`, `test-driven-development`, …) by
   **bare name** in its `skills:` frontmatter — no duplication, no namespacing needed.
   On-demand `Skill` tool loads also work cross-plugin.
-- Adding a stack = ship a new `sdd-<stack>` pack + register it in the root
-  `marketplace.json` + add a row to `references/agent-routing.md`. Core agents and
-  workflow skills are untouched.
+- Adding a stack = ship a new `sdd-<stack>` pack + register it in **both** root manifests
+  (`.claude-plugin/marketplace.json` and the Codex mirror `.agents/plugins/marketplace.json` —
+  `scripts/check-structure.sh` fails on the mismatch) + add a row to `references/agent-routing.md`
+  + add the role to `skills/role/SKILL.md`'s frontmatter `description` and `argument-hint`, the one
+  literal list the routing table cannot replace. Core agents and workflow skills are untouched.
 
 ## Workflow
 
@@ -160,7 +162,7 @@ sdd is a **thin, fixed orchestration spine + a fat, lazily-loaded knowledge peri
    - **eager/on-demand is a *reliability* tradeoff, not only a token one.** Subagents are NOT auto-fed the full skill catalogue the way the main loop is — that is why engineers carry explicit "detect X → load skill Y" lists. So on-demand is only "free" when a **reliable trigger path** exists: a *named, signal-gated* pointer in the agent's prompt (gated on a concrete signal — a file like `.gitlab-ci.yml`, a `config.yaml` value, a detected framework). If no such pointer exists, demoting a skill out of frontmatter silently kills its triggering — the exact opposite of the goal.
    - Decision rule: **demote ⟺ a named prose pointer exists or you add one in the same change.** Eager is the *correct* tool — not a failure — precisely when a skill is needed but cannot be reliably reached by a detection signal (e.g. a stack-agnostic design/review lens like `codebase-design`). The same skill can rightly be eager on one agent (its everyday baseline) and on-demand on another (conditional) — placement is judged per agent, not per skill.
 3. **Does it conflict with a spine principle?** Reject or rewrite anything that requires persistent prose docs (e.g. `CONTEXT.md`/ADR upkeep — `config.yaml` is the sole context), parallel writes, environment-specific lookup tools baked into the skill, asking the user questions during `/apply`, or blocking the git ops the pipeline relies on (`reset --soft` squash). These fight the architecture even when the skill itself is good.
-4. **Does its trigger overlap an existing skill?** Overlap → **merge into the existing skill** (as feedback-loop folded into `systematic-debugging`, horizontal-slicing into `test-driven-development`), don't create a rival with an ambiguous trigger. Only spin up a new skill when its trigger is genuinely distinct. Either way, the `description` must be triggering-conditions-only (start with "Use when…"); run `scripts/check-cso.sh` — precision of *triggering*, not skill count, is what keeps fusion from drifting into "四不像".
+4. **Does its trigger overlap an existing skill?** Overlap → **merge into the existing skill** (as feedback-loop folded into `systematic-debugging`, horizontal-slicing into `test-driven-development`), don't create a rival with an ambiguous trigger. Only spin up a new skill when its trigger is genuinely distinct. Either way, the `description` must be triggering-conditions-only (start with "Use when…") — unless the skill is command-only (`disable-model-invocation: true`), which has no trigger surface at all and is exempt; run `scripts/check-cso.sh` — precision of *triggering*, not skill count, is what keeps fusion from drifting into "四不像".
 
 Then register it in `skills/SOURCES.yaml`: `repo: <upstream>` if synced as-is, or `repo: original` (with an inspired-by comment) if rewritten enough that a sync would clobber the customization.
 

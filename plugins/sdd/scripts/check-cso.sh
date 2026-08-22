@@ -92,6 +92,22 @@ for skill_dir in "$PLUGINS_DIR"/*/skills/*/; do
     fi
   done
 
+  # A command-only skill (`disable-model-invocation: true`) cannot be selected by the
+  # model at all, so it has no trigger surface to write: the command IS the trigger and
+  # a phrasing enumeration is pure standing cost. Exempt it from the trigger-phrase check
+  # rather than pushing its description back to "Use when...".
+  if awk '
+    /^---$/ { fm++; next }
+    fm == 1 && /^disable-model-invocation:[[:space:]]*true[[:space:]]*$/ { found=1 }
+    fm >= 2 { exit }
+    END { exit !found }
+  ' "$skill_dir/SKILL.md"; then
+    if [[ "$found_issue" == "true" ]]; then
+      issues=$((issues + 1))
+    fi
+    continue
+  fi
+
   # Check if description lacks a trigger phrase
   # `Use BEFORE …` is the same trigger-phrase family, stated as timing rather than condition —
   # a write-time skill fires ahead of an action, not on a symptom. Trigger-only either way.
