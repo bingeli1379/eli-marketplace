@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Audit the toolset against what you actually use
 
-**What an unused skill costs is its description, on every single request.** A skill's `description` sits in context permanently while its body is lazy-loaded, so one that never fires is a fixed per-turn charge for nothing — and that charge, not the number of skills, is what a prune is ranked by: thirty terse skills can cost less than six verbose ones. The second cost, a wider field of candidates making the right one harder to select, is real and is not measurable from here — say so rather than putting a number on it.
+**What an unused skill costs is its description, on every single request.** A model-selectable skill's `description` sits in context permanently while its body is lazy-loaded, so one that never fires is a fixed per-turn charge for nothing — while a command-only one is not in context at all and costs nothing however long it is (step 1 keeps that straight) — and that charge, not the number of skills, is what a prune is ranked by: thirty terse skills can cost less than six verbose ones. The second cost, a wider field of candidates making the right one harder to select, is real and is not measurable from here — say so rather than putting a number on it.
 
 **Zero usage means two opposite things, and conflating them is the failure this skill exists to avoid.** An MCP server nobody called is surplus. A skill nobody called is often a skill that never got the chance, in a plugin that is doing its job by another route — deleting that is a loss, and keeping it is not free either.
 
@@ -20,11 +20,14 @@ The keys the steps below consume:
 
 | key | what it holds |
 |---|---|
-| `rollup_by_plugin` | an object keyed by `<plugin>@<marketplace>` (plus `(personal)` for the user's own skills), already ordered by descending cost — iterate its `.items()`, it is not a list. Each row: `installed`, `never_fired`, `description_chars`, `approx_tokens`, `server_calls`, `shadowed_by_personal` |
+| `rollup_by_plugin` | an object keyed by `<plugin>@<marketplace>` (plus `(personal)` for the user's own skills), already ordered by descending cost — iterate its `.items()`, it is not a list. Each row: `installed`, `never_fired`, `never_fired_command_only`, `description_chars`, `approx_tokens`, `server_calls`, `shadowed_by_personal` |
 | `description_cost` | the totals, the never-fired share of them, `chars_per_token` (the divisor every ≈tokens figure in the report converts with), and `orphan_recorded_names` |
 | `mcp_servers` | per server: `count`, `scope`, `where`, and for a plugin server its `plugin` and `marketplace`; for a project server, `project_exists` and `project_sessions` |
-| `skills_used` / `skills_installed` | both keyed by skill name, and both holding an object rather than a bare number: a used name gives `count` and `last_used_ms`, an installed one gives `owner` and `description_chars` |
+| `skills_used` / `skills_installed` | both keyed by skill name, and both holding an object rather than a bare number: a used name gives `count` and `last_used_ms`, an installed one gives `owner`, `description_chars`, and `command_only` |
+| `disabled_plugins` | `<plugin>@<marketplace>` entries switched off in settings. Installed, loading nothing, costing nothing — excluded from every count above, so they appear in the report only as the Coverage line that says they were excluded |
 | `coverage`, `unavailable` | the window read, and the sources that could not be |
+
+**Two populations charge nothing and are already reported as zero — never re-add them as a cost.** A command-only skill (`disable-model-invocation: true`, flagged `command_only`) is absent from the model's skill listing, so its description is never in context however long it is; it still fires as `/plugin:skill`, so it belongs in the Keep table at 0. A disabled plugin is dropped from the inventory entirely. Both were once the largest rows of a real run, and both were phantom.
 
 **A row's `description_chars` and `approx_tokens` cover its never-fired skills only — not the plugin's whole description cost.** The script accumulates them in the same branch that increments `never_fired`, so a plugin whose every skill fires reads 0. That is exactly what the never-fired table's `每輪 ≈tokens` column wants, and exactly the wrong field for any other question: the inventory-wide totals are `description_cost.all_chars` / `all_approx_tokens`, and one skill's own cost is `skills_installed[<name>].description_chars`.
 
@@ -51,6 +54,7 @@ The signals, first match wins:
 
 | What the data shows | Recommend |
 |---|---|
+| `never_fired_command_only` == `never_fired` | **保留** — every silent skill here is command-only, so the row already costs 0 and pruning it saves nothing; say that instead of ranking it |
 | `shadowed_by_personal` > 0 and every skill silent | **該處理** — two copies of one skill are installed and only one can win |
 | `never_fired` < `installed` | **保留** — the plugin is reached, so the silent ones are a matching problem, not an unwanted capability |
 | No skill fires but `server_calls` > 0 | **保留** — the capability is in use through its tools; its skills are what fail to trigger |
@@ -79,6 +83,7 @@ Records one verdict per item. Step 3 (report) prints them.
 - transcripts：<n> 個檔，<YYYY-MM-DD> 到 <YYYY-MM-DD>
 - 讀不到的來源：<每一筆 unavailable，以及它讓哪個判定做不出來 | 無>
 - 只在歷史裡、沒有安裝對應的名字：<`description_cost.orphan_recorded_names`> 個（不判定）
+- 已停用、不計成本的 plugin：<`disabled_plugins` 逐一列出 | 無>
 - 每輪固定成本：全部 skill description ≈<總 tokens>，其中從沒觸發的佔 ≈<tokens>（<百分比>）
 
 ## Remove — 零呼叫的 MCP server（<n>）
