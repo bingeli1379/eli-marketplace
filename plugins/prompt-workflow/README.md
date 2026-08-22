@@ -22,7 +22,9 @@ reaches it. The run reads your whole session history, so starting it is your cal
   description still costs per turn: firing is not the same as being worth the charge
 - **Remove** — a declared MCP server with zero calls (server level, never per tool), including one
   whose project directory is no longer there: dead config that cannot load while the path is gone.
-  A project-scoped server the session window never covered gets no verdict instead of a wrong one
+  A project-scoped server the session window never covered gets no verdict instead of a wrong one.
+  Each is sized as far as the run can see: a server's always-loaded instructions block is a per-turn
+  charge like a skill's description, while its tool schemas are knowable only by connecting
 - **該處理** — a plugin whose skills never fired and which nothing else reaches either: its whole
   per-turn description cost buys nothing
 - **保留** — a plugin whose skills never fired but which is reached another way — another of its

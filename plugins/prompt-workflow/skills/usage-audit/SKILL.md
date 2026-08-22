@@ -21,7 +21,7 @@ The keys the steps below consume:
 | key | what it holds |
 |---|---|
 | `rollup_by_plugin` | an object keyed by `<plugin>@<marketplace>` (plus `(personal)` for the user's own skills), already ordered by descending cost — iterate its `.items()`, it is not a list. Each row: `installed`, `never_fired`, `description_chars`, `approx_tokens`, `server_calls`, `shadowed_by_personal` |
-| `description_cost` | the totals, the never-fired share of them, and `orphan_recorded_names` |
+| `description_cost` | the totals, the never-fired share of them, `chars_per_token` (the divisor every ≈tokens figure in the report converts with), and `orphan_recorded_names` |
 | `mcp_servers` | per server: `count`, `scope`, `where`, and for a plugin server its `plugin` and `marketplace`; for a project server, `project_exists` and `project_sessions` |
 | `skills_used` / `skills_installed` | both keyed by skill name, and both holding an object rather than a bare number: a used name gives `count` and `last_used_ms`, an installed one gives `owner` and `description_chars` |
 | `coverage`, `unavailable` | the window read, and the sources that could not be |
@@ -84,7 +84,7 @@ Records one verdict per item. Step 3 (report) prints them.
 ## Remove — 零呼叫的 MCP server（<n>）
 | server | scope | 宣告在哪 | 影響範圍 | 怎麼移除 |
 <一個拿不到判定的 server（專案還在、但窗口內沒有它的 session）仍然列在這張表上，`怎麼移除` 寫「不判定」加上原因；把它漏掉會讓讀者以為它有在用。專案目錄已經不在的不算這類 — 那個有判定、也有指令>
-<表後一句：這張表沒有 token 欄，因為 server 的成本是它的 tool schema，這份收集看不到>
+<表後一句：這張表沒有 token 欄，但成本不是零。逐一寫出每個列在表上、且這個 session 已經連上的 server，它常駐的 instructions 區塊實際多大（<chars> chars ≈<tokens> tokens／輪，用 `description_cost.chars_per_token` 換算）；有連上但本身沒有 instructions 區塊的，寫「沒有 instructions，這半是真的零」，沒連上的才寫「沒量到」並點出是哪幾個；tool schema 那半一律不估>
 
 ## 從沒觸發過的 skill（<n> / 共 <m> 個已安裝）— 依每輪成本排序
 | plugin@marketplace | 從沒觸發的 skill 數 | 每輪 ≈tokens | 建議 | 依據 |
@@ -111,7 +111,13 @@ The `影響範圍` cell says where the server is actually loaded — everywhere 
 
 **The Keep table carries each skill's own cost** — `skills_installed[<name>].description_chars` ÷ `description_cost.chars_per_token` — because firing is not the same as being worth its charge: a skill called once or twice on a fat description is the one place a rewrite pays, and a table of call counts alone hides it. Its column is labelled `這支 description 每輪 ≈tokens`, deliberately apart from the never-fired table's per-plugin `每輪 ≈tokens`: one label on two different quantities is what makes a reader add them together, and what makes the next run reach for `rollup_by_plugin`'s field instead of this one.
 
-**The Remove table carries no token column, and the report says so in one line under it rather than leaving the gap unexplained.** A server's context charge is its tool schemas, which this collection never sees — the same limit that keeps verdicts at server level: their size is knowable only by connecting, and where a server's tools load on demand they are not even a fixed per-turn charge the way a `description` is. For a server, `count` and `影響範圍` are the whole basis for the call — neither print a blank column nor estimate one.
+**The Remove table carries no token column, and the line under it states what a server actually charges rather than calling the whole cost unmeasurable.** "This collection cannot see it" reads as zero, and zero is wrong — a server's per-turn charge has two halves, and only one of them is out of reach:
+
+- **Its `instructions` block is a fixed per-turn charge of exactly the same shape as a skill `description`**, and for a server the running session is connected to, that text is sitting in this session's own context — so it is not unmeasured, it is measurable by the run itself, per server listed in the table, converting with `description_cost.chars_per_token`. The collection never sees this block (it reaches the session from the server at connect time, not from any config file on disk), which is a limit of the script, not of the report. **The character count must come from an actual count of that text, never from reading its length off by eye** — an eyeballed number lands in the report beside figures the script measured, with nothing marking which is which, and a fabricated `≈` is what this whole audit exists not to print.
+  **Three states, and collapsing any two is this skill's own opening failure in miniature:** measured (give the figure); **connected but shipping no `instructions` block at all** — a real zero, so say it charges nothing for instructions rather than that it was not measured; and not connected this session — not measured, and name which servers that covers. **What separates those last two is whether that server's tools are present in this session at all** — loaded, or listed as deferred: tools present with no instructions text is the real zero, no tools at all is not connected. The absence of instructions text is never the answer on its own, because that is the one reading under which the two states are indistinguishable.
+- **Its tool schemas are knowable only by connecting**, which is the same limit that keeps verdicts at server level, and under tool deferral they are not even a per-turn charge until something fetches them. Never estimate this half, and never fetch schemas just to size them — that charges the context for the measurement and reports a number the server does not normally cost.
+
+Still no column: the instructions figure exists only for connected servers, and a column with blanks in it is worse than a sentence that says which servers it covers. `count` and `影響範圍` remain the basis for the verdict — the token figure sizes what removing it saves, it does not decide it.
 
 **Counts from different sources are not comparable and never share a column.** Skill counts are lifetime totals from the harness's own counter; MCP counts come from transcripts, which rotate, so they cover a recent window. State which is which wherever a number appears.
 
