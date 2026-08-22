@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.8.1] - 2026-08-22
+
+### Fixed
+- `/role` finds a specialist through the routing table rather than through its own copy of the role list, so a newly registered stack pack is offered straight away instead of after someone remembers to update a second list.
+- The description check no longer warns about a command-only skill. Such a skill has no trigger phrase to write — the command is the trigger — so it was being told to add wording that would have done nothing.
+
 ## [3.8.0] - 2026-08-06
 
 ### Added
