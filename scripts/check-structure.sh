@@ -157,11 +157,23 @@ while IFS= read -r line; do
   resolves "$(skill_dir_of "$f")" "$md" || err "dangling reference path '$md' in $f"
 done < <(grep -rHoE '(references|templates|agents)/[A-Za-z0-9._-]+\.md' plugins/*/skills 2>/dev/null | sort -u)
 
-# 7b. a bare `name.md` inside a reference/template file — a sibling pointer, so it must resolve
+# The set of upstream-mirrored skills (SOURCES.yaml `repo:` is a URL), shared by 7b and 7d.
+# Membership is tested with bash pattern matching, NOT `grep <<<` — a herestring plus a grep
+# spawn per file was ~1200 processes and ~10s here, while the greps themselves cost ~140ms.
+upstream_skills=$([[ -f "$SRC" ]] && awk '/^[a-z0-9-]+:/{k=$1} /repo: *https?:\/\//{print k}' "$SRC" | tr -d ':')
+upstream_set=$'\n'"$upstream_skills"$'\n'
+
+# 7b. a bare `name.md` inside a reference/template file — a sibling pointer, so it must resolve.
+# Upstream-mirrored skills are skipped for the same reason 7d skips them: their bodies are
+# replaced on the next sync, so a fix here is lost — and the mirrored docs legitimately name
+# files belonging to the tool they document (VitePress routing discusses `index.md`), which is
+# a filename in the READER's project, not a pointer to a sibling of this skill.
 while IFS= read -r line; do
   [[ -z "$line" ]] && continue
   f="${line%%:*}"; md="${line#*:}"; md="${md//\`/}"
   [[ "$md" =~ ^(SKILL|README|CHANGELOG|CLAUDE|AGENTS|MEMORY)\.md$ ]] && continue
+  skill="${f#*/skills/}"; skill="${skill%%/*}"
+  [[ "$upstream_set" == *$'\n'"$skill"$'\n'* ]] && continue
   resolves "$(skill_dir_of "$f")" "$md" || err "dangling cross-reference '$md' in $f"
 done < <(grep -rHoE '`[A-Za-z0-9._-]+\.md`' plugins/*/skills/*/references plugins/*/skills/*/templates 2>/dev/null | sort -u)
 
@@ -182,10 +194,6 @@ done < <(grep -rHoE '[Ss]tep[0-9]+' plugins/*/skills 2>/dev/null | sort -u)
 # collecting every .md name it mentions, then a set lookup. Upstream-mirrored skills are
 # skipped (SOURCES.yaml `repo:` is a URL): their bodies are replaced on the next sync, so a
 # pointer added there is lost and the warning would never clear.
-# Membership is tested with bash pattern matching, NOT `grep <<<` — a herestring plus a grep
-# spawn per file was ~1200 processes and ~10s here, while the greps themselves cost ~140ms.
-upstream_skills=$([[ -f "$SRC" ]] && awk '/^[a-z0-9-]+:/{k=$1} /repo: *https?:\/\//{print k}' "$SRC" | tr -d ':')
-upstream_set=$'\n'"$upstream_skills"$'\n'
 for p in plugins/*/; do
   # both spellings count as a mention: a bare `name.md` and a path-shaped `references/name.md`
   mentioned=$(grep -rhoE '`[A-Za-z0-9._/-]+\.md`' "$p" 2>/dev/null | tr -d '`' | sed -E 's|.*/||' | sort -u)
