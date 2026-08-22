@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0] - 2026-08-22
+
+### Added
+- Diagnosing a GKE pod that will not start or keeps restarting — CrashLoopBackOff, OOMKilled, ImagePullBackOff, Pending — working from its logs and events to the cause.
+- GKE workload autoscaling: horizontal and vertical autoscalers, and right-sizing a workload's CPU and memory requests, with example manifests you can copy.
+- GKE workload reliability: disruption budgets, liveness / readiness / startup probes, graceful shutdown, spreading replicas across failure domains. Cluster-level topology stays with the existing Kubernetes guidance.
+
 ## [1.0.4] - 2026-08-04
 
 ### Fixed
