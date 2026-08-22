@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0] - 2026-08-22
+
+### Added
+- VitePress guidance for documentation sites — config, theme and layout, Markdown extensions, i18n, server-side rendering and the build.
+- Turborepo guidance for monorepos — `turbo.json` task pipelines, local and remote caching, filtered and affected-only runs, boundaries, and how to lay packages out.
+- Options API guidance for Vue written with `data()`, `methods` and `computed`, for codebases that cannot move to the Composition API. The existing Vue guidance stays Composition-API-first, so each now loads for the style you are actually writing.
+
 ## [1.0.4] - 2026-08-04
 
 ### Fixed

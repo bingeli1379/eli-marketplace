@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.8.2] - 2026-08-22
+
+### Fixed
+- Updating a bundled skill from upstream now brings its example files across too. A skill that ships ready-made example manifests alongside its guidance used to arrive pointing at files that were never copied, so following it led nowhere.
+
 ## [3.8.1] - 2026-08-22
 
 ### Fixed
