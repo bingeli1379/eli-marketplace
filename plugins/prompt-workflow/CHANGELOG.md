@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.3] - 2026-08-22
+
+### Changed
+- `/usage-audit` now lays the report out as four tables instead of three. Every MCP server is listed and ranked by calls with the dead ones in bold, because a list of zeros cannot show a server *sliding* toward zero while it is still worth keeping. Your own `~/.claude/skills` are expanded one row per skill, since that is how you delete them; marketplace plugins stay rolled up per plugin, since that is how they arrive and leave. The plugin table now shows what a plugin weighs next to how much of that its silent skills are burning — one number without the other tells you nothing about whether to act.
+
+### Fixed
+- Skills and plugins that cost nothing are no longer billed as if they did. A command-only skill is not in the model's listing at all, and a disabled plugin loads nothing, yet both were being counted by description length — and both were topping the list of things to prune on a real run. They now read zero, and the disabled ones are named in Coverage so you can see they were excluded rather than missed.
+- A server the report tells you to remove now tells you how. The removal command for each scope came back, including the one case where `claude mcp remove` cannot run at all — a project whose directory is gone — where the fix is a hand-edit of `~/.claude.json` and a backup first.
+- Every plugin in the report now gets a verdict that fits it. A plugin whose every skill fires had no defined recommendation, and a row where all the silent skills were command-only could print a reason that was simply untrue.
+- `/review-skill` now re-checks the commands and paths in a file that goes stale on its own. A `CLAUDE.md` naming a build command rots because the codebase moved, with nobody touching the file — so scoping that check to the diff passed a command that no longer runs.
+
+### Added
+- The authoring rules now settle what happens when another skill's guidance on writing skills is loaded on the same turn. This plugin's catalogue wins on judgment; the other source is trusted only for the harness mechanics it documents first-hand. Without that, whichever the model read last was the one that won.
+
 ## [0.2.2] - 2026-08-22
 
 ### Changed
