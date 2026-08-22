@@ -18,7 +18,9 @@ tools a server offers can only be learned by connecting to it.
 **Command only** (`disable-model-invocation: true`) — a passing remark about your setup never
 reaches it. The run reads your whole session history, so starting it is your call.
 
-Four tables, in this order:
+It opens with the cost block: what your skills charge per turn, how much of that never fires, and
+how much of *that* a prune actually recovers — the last two differ by whatever sits inside plugins
+you are keeping for another route, which no uninstall reaches. Then four tables, in this order:
 
 - **MCP server** — every one of them, ranked by call count, with the zero-call rows in bold. Listing
   only the dead ones cannot show a server *sliding* toward zero, which is the row worth seeing while
@@ -32,8 +34,11 @@ Four tables, in this order:
   per skill, because that is the unit you remove them in
 - **Plugin@marketplace** — rolled up per plugin, because a plugin arrives and leaves whole. Two cost
   columns: what the plugin weighs, and how much of that its never-fired skills are burning. Each row
-  carries a verdict — **該處理** when nothing in it is reached by any route, **保留** when it is
-  reached another way (another of its skills, or its own MCP server)
+  carries a verdict — **該處理** when nothing this run can see has ever been reached, **保留** when it
+  is reached another way (another of its skills, or its own MCP server), and **無判定** when the plugin
+  holds nothing measurable at all: no skill and no MCP server, or an install path that is gone. A
+  plugin that ships only commands or agents is left unjudged rather than retired on evidence never
+  taken
 - **Keep** — the whole inventory ranked by use, each with what its own description still costs per
   turn: firing is not the same as being worth the charge
 
@@ -41,7 +46,7 @@ Rows are ranked by what they cost per turn, not by how many skills they hold: a 
 skill's description sits in context on every request while its body is lazy-loaded, so thirty terse
 skills can be cheaper than six verbose ones. A command-only skill is in context on no request at
 all, so it is counted at zero rather than ranked; a disabled plugin is dropped from the inventory
-entirely and shows up only as the Coverage line saying it was excluded.
+entirely and shows up only as a count beside the fixed-cost figure, saying it was excluded.
 
 A name with usage but nothing installed behind it gets no verdict — this diagnoses the setup you have now, not the one you used to have.
 

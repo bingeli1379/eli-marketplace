@@ -7,7 +7,13 @@ Sources, and why more than one is needed — each is incomplete on its own:
 
   ~/.claude.json  skillUsage    lifetime per-skill counts. Used skills ONLY: it holds no
                                 zero-count entry, so it is a numerator and can never
-                                supply the "installed but never fired" set.
+                                supply the "installed but never fired" set. It DOES count a
+                                skill a dispatched subagent invoked, so a plugin used only
+                                from inside an agent still reads as fired — verified against
+                                `sdd:conventional-commits`, whose 6 lifetime calls are 6
+                                sidechain invocations and no main-thread one. Re-deriving
+                                counts from transcripts to "catch" subagent use therefore
+                                fixes nothing and loses the lifetime span.
                   toolUsage     built-in tools only, and observed stale. Not relied on.
                   mcpServers    user-scoped MCP servers (the denominator's first part).
                   projects[]    per-project mcpServers / enabledMcpjsonServers (second part).
@@ -155,6 +161,16 @@ if not skills_installed:
         "no SKILL.md found under any install path — skills reported usage-only, unused ones cannot be named")
 out["skills_installed"] = skills_installed
 out["disabled_plugins"] = sorted(disabled)
+# The skills shipped inside the CLI itself are model-selectable and charge their descriptions on
+# every turn exactly as a plugin's do, but they live in the compiled binary rather than on disk, so
+# no source read here can enumerate them. Two things follow and both are reported, never assumed:
+# every total below covers plugin and personal skills only, and a built-in's name arrives in
+# `skills_used` with no install behind it, so it counts as used while never entering the denominator.
+# Scraping the binary for them would go stale on the next release while still printing a number,
+# which is worse than naming the gap.
+out["unavailable"].append(
+    "built-in skills are shipped inside the CLI binary, not on disk — they cannot be enumerated, so "
+    "every description-cost total covers plugin and personal skills only")
 
 # ---- MCP servers declared: user scope + project scope + plugin-shipped ----
 # Each entry records the scope AND the concrete place it came from, because the scope alone does
@@ -194,6 +210,7 @@ def plugin_servers(plugin_dir):
 # Every plugin, disabled ones included: a disabled plugin costs no skill descriptions, but its
 # MCP server may still appear in the window, and dropping it here would leave that server with
 # scope "observed" — the one scope for which the report cannot name a removal path.
+plugins_declaring_mcp = set()
 for key, meta in plugins.items():
     try:
         names, path = plugin_servers(meta["path"])
@@ -201,11 +218,26 @@ for key, meta in plugins.items():
         out["unavailable"].append(
             f"{key}: MCP manifest unreadable ({e}) — its servers are missing from the declared set")
         continue
+    if names:
+        plugins_declaring_mcp.add(key)
     for name in names:
         declared.setdefault(name, {"scope": "plugin", "where": meta["path"],
                                    "manifest": os.path.basename(path) if path else None,
                                    "plugin": meta["plugin"],
                                    "marketplace": meta["marketplace"]})
+
+def plugin_components(plugin_dir):
+    """Which component directories a plugin ships besides skills — disclosure, never a verdict.
+
+    An empty result means only that nothing recognised is on disk, NOT that the plugin ships
+    nothing: the three LSP plugins here hold a README and a LICENSE and nothing else, their
+    capability declared somewhere this scan does not reach. So a zero-skill plugin earns a verdict
+    only from what IS measurable — an MCP server it declares — and everything else is left
+    unjudged with its contents listed. Whitelisting component directories and reading an empty
+    list as "nothing here" would have retired all three."""
+    return sorted(c for c in ("commands", "agents", "hooks")
+                  if os.path.isdir(os.path.join(plugin_dir, c)))
+
 
 # `declared` stays internal: `mcp_servers` below is the only shape the report consumes.
 
@@ -215,20 +247,37 @@ if not files:
     out["unavailable"].append("no transcripts under ~/.claude/projects — MCP tool counts unavailable")
 
 TOOL_RE = re.compile(r'"name":"(mcp__[^"]+)"')
+# The window is bounded by the messages, never by file mtime. A transcript is appended to, so its
+# mtime is when the session ENDED — a range built from mtimes reports the window as beginning when
+# the oldest session finished rather than when it started, and on this machine that hid 24 of 55
+# days. A zero over the window is what every Remove verdict rests on, so a window reported narrower
+# than it was makes that zero look like weaker evidence than it is.
+TS_RE = re.compile(r'"timestamp":"([^"]+)"')
 tool_counts = Counter()
 tool_projects = defaultdict(set)
-mtimes = []
+stamps = []
+undated = 0
 for path in files:
     project = os.path.basename(os.path.dirname(path))
     try:
-        mtimes.append(os.path.getmtime(path))
+        first_ts = None
+        last_line = None
         with open(path, errors="replace") as f:
             for line in f:
+                if first_ts is None:
+                    found = TS_RE.search(line)
+                    if found:
+                        first_ts = found.group(1)
+                last_line = line
                 if "mcp__" not in line:
                     continue
                 for name in TOOL_RE.findall(line):
                     tool_counts[name] += 1
                     tool_projects[name].add(project)
+        last_ts = TS_RE.search(last_line) if last_line else None
+        stamps += [t for t in (first_ts, last_ts.group(1) if last_ts else None) if t]
+        if first_ts is None:
+            undated += 1
     except Exception:
         out["unavailable"].append(f"unreadable transcript: {path}")
 
@@ -290,10 +339,13 @@ out["mcp_servers"] = {
     }
     for s in set(declared) | set(server_counts)
 }
+# Emitted as YYYY-MM-DD, the form the report prints: an ISO-8601 timestamp sorts lexically in
+# chronological order, so the conversion the report would otherwise redo every run happens here once.
 out["coverage"] = {
     "transcript_files": len(files),
-    "oldest_mtime": min(mtimes) if mtimes else None,
-    "newest_mtime": max(mtimes) if mtimes else None,
+    "window_start": min(stamps)[:10] if stamps else None,
+    "window_end": max(stamps)[:10] if stamps else None,
+    "files_without_timestamp": undated,
 }
 
 # ---- rollup: everything the report renders, computed once and here ----
@@ -318,6 +370,8 @@ for name, meta in skills_installed.items():
                                     "never_fired_command_only": 0, "description_chars": 0,
                                     "all_description_chars": 0,
                                     "shadowed_by_personal": 0,
+                                    "other_components": [], "declares_mcp": False,
+                                    "path_exists": True,
                                     "server_calls": server_calls_by_plugin.get(owner, 0)})
     row["installed"] += 1
     row["all_description_chars"] += meta["description_chars"]
@@ -330,6 +384,31 @@ for name, meta in skills_installed.items():
     # a plugin skill whose bare name is also installed personally, where that copy is the one firing
     if owner != "(personal)" and name.split(":")[-1] in personal_fired:
         row["shadowed_by_personal"] += 1
+
+# Built from skills_installed alone, the rollup has no row for a plugin that ships no skill — so a
+# plugin reached entirely through its MCP server or its commands was absent from the plugin
+# inventory altogether and could be given no verdict. On this machine that dropped
+# devtools@titansoft-marketplace, 41 calls, out of the table completely. Every enabled plugin gets a
+# row; the zero-skill ones are judged on `server_calls` and `other_components` instead.
+for key, meta in plugins.items():
+    if not meta["enabled"]:
+        continue
+    row = rollup.setdefault(key, {"installed": 0, "fired": 0, "never_fired": 0,
+                                  "never_fired_command_only": 0, "description_chars": 0,
+                                  "all_description_chars": 0, "shadowed_by_personal": 0,
+                                  "other_components": [],
+                                  "server_calls": server_calls_by_plugin.get(key, 0)})
+    row["other_components"] = plugin_components(meta["path"])
+    row["declares_mcp"] = key in plugins_declaring_mcp
+    # An entry whose install path is gone is a broken install, not an unused capability — the same
+    # split the project-scoped MCP rule draws between an impossible zero and an unmeasured one.
+    # Nothing loads from a directory that is absent, so no skill of its could ever have fired and
+    # its zero says nothing about whether the user wants it.
+    row["path_exists"] = os.path.isdir(meta["path"])
+    if not row["path_exists"]:
+        out["unavailable"].append(
+            f"{key}: install path missing ({meta['path']}) — it loads nothing, so it gets no "
+            "capability verdict; the stale entry in installed_plugins.json is the finding")
 
 for row in rollup.values():
     row["approx_tokens"] = round(row["description_chars"] / CHARS_PER_TOKEN)
@@ -349,7 +428,6 @@ out["description_cost"] = {
     "never_fired_approx_tokens": round(dead_chars / CHARS_PER_TOKEN),
     "never_fired_pct": round(dead_chars * 100 / all_chars) if all_chars else 0,
     "chars_per_token": CHARS_PER_TOKEN,
-    "orphan_recorded_names": len([n for n in out["skills_used"] if n not in skills_installed]),
 }
 
 json.dump(out, sys.stdout, ensure_ascii=False, indent=2)
