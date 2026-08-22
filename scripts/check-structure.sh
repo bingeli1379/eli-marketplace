@@ -23,7 +23,7 @@ warns=0
 err()  { echo "ERROR: $*"; errors=$((errors + 1)); }
 warn() { echo "WARN:  $*"; warns=$((warns + 1)); }
 
-# the sdd-family skill registry — read by check 5 and check 7d
+# the sdd-family skill registry — read by check 5, and by the upstream set that 7b and 7d share
 SRC="plugins/sdd/skills/SOURCES.yaml"
 
 # name: value from a markdown file's YAML frontmatter
@@ -139,7 +139,15 @@ skill_dir_of() {  # the skills/<name> dir owning a file, whether it is SKILL.md 
   # parameter expansion, not dirname/basename: those are external processes, and at ~2000 calls
   # they cost more than every grep in this script combined.
   local d="${1%/*}"
-  case "$d" in */references|*/templates) echo "${d%/*}";; *) echo "$d";; esac
+  case "$d" in
+    */references|*/templates)  echo "${d%/*}";;
+    # a nested reference tree (turborepo ships references/<topic>/<file>.md) — strip from the
+    # FIRST references|templates segment, or the owner resolves to the subdirectory itself and
+    # every lookup below it is checked against a base that does not exist
+    */references/*)            echo "${d%%/references/*}";;
+    */templates/*)             echo "${d%%/templates/*}";;
+    *)                         echo "$d";;
+  esac
 }
 
 resolves() {  # $1 = skill dir, $2 = bundled .md name
@@ -147,7 +155,14 @@ resolves() {  # $1 = skill dir, $2 = bundled .md name
   [[ "$2" =~ ^.\.md$ ]] && return 0
   local p="${1%/skills/*}"
   [[ -f "$1/references/$2" || -f "$1/templates/$2" || -f "$1/$2" \
-     || -f "$p/references/$2" || -f "$p/agents/$2" || -f "$p/$2" ]]
+     || -f "$p/references/$2" || -f "$p/agents/$2" || -f "$p/$2" ]] && return 0
+  # nested reference trees, one level down. Only reached once every flat lookup has missed, so
+  # the glob costs nothing on the common path (builtin globbing, no subshell).
+  local n
+  for n in "$1"/references/*/"$2" "$1"/templates/*/"$2"; do
+    [[ -f "$n" ]] && return 0
+  done
+  return 1
 }
 
 # 7a. a path-shaped mention names a bundled location explicitly — it must resolve
