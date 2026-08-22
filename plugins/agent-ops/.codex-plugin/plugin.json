@@ -1,6 +1,6 @@
 {
   "name": "agent-ops",
-  "description": "Look after the AI setup itself: audit which installed MCP servers, tools, and skills actually get used, and keep the ones that stay in good shape",
+  "description": "Look after the AI setup itself: audit which installed MCP servers, tools, and skills actually get used, write and audit skill/agent prompt files, and feed real-usage problems back into their source",
   "version": "0.1.1",
   "author": {
     "name": "Eli",
@@ -15,12 +15,15 @@
     "skills",
     "usage-audit",
     "context",
-    "prune"
+    "prune",
+    "review-skill",
+    "skill-authoring",
+    "improve-skill"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Agent Ops",
-    "shortDescription": "Audit installed MCP servers, tools, and skills against what you actually use",
+    "shortDescription": "Audit the AI setup: what actually gets used, and whether the prompts you added are well written",
     "developerName": "Eli",
     "category": "Developer Tools",
     "capabilities": [
