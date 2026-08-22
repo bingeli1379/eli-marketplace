@@ -9,8 +9,10 @@ A Claude Code plugin marketplace. It hosts custom plugins (skills) distributed v
 ## Structure
 
 - `.claude-plugin/marketplace.json` — marketplace manifest, lists all plugins with name/source/description
+- `.agents/plugins/marketplace.json` — the same list for Codex. **A second registry with the same drift risk**: when a plugin is missing here nothing complains, because the Claude marketplace still loads and the plugin is simply absent for Codex users
 - `plugins/<plugin-name>/` — each plugin directory
   - `.claude-plugin/plugin.json` — plugin metadata (name, version, description)
+  - `.codex-plugin/plugin.json` — the Codex counterpart; carries the same name/description/version plus `skills` and `interface`, so a description change has to land in both
   - `skills/<skill-name>/SKILL.md` — skill definitions with YAML frontmatter (name, description) and prompt body
 
 Contains:
@@ -26,6 +28,7 @@ Contains:
 1. Create `plugins/<name>/.claude-plugin/plugin.json` with name, description, version
 2. Add skill directories under `plugins/<name>/skills/`
 3. Register the plugin in `.claude-plugin/marketplace.json` under the `plugins` array
+4. For Codex support, do the mirror pair too — `plugins/<name>/.codex-plugin/plugin.json`, and an entry in `.agents/plugins/marketplace.json`. **All four registration surfaces or none**: skipping the Codex pair ships a plugin that exists for Claude and silently does not exist for Codex, which is how `agent-ops` went unregistered there for two releases. `scripts/check-structure.sh` now fails on the mismatch
 
 ## Adding a New Skill to an Existing Plugin
 
@@ -54,7 +57,7 @@ Create `plugins/<plugin-name>/skills/<skill-name>/SKILL.md` with YAML frontmatte
 
 ## Structure Validation
 
-`scripts/check-structure.sh` validates the marketplace's deterministic invariants: JSON manifests parse, `marketplace.json` ↔ on-disk plugins, every skill/agent `name:` equals its directory/filename (a mismatch is a silent load failure), sdd-family `SOURCES.yaml` coverage, wrong-base bundled-file reads, and dangling references (a reference path or `name.md` cross-reference pointing at nothing, a glued `stepN` citation past the skill's real step count). It is fast and token-free.
+`scripts/check-structure.sh` validates the marketplace's deterministic invariants: JSON manifests parse, **both** marketplace manifests (Claude and Codex) ↔ on-disk plugins, every skill/agent `name:` equals its directory/filename (a mismatch is a silent load failure), sdd-family `SOURCES.yaml` coverage, wrong-base bundled-file reads, and dangling references (a reference path or `name.md` cross-reference pointing at nothing, a glued `stepN` citation past the skill's real step count). It is fast and token-free.
 
 **Renaming a reference file or renumbering steps: sweep the mentions that do NOT look like paths.** A rename updates `references/<name>.md` occurrences easily and leaves bare `` `<name>.md` `` cross-references and glued `stepN` citations behind, pointing at nothing. The structure check above now fails on both, so run it after any rename — that is the cheap half of the problem. The expensive half is what a *self*-review keeps missing: see `/review-skill` Lens A class 9 (an insertion invalidating a declared budget, an artifact contract, an ordering gate, or the sentence next to it).
 
