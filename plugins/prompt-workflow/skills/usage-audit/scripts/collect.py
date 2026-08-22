@@ -203,6 +203,7 @@ for key, meta in plugins.items():
         continue
     for name in names:
         declared.setdefault(name, {"scope": "plugin", "where": meta["path"],
+                                   "manifest": os.path.basename(path) if path else None,
                                    "plugin": meta["plugin"],
                                    "marketplace": meta["marketplace"]})
 
@@ -313,12 +314,15 @@ for meta in out["mcp_servers"].values():
 rollup = {}
 for name, meta in skills_installed.items():
     owner = meta["owner"]
-    row = rollup.setdefault(owner, {"installed": 0, "never_fired": 0,
+    row = rollup.setdefault(owner, {"installed": 0, "fired": 0, "never_fired": 0,
                                     "never_fired_command_only": 0, "description_chars": 0,
+                                    "all_description_chars": 0,
                                     "shadowed_by_personal": 0,
                                     "server_calls": server_calls_by_plugin.get(owner, 0)})
     row["installed"] += 1
+    row["all_description_chars"] += meta["description_chars"]
     if name in fired:
+        row["fired"] += 1
         continue
     row["never_fired"] += 1
     row["never_fired_command_only"] += 1 if meta["command_only"] else 0
@@ -329,8 +333,10 @@ for name, meta in skills_installed.items():
 
 for row in rollup.values():
     row["approx_tokens"] = round(row["description_chars"] / CHARS_PER_TOKEN)
+    row["all_approx_tokens"] = round(row["all_description_chars"] / CHARS_PER_TOKEN)
+# Ranked by the whole cost, which is what the report's plugin table sorts on.
 out["rollup_by_plugin"] = dict(
-    sorted(rollup.items(), key=lambda kv: -kv[1]["description_chars"]))
+    sorted(rollup.items(), key=lambda kv: -kv[1]["all_description_chars"]))
 
 all_chars = sum(m["description_chars"] for m in skills_installed.values())
 dead_chars = sum(r["description_chars"] for r in rollup.values())
