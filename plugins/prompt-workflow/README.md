@@ -30,9 +30,10 @@ reaches it. The run reads your whole session history, so starting it is your cal
 - **保留** — a plugin whose skills never fired but which is reached another way — another of its
   skills, or its own MCP server
 
-Rows are ranked by what they cost per turn, not by how many skills they hold: a skill's
-description sits in context on every request while its body is lazy-loaded, so thirty terse
-skills can be cheaper than six verbose ones.
+Rows are ranked by what they cost per turn, not by how many skills they hold: a model-selectable
+skill's description sits in context on every request while its body is lazy-loaded, so thirty terse
+skills can be cheaper than six verbose ones. A command-only skill and a disabled plugin are in
+context on no request at all, so both are counted at zero rather than ranked.
 
 A name with usage but nothing installed behind it gets no verdict — this diagnoses the setup you have now, not the one you used to have.
 
