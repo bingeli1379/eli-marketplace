@@ -91,6 +91,7 @@ Rate each finding as:
   - File paths → use `Glob` to confirm existence
   - Function / method / variable names → grep the codebase
   - CLI output strings → note as "requires manual verification" if not confirmable programmatically
+- **A target whose content rots without being edited is verified whole, not diff-scoped** — e.g. a `CLAUDE.md`, or any prose naming build/test commands, codebase paths, or a tech-stack version. Those lines go stale because the *codebase* moved, with nobody touching the file, so the "added in the diff" filter above passes a command that no longer runs. Verify every command and path such a file names, changed or not.
 - **BROKEN** if a referenced item does not exist. **RISKY** if the reference is fragile — a step number without its name (the catalogue's rule), or a hardcoded CLI string that drifts across tool versions.
 
 **r. Cross-file consistency** — rule: catalogue *Before changing a rule, grep a distinctive token from it*.

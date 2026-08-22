@@ -20,6 +20,14 @@ Sources, and why more than one is needed — each is incomplete on its own:
   ~/.claude/projects/**/*.jsonl transcripts: the only per-MCP-tool call record, plus the
                                 recency and per-project spread the counters do not carry.
                                 Rotated, so its counts are a recent window, not a lifetime.
+  ~/.claude/settings*.json      enabledPlugins: which installed plugins are actually loaded. A
+                                plugin switched off still has its files in the install path, so
+                                without this every disabled plugin is billed for descriptions it
+                                no longer puts in context.
+  <skill>/SKILL.md frontmatter  disable-model-invocation: a command-only skill is absent from the
+                                model's skill listing entirely, so its description costs nothing
+                                per turn. Counting it inflates exactly the number this audit exists
+                                to produce.
 
 These are Claude Code internals and may be renamed by a release. Every one is read
 defensively: a missing source is reported in `unavailable`, never silently skipped.
@@ -62,6 +70,26 @@ out["skills_used"] = {
 # keys on `<plugin>@<marketplace>` and carries the `installPath` of the version in force, which
 # also removes any need to pick a version out of the cache by hand.
 INSTALLED = os.path.join(HOME, ".claude", "plugins", "installed_plugins.json")
+
+# Installed and enabled are two different states, and only the enabled one costs anything. A plugin
+# switched off in settings keeps every file in its install path, so a scan of that path bills it for
+# descriptions it no longer puts in context — the largest single row of a real run turned out to be
+# a plugin the user had already disabled. Only an explicit `false` disables: a plugin absent from
+# the map has never been touched by the toggle and is loaded normally.
+disabled = set()
+for fn in ("settings.json", "settings.local.json"):   # local last: it overrides
+    path = os.path.join(HOME, ".claude", fn)
+    try:
+        with open(path) as f:
+            for key, on in (json.load(f).get("enabledPlugins") or {}).items():
+                disabled.discard(key) if on else disabled.add(key)
+    except FileNotFoundError:
+        continue
+    except Exception as e:
+        out["unavailable"].append(
+            f"~/.claude/{fn} unreadable ({e.__class__.__name__}) — disabled plugins cannot be "
+            "excluded, so their descriptions are counted as a cost they may not have")
+
 plugins = {}          # "<plugin>@<marketplace>" -> {"plugin","marketplace","path"}
 try:
     with open(INSTALLED) as f:
@@ -70,43 +98,63 @@ try:
             if not isinstance(entry, dict) or not entry.get("installPath"):
                 continue
             name, _, market = key.partition("@")
-            plugins[key] = {"plugin": name, "marketplace": market, "path": entry["installPath"]}
+            plugins[key] = {"plugin": name, "marketplace": market, "path": entry["installPath"],
+                            "enabled": key not in disabled}
 except Exception as e:
     out["unavailable"].append(
         f"installed_plugins.json unreadable ({e.__class__.__name__}) — nothing can be called unused, "
         "since the installed set is unknown")
-# The `description` of every installed skill sits in context on every request, while its body is
+# A model-selectable skill's `description` sits in context on every request, while its body is
 # lazy-loaded — so a skill that never fires costs its description length, every turn, forever.
+# A command-only one is not in that listing at all; `skill_facts` below returns 0 for it.
 # That length is the cost of keeping it, and it is what a prune should be ranked by: a plugin with
 # thirty terse skills can be cheaper than one with six verbose ones.
 FRONTMATTER = re.compile(r"^---\s*$(.*?)^---\s*$", re.S | re.M)
-DESCRIPTION = re.compile(r"^description:\s*(.*?)(?=^\w+:|\Z)", re.S | re.M)
+DESCRIPTION = re.compile(r"^description:\s*(.*?)(?=^[\w-]+:|\Z)", re.S | re.M)
+COMMAND_ONLY = re.compile(r"^disable-model-invocation:\s*true\s*$", re.M | re.I)
 
 
-def description_chars(path):
+def skill_facts(path):
+    """(description_chars, command_only) for one SKILL.md.
+
+    `disable-model-invocation: true` keeps the skill out of the model's skill listing altogether —
+    it is reachable only as `/plugin:skill` — so its description is never in context and its
+    per-turn charge is zero, however long the text is. Reporting its length as a cost recommends
+    pruning something that already costs nothing, and it hides where the real charge sits. Matched
+    inside the frontmatter block only: a skill whose BODY discusses the flag (this plugin has
+    several) must not be read as setting it."""
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
             block = FRONTMATTER.search(f.read())
         if not block:
-            return 0
+            return 0, False
+        if COMMAND_ONLY.search(block.group(1)):
+            return 0, True
         found = DESCRIPTION.search(block.group(1))
-        return len(found.group(1).strip()) if found else 0
+        return (len(found.group(1).strip()) if found else 0), False
     except Exception:
-        return 0
+        return 0, False
 
 
 skills_installed = {}
 for key, meta in plugins.items():
+    if not meta["enabled"]:
+        continue
     for path in glob.glob(os.path.join(meta["path"], "skills", "*", "SKILL.md")):
         name = f'{meta["plugin"]}:{os.path.basename(os.path.dirname(path))}'
-        skills_installed[name] = {"owner": key, "description_chars": description_chars(path)}
+        chars, cmd_only = skill_facts(path)
+        skills_installed[name] = {"owner": key, "description_chars": chars,
+                                  "command_only": cmd_only}
 for path in glob.glob(os.path.join(HOME, ".claude", "skills", "*", "SKILL.md")):
+    chars, cmd_only = skill_facts(path)
     skills_installed.setdefault(os.path.basename(os.path.dirname(path)),
-                                {"owner": "(personal)", "description_chars": description_chars(path)})
+                                {"owner": "(personal)", "description_chars": chars,
+                                 "command_only": cmd_only})
 if not skills_installed:
     out["unavailable"].append(
         "no SKILL.md found under any install path — skills reported usage-only, unused ones cannot be named")
 out["skills_installed"] = skills_installed
+out["disabled_plugins"] = sorted(disabled)
 
 # ---- MCP servers declared: user scope + project scope + plugin-shipped ----
 # Each entry records the scope AND the concrete place it came from, because the scope alone does
@@ -143,6 +191,9 @@ def plugin_servers(plugin_dir):
     return [], None
 
 
+# Every plugin, disabled ones included: a disabled plugin costs no skill descriptions, but its
+# MCP server may still appear in the window, and dropping it here would leave that server with
+# scope "observed" — the one scope for which the report cannot name a removal path.
 for key, meta in plugins.items():
     try:
         names, path = plugin_servers(meta["path"])
@@ -152,6 +203,7 @@ for key, meta in plugins.items():
         continue
     for name in names:
         declared.setdefault(name, {"scope": "plugin", "where": meta["path"],
+                                   "manifest": os.path.basename(path) if path else None,
                                    "plugin": meta["plugin"],
                                    "marketplace": meta["marketplace"]})
 
@@ -262,13 +314,18 @@ for meta in out["mcp_servers"].values():
 rollup = {}
 for name, meta in skills_installed.items():
     owner = meta["owner"]
-    row = rollup.setdefault(owner, {"installed": 0, "never_fired": 0, "description_chars": 0,
+    row = rollup.setdefault(owner, {"installed": 0, "fired": 0, "never_fired": 0,
+                                    "never_fired_command_only": 0, "description_chars": 0,
+                                    "all_description_chars": 0,
                                     "shadowed_by_personal": 0,
                                     "server_calls": server_calls_by_plugin.get(owner, 0)})
     row["installed"] += 1
+    row["all_description_chars"] += meta["description_chars"]
     if name in fired:
+        row["fired"] += 1
         continue
     row["never_fired"] += 1
+    row["never_fired_command_only"] += 1 if meta["command_only"] else 0
     row["description_chars"] += meta["description_chars"]
     # a plugin skill whose bare name is also installed personally, where that copy is the one firing
     if owner != "(personal)" and name.split(":")[-1] in personal_fired:
@@ -276,8 +333,10 @@ for name, meta in skills_installed.items():
 
 for row in rollup.values():
     row["approx_tokens"] = round(row["description_chars"] / CHARS_PER_TOKEN)
+    row["all_approx_tokens"] = round(row["all_description_chars"] / CHARS_PER_TOKEN)
+# Ranked by the whole cost, which is what the report's plugin table sorts on.
 out["rollup_by_plugin"] = dict(
-    sorted(rollup.items(), key=lambda kv: -kv[1]["description_chars"]))
+    sorted(rollup.items(), key=lambda kv: -kv[1]["all_description_chars"]))
 
 all_chars = sum(m["description_chars"] for m in skills_installed.values())
 dead_chars = sum(r["description_chars"] for r in rollup.values())
