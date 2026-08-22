@@ -9,7 +9,12 @@
     {
       "name": "dev-workflow",
       "source": "./plugins/dev-workflow",
-      "description": "Daily dev workflow skills: commit, release, skill authoring rules, skill audit (prompt text + workflow logic), usage-driven skill refinement"
+      "description": "Daily dev workflow commands: commit and release"
+    },
+    {
+      "name": "prompt-workflow",
+      "source": "./plugins/prompt-workflow",
+      "description": "Look after the AI setup itself: write and audit the prompt files that steer it, feed real-usage problems back into their source, and audit which installed MCP servers and skills actually get used"
     },
     {
       "name": "issue-tracing",
@@ -55,11 +60,6 @@
       "name": "sdd-devops",
       "source": "./plugins/sdd-devops",
       "description": "SDD stack pack: DevOps engineer and infrastructure skills"
-    },
-    {
-      "name": "agent-ops",
-      "source": "./plugins/agent-ops",
-      "description": "Look after the AI setup itself: audit which installed MCP servers, tools, and skills actually get used, and keep the ones that stay in good shape"
     }
   ]
 }

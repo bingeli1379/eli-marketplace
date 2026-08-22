@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0] - 2026-08-22
+
+### Changed
+- The plugin is renamed from `agent-ops` to `prompt-workflow`. The old install name no longer resolves, so reinstall as `prompt-workflow@eli-marketplace` to keep getting updates. The new name pairs it with `dev-workflow`: that one works on your code, this one on the prompt files that steer the model.
+- `/usage-audit` only runs when you type it. A passing remark about your setup no longer reaches it, because the run reads your whole session history and starting that is your call.
+
+### Added
+- Writing, auditing, and improving prompt files now happen here. `skill-authoring` (the write-time rules), `/review-skill` (the audit), and `/improve-skill` (feed a real-usage problem back into a skill's source) moved in from `dev-workflow`, alongside the shared authoring catalogue they both read.
+- The authoring rules now cover who may invoke a skill: decide it before writing the description and say it with the frontmatter flags, because a "never auto-trigger" sentence written into a description binds nothing and is charged on every request.
+
+### Fixed
+- The plugin now appears in the Codex marketplace. It had never been registered there, so Codex users could not install it at all while everything looked fine on the Claude side.
+
 ## [0.1.1] - 2026-08-21
 
 ### Added

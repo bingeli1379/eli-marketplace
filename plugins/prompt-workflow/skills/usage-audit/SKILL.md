@@ -1,6 +1,7 @@
 ---
 name: usage-audit
-description: Audit installed MCP servers, tools, and skills against actual usage. Triggers on 盤點/檢查/清理 裝了哪些 MCP、tool 太多、哪些沒在用、哪些可以刪掉、skill 沒被觸發、skill 叫不出來、環境太肥, which MCP servers can I remove, is anything I installed unused, tool usage stats, prune my setup, audit my toolset, why does my skill never fire, or /usage-audit. Audits the INVENTORY — what is installed and whether it ever fires — NOT the text or logic of a prompt file.
+description: Audit the INVENTORY of installed MCP servers, tools, and skills against actual usage — what is installed and whether it ever fires, NOT the text or logic of a prompt file.
+disable-model-invocation: true
 ---
 
 # Audit the toolset against what you actually use

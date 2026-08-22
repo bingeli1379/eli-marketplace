@@ -16,7 +16,7 @@ Feed real-usage problems back into your own skills. You were working in **anothe
 1. In another project, you use a skill and hit a problem.
 2. You handle it manually and finish your task — do NOT block on the skill defect.
 3. **← You run `/improve-skill <skill>` here.** It patches the skill's source in the owning repo's local working copy.
-4. You run `/commit` (etc.) yourself.
+4. You commit yourself.
 5. You `git push` yourself.
 6. You reinstall / update the plugin yourself so the fix takes effect.
 
@@ -103,7 +103,7 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 7. **Hand off (do NOT commit, push, or reinstall)**
 
    Report **the ranked changeset from step 4** (each item with the usage evidence behind it), **the calls you made** — every judgement call you resolved rather than asked about, what you picked and what you rejected — and the `<repo>` path(s). Then state the remaining steps are the user's. **Group the handoff by repo — one block per touched repo, each listing its own files and its own three steps.** Separate repos mean separate git histories and separate plugin installs; a merged handoff loses which commit belongs where:
-   - commit (run `/commit` from that repo, or `git -C <repo> …`), and `/release` if the target's behavior changed — never one commit spanning two repos, that is not even possible;
+   - commit from that repo (or `git -C <repo> …`), plus a version bump and changelog entry if the target's behavior changed — never one commit spanning two repos, that is not even possible;
    - `git push` in that repo;
    - reinstall / update that repo's plugin so the fix goes live — reinstalling one marketplace does nothing for the other's edits.
    Flag explicitly: **the fix is NOT active in the current environment until that reinstall** — the running copy (skill, output style, hook) still comes from the old installed cache.
