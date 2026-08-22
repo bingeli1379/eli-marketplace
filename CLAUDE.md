@@ -32,11 +32,11 @@ Contains:
 
 ## Adding a New Skill to an Existing Plugin
 
-Create `plugins/<plugin-name>/skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description` starting with "Use when...") and the prompt body.
+Create `plugins/<plugin-name>/skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description` — see *Skill File Conventions* below) and the prompt body.
 
 ## Skill File Conventions
 
-- YAML frontmatter: `name` and `description` (description starts with "Use when...")
+- YAML frontmatter: `name` and `description`. A model-selectable description starts with "Use when..." and holds trigger conditions only; a command-only skill (`disable-model-invocation: true`) has no trigger surface to write. The three invocation classes and what each description must hold live in `plugins/prompt-workflow/references/authoring-rules.md`
 - Instructions are structured with numbered steps and tables
 - Rules/guardrails go at the bottom
 - Audit report language: Traditional Chinese (technical terms stay English)

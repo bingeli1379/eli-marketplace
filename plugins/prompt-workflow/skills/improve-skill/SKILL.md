@@ -85,6 +85,8 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 
 5. **Apply to the working copy**
 
+   **Before writing any prose edit, read `${CLAUDE_PLUGIN_ROOT}/references/authoring-rules.md`.** It is the same catalogue step 6's audit measures the edit against, so reaching it only there means fixing your own edit instead of writing it right — and the rules that bite hardest are the ones invisible from the file you are editing (which frontmatter flag a behavior change actually needs, what a description may hold). Where `0c`'s repo conventions conflict with it, they win.
+
    Make the edits at `<repo>`. For any item classified as a preference in step 2, write the memory / suggest the `CLAUDE.md` line instead of editing the target.
 
 6. **Validate the edits — compose the existing audits, do not re-implement them**

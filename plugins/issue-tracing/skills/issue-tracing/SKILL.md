@@ -1,6 +1,7 @@
 ---
 name: issue-tracing
-description: Use when the user hands over a Grafana or Kibana/ELK URL, or an alert they were paged with, and wants to know what is wrong — investigate, trace, dig into, or find the root cause of an alert, error, incident, spike, or anomaly. Covers the everyday phrasings too — 「查一下這個 alert」、「這個錯誤是什麼原因」、「幫我看一下這個 log」、「這個噴什麼」、「on-call 收到告警」、"look into this alert", "what is causing this". Also when the user runs /issue-tracing.
+description: On-call incident triage — traces a Grafana or Kibana/ELK URL down the call chain to a root cause and writes a Root Cause / Impact / How to Resolve / Unknowns report.
+disable-model-invocation: true
 ---
 
 # Issue Tracing
