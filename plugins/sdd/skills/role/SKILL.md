@@ -45,7 +45,7 @@ This is distinct from the other entry points:
    - **Role given in args** (a name or its short alias from the list above) → use it directly.
    - **No / unknown role** → print the full role list above (grouped, name + one-line duty) and ask the user to reply with the role name. Do **NOT** use a multi-step picker — one glance at the list, type the name. Keep waiting until you have a valid role.
 
-   Resolve the chosen name to its agent file per `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md` (*Agent-file resolution*). Core roles (`architect`, `review`, `security`, `performance`, `qa`, `technical-writer`) live in this plugin's `agents/`. Implementation roles (`vue`, `dotnet`, `python`, `electron`, `godot`, `database`, `devops`) live in their `sdd-<stack>` pack — locate the file with `find ~/.claude/plugins -path "*/<pack>/agents/<role>.md"`. If the pack is not installed (nothing found), tell the user `該 specialist 屬於 sdd-<pack>，尚未安裝。請先 /plugin install sdd-<pack> 再 /sdd:role。` and stop.
+   **Read `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md` › *Agent-file resolution* now** and resolve the chosen name from it — it holds the role→Home map, the core-vs-pack split, the `find` that locates a pack's agent file without assuming the install layout, and the not-installed message to give the user before stopping. Resolve from there rather than from the role list in this skill's own frontmatter: that list is the argument hint, and a newly added pack lands in the routing table without landing in it.
 
 2. **Become the role**
 
