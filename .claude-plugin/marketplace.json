@@ -12,6 +12,11 @@
       "description": "Daily dev workflow commands: commit and release"
     },
     {
+      "name": "prompt-workflow",
+      "source": "./plugins/prompt-workflow",
+      "description": "Look after the AI setup itself: write and audit the prompt files that steer it, feed real-usage problems back into their source, and audit which installed MCP servers and skills actually get used"
+    },
+    {
       "name": "issue-tracing",
       "source": "./plugins/issue-tracing",
       "description": "On-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured Root Cause / Impact / How to Resolve / Unknowns report"
@@ -55,11 +60,6 @@
       "name": "sdd-devops",
       "source": "./plugins/sdd-devops",
       "description": "SDD stack pack: DevOps engineer and infrastructure skills"
-    },
-    {
-      "name": "agent-ops",
-      "source": "./plugins/agent-ops",
-      "description": "Look after the AI setup itself: audit which installed MCP servers, tools, and skills actually get used, write and audit skill/agent prompt files, and feed real-usage problems back into their source"
     }
   ]
 }

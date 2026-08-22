@@ -17,10 +17,10 @@
       "category": "Developer Tools"
     },
     {
-      "name": "agent-ops",
+      "name": "prompt-workflow",
       "source": {
         "source": "local",
-        "path": "./plugins/agent-ops"
+        "path": "./plugins/prompt-workflow"
       },
       "policy": {
         "installation": "AVAILABLE",
