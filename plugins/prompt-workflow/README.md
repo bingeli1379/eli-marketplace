@@ -26,7 +26,8 @@ Four tables, in this order:
   the run can see (its always-loaded instructions block is a per-turn charge like a skill's
   description, while its tool schemas are knowable only by connecting), and one whose project
   directory is gone is dead config rather than an unused capability. A project-scoped server the
-  session window never covered gets no verdict instead of a wrong one
+  session window never covered gets no verdict instead of a wrong one, and every zero-call row is
+  told how to remove it — the command for its scope, or the hand-edit where no command can run
 - **Local skill** — the ones in `~/.claude/skills` that belong to no marketplace, expanded one row
   per skill, because that is the unit you remove them in
 - **Plugin@marketplace** — rolled up per plugin, because a plugin arrives and leaves whole. Two cost
@@ -38,8 +39,9 @@ Four tables, in this order:
 
 Rows are ranked by what they cost per turn, not by how many skills they hold: a model-selectable
 skill's description sits in context on every request while its body is lazy-loaded, so thirty terse
-skills can be cheaper than six verbose ones. A command-only skill and a disabled plugin are in
-context on no request at all, so both are counted at zero rather than ranked.
+skills can be cheaper than six verbose ones. A command-only skill is in context on no request at
+all, so it is counted at zero rather than ranked; a disabled plugin is dropped from the inventory
+entirely and shows up only as the Coverage line saying it was excluded.
 
 A name with usage but nothing installed behind it gets no verdict — this diagnoses the setup you have now, not the one you used to have.
 

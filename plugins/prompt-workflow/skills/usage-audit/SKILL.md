@@ -54,6 +54,7 @@ The signals, first match wins:
 
 | What the data shows | Recommend |
 |---|---|
+| `never_fired` == 0 | **保留** — every skill in it fires; the row is the standing state, with nothing to prune |
 | `never_fired_command_only` == `never_fired` | **保留** — every silent skill here is command-only, so the row already costs 0 and pruning it saves nothing; say that instead of ranking it |
 | `shadowed_by_personal` > 0 and every skill silent | **該處理** — two copies of one skill are installed and only one can win |
 | `never_fired` < `installed` | **保留** — the plugin is reached, so the silent ones are a matching problem, not an unwanted capability |
@@ -118,6 +119,16 @@ Records one verdict per item. Step 3 (report) prints them.
 | `plugin` | plugin 自帶 `<the row's `manifest` value>` — quote what the collection recorded rather than picking between `.mcp.json` and `mcp.json`, which is a coin flip printed as a fact |
 | `observed` | 只在 transcripts 看得到 — say the declaration cannot be read, and never invent a path for it |
 
+**A zero-call row names how to remove it — a command or a named action, never a category.** The scope alone leaves the reader to find out which project or which plugin, and the sentence under the table is where it lands, one line per zero-call server. Derive it:
+
+| scope | 怎麼移除 |
+|---|---|
+| `user` | `claude mcp remove <server> -s user` |
+| `project`, directory still there | `cd <where> && claude mcp remove <server> -s project` |
+| `project`, directory gone | drop that project's whole entry from `~/.claude.json`'s `projects` map — `claude mcp remove` needs a directory to run in, so the command above cannot execute at all here. Name the key, say to back the file up first, and leave the edit to the user |
+| `plugin` | uninstall `<plugin>@<marketplace>` via `/plugin` — a plugin-shipped server has no config entry to edit, and the marketplace is half the address: the same plugin name can exist in more than one |
+| `observed` | seen only in transcripts and declared nowhere the run can read: say the removal path is unknown rather than guessing one |
+
 **The table carries no token column, and the line under it states what a silent server actually charges rather than calling the whole cost unmeasurable.** "This collection cannot see it" reads as zero, and zero is wrong — a server's per-turn charge has two halves, and only one of them is out of reach:
 
 - **Its `instructions` block is a fixed per-turn charge of exactly the same shape as a skill `description`**, and for a server the running session is connected to, that text is sitting in this session's own context — so it is not unmeasured, it is measurable by the run itself, converting with `description_cost.chars_per_token`. The collection never sees this block (it reaches the session from the server at connect time, not from any config file on disk), which is a limit of the script, not of the report. **The character count must come from an actual count of that text, never from reading its length off by eye** — an eyeballed number lands in the report beside figures the script measured, with nothing marking which is which, and a fabricated `≈` is what this whole audit exists not to print.
@@ -126,7 +137,7 @@ Records one verdict per item. Step 3 (report) prints them.
 
 ### The two skill tables, and why they are two
 
-**Table 3 excludes `rollup_by_plugin`'s `(personal)` row** — that population is table 2, expanded. Leaving it in prints that whole population's tokens twice under two different headings, and the reader has no way to tell it is one population counted once. It gets no **保留** / **該處理** verdict either — those are per plugin, and table 2 has no 建議 column — so table 3's heading total is the sum of the rows it actually shows.
+**Table 3 excludes `rollup_by_plugin`'s `(personal)` row** — that population is table 2, expanded one row per `skills_installed` entry whose `owner` is `(personal)`, with its heading total taken from that same rollup row. Leaving it in prints that whole population's tokens twice under two different headings, and the reader has no way to tell it is one population counted once. It gets no **保留** / **該處理** verdict either — those are per plugin, and table 2 has no 建議 column — so table 3's heading total is the sum of the rows it actually shows.
 
 **Local skills are expanded per skill; marketplace skills are rolled up per plugin.** They are pruned differently, and that is the whole reason for the split: a local skill is a directory the user owns and removes one at a time, so the actionable unit is the skill; a plugin arrives and leaves whole, so listing its skills individually offers a cut nobody can make. Never merge the two tables, and never expand a plugin's skills into rows.
 
