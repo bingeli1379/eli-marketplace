@@ -15,7 +15,8 @@ A Claude Code plugin marketplace. It hosts custom plugins (skills) distributed v
 
 Contains:
 
-- **dev-workflow** — daily workflow skills: commit, release, review-skill, skill-authoring
+- **dev-workflow** — daily workflow skills: commit, release
+- **agent-ops** — look after the AI setup itself: usage-audit (what is installed and whether it fires), skill-authoring, review-skill, improve-skill (what the prompt files say and whether they hold)
 - **issue-tracing** — on-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured incident report
 - **sdd** — spec-driven AI development workflow core (proposal, design, tasks → implement, validate, archive): workflow commands, orchestrator, architect, cross-cutting reviewers, universal skills
 - **sdd-\<stack\> packs** — optional stack packs that extend sdd with one stack's engineer agent + skills: `sdd-vue`, `sdd-dotnet`, `sdd-python`, `sdd-godot`, `sdd-electron`, `sdd-database`, `sdd-devops`. Each declares `dependencies: ["sdd"]`. See `plugins/sdd/CLAUDE.md` → *Plugin Topology* and `plugins/sdd/references/agent-routing.md`. **The packs ship no `CLAUDE.md` of their own** — core's is the family's, so read it before editing anything in a pack too, in particular *Routing a defect back to its source* when you are feeding a real-usage problem back in.
@@ -49,7 +50,7 @@ Create `plugins/<plugin-name>/skills/<skill-name>/SKILL.md` with YAML frontmatte
 
 4. **Only edit skills the repo authors; never rewrite an upstream-synced skill's body.** Before editing any skill body, check `plugins/sdd/skills/SOURCES.yaml`: only `repo: original` skills are ours to edit. A skill marked `repo: <url>` is an upstream mirror — `scripts/update-skills.sh` replaces its body on the next sync, so a body edit is lost. Its frontmatter `description` IS safe to change (sync preserves local frontmatter) for a trigger-wording tweak. To change behavior around a synced skill, edit what the repo owns (an agent, a workflow-core skill, an original skill) or its description. Agent `.md` files are always ours to edit.
 
-5. **Keep each plugin self-contained — no cross-plugin / cross-marketplace references.** A `${CLAUDE_PLUGIN_ROOT}` path must stay within the plugin's own directory; refer to another skill only by name (Skill tool) and only within the same plugin. A reference that crosses plugin boundaries breaks whenever the other plugin isn't installed and couples release cycles. (E.g. sdd's own `conventional-commits` stays independent of dev-workflow's `/commit`.)
+5. **Keep each plugin self-contained — no cross-plugin / cross-marketplace references.** A `${CLAUDE_PLUGIN_ROOT}` path must stay within the plugin's own directory; refer to another skill only by name (Skill tool) and only within the same plugin. A reference that crosses plugin boundaries breaks whenever the other plugin isn't installed and couples release cycles. (E.g. sdd's own `conventional-commits` stays independent of dev-workflow's `/commit`; agent-ops' `/improve-skill` hands committing back to you rather than naming `/commit`.)
 
 ## Structure Validation
 
