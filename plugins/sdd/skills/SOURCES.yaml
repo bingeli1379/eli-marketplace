@@ -205,6 +205,21 @@ gitlab-glab:
   repo: https://github.com/henricook/claude-glab-skill
   path: .
 
+# GKE / Workloads (from google/skills — Google's official Agent Skills repo).
+# Only the workload-level skills an application developer reaches for; the plugin's other 26
+# cover cluster provisioning, networking, upgrades, multi-tenancy and AI/TPU inference, which
+# are platform-team surfaces. Paths point INTO the google-cloud-gke plugin: the repo also keeps
+# a byte-identical copy under skills/cloud/, and the plugin is the tree Google is developing.
+gke-workload-troubleshooting:
+  repo: https://github.com/google/skills
+  path: plugins/cloud/google-cloud-gke/skills/gke-workload-troubleshooting
+gke-reliability:
+  repo: https://github.com/google/skills
+  path: plugins/cloud/google-cloud-gke/skills/gke-reliability
+gke-workload-scaling:
+  repo: https://github.com/google/skills
+  path: plugins/cloud/google-cloud-gke/skills/gke-workload-scaling
+
 # Security
 differential-review:
   repo: https://github.com/trailofbits/skills
@@ -491,18 +506,3 @@ godot-dialogue-system:
   path: skills/dialogue-system
 
 # Maintenance
-
-# GKE / Workloads (from google/skills — Google's official Agent Skills repo).
-# Only the workload-level skills an application developer reaches for; the plugin's other 26
-# cover cluster provisioning, networking, upgrades, multi-tenancy and AI/TPU inference, which
-# are platform-team surfaces. Paths point INTO the google-cloud-gke plugin: the repo also keeps
-# a byte-identical copy under skills/cloud/, and the plugin is the tree Google is developing.
-gke-workload-troubleshooting:
-  repo: https://github.com/google/skills
-  path: plugins/cloud/google-cloud-gke/skills/gke-workload-troubleshooting
-gke-reliability:
-  repo: https://github.com/google/skills
-  path: plugins/cloud/google-cloud-gke/skills/gke-reliability
-gke-workload-scaling:
-  repo: https://github.com/google/skills
-  path: plugins/cloud/google-cloud-gke/skills/gke-workload-scaling
