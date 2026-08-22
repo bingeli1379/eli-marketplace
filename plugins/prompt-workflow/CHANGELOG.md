@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.2] - 2026-08-22
+
+### Changed
+- A slash command's argument now has a place to live that is not its description. Naming the three ways a skill can be reached told a command-only description to say what the command does and stop, which correctly pushed the argument out — and left nowhere for it to land, so trimming a description either dropped the argument or kept paying for it in the one field the person typing the command never sees. It goes in `argument-hint` now, which is what the slash-command menu actually shows you. The audit flags the two ways that field quietly does nothing: indented under another frontmatter key, or sitting on a skill you cannot type.
+
 ## [0.2.1] - 2026-08-22
 
 ### Fixed
