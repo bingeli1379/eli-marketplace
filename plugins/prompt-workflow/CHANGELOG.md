@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- `/usage-audit` opens on what it costs you instead of on how it measured. The Coverage block is gone; the three cost figures lead the report — what your skills charge per turn, how much of that never fires, and how much of *that* a prune actually recovers. The third one is new, and it is the gap that mattered: the never-fired total counts silent skills inside plugins you are keeping for another route, which no uninstall reaches and only a rewritten description brings back, so reading the wasted figure as the saving overstated it by more than half on a real run. What survived from Coverage moved to where it is used rather than being dropped — the session window now sits under the MCP table whose zero-call verdicts rest on it, and unreadable sources stay a line in the cost block, because a source that could not be read removes a verdict the report would otherwise be entitled to make.
+
+### Fixed
+- `/usage-audit` counted the window from file timestamps instead of from the messages in it. A transcript is appended to, so its mtime is when the session *ended* — the reported window began when the oldest session finished rather than when it started, and on a real run that hid 24 of 55 days. A zero over the window is what every removal rests on, so a window reported narrower than it was made that zero look like weaker evidence than it is.
+- Every plugin now appears in the plugin table, not only the ones that happen to ship skills. The table was built from the installed skills alone, so a plugin reached entirely through its MCP server was absent from the inventory and could be given no verdict at all — on a real run that silently dropped a server with 41 calls behind it.
+- A plugin with nothing measurable in it is now left unjudged instead of retired. A zero-skill plugin earns a verdict only from an MCP server it declares; one that ships only commands or agents, or whose install path has gone missing, gets the new **無判定** and says which of the two it was. Reading "nothing recognised on disk" as "ships nothing" would have recommended removing three plugins that were doing their job.
+- The report no longer prints the per-turn skill cost as if it were the whole of it. The skills shipped inside the CLI itself charge their descriptions every turn and cannot be enumerated from disk, so the totals now say which population they cover and Coverage names the excluded one.
+- The count of names seen only in history is no longer a single opaque figure. Most of it is renames and built-ins rather than things that vanished, so Coverage now says how many of those names match something installed today — disclosure only, with the counts still unmerged.
+
 ## [0.2.3] - 2026-08-22
 
 ### Changed
