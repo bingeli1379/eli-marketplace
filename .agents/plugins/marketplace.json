@@ -17,6 +17,18 @@
       "category": "Developer Tools"
     },
     {
+      "name": "prompt-workflow",
+      "source": {
+        "source": "local",
+        "path": "./plugins/prompt-workflow"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    },
+    {
       "name": "issue-tracing",
       "source": {
         "source": "local",

@@ -1,0 +1,34 @@
+{
+  "name": "prompt-workflow",
+  "description": "Look after the AI setup itself: write and audit the prompt files that steer it, feed real-usage problems back into their source, and audit which installed MCP servers and skills actually get used",
+  "version": "0.2.0",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-marketplace",
+  "license": "MIT",
+  "keywords": [
+    "prompt-workflow",
+    "mcp",
+    "skills",
+    "usage-audit",
+    "context",
+    "prune",
+    "review-skill",
+    "skill-authoring",
+    "improve-skill"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Prompt Workflow",
+    "shortDescription": "Write and audit the prompt files that steer your AI setup, and prune what never fires",
+    "developerName": "Eli",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Skills",
+      "Files"
+    ]
+  }
+}

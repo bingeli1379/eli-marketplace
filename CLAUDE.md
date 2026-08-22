@@ -9,13 +9,16 @@ A Claude Code plugin marketplace. It hosts custom plugins (skills) distributed v
 ## Structure
 
 - `.claude-plugin/marketplace.json` — marketplace manifest, lists all plugins with name/source/description
+- `.agents/plugins/marketplace.json` — the same list for Codex. **A second registry with the same drift risk**: when a plugin is missing here nothing complains, because the Claude marketplace still loads and the plugin is simply absent for Codex users
 - `plugins/<plugin-name>/` — each plugin directory
   - `.claude-plugin/plugin.json` — plugin metadata (name, version, description)
+  - `.codex-plugin/plugin.json` — the Codex counterpart; carries the same name/description/version plus `skills` and `interface`, so a description change has to land in both
   - `skills/<skill-name>/SKILL.md` — skill definitions with YAML frontmatter (name, description) and prompt body
 
 Contains:
 
-- **dev-workflow** — daily workflow skills: commit, release, review-skill, skill-authoring
+- **dev-workflow** — daily workflow skills: commit, release
+- **prompt-workflow** — the same for the prompt files that steer the AI: skill-authoring, review-skill, improve-skill (what they say and whether they hold), plus usage-audit (what is installed and whether it ever fires)
 - **issue-tracing** — on-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured incident report
 - **sdd** — spec-driven AI development workflow core (proposal, design, tasks → implement, validate, archive): workflow commands, orchestrator, architect, cross-cutting reviewers, universal skills
 - **sdd-\<stack\> packs** — optional stack packs that extend sdd with one stack's engineer agent + skills: `sdd-vue`, `sdd-dotnet`, `sdd-python`, `sdd-godot`, `sdd-electron`, `sdd-database`, `sdd-devops`. Each declares `dependencies: ["sdd"]`. See `plugins/sdd/CLAUDE.md` → *Plugin Topology* and `plugins/sdd/references/agent-routing.md`. **The packs ship no `CLAUDE.md` of their own** — core's is the family's, so read it before editing anything in a pack too, in particular *Routing a defect back to its source* when you are feeding a real-usage problem back in.
@@ -25,6 +28,7 @@ Contains:
 1. Create `plugins/<name>/.claude-plugin/plugin.json` with name, description, version
 2. Add skill directories under `plugins/<name>/skills/`
 3. Register the plugin in `.claude-plugin/marketplace.json` under the `plugins` array
+4. For Codex support, do the mirror pair too — `plugins/<name>/.codex-plugin/plugin.json`, and an entry in `.agents/plugins/marketplace.json`. **All four registration surfaces or none**: skipping the Codex pair ships a plugin that exists for Claude and silently does not exist for Codex — it has already happened here, and nothing complained. `scripts/check-structure.sh` now fails on the mismatch
 
 ## Adding a New Skill to an Existing Plugin
 
@@ -47,13 +51,13 @@ Create `plugins/<plugin-name>/skills/<skill-name>/SKILL.md` with YAML frontmatte
 
 3. **Preflight inputs that need the user.** Anything that requires the user to do something (e.g. `/add-dir`, supply credentials, confirm a path) must be the FIRST step of the skill flow, not buried mid-flow. Resolve it before doing the bulk of the work so a missing input does not waste prior tool calls.
 
-4. **Only edit skills the repo authors; never rewrite an upstream-synced skill's body.** Before editing any skill body, check `plugins/sdd/skills/SOURCES.yaml`: only `repo: original` skills are ours to edit. A skill marked `repo: <url>` is an upstream mirror — `scripts/update-skills.sh` replaces its body on the next sync, so a body edit is lost. Its frontmatter `description` IS safe to change (sync preserves local frontmatter) for a trigger-wording tweak. To change behavior around a synced skill, edit what the repo owns (an agent, a workflow-core skill, an original skill) or its description. Agent `.md` files are always ours to edit.
+4. **Only edit skills the repo authors; never rewrite an upstream-synced skill's body.** Before editing any skill body, check `plugins/sdd/skills/SOURCES.yaml`: only `repo: original` skills are ours to edit. A skill marked `repo: <url>` is an upstream mirror — `plugins/sdd/scripts/update-skills.sh` replaces its body on the next sync, so a body edit is lost. Its frontmatter `description` IS safe to change (sync preserves local frontmatter) for a trigger-wording tweak. To change behavior around a synced skill, edit what the repo owns (an agent, a workflow-core skill, an original skill) or its description. Agent `.md` files are always ours to edit.
 
-5. **Keep each plugin self-contained — no cross-plugin / cross-marketplace references.** A `${CLAUDE_PLUGIN_ROOT}` path must stay within the plugin's own directory; refer to another skill only by name (Skill tool) and only within the same plugin. A reference that crosses plugin boundaries breaks whenever the other plugin isn't installed and couples release cycles. (E.g. sdd's own `conventional-commits` stays independent of dev-workflow's `/commit`.)
+5. **Keep each plugin self-contained — no cross-plugin / cross-marketplace references.** A `${CLAUDE_PLUGIN_ROOT}` path must stay within the plugin's own directory; refer to another skill only by name (Skill tool) and only within the same plugin. A reference that crosses plugin boundaries breaks whenever the other plugin isn't installed and couples release cycles. (E.g. sdd's own `conventional-commits` stays independent of dev-workflow's `/commit`; prompt-workflow's `/improve-skill` hands committing back to you rather than naming `/commit`.)
 
 ## Structure Validation
 
-`scripts/check-structure.sh` validates the marketplace's deterministic invariants: JSON manifests parse, `marketplace.json` ↔ on-disk plugins, every skill/agent `name:` equals its directory/filename (a mismatch is a silent load failure), sdd-family `SOURCES.yaml` coverage, wrong-base bundled-file reads, and dangling references (a reference path or `name.md` cross-reference pointing at nothing, a glued `stepN` citation past the skill's real step count). It is fast and token-free.
+`scripts/check-structure.sh` validates the marketplace's deterministic invariants: JSON manifests parse, **both** marketplace manifests (Claude and Codex) ↔ on-disk plugins, every skill/agent `name:` equals its directory/filename (a mismatch is a silent load failure), sdd-family `SOURCES.yaml` coverage, wrong-base bundled-file reads, and dangling references (a reference path or `name.md` cross-reference pointing at nothing, a glued `stepN` citation past the skill's real step count). It is fast and token-free.
 
 **Renaming a reference file or renumbering steps: sweep the mentions that do NOT look like paths.** A rename updates `references/<name>.md` occurrences easily and leaves bare `` `<name>.md` `` cross-references and glued `stepN` citations behind, pointing at nothing. The structure check above now fails on both, so run it after any rename — that is the cheap half of the problem. The expensive half is what a *self*-review keeps missing: see `/review-skill` Lens A class 9 (an insertion invalidating a declared budget, an artifact contract, an ordering gate, or the sentence next to it).
 

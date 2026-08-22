@@ -6,8 +6,8 @@ A personal [Claude Code](https://claude.ai/code) plugin marketplace hosting cust
 
 | Plugin | Description | Compatibility |
 |--------|-------------|---------------|
-| [dev-workflow](./plugins/dev-workflow) | Daily workflow commands — commit, release, prompt audit | Claude Code · Codex |
-| [agent-ops](./plugins/agent-ops) | Look after the AI setup itself — audit which installed MCP servers, tools, and skills actually get used | Claude Code · Codex |
+| [dev-workflow](./plugins/dev-workflow) | Daily workflow commands — commit, release | Claude Code · Codex |
+| [prompt-workflow](./plugins/prompt-workflow) | The same for your prompt files — author, audit, improve from real usage, prune what never fires | Claude Code · Codex |
 | [issue-tracing](./plugins/issue-tracing) | On-call triage — turn a Grafana or Kibana/ELK URL into a structured incident report | Claude Code · Codex |
 | [sdd](./plugins/sdd) | Spec-driven multi-agent development workflow core — propose, validate, apply, complete | Claude Code (Codex: degraded) |
 | [sdd-vue](./plugins/sdd-vue) | SDD stack pack — Vue/Nuxt frontend engineer and frontend skills | Claude Code (Codex: degraded) |
