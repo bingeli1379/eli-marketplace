@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "sdd-vue",
   "displayName": "SDD Vue",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "SDD stack pack: Vue/Nuxt frontend engineer and frontend skills",
   "author": {
     "name": "Eli",
