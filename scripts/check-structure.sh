@@ -4,7 +4,7 @@ set -uo pipefail
 # Structural integrity check for the plugin marketplace.
 # Catches the regression classes found in manual audits:
 #   - invalid JSON manifests
-#   - marketplace.json <-> on-disk plugin drift
+#   - marketplace.json <-> on-disk plugin drift, for BOTH registries (Claude and Codex)
 #   - skill/agent `name:` frontmatter not matching its directory/filename (silent load failure)
 #   - skills missing from the central SOURCES.yaml registry
 #   - bundled-file read instructions using a wrong-base relative path
@@ -35,6 +35,7 @@ get_name() {
 
 # ---- 1. JSON validity (all manifests) ----
 json_files=(".claude-plugin/marketplace.json")
+[[ -f ".agents/plugins/marketplace.json" ]] && json_files+=(".agents/plugins/marketplace.json")
 for p in plugins/*/; do
   for m in "${p}.claude-plugin/plugin.json" "${p}.codex-plugin/plugin.json"; do
     [[ -f "$m" ]] && json_files+=("$m")
@@ -55,6 +56,31 @@ if python3 -m json.tool .claude-plugin/marketplace.json >/dev/null 2>&1; then
   for p in plugins/*/; do
     name=$(basename "$p")
     echo "$reg_sources" | grep -qx "./plugins/$name" || err "plugin '$name' on disk is not registered in marketplace.json"
+  done
+fi
+
+# ---- 2b. Codex marketplace (.agents) <-> disk ----
+# The Codex manifest is a SECOND registry with the same drift risk, and nothing else notices when
+# it falls behind: the Claude marketplace loads, this script passed, and the plugin is simply
+# absent for Codex users. A plugin shipping a .codex-plugin/plugin.json declares Codex support,
+# so it must be registered here too.
+AGENTS_MP=".agents/plugins/marketplace.json"
+if [[ -f "$AGENTS_MP" ]] && python3 -m json.tool "$AGENTS_MP" >/dev/null 2>&1; then
+  agents_paths=$(python3 -c "
+import json
+for p in json.load(open('$AGENTS_MP'))['plugins']:
+    src = p.get('source') or {}
+    print(src.get('path', '') if isinstance(src, dict) else src)
+")
+  while IFS= read -r src; do
+    [[ -z "$src" ]] && continue
+    d="${src#./}"
+    [[ -f "$d/.codex-plugin/plugin.json" ]] || err "$AGENTS_MP path '$src' has no .codex-plugin/plugin.json"
+  done <<< "$agents_paths"
+  for p in plugins/*/; do
+    name=$(basename "$p")
+    [[ -f "${p}.codex-plugin/plugin.json" ]] || continue
+    echo "$agents_paths" | grep -qx "./plugins/$name" || err "plugin '$name' ships a .codex-plugin manifest but is not registered in $AGENTS_MP"
   done
 fi
 
