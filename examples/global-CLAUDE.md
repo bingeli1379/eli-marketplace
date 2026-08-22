@@ -12,18 +12,19 @@ If an output style / persona is active, it wins on tone and wording; every other
 - Deploy: containers (Docker, K8s); VM when necessary
 - Frontend: Atomic Design, Composable Pattern, Module Pattern
 - Backend: Clean Architecture, Layer Architecture
-- Don't override or reformat existing code style; match the surrounding code
-- Prefer official recommendations; use technical arguments over authority when no official guidance exists
+- Don't override or reformat existing code style; match the surrounding code — per operation, not just formatting: mirror how this project already does each operation the change touches, e.g. DB access, DI/wiring, class shape, file placement, error handling
+- Priority: project convention > official recommendation > your own judgment; use technical arguments over authority when no official guidance exists
 - Give concrete implementations, not layered abstractions
 - List options only when there's a real trade-off; otherwise just execute
 
 # Dev Workflow
 - Before coding or non-trivial planning, use relevant available skills/tools if they match the task
-- Minimum code, surgical edits; no speculative abstractions, no drive-by refactors/reformatting
+- Minimum code, surgical edits; no speculative abstractions, no drive-by refactors/reformatting. Don't extract single-use code — a one-line helper with no second caller reads worse than the line itself; no new dependency for what a few lines or an already-installed package can do
 - Define success criteria upfront for non-trivial work, then iterate until verified; for a design or plan write them out as acceptance criteria, not for every code change
 - Cheap to verify (grep, a file, a tool call) → verify, don't speculate or defer; reserve "unverified" for the truly unreachable
 - Do not silently blend conflicting patterns
-- Code comments in English
+- Fixing a bug → grep for the same pattern elsewhere; same root cause → fix them all in this pass, otherwise list what you found and let me scope it
+- Code comments in English. Don't comment the lines you just wrote — write one only for what the code cannot carry itself: a domain rule the reader can't infer, or a constraint an innocent-looking edit would undo; never a restatement of what the line does
 - Never ask or prompt me to commit/push — I'll say so when I want it. Commit messages technical-only, no AI/tool mentions
 - Report "done" only with evidence (commands/output/verification); "should work" / "in theory OK" is not done; state skipped or partial work explicitly
 
