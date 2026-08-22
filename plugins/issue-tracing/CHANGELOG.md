@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.12.0] - 2026-08-22
+
+### Changed
+- `/issue-tracing` is now the only way to start an investigation. Handing over a Grafana or Kibana link, an alert, a stack trace or a log dump — or simply asking what is erroring — no longer sets the full triage run going on its own: you get an ordinary answer to what you asked, and the structured Root Cause / Impact / How to Resolve / Unknowns report when you ask for it by name.
+
 ## [1.11.0] - 2026-08-04
 
 ### Added

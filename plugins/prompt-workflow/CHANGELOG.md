@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.1] - 2026-08-22
+
+### Fixed
+- Editing a skill in a language other than English now pulls in the authoring rules. The write-time rules listed their everyday phrasings in English only, so a request phrased in your own language did not reach them and the edit got made without them — including the rule that "only trigger on the command" is a frontmatter flag and never something you write into the description.
+- `/improve-skill` reads the authoring rules before it writes, not after. It used to reach them only through the audit it runs at the end, so its edits were measured against rules it had not yet read and the audit came back with findings against its own work.
+- `/review-skill` no longer promises to finish a job it cannot. Pointed at something the size of a whole marketplace it kept going until it ran out of room and stopped partway with no record of what was left, which reads exactly like having covered everything. It now says up front how much it will not get to, works the files other files depend on first, and hands back the remaining list so a later run picks up from there.
+- A server that made no calls is now sized instead of written off. The removal table used to call its context charge unmeasurable, which reads as zero; half of it is not, and that half is now counted per server — separating a real zero from a server that simply was not connected this session.
+
+### Changed
+- The authoring rules now name the three ways a skill can be reached, side by side, with what each one's description has to hold: selectable by the model, command-only, or model-only. The two failures they prevent are opposite — paying for a list of phrasings nothing can match, and trimming away the only surface that could have reached the skill at all.
+
 ## [0.2.0] - 2026-08-22
 
 ### Changed
