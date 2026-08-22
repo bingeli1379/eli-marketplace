@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.0.0] - 2026-08-22
+
+### Removed
+- Writing skills, auditing them, and feeding real-usage problems back into them are no longer part of this plugin. `skill-authoring`, `/review-skill`, and `/improve-skill` now live in `prompt-workflow` — install `prompt-workflow@eli-marketplace` to keep them. What stays here is the two daily commands, `/commit` and `/release`.
+
 ## [3.3.1] - 2026-08-21
 
 ### Fixed
