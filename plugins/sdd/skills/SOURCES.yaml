@@ -31,6 +31,9 @@ vue-jsx-best-practices:
 create-adaptable-composable:
   repo: https://github.com/vuejs-ai/skills
   path: skills/create-adaptable-composable
+vue-options-api-best-practices:
+  repo: https://github.com/vuejs-ai/skills
+  path: skills/vue-options-api-best-practices
 
 # Vue / Tools (from antfu/skills — maintained by antfu)
 vue:
@@ -57,6 +60,12 @@ antfu:
 unocss:
   repo: https://github.com/antfu/skills
   path: skills/unocss
+vitepress:
+  repo: https://github.com/antfu/skills
+  path: skills/vitepress
+turborepo:
+  repo: https://github.com/antfu/skills
+  path: skills/turborepo
 
 # VueUse (from vueuse/skills — official org)
 vueuse-functions:
