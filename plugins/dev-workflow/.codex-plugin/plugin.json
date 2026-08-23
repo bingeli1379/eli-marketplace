@@ -1,7 +1,7 @@
 {
   "name": "dev-workflow",
   "description": "Daily dev workflow commands: commit and release",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
