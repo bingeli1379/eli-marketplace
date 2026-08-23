@@ -17,7 +17,7 @@ Include the following verbatim in each reviewer's dispatched prompt:
 > **Analytical depth requirement**
 >
 > 1. **Enumerate coverage BEFORE findings** — list the categories/dimensions you examined:
->    - `review-engineer` → architecture compliance, correctness, performance, readability, test quality
+>    - `review-engineer` → architecture compliance, correctness, performance, readability, test quality, change history & in-code constraints
 >    - `security-engineer` → each applicable OWASP Top-10 category, authN/authZ, input validation, secrets/config, dependency risks
 >    - `qa-engineer` → every acceptance scenario, plus happy path + edge cases + error paths + authorization cases. Scenarios come from the spec WHEN/THEN clauses when the change has specs (`/apply`); when it has none (`/quick`), enumerate every affected user-facing flow instead.
 > 2. **Confirm non-findings explicitly** — for every category examined, state the result. "No issues found in category X" is a valid and expected outcome. Silence on a category is treated as "agent skipped it" and fails the review.

@@ -21,7 +21,7 @@ Two entry conditions, same read-only contract:
 
 | lens | agent | reviews | not |
 |---|---|---|---|
-| `quality` | review-engineer | architecture compliance, code-level correctness, maintainability, patterns, over-engineering (reinvented stdlib / dead abstractions / needless deps — what to delete) | does not run tests to verify behaviour |
+| `quality` | review-engineer | architecture compliance, code-level correctness, maintainability, patterns, over-engineering (reinvented stdlib / dead abstractions / needless deps — what to delete), change history & in-code constraints (does the change undo a deliberate past commit, or break a rule a comment states) | does not run tests, builds, or typecheckers to verify behaviour |
 | `security` | security-engineer | vulnerabilities, OWASP, injection, authn/authz, secrets/config, dependency risks | does not judge performance/architecture |
 | `performance` | performance-engineer | FE (CWV/bundle), BE (API/SP/query), data-scale capacity — **static, report-only** | does not run load tests/profilers; SP-internal tuning → DBA |
 | `e2e` | qa-engineer | runs Playwright E2E against a spec's WHEN/THEN or supplied acceptance criteria | needs a runnable app + criteria; not for a bare SP/query |
