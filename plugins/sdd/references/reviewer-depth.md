@@ -10,6 +10,8 @@ The **Analytical depth requirement** every reviewer dispatch must carry. Single 
 
 **Rationale:** structurally enforcing exhaustive scanning and auditable coverage is the primary safeguard — a reviewer that reports only what caught its eye has silently chosen its own scope.
 
+**A returned report that violates these requirements gets bounced, not papered over.** Severity is what decides whether the run stops, and silence on a category is defined below as a skipped category — so a finding with no severity, or a category the report never mentions, leaves a verdict that cannot be acted on. Send it back to the same agent with `SendMessage` naming the missing part; its context is intact, so this is far cheaper than a re-dispatch, and cheaper than assigning the severity yourself — a dispatcher-invented severity is a guess wearing the reviewer's judgement. Observed: a security report returned one finding with no severity and the round was accepted anyway.
+
 ---
 
 Include the following verbatim in each reviewer's dispatched prompt:
