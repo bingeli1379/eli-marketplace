@@ -128,6 +128,8 @@ Four counts: read in full, skimmed, **metadata-checked** — where a binary's es
 checked but not by reading it — and skipped, broken down by the class each skip came from. Plus the
 `project list` field, which is three-valued: `used`, `none found`, or `no repo access`.
 
+**Every changed file lands in exactly one of the four, and the four sum to the number of changed files.** Count the changed files first and check the sum before writing the line: a file that appears in none of them vanishes from the accounting, and the line still reads as a complete one whatever it adds up to — nothing in the report shows the shortfall.
+
 Without them, a review that skipped half the diff is indistinguishable from one that read it all.
 They are what let the reader disagree with a skip, which is the only way a wrong skip ever gets
 found.
