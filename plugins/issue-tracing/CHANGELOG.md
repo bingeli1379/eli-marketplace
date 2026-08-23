@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.1] - 2026-08-23
+
+### Fixed
+- The shortcut that follows one request across services is now checked before it is spent. A run could burn a query on a request id that was never a trace id — a per-connection id from the web server, or a random id of the same shape — then read the empty result as "these ids are unrelated" and abandon the shortcut for every remaining service. The shape now rules it out for free where it cannot work, and an empty result is scoped to the one service it came from.
+- Whether requests actually failed no longer depends on the log stream carrying searchable status fields. Where it writes only an ordinary access line, that line is read directly, which yields the status, how long each request took, and the calling address — so a report stops saying the request outcome could not be obtained when the answer was one query away.
+
 ## [1.12.0] - 2026-08-22
 
 ### Changed
