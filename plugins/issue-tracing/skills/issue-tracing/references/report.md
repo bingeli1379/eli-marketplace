@@ -116,6 +116,7 @@ If any block is empty or says "skipped", the work is incomplete — go back and 
    - 判法是機械的，而且成本為零：**拿一筆 hit 的 trace-correlation id 撈整條鏈（5.0 已經做過），看最後那筆 access log 的 status code。** 200 就是被接住了、使用者沒事；5xx 才是真的失敗。
    - 若該 stream 有結構化 access 欄位（status / path / 耗時），**直接查 `status_code >= 500` 的清單**——那是「誰真的失敗、失敗在哪個 endpoint、等了幾秒」的唯一直接來源，不是補充色彩。
    - 兩個方向都要防：**全 200 卻報成事故**（假警報，把良性噪音寫成「N 筆錯誤影響某流程」），以及**有 5xx 卻因為「大多數看起來還好」而漏報**。
+   - **沒有結構化 access 欄位不等於拿不到 status**：該 stream 若有 access-severity 的 log 行，那行通常是固定欄位順序，撈原始 log 文字下來 client-side 解析即可得 status／耗時／client address（SKILL.md step 4 的 access-line 段落）。走完那條才算「拿不到」。
    - 拿不到 status 就明寫「未取得請求結果」並列進 Unknowns——**不可用 error 筆數代替失敗數**。
 
 7. **止血建議要對得起你自己量到的數字，而且「擋得住這件事的開關是關的」永遠是一條 How to Resolve。** 這兩件事在調查途中就已經拿到，卻最容易在寫報告時掉——因為此刻眼前只有這份模板：告警／SOP 附的第一時間處置（step 2b「Alert URL / alert context」已要求驗證而非照抄），以及能擋住這類事件的設定現值（step 1c 的 config / settings lookup）。收尾前檢查兩項：**你的 infra 數字有沒有否證掉告警指定的動作**（有 → 明說哪一項無效與依據，不可把它原文寫成建議），以及**那顆旋鈕現在是什麼值**（關著／設錯 → 指名設定與現值，那通常就是真正的長期解）。查不到值就進 Unknowns，**不可寫「建議調整相關設定」這種沒有受詞的句子**——它讀起來像有結論，實際沒有。
