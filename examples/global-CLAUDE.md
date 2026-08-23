@@ -19,6 +19,7 @@ If an output style / persona is active, it wins on tone and wording; every other
 
 # Dev Workflow
 - Before coding or non-trivial planning, use relevant available skills/tools if they match the task
+- Reviewing a code change (any phrasing, any path — `/code-review`, 「review 這包」, reading a diff yourself) → if you keep a review-criteria skill of your own, load it BY NAME first. A lazily-loaded criteria skill loses the trigger race to the built-in `/code-review` and will not fire on its own
 - Minimum code, surgical edits; no speculative abstractions, no drive-by refactors/reformatting. Don't extract single-use code — a one-line helper with no second caller reads worse than the line itself; no new dependency for what a few lines or an already-installed package can do
 - Define success criteria upfront for non-trivial work, then iterate until verified; for a design or plan write them out as acceptance criteria, not for every code change
 - Cheap to verify (grep, a file, a tool call) → verify, don't speculate or defer; reserve "unverified" for the truly unreachable
