@@ -16,7 +16,7 @@ doubt.
 
 | shape | what it is | format |
 |---|---|---|
-| **finding** | demonstrated: you can name the input or state that makes it break | `file:line` as the heading, then three labelled lines — **what breaks**, **trigger**, **fix**. Ordered by consequence, at the top of the report |
+| **finding** | demonstrated: you can name the input or state that makes it break | `file:line` as the heading, the 1–5 line **verbatim quote** of the code it is about, then three labelled lines — **what breaks**, **trigger**, **fix**. Ordered by consequence, at the top of the report |
 | **suggestion** | correct as it stands, and worth changing anyway — naming, inline this, a stray literal, a dead import, an asset out of proportion | the change **and its reason, always** — for an obvious one the reason is a word (`typo`), for the rest a clause saying what it buys. Never a chain of reasoning: if justifying it runs to a paragraph, it is not a suggestion |
 | **unconfirmed** | a suspicion you could not demonstrate, **and only where confirming it would produce a finding** | one line, the claim plus **what would settle it**, so the reader is deciding whether to spend that, not whether to worry |
 
@@ -54,6 +54,8 @@ Write a **finding** when at least one holds and you can show the trigger:
    invariant nothing states, an ordering nothing enforces, a lifetime someone must remember to hold.
 3. **It breaks a rule this project actually has.** A convention with a home in the repo — a
    documented standard, a linter rule, a pattern every sibling file follows. Not one you prefer.
+
+**The quote is what makes the location survive.** A `file:line` on its own rots the moment anything above it moves, and it hands the reader nothing to match against — they take your word for where the thing is. The quote lets them, or any later pass over the same report, find the code again once the number stops pointing at it. Copy it exactly, only stripping a leading diff marker; for a finding about something *absent*, quote the nearest line the missing code should sit beside and say which side it goes on.
 
 **The three labels are fixed, and that is the point**: a missing slot shows up as an empty label
 instead of hiding inside a paragraph. Render them in the report's own language. **fix** carries the
@@ -116,6 +118,10 @@ Findings: <n> · suggestions: <n> · unconfirmed: <n> · suppressed: <n> (<class
 ## Findings
 
 **1. `<file>:<line>`**
+
+```
+<the 1–5 line verbatim quote>
+```
 
 - **what breaks**: …
 - **trigger**: …
