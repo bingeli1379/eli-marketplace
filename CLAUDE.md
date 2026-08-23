@@ -20,6 +20,7 @@ Contains:
 - **dev-workflow** — daily workflow skills: commit, release
 - **prompt-workflow** — the same for the prompt files that steer the AI: skill-authoring, review-skill, improve-skill (what they say and whether they hold), plus usage-audit (what is installed and whether it ever fires)
 - **issue-tracing** — on-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured incident report
+- **code-review-workflow** — criteria a running reviewer loads before it reviews: which changed files are worth reading how deeply (gate A, in `review-criteria`'s `SKILL.md`) and which findings are worth reporting (gate B, in its `gate-b.md`, read at the point the findings get written). Not a review tool of its own
 - **sdd** — spec-driven AI development workflow core (proposal, design, tasks → implement, validate, archive): workflow commands, orchestrator, architect, cross-cutting reviewers, universal skills
 - **sdd-\<stack\> packs** — optional stack packs that extend sdd with one stack's engineer agent + skills: `sdd-vue`, `sdd-dotnet`, `sdd-python`, `sdd-godot`, `sdd-electron`, `sdd-database`, `sdd-devops`. Each declares `dependencies: ["sdd"]`. See `plugins/sdd/CLAUDE.md` → *Plugin Topology* and `plugins/sdd/references/agent-routing.md`. **The packs ship no `CLAUDE.md` of their own** — core's is the family's, so read it before editing anything in a pack too, in particular *Routing a defect back to its source* when you are feeding a real-usage problem back in.
 
@@ -53,7 +54,11 @@ Create `plugins/<plugin-name>/skills/<skill-name>/SKILL.md` with YAML frontmatte
 
 4. **Only edit skills the repo authors; never rewrite an upstream-synced skill's body.** Before editing any skill body, check `plugins/sdd/skills/SOURCES.yaml`: only `repo: original` skills are ours to edit. A skill marked `repo: <url>` is an upstream mirror — `plugins/sdd/scripts/update-skills.sh` replaces its body on the next sync, so a body edit is lost. Its frontmatter `description` IS safe to change (sync preserves local frontmatter) for a trigger-wording tweak. To change behavior around a synced skill, edit what the repo owns (an agent, a workflow-core skill, an original skill) or its description. Agent `.md` files are always ours to edit.
 
-5. **Keep each plugin self-contained — no cross-plugin / cross-marketplace references.** A `${CLAUDE_PLUGIN_ROOT}` path must stay within the plugin's own directory; refer to another skill only by name (Skill tool) and only within the same plugin. A reference that crosses plugin boundaries breaks whenever the other plugin isn't installed and couples release cycles. (E.g. sdd's own `conventional-commits` stays independent of dev-workflow's `/commit`; prompt-workflow's `/improve-skill` hands committing back to you rather than naming `/commit`.)
+5. **Keep each plugin usable on its own — hard cross-plugin dependencies are banned, lazy ones are expected, a copy is the fallback.** The test is what happens when the other plugin is not installed.
+
+   - **Hard — banned.** A `${CLAUDE_PLUGIN_ROOT}` path or any bundled-file read outside the plugin's own directory, and any step that cannot finish without the other plugin. Both break the moment it is absent, and they couple release cycles. **Carve-out: a declared `dependencies` relationship makes the other plugin guaranteed-present**, so hard use is correct there — a frontmatter `skills:` entry by bare name included, which is how the `sdd-<stack>` packs reach core.
+   - **Lazy — encouraged, and the intended way to chain two plugins.** Loading another plugin's skill through the Skill tool, named, **guarded by an absence plan**: how the absence is detected, and what the run does without it — proceed with less, never stall, and never present the reduced result as the full one. `/sdd:review`'s project-knowledge directive is the in-repo shape.
+   - **Neither fits** — the behaviour is needed on every run and there is nothing to degrade to — then the plugin ships its own copy (sdd's `conventional-commits` rather than a dependency on dev-workflow's `/commit`), and that duplication is deliberate.
 
 ## Structure Validation
 
