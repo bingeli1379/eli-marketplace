@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.9.0] - 2026-08-23
+
+### Added
+- Code review now judges a change against the history of the lines it touches, not just the code as it stands. A commit that quietly undoes a guard, a workaround, or an ordering someone put there on purpose used to read as clean — the reviewer now reads the blame and the commit behind those lines and flags the reversal, naming which commit it undoes and what that commit was for. Rules written in the code's own comments count the same way: break one and it is a blocker, with the comment quoted back at you. It also no longer runs your build, typechecker, or test suite to reach a verdict — those belong to CI. This applies everywhere the code reviewer runs: the standalone review and the review pass inside `/apply` and `/quick`.
+
+### Fixed
+- The standalone `/review` was the one place its reviewers ran without the coverage rules, so each could report whatever caught its eye — and a review that skipped a whole dimension looked exactly like one that found nothing there. They now carry the same enumeration requirement the other workflows already imposed, one copy per agent so a review split across many files takes it into every part, and each section of the report opens with what that reviewer actually examined.
+
 ## [3.8.2] - 2026-08-22
 
 ### Fixed
