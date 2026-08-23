@@ -130,6 +130,8 @@ Include a "Checklist Verification" section in your report showing which items we
 
 If you genuinely cannot quote it — the finding is about something *absent* (a missing null check, an unimplemented requirement, a file that should exist) — quote the **nearest anchor point** instead (the line the missing code should precede or follow) and say so in one clause: `— 缺漏，錨點為應插入位置`. An absence still has a location.
 
+**A dispatch may supersede the layout below** — when it hands you project review criteria that define their own report shape, theirs is the one you produce and this template yields to it.
+
 ```markdown
 ## Code Review Result
 ### Pass — [what was done well]

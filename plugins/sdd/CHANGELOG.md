@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.10.0] - 2026-08-23
+
+### Added
+- Reviewers now pick up your project's own review criteria before they read anything. Where a `review-criteria` skill is installed, the code, security and QA reviewers load it and follow it — how deeply to read each changed file, what clears the bar for being written down, the shapes items take, and the counting lines that show what got skipped and suppressed. Where it and sdd's own rules overlap, yours win: `/review` stops rewriting a criteria-shaped report into its own template and keeps only the frame around it, which carries the cross-reviewer facts no single reviewer can see. Two things stay with the dispatcher either way — which files a reviewer owns, and merging duplicates across reviewers. With no such skill installed nothing changes, and the run says so in one line so the two cases stay apart.
+
+### Fixed
+- The consolidation pass no longer reports a reviewer's suggestions and unconfirmed items as "could not be located". Only findings carry a code quote, so only findings are anchor-checked; the other kinds pass through to their own sections, and the unlocatable count stops being inflated by items that were never lost.
+
 ## [3.9.0] - 2026-08-23
 
 ### Added
