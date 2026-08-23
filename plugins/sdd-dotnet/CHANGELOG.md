@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.1] - 2026-08-23
+
+### Changed
+- The .NET engineer now treats every concrete tool named by the always-loaded best-practices guide as a suggestion. That guide is mirrored from a general catalogue and had only been overridden on the question of comments, so its choice of test framework read as authoritative — and it disagrees with both this pack's own defaults and the projects it runs against. The test framework, assertion library and mocking library are taken from a test file already in the project, and sections covering stacks a project does not use are set aside the same way.
+
 ## [1.2.0] - 2026-08-05
 
 ### Changed
