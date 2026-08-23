@@ -4,6 +4,14 @@ All notable changes to this plugin are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-08-23
+
+### Added
+- Every finding now carries the code it is about, not just a line number. A `file:line` on its own stops pointing at the right place the moment anything above it moves, and it gives you nothing to check the claim against; the 1–5 line quote means you — or a later pass over the same report — can find the code again afterwards. For a finding about something missing, it quotes the nearest line the missing code should sit beside.
+
+### Fixed
+- The reading-depth counts now account for every changed file. They named what to tally but never had to add up, so a file could appear in none of them while the line still read as a complete accounting, with nothing in the report showing the shortfall. The four are now checked against the changed-file total before the line is written.
+
 ## [0.1.0] - 2026-08-23
 
 ### Added
