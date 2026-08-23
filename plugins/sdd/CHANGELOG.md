@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.10.2] - 2026-08-23
+
+### Changed
+- A fix no longer costs a full round of every reviewer regardless of what it was. What was found decides it, the way the rest of the workflow already worked: something serious earns a fresh look from everyone, a minor point ends the loop once fixed and checked. A re-review also goes back to the reviewer that raised it rather than starting a new one, so it keeps everything it had already read.
+
+### Fixed
+- A fix is no longer accepted on the agent's word — its diff is read first, because an agent reporting success over a passing test suite can still have closed only part of what was found.
+- Questions that can only be answered in another repository are settled before a reviewer is dispatched. A reviewer sees only the repository it was given, so those came back unanswered every round no matter how many rounds ran.
+- A reviewer is no longer handed a claim nobody checked. A wrong premise in its instructions spends its attention correcting the dispatcher instead of reading the change, and can steer the whole review.
+- A review that leaves out a finding's severity, or says nothing about a category it was asked to cover, goes back to the same reviewer instead of being accepted as it stands — a verdict with no severity cannot decide whether the work stops.
+
 ## [3.10.1] - 2026-08-23
 
 ### Fixed
