@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- The authoring rules gain a fourth reason to pull material into a `references/` file: **when its effect depends on arriving late in the run.** Every run needs it, but read at load it is buried under everything read since — so the extraction buys position, not laziness. A rule that has to win against the model's default at the moment the output gets written is the shape. It carries a cost the other three do not, and the rules now say so: the pointer has to be obeyed, so it belongs in the step that uses the material, written as an action rather than a note.
+
 ## [0.2.4] - 2026-08-22
 
 ### Changed
