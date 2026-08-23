@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.0.1] - 2026-08-23
+
+### Fixed
+- Releasing a package a second time no longer replays its whole history into the changelog. A first release keeps the version as it stands, so its release commit touches only the changelog — and the search for "when did we last release this" was looking for a change to the version file, found none, and concluded the package had never been released at all.
+
 ## [4.0.0] - 2026-08-22
 
 ### Removed

@@ -138,7 +138,11 @@ Findings: <n> · suggestions: <n> · unconfirmed: <n> · suppressed: <n> (<class
 
 The first line comes from gate A's step 4, the second from this gate. **A section whose count is
 zero is left out** — the counting line already said so, and an empty heading reads as an oversight.
-Headings and the three finding labels are rendered in the report's own language; the counting lines
+Headings and the three finding labels are rendered in the report's own language, settled in this
+order: the language whoever asked for the review states outright — a dispatching workflow names one
+in the prompt it hands you, and it names it there precisely because the prompt itself is not written
+in it; failing that, the language the request came in; failing both, the language of the repo's own
+comments. The counting lines
 keep their keys as written, so a reader can compare two runs.
 
 A suppression the reader cannot see is one they can never disagree with, and disagreement is the

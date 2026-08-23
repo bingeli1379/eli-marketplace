@@ -4,6 +4,12 @@ All notable changes to this plugin are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] - 2026-08-23
+
+### Fixed
+- Two reviews of the same change no longer disagree about what was read. A file the reviewer decided to skip and then looked at anyway had no defined place in the tally, so one run counted it as read and another left it under "skipped" while still reporting on it — the line contradicted itself and stopped adding up to the number of changed files. It now records what was actually done.
+- The report's headings and labels now come out in a predictable language: the one whoever asked for the review states outright, or failing that the language they asked in, or failing both the language of the code's own comments. Previously two runs of the same review could render them differently.
+
 ## [0.1.1] - 2026-08-23
 
 ### Added

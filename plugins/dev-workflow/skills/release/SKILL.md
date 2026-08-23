@@ -15,7 +15,7 @@ description: "Use when cutting a release, bumping a version, or generating a cha
 **Target package** (multi-package repos): if `$ARGUMENTS` names a package/plugin, that is the release target. Otherwise detect candidate packages (each directory carrying its own version manifest). If exactly one exists, use it. If several exist (e.g. a marketplace with multiple plugins), list them with their current versions and ask which to release — never release all of them at once unless explicitly told.
 
 **Sweep for other changed packages.** When the user asks to also release changed sub-packages ("release the changed ones too") — or after releasing the primary target — detect **every** package that has unreleased changes and release each as its OWN target (own version bump, own CHANGELOG, own `chore(<pkg>): release` commit — never fold several packages into one). Detect per package:
-- find its last release commit: `git log --oneline -1 --grep='release v' -- <package>/<version-file>`
+- find its last release commit: `git log --oneline -1 --grep='release v' -- <package>/` — filter by the package **directory**, not its version file: a first release keeps the version as it stands, so its release commit touches only the CHANGELOG and a version-file filter misses it entirely
 - list non-release commits touching it since: `git log <rel>..HEAD --oneline --no-merges -- <package>/`
 - a package with commits there has unreleased work; a package with none is up to date, skip it.
 Note a single change can land under a package via a commit whose scope tag names a *different* package (see step 3) — path-filtering by `-- <package>/` is what catches it, not the commit message.
@@ -41,7 +41,7 @@ Record: **current version**, **all version file paths** (every parallel manifest
 
 ### 2. Find the previous version baseline
 
-**First, settle whether there is a previous release at all** — the strategies below all assume one, and each will manufacture a false baseline when there is none. It is a first release when no commit ever changed the package's version file AND no tag names an earlier version AND `CHANGELOG.md` either does not exist or its newest heading already equals the version on disk. Then the range is the whole of the package's history, step 4 (determine version bump) keeps the version as it stands, and nothing is asked — there is no earlier version for the user to pick. **Check this before strategy 2 in particular**: a first release's newest changelog heading IS the current version, so that strategy would report a baseline equal to what is being released.
+**First, settle whether there is a previous release at all** — the strategies below all assume one, and each will manufacture a false baseline when there is none. It is a first release when no `release v` commit for the package exists AND no tag names an earlier version AND `CHANGELOG.md` either does not exist or its newest heading already equals the version on disk. **Look for that commit, not for a change to the version file** — a first release that kept the version as it stands leaves the manifest untouched, so every later release of that package would otherwise re-detect it as never released and replay its whole history into the changelog. Then the range is the whole of the package's history, step 4 (determine version bump) keeps the version as it stands, and nothing is asked — there is no earlier version for the user to pick. **Check this before strategy 2 in particular**: a first release's newest changelog heading IS the current version, so that strategy would report a baseline equal to what is being released.
 
 Otherwise use the following strategy to determine what changed since the last release:
 
@@ -54,7 +54,7 @@ Once the baseline commit is identified, scope every range query **to the target 
 - `git log <baseline>..HEAD --oneline -- <package>/` for the commit list
 - `git diff <baseline>..HEAD --stat -- <package>/` for the change summary
 
-Prefer a package-path baseline (`git log --oneline -1 --grep='release v' -- <package>/<version-file>`) over a bare version tag when the history contains merges — a tag can sit on a tangled topology where `tag..HEAD` sweeps in unrelated branches. Grep for `release v` (the `release vX.Y.Z` message pattern), NOT a bare `release` — a feature commit whose message merely mentions "release" (e.g. "harden the release flow") would otherwise be picked as the baseline.
+Prefer a package-path baseline (`git log --oneline -1 --grep='release v' -- <package>/`, filtered by the package directory for the reason step 1 gives) over a bare version tag when the history contains merges — a tag can sit on a tangled topology where `tag..HEAD` sweeps in unrelated branches. Grep for `release v` (the `release vX.Y.Z` message pattern), NOT a bare `release` — a feature commit whose message merely mentions "release" (e.g. "harden the release flow") would otherwise be picked as the baseline.
 
 ### 3. Categorize changes
 
