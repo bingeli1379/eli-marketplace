@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "code-review-workflow",
+  "displayName": "Code Review Workflow",
+  "description": "Criteria that make a code review quieter: what is worth reading, and what is worth reporting. Applied by whatever reviewer is already running.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-marketplace",
+  "license": "MIT",
+  "keywords": ["code-review", "review", "diff", "signal-to-noise", "criteria", "attention"]
+}
