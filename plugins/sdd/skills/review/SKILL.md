@@ -137,7 +137,9 @@ Two entry conditions, same read-only contract:
    > 要追問或直接修嗎?跟我說要看哪項或改哪幾項 — 追問我問回原 reviewer,修我派對應 specialist。
    ```
 
-   **Each lens section opens with that agent's coverage line** — the categories it enumerated, ahead of its findings, from the analytical-depth block it was dispatched with (5b). Drop it and the block's audit half is produced and then discarded here, which is the whole point of enforcing it: a reviewer that skipped a category reads exactly like one that found nothing in it.
+   **Each lens section opens with that agent's coverage line** — the categories it enumerated, ahead of everything else in the section, from the analytical-depth block it was dispatched with (5b); where the reviewer also loaded review criteria, that line sits above their layout rather than displacing any of it. Drop it and the block's audit half is produced and then discarded here, which is the whole point of enforcing it: a reviewer that skipped a category reads exactly like one that found nothing in it.
+
+   **A reviewer that loaded review criteria hands you a section those criteria already laid out — reproduce it, do not reshape it.** Its counting lines, its item shapes, and its section order come through verbatim; rewriting them into this template's prose is the reflex a consolidation step has, and it is the one move that undoes what loading those criteria bought. What stays yours is the frame *around* the lens sections — the header, the `Triage:` counts, `位置未確認`, `scope 外`, and the recommendations — because those are cross-reviewer facts no single reviewer's criteria can see. A lens whose reviewer found no such criteria says so in one line and follows this template as usual, so the two cases stay distinguishable.
 
    Omit the `位置未確認`, `scope 外`, and `已濾除` sections when they are empty; keep the `Triage:` counts either way so a run that dropped nothing is visibly distinct from a run that skipped the gate. An unsharded run can also produce `scope 外` findings — a single reviewer following an importer past the scope hits the same case.
 

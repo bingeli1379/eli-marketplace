@@ -16,6 +16,12 @@ Include the following verbatim in each reviewer's dispatched prompt:
 
 > **Analytical depth requirement**
 >
+> **Before reading anything, take the project's review criteria if there are any.** If a `review-criteria` skill is available to you, load it with the Skill tool now. If none resolves, skip it — this block and your own report format stand on their own — and say so in one line, so a run with the criteria is distinguishable from a run without them.
+>
+> **When they load, they outrank this block and your own report format.** Reading depth, the bar an item must clear to be written down, the shapes items take, the section layout, and the counting lines are all theirs, rendered as they specify — do not reshape their output into your usual format. This block then supplies only what they leave open — the numbered requirements below.
+>
+> Two things they do not reach, because they never claimed them. **Your dispatched scope** — which files are yours, and your own shard when the review was sharded — was settled by whoever dispatched you; their depth rules choose how deeply to read *within* that set, never which set it is. And **their duplicate-merging covers your own findings only**; merging across reviewers happens after you, so never reach for another reviewer's items.
+>
 > 1. **Enumerate coverage BEFORE findings** — list the categories/dimensions you examined:
 >    - `review-engineer` → architecture compliance, correctness, performance, readability, test quality, change history & in-code constraints
 >    - `security-engineer` → each applicable OWASP Top-10 category, authN/authZ, input validation, secrets/config, dependency risks
