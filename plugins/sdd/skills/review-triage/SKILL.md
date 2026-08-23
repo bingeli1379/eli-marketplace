@@ -25,6 +25,8 @@ Each finding must arrive with an **anchor**: the `file:line` plus the reviewer's
 the code it is about. Reviewer report formats require this. A finding that arrives with no anchor
 is not silently dropped — it goes to Step 1's `unanchored` bucket.
 
+**Gate only the items a reviewer reported as findings.** A reviewer running with project review criteria returns several item classes — a demonstrated finding, a suggestion that is correct as it stands, a suspicion it could not demonstrate. Only the first is a finding here. The others pass through to their own sections untouched and are not counted in `U`: a suggestion carries a location but no code quote by design, and an undemonstrated item has nothing to anchor by definition, so anchor-checking either one reports "could not be located" about something that was never lost.
+
 E2E / test-run findings (qa-engineer) **skip Steps 1–2 entirely**. Their evidence is a failing test
 run, which is stronger than a code quote; there is nothing to re-anchor and nothing a diff can
 disprove. They pass straight to Step 3.
@@ -117,6 +119,10 @@ Report the counts so the reader can see the gate ran:
 ```
 findings: N reported → M reported (dropped D 誤報, merged G groups, U unanchored)
 ```
+
+**`N` counts findings only** — the classes this gate does not touch are not in it. That is what keeps it checkable: `N` lines up with the reviewer's own findings count, so a reader can hold the two numbers against each other, which they cannot do once suggestions are folded in.
+
+**`N` is what the reviewers reported, not what they found.** A reviewer that loaded project review criteria may have suppressed items before reporting; those suppressions are counted in that reviewer's own section, in the vocabulary its criteria define, and this gate never sees them. Keep the two counts apart rather than folding them together — this gate's promise is only that *it* drops nothing on taste, and merging the numbers would quietly extend that promise over a filter it does not control.
 
 Then the report body, in this order: anchored in-scope findings by severity → `unanchored` section →
 `out-of-scope` section → collapsed `已濾除（誤報）` block. Omit any section that is empty; always keep
