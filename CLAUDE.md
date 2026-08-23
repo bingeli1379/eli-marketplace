@@ -20,6 +20,7 @@ Contains:
 - **dev-workflow** — daily workflow skills: commit, release
 - **prompt-workflow** — the same for the prompt files that steer the AI: skill-authoring, review-skill, improve-skill (what they say and whether they hold), plus usage-audit (what is installed and whether it ever fires)
 - **issue-tracing** — on-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured incident report
+- **code-review-workflow** — criteria a running reviewer loads before it reviews: which changed files are worth reading how deeply (gate A, in `review-criteria`'s `SKILL.md`) and which findings are worth reporting (gate B, in its `gate-b.md`, read at the point the findings get written). Not a review tool of its own
 - **sdd** — spec-driven AI development workflow core (proposal, design, tasks → implement, validate, archive): workflow commands, orchestrator, architect, cross-cutting reviewers, universal skills
 - **sdd-\<stack\> packs** — optional stack packs that extend sdd with one stack's engineer agent + skills: `sdd-vue`, `sdd-dotnet`, `sdd-python`, `sdd-godot`, `sdd-electron`, `sdd-database`, `sdd-devops`. Each declares `dependencies: ["sdd"]`. See `plugins/sdd/CLAUDE.md` → *Plugin Topology* and `plugins/sdd/references/agent-routing.md`. **The packs ship no `CLAUDE.md` of their own** — core's is the family's, so read it before editing anything in a pack too, in particular *Routing a defect back to its source* when you are feeding a real-usage problem back in.
 
