@@ -41,6 +41,18 @@
       "category": "Developer Tools"
     },
     {
+      "name": "code-review-workflow",
+      "source": {
+        "source": "local",
+        "path": "./plugins/code-review-workflow"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    },
+    {
       "name": "sdd",
       "source": {
         "source": "local",

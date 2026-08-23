@@ -22,6 +22,11 @@
       "description": "On-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured Root Cause / Impact / How to Resolve / Unknowns report"
     },
     {
+      "name": "code-review-workflow",
+      "source": "./plugins/code-review-workflow",
+      "description": "Criteria that make a code review quieter: what is worth reading, and what is worth reporting. Applied by whatever reviewer is already running."
+    },
+    {
       "name": "sdd",
       "source": "./plugins/sdd",
       "description": "Spec-driven AI development workflow core: workflow commands, orchestrator, architect, cross-cutting reviewers, and universal skills. Stack specialists ship as optional sdd-* packs."

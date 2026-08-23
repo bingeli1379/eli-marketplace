@@ -21,7 +21,7 @@ Two entry conditions, same read-only contract:
 
 | lens | agent | reviews | not |
 |---|---|---|---|
-| `quality` | review-engineer | architecture compliance, code-level correctness, maintainability, patterns, over-engineering (reinvented stdlib / dead abstractions / needless deps — what to delete) | does not run tests to verify behaviour |
+| `quality` | review-engineer | architecture compliance, code-level correctness, maintainability, patterns, over-engineering (reinvented stdlib / dead abstractions / needless deps — what to delete), change history & in-code constraints (does the change undo a deliberate past commit, or break a rule a comment states) | does not run tests, builds, or typecheckers to verify behaviour |
 | `security` | security-engineer | vulnerabilities, OWASP, injection, authn/authz, secrets/config, dependency risks | does not judge performance/architecture |
 | `performance` | performance-engineer | FE (CWV/bundle), BE (API/SP/query), data-scale capacity — **static, report-only** | does not run load tests/profilers; SP-internal tuning → DBA |
 | `e2e` | qa-engineer | runs Playwright E2E against a spec's WHEN/THEN or supplied acceptance criteria | needs a runnable app + criteria; not for a bare SP/query |
@@ -98,6 +98,7 @@ Two entry conditions, same read-only contract:
    - The scope it owns — the whole resolved target when unsharded (file list, or `git diff BASE_SHA..HEAD_SHA`, or definition+callers); its **own shard** when sharded, plus the full manifest and the reporting fence from 5a
    - `## Project Context` (config.yaml verbatim) when present + the project-knowledge directive
    - **Hard read-only constraint**: *"Review and report ONLY. Do NOT edit any file, do NOT create commits, do NOT dispatch other agents. Return findings as a structured report."*
+   - **Analytical depth — `review-engineer` / `security-engineer` / `qa-engineer` only**: read `${CLAUDE_PLUGIN_ROOT}/references/reviewer-depth.md` and include its block verbatim in each of those dispatches. **One copy per agent, so a sharded run carries it into every shard** — each agent then enumerates its coverage over its own shard, which is what stops a shard reviewer silently narrowing to whatever caught its eye. That file also names who must NOT receive it and why; `performance-engineer` is excluded there and gets its own mandate in the `performance-engineer` bullet below instead.
    - performance-engineer: capacity analysis is **static**; output is a per-path verdict (SAFE / RISKY / WILL NOT SCALE). **MANDATORY for any backend/data/batch code in scope — the primary OOM defense: exhaustively enumerate every point where an external store's data is loaded into memory and give each a boundedness verdict; do NOT report only the slow-looking ones. When a path's size is unknown, emit `NEEDS:` for the row count instead of guessing a threshold.**
 
    **Keep them alive.** Do NOT treat reviewers as one-shot. After they report, they stay backgrounded — follow-up questions and re-reviews go back to the **same** agent via **SendMessage** (its context, loaded skills, and the files it already read are intact), which avoids re-paying agent startup. Only spawn a fresh reviewer if its context was lost or the target changed substantially.
@@ -135,6 +136,8 @@ Two entry conditions, same read-only contract:
 
    > 要追問或直接修嗎?跟我說要看哪項或改哪幾項 — 追問我問回原 reviewer,修我派對應 specialist。
    ```
+
+   **Each lens section opens with that agent's coverage line** — the categories it enumerated, ahead of its findings, from the analytical-depth block it was dispatched with (5b). Drop it and the block's audit half is produced and then discarded here, which is the whole point of enforcing it: a reviewer that skipped a category reads exactly like one that found nothing in it.
 
    Omit the `位置未確認`, `scope 外`, and `已濾除` sections when they are empty; keep the `Triage:` counts either way so a run that dropped nothing is visibly distinct from a run that skipped the gate. An unsharded run can also produce `scope 外` findings — a single reviewer following an importer past the scope hits the same case.
 
