@@ -4,6 +4,7 @@
 
 ### Added
 - The authoring rules gain a fourth reason to pull material into a `references/` file: **when its effect depends on arriving late in the run.** Every run needs it, but read at load it is buried under everything read since — so the extraction buys position, not laziness. A rule that has to win against the model's default at the moment the output gets written is the shape. It carries a cost the other three do not, and the rules now say so: the pointer has to be obeyed, so it belongs in the step that uses the material, written as an action rather than a note.
+- `/review-skill` gains two defect classes and a stronger closing sweep, aimed at the same problem: a run that finds one more thing every time you re-run it. **Class 13** catches an output slot whose legal values are defined nowhere — the report reads fine on its own and only fails when you put two runs side by side. **Class 14** catches a precedence order that resolves to an assignment the winning target cannot carry, which is invisible to every check that looks at one rule at a time. And step 7's blast-radius sweep now re-runs both against the text the fixes just wrote, because a fix is exactly what creates them — that is the defect shape that used to survive until the next round.
 
 ## [0.2.4] - 2026-08-22
 
