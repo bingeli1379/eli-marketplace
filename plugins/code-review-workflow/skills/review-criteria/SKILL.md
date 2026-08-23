@@ -152,6 +152,9 @@ report is drafted means editing a list gate B would not have produced.
 - **Not a verdict.** A skipped file is unread, never "reviewed and fine". Never report it as
   checked, and never let a summary's coverage claim include it.
 - **Not binding once you have seen something.** Anything odd noticed while skimming a `diff` file is
-  escalated on the spot and reviewed; the depth was a budget, not a permission.
+  escalated on the spot and reviewed; the depth was a budget, not a permission. **The counts then
+  record what you did, not what you planned**: a file you assigned `skip` and then read lands in the
+  depth you actually read it at, and its skip class comes off with it. Left under `skipped` while you
+  report on it, the tally contradicts itself and stops matching the changed-file total.
 - **Not a reason to report less.** Depth governs reading only; what is worth reporting is step 5's
   gate B, and a file read at `diff` depth reports whatever it showed.
