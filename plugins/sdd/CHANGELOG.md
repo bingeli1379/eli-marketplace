@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.10.1] - 2026-08-23
+
+### Fixed
+- Reviewers now report in Traditional Chinese, with code, identifiers and quoted snippets left as they are. The dispatch never said which language to use, so a reviewer followed the English of the prompt it was handed instead of the language the rest of the workflow speaks.
+
 ## [3.10.0] - 2026-08-23
 
 ### Added
