@@ -19,6 +19,8 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode. In **multi-repo** mode: the scan covers every child repo the task touches; per-repo grounding is read per touched repo (Step 2); each dispatched agent is bound to one child repo and does its work + commits inside that repo (`git -C <repo> ...`); cross-repo work is ordered contract-first.
 
+   **Stamp the run's start with `date` before anything else.** Step 8's `Time` table measures total from here and its first row from the Step 5 boundary; neither is recoverable once the run is under way (Step 6's stamping rule).
+
 1. **Get the task description**
 
    If no description is provided, use **AskUserQuestion** (open-ended) to ask:
@@ -185,6 +187,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - Give each agent a descriptive `name`
    - **Writes single-threaded**: dispatch implementation/fix agents **one at a time** in dependency order, each committing before the next starts. Only read-only reviewers (Phase 2) are dispatched simultaneously. (Multi-repo exception: agents in *different* child repos may run concurrently.)
    - You will be **automatically notified** when each background agent completes — do NOT poll
+   - **Stamp each of step 8's `Time` rows at its boundary with `date`, and each dispatched agent's spawn and return.** Step 8's final report prints the breakdown. The numbers are only cheap at the boundary: a returning agent's report carries no elapsed time, and `ListAgents` gives an age relative to now, so once a later round starts an earlier one's cost is no longer recoverable.
    - **Handling a NEEDS return**: if an agent's report contains a `NEEDS:` line, treat it as *paused awaiting an external fact*, not done. Resolve it with whatever tools/knowledge you (the orchestrator) have, then **resume the SAME agent with `SendMessage`** (context intact — do NOT re-dispatch). Because agents run in the background you can service several concurrently. `CONFLICT:` → resolve with the user; `BLOCKED:` → re-scope or re-dispatch with corrected context. See `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns* for the vocabulary.
    - **Resolve cross-repo questions BEFORE dispatching a reviewer.** A reviewer's scope is the repo it was bound to, so a question that can only be settled in another repo comes back unresolved every round no matter how many rounds run — who else consumes this shared library, whether any caller constructs it directly instead of through the sanctioned entry point, whether a contract is relied on elsewhere. Answer those yourself and hand the answer over as context. Discovering after two rounds that a grep would have settled it costs both rounds.
    - **A reviewer's prompt carries only what you verified; everything else is asked, not asserted.** A premise stated as fact and later found wrong spends that reviewer's coverage correcting you instead of reading the diff, and it can steer the whole review — observed: a dispatch asserting the change removed a network call from a failure path, when that path had always been in-memory. State what you checked, and for what you did not, ask the reviewer to establish it.
@@ -264,6 +267,15 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    ### E2E (if applicable)
    [PASSED / FAILED / SKIPPED]
+
+   ### Time
+   | phase | elapsed |
+   |---|---|
+   | **total** | <n>m |
+   | analysis + scan | <n>m |
+   | implementation | <n>m |
+   | Phase 2 review (<k> dispatches) | <n>m |
+   | fix + re-review (<r> rounds) | <n>m |
 
    ### Notes
    [issues encountered, decisions made, follow-up suggestions]
