@@ -3,7 +3,7 @@
   "name": "sdd",
   "displayName": "SDD Core",
   "description": "Spec-driven AI development workflow core: workflow commands, orchestrator, architect, cross-cutting reviewers, and universal skills. Stack specialists ship as optional sdd-* packs.",
-  "version": "3.10.2",
+  "version": "3.11.0",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"

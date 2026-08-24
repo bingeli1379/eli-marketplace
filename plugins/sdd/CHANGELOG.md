@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.11.0] - 2026-08-24
+
+### Added
+- `/sdd:quick` now finishes with a time breakdown — the total, plus how long the scan, the implementation, and the review rounds each took — so a run that felt slow shows you where the time actually went.
+
+### Changed
+- Engineers no longer add validation to values that cannot vary while the program runs. Where a check belongs now follows where the value comes from: something written into the code gets none, configuration is checked once at startup, and only input arriving from outside the trust boundary is validated. Reviewers follow the same rule, so a missing check on a non-boundary value is no longer raised as a finding and no longer costs a fix round adding dead code.
+
+### Fixed
+- `/sdd:quick` brings in a fresh set of reviewers for each round rather than going back to the previous ones. A reviewer still holding its own earlier verdict leans toward confirming its finding closed instead of re-opening what it had already called clean.
+
 ## [3.10.2] - 2026-08-23
 
 ### Changed
