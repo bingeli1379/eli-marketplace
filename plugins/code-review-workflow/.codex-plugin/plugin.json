@@ -1,7 +1,7 @@
 {
   "name": "code-review-workflow",
   "description": "Criteria that make a code review quieter: what is worth reading, and what is worth reporting. Applied by whatever reviewer is already running.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
