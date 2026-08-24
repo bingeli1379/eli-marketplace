@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.4] - 2026-08-24
+
+### Changed
+- Shorter name in the Codex plugin list — "SDD Godot" instead of "SDD — Godot Pack", matching the rest of the SDD family.
+
 ## [1.0.3] - 2026-08-04
 
 ### Changed
