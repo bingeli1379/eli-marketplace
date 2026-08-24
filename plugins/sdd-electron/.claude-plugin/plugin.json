@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "sdd-electron",
   "displayName": "SDD Electron",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "SDD stack pack: Electron desktop/game engineer and skills",
   "author": {
     "name": "Eli",
