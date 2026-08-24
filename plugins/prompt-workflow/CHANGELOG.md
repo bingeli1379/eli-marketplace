@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.6] - 2026-08-24
+
+### Added
+- A skill description that has grown past its budget is now shortened during the audit instead of only being pointed out. Its budget and the way to meet it are both written down already, so there was nothing left for you to weigh.
+
+### Fixed
+- Shortening a description can no longer quietly cost it the wordings that reach the skill. The audit now checks the situations that should match against both the old and new text, reports the list it checked, and puts back anything that stopped matching.
+
 ## [0.2.5] - 2026-08-23
 
 ### Added
