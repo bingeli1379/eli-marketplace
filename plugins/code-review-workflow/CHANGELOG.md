@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.3] - 2026-08-24
+
+### Fixed
+- Asking to read or explain a change no longer pulls in the review criteria. A request like "看一下我最近的 commit" matched the same wording as a review request, so wanting to understand a diff came back as a full review pass. The criteria now load only when a review was actually asked for.
+
 All notable changes to this plugin are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
