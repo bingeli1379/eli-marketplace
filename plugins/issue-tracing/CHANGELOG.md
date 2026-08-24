@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.12.2] - 2026-08-24
+
+### Fixed
+- Slow-request numbers now cover the whole time window instead of one arbitrary slice of it. The affected requests are the slow tail, so a sample that missed them reported the window's ordinary speed as the incident's — one run put a 390ms median in a ticket while requests in the very same log ran to 4.4 seconds.
+
 ## [1.12.1] - 2026-08-23
 
 ### Fixed

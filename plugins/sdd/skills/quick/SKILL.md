@@ -19,6 +19,8 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode. In **multi-repo** mode: the scan covers every child repo the task touches; per-repo grounding is read per touched repo (Step 2); each dispatched agent is bound to one child repo and does its work + commits inside that repo (`git -C <repo> ...`); cross-repo work is ordered contract-first.
 
+   **Stamp the run's start with `date` before anything else.** Step 8's `Time` table measures total from here and its first row from the Step 5 boundary; neither is recoverable once the run is under way (Step 6's stamping rule).
+
 1. **Get the task description**
 
    If no description is provided, use **AskUserQuestion** (open-ended) to ask:
@@ -117,6 +119,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    ### Agents to Dispatch
    - <agent-1>: <task count> tasks
+   - Phase 2 review: <k> reviewers in parallel; any `blocker` / `major` / FAILED finding costs one more full round of all <k>, capped at 3 rounds total (the severity triage below)
 
    Dispatching now.                     ← omit while questions are outstanding
    ```
@@ -184,6 +187,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - Give each agent a descriptive `name`
    - **Writes single-threaded**: dispatch implementation/fix agents **one at a time** in dependency order, each committing before the next starts. Only read-only reviewers (Phase 2) are dispatched simultaneously. (Multi-repo exception: agents in *different* child repos may run concurrently.)
    - You will be **automatically notified** when each background agent completes — do NOT poll
+   - **Stamp each of step 8's `Time` rows at its boundary with `date`, and each dispatched agent's spawn and return.** Step 8's final report prints the breakdown. The numbers are only cheap at the boundary: a returning agent's report carries no elapsed time, and `ListAgents` gives an age relative to now, so once a later round starts an earlier one's cost is no longer recoverable.
    - **Handling a NEEDS return**: if an agent's report contains a `NEEDS:` line, treat it as *paused awaiting an external fact*, not done. Resolve it with whatever tools/knowledge you (the orchestrator) have, then **resume the SAME agent with `SendMessage`** (context intact — do NOT re-dispatch). Because agents run in the background you can service several concurrently. `CONFLICT:` → resolve with the user; `BLOCKED:` → re-scope or re-dispatch with corrected context. See `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns* for the vocabulary.
    - **Resolve cross-repo questions BEFORE dispatching a reviewer.** A reviewer's scope is the repo it was bound to, so a question that can only be settled in another repo comes back unresolved every round no matter how many rounds run — who else consumes this shared library, whether any caller constructs it directly instead of through the sanctioned entry point, whether a contract is relied on elsewhere. Answer those yourself and hand the answer over as context. Discovering after two rounds that a grep would have settled it costs both rounds.
    - **A reviewer's prompt carries only what you verified; everything else is asked, not asserted.** A premise stated as fact and later found wrong spends that reviewer's coverage correcting you instead of reading the diff, and it can steer the whole review — observed: a dispatch asserting the change removed a network call from a failure path, when that path had always been in-memory. State what you checked, and for what you did not, ask the reviewer to establish it.
@@ -210,7 +214,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **Conditional Phase 2 reviewer — performance-engineer (all complexity levels):** if the diff touches a **performance-sensitive surface** (new/changed API endpoint, stored-procedure / SQL / Dapper / EF query, data-access/repository path, batch or data-pipeline job, list/report endpoint), add **performance-engineer** to the Phase 2 parallel dispatch. It does **static data-scale capacity analysis only** (no load tests/profilers; no code edits) and reports a per-path verdict (SAFE / RISKY / WILL NOT SCALE); findings are advisory recommendations routed to the owning agent. Skip for purely frontend-presentational, config, docs, or test-only diffs.
 
-   If review, security, or QA fails: collect all issues, group by responsible agent, dispatch **fix agents sequentially** (one write agent at a time), and **read each fix's diff yourself to confirm that specific defect is gone before accepting it** — an agent reporting `DONE` over a green suite can still have closed only part of a multi-part finding, and nothing else in the pipeline sees that. Then **triage by severity, exactly as `/apply` and `agents/orchestrator.md` → *Fix → Re-verify Loop* do**: a `blocker` / `major`, a FAILED QA run, or a `WILL NOT SCALE` capacity verdict earns a **full fresh review** (every reviewer again, simultaneously, read-only, re-examining ALL changed files — fixes can introduce new bugs), while findings that are only `minor` end the loop once fixed and self-verified, recorded as follow-ups rather than spending another round. Those are the only severities reviewers here report — `reviewer-depth.md` defines `blocker` / `major` / `minor` and nothing else. **Send a re-review to the SAME backgrounded reviewer with `SendMessage`, not a fresh spawn** — its context and the files it already read are intact, so the round costs a fraction of a new dispatch; spawn fresh only when that context was lost or the target changed substantially. Max 3 rounds; only pause and report to user if a blocker/major still stands after them.
+   If review, security, or QA fails: collect all issues, group by responsible agent, dispatch **fix agents sequentially** (one write agent at a time), and **read each fix's diff yourself to confirm that specific defect is gone before accepting it** — an agent reporting `DONE` over a green suite can still have closed only part of a multi-part finding, and nothing else in the pipeline sees that. Then **triage by severity, exactly as `/apply` and `agents/orchestrator.md` → *Fix → Re-verify Loop* do**: a `blocker` / `major`, a FAILED QA run, or a `WILL NOT SCALE` capacity verdict earns a **full fresh review** — every reviewer **spawned again**, simultaneously, read-only, re-examining ALL changed files. Fresh is the point: fixes can introduce new bugs, and a reviewer still holding its own earlier verdict is predisposed to confirm its finding closed rather than to re-open what it already called clean, and still carries whatever framing its first dispatch gave it, a wrong premise included. Findings that are only `minor` end the loop once fixed and self-verified, recorded as follow-ups rather than spending another round. Those are the only severities reviewers here report — `reviewer-depth.md` defines `blocker` / `major` / `minor` and nothing else. **Reuse a backgrounded reviewer with `SendMessage` only where the code did not change** — a follow-up question about what it already read, or confirming one local fix closed the single finding it raised. That saves the spawn's skill re-load, and it is `/review`'s own rule read with its escape clause intact: a target that changed substantially gets a fresh reviewer, and in this loop the target always changed. Max 3 rounds; only pause and report to user if a blocker/major still stands after them.
 
    **Commit consolidation (per group, single-writer):**
 
@@ -264,6 +268,15 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    ### E2E (if applicable)
    [PASSED / FAILED / SKIPPED]
 
+   ### Time
+   | phase | elapsed |
+   |---|---|
+   | **total** | <n>m |
+   | analysis + scan | <n>m |
+   | implementation | <n>m |
+   | Phase 2 review (<k> dispatches) | <n>m |
+   | fix + re-review (<r> rounds) | <n>m |
+
    ### Notes
    [issues encountered, decisions made, follow-up suggestions]
    ```
@@ -278,7 +291,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 - `config.yaml` (when present) MUST be forwarded verbatim into every worker agent's prompt as `## Project Context` — the cwd repo's in single-repo mode, and in multi-repo the config of the child repo that agent is bound to (there is no umbrella config). `hard_rules` are binding. The project's own docs are never read or forwarded — config.yaml is the only project context. Skip the section silently if config.yaml is missing.
 - **Execute first, report after** — show the plan and dispatch immediately, do NOT wait for user confirmation
 - **Code review + security review are MANDATORY** for all complexity levels — never skip them
-- If review/QA fails → auto-dispatch fix → confirm each fix's diff yourself → **triage by severity** (`blocker`/`major`, FAILED QA, or a `WILL NOT SCALE` verdict earns a full fresh review round; `minor` ends the loop once fixed and self-verified) → re-reviews go back to the **same** backgrounded reviewer via `SendMessage` → max 3 rounds → only then pause
+- If review/QA fails → auto-dispatch fix → confirm each fix's diff yourself → **triage by severity** (`blocker`/`major`, FAILED QA, or a `WILL NOT SCALE` verdict earns a full fresh review round — reviewers **re-spawned**, not re-prompted, since a fix changed the target — reuse stays only for a same-code follow-up; `minor` ends the loop once fixed and self-verified) → max 3 rounds → only then pause
 - **One commit per task during implementation** — atomic commits with task-number prefix. **Squashed into one clean group commit (no task numbers) after Phase 1 completes**, matching `/apply` final commit style.
 - Work on the current branch — do NOT create or switch branches
 - Keep the plan concise — this is quick mode, not a full spec

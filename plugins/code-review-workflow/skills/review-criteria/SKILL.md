@@ -1,6 +1,6 @@
 ---
 name: review-criteria
-description: Load BEFORE reading a diff or reviewing code changes — before reviewing a PR, MR, commit, staged changes, or a patch, however small the ask. 看一下這個 PR, review 這個 diff, 幫我看這包改動, 這段有問題嗎, review this, check my changes, look over this patch. Criteria the running reviewer applies to its own reading; NOT a review tool, NOT a lint or style guide, NOT for auditing prompt or skill files.
+description: Load BEFORE reviewing code changes — a PR, MR, commit, staged changes, or a patch, however small the ask. review this, code review, check my changes, review 這個 diff, 幫我 review 這包, 幫我 code review, 這段有問題嗎, 檢查一下這包改動. Criteria the running reviewer applies to its own reading; NOT a review tool, NOT a lint or style guide, NOT for auditing prompt or skill files, NOT for reading, explaining, or summarizing a diff or commit when no review was asked for — 看一下我最近的 commit, 這包在做什麼, explain this change.
 user-invocable: false
 ---
 
