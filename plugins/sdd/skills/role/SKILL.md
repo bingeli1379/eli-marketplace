@@ -12,7 +12,7 @@ argument-hint: "<role> (architect | dotnet | vue | python | electron | godot | d
 Become one sdd specialist agent as an **interactive persona**. The main conversation adopts that agent's role definition and you talk to it directly, with full back-and-forth.
 
 This is distinct from the other entry points:
-- **Agent-tool dispatch / `/quick` / `/apply`** spawn the agent as a background subagent on ITS configured `model`/`effort` (tuned per agent for autonomous dispatch — ranges haiku→opus), fire-and-return.
+- **Agent-tool dispatch / `/quick` / `/apply`** spawn the agent as a background subagent on ITS configured `model`/`effort` (tuned per agent for autonomous dispatch — ranges sonnet→opus), fire-and-return.
 - **`/sdd:role`** makes the **main loop** *become* the agent — fully interactive, and on the **current session's model and effort** (not the agent's frontmatter). You get the specialist persona at full session quality.
 
 ## Roles

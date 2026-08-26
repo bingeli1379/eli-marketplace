@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.11.1] - 2026-08-27
+
+### Changed
+- A re-review after fixes now reads the fix range and what depends on it, instead of cold-reading every changed file again — and a round that came back with only minor findings ends there rather than spending three more reviewers on it. Review rounds finish sooner and cost less.
+- Every reviewer now rates findings `blocker` / `major` / `minor`. Security reviews used to report Critical/High/Medium/Low, which the fix loop could not act on: a finding rated "High" matched none of its branches, so it could pass through without buying the extra review round it deserved. Capacity checks keep their own SAFE / RISKY / WILL NOT SCALE verdicts, which are a different thing from severity.
+- Reviewers now state which range they covered, and give one line per clean category instead of a paragraph each — a review of part of a change can no longer read as a review of all of it.
+- Phase 1 writes a single checkbox commit after the last group instead of one per group, so feature commits are no longer interleaved with bookkeeping ones.
+- Documentation is written on a stronger model tier. The previous pairing declared an effort level that its model does not support, so the setting never applied.
+
+### Fixed
+- The fix loop could reach a state it would neither exit nor pause: three rounds ending with a newly unbounded data path still standing, and no blocker or major alongside it, left no defined path forward. Every condition that keeps the loop open now also stops it.
+- Reviewing the same code no longer re-reads the same diff once per finding — one read per fix now covers all of them, with the same checks applied.
+
 ## [3.11.0] - 2026-08-24
 
 ### Added
