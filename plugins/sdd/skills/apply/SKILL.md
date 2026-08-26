@@ -180,7 +180,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
      1. Stage all changed files with `git add` (specify files by name)
      2. Run all lint commands listed above (if any) to fix formatting — stage any changes they produce
      3. Commit code + lint fixes following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`). **Read the skill for type list, description rules, and format.** The only sdd-specific addition: prefix the description with the task number — `<type>[optional scope]: <task-number> <description>` (e.g., `feat: 1.1 add UserSearch entity`, `test: 2.3 add unit tests for search service`).
-   - Do NOT modify `tasks.md` — the orchestrator handles checkbox updates after merging your work.
+   - Do NOT modify `tasks.md` — the orchestrator handles checkbox updates after squashing your work.
    - Do NOT batch multiple tasks into one commit — one commit per task, no exceptions
    - After the commit, report back: "DONE: <task-number> <task-description>"
    - **Completion contract** — binding, per *Completion Contract — do NOT end your turn early* in `agent-guidelines` (already in your context): not finished until every assigned task is committed with a `DONE:` line each; the only valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:` (below).
