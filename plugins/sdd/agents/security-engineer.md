@@ -93,6 +93,7 @@ Severity answers *how bad if true*. It is independent of how well demonstrated a
 
 ````markdown
 ## Security Review Result
+### Scope — [the range or file set you covered: `git diff A..B`, or the file list; on a retry round this is the round's range, not the whole change]
 ### Exposure — [who can reach this surface: anonymous public / authenticated end user / trusted internal operator; how it was determined, or that it could not be]
 ### Blockers
 - [file:line] [blocker] Issue — Impact: [attacker scenario] — Fix: [remediation]
