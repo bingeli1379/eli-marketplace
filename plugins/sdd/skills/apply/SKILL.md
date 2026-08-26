@@ -214,7 +214,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
    **Zero-misses principle: orchestrator ALWAYS dispatches every phase — the agent decides scope, not you.** Do NOT skip any phase based on your own judgement (e.g., "this is just a migration", "changes are mechanical", "only config files changed"). If there is genuinely nothing to do, the dispatched agent will report that. The ONLY way to skip a phase is if `config.yaml` explicitly provides a skip option for it.
 
-   - **Phase 1 — Sequential single-writer development**: Dispatch groups one at a time in dependency order, each agent committing on the current branch. After each group completes, squash its per-task commits into a single clean commit in place (`git reset --soft <prev-group-sha>`, where `<prev-group-sha>` is the authoritative `GROUP_BASE` = HEAD *after* the previous group's squash and its `tasks.md` commit; + re-commit). The next group's agent reads the committed result. See `orchestrator.md` Phase 1 (steps a–d) for full details.
+   - **Phase 1 — Sequential single-writer development**: Dispatch groups one at a time in dependency order, each agent committing on the current branch. After each group completes, squash its per-task commits into a single clean commit in place (`git reset --soft <prev-group-sha>`, where `<prev-group-sha>` is the authoritative `GROUP_BASE` = HEAD *after* the previous group's squash; + re-commit). Each group's `tasks.md` checkboxes are written to disk as it finishes and committed in a single commit once no pending groups remain, so no metadata commit sits between groups. The next group's agent reads the committed result. See `orchestrator.md` Phase 1 (steps a–e) for full details.
    - **Phase 2 — Review + Security + QA (parallel read-only quality gate)**: After all Phase 1 groups are committed, dispatch review-engineer + security-engineer + qa-engineer **simultaneously in one message** (read-only review fans out safely). This runs code review, security review, and E2E tests in parallel. A change is NOT complete until all three pass. Even if no E2E specs exist, dispatch qa-engineer — let it confirm there is nothing to verify.
      - **Reviewer context (MANDATORY)**: each reviewer's prompt MUST include the same grounding the implementers got — the full `feature-spec/config.yaml` (so `hard_rules` can be checked line by line) and `design.md` (so the **Reference implementation** named per group is the analog the conformance review diffs against). In multi-repo mode, pass the config(s) of the repos under review. Without this, review-engineer's Convention Conformance and hard_rules checks have nothing to anchor to.
      - **Cross-repo QA (multi-repo)**: when the change spans repos, tell qa-engineer it is a multi-repo change and pass `design.md`'s cross-repo integration points plus the relevant files from both the provider and consumer repos, so its Step 0 contract check can diff the seams.
@@ -259,11 +259,9 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - **Verify commit history**: `git log --oneline <base-sha>..HEAD` — each commit should be a clean, single-concern conventional commit with no task numbers. The expected pattern:
      ```
      feat(search): add search API and service layer       ← group 1
-     chore: mark group 1 tasks complete
      feat(search): add search page and composables        ← group 2
-     chore: mark group 2 tasks complete
      test(search): add search E2E acceptance tests        ← group 3
-     chore: mark group 3 tasks complete
+     chore: mark phase 1 tasks complete                   ← one checkbox commit, after the last group
      fix: address review, security, and QA findings        ← phase 2 (if any)
      docs: update API documentation for user search       ← phase 3 (if any)
      ```
@@ -310,7 +308,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 - `config.yaml` (when present) MUST be forwarded verbatim into every worker agent's prompt as the `## Project Context` section — the cwd repo's in single-repo mode, and in multi-repo the config of the child repo that agent is bound to (there is no umbrella config). `hard_rules` from config.yaml are non-negotiable. The project's own docs are never read or forwarded — config.yaml is the only project context. Skip the section silently if config.yaml is missing — never fabricate placeholder content.
 - Only dispatch agents for PENDING tasks (skip completed `- [x]` tasks)
 - Agents do NOT modify `tasks.md` — the orchestrator updates checkboxes after squashing each group
-- **Safe tasks.md commits**: When committing tasks.md checkbox updates, ALWAYS: (1) `git status --short` to check for unexpected staged files, (2) stage ONLY tasks.md by exact path (`git add <path>`), (3) NEVER `git add .` for metadata-only commits. Lint-staged or stale index entries can silently stage unrelated files — a `git status` check before commit prevents catastrophic reverts.
+- **Checkbox updates: write per group, commit once.** Each group's checkboxes are written to disk right after its squash (that on-disk file is what a resume reads), and **one** `chore: mark phase 1 tasks complete` commit covers all of them after the last group — not one metadata commit per group. That commit still runs the full safety sequence — `git status --short` first, stash anything unexpectedly staged, stage ONLY tasks.md by exact path (`git add <path>`), **NEVER `git add .`** — because a commit takes the whole index and the last group does not always end on our own squash commit. What changed is that the sequence runs **once** instead of once per group; it was not dropped.
 - If `lint_commands` are configured in `config.yaml`, agents MUST run them before every commit — no exceptions. **Exception**: if the project matches a pre-lint skip rule in `company-conventions.md`, lint commands are not required.
 - If a task genuinely cannot be implemented (missing dependency, unclear spec), skip it and flag it in the report — do NOT block the entire pipeline
 - Keep code changes minimal and scoped to each task
