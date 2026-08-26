@@ -119,6 +119,8 @@ Include a "Checklist Verification" section in your report showing which items we
 
 ## Report Format
 
+**Must Fix / Suggested Improvements is the disposition; the severity word rides on each item.** They are two axes and both are required: disposition says whether this blocks, severity says how bad it is, and the dispatching workflow branches on the severity word — `reviewer-depth.md` requirement 3 (injected into your dispatch) is its single source. So every Must Fix item carries `blocker` or `major`, and a Suggested Improvement is `minor` by construction. Do not invent a third word.
+
 **Anchor every finding (MANDATORY).** A finding whose location cannot be confirmed is unusable: downstream, a human cannot be pointed at it and a fix agent goes hunting and "fixes" the wrong place. So every item under Must Fix / Suggested Improvements carries, in addition to `file:line`, the **verbatim quote** of the code it is about — copied exactly from the file or the diff hunk (strip only the leading `+`/`-`/` ` diff marker), 1–5 lines, no reformatting, no paraphrase, no reconstruction from memory.
 
 ````markdown
@@ -135,8 +137,8 @@ If you genuinely cannot quote it — the finding is about something *absent* (a 
 ```markdown
 ## Code Review Result
 ### Pass — [what was done well]
-### Must Fix (blocking) — [file:line] issue → suggestion
-### Suggested Improvements (non-blocking) — [file:line] issue → suggestion
+### Must Fix (blocking) — [file:line] [blocker|major] issue → suggestion
+### Suggested Improvements (non-blocking) — [file:line] [minor] issue → suggestion
 ### Test Coverage — New: X% (target 100%) | Existing: added/skipped + reason
 ### Design Compliance — [requirement coverage table + unrequested-scope findings, the latter always non-blocking; spec-driven runs only]
 ### Checklist Verification — [items checked and status from mandatory skills]

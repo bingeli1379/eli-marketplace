@@ -99,7 +99,7 @@ Two entry conditions, same read-only contract:
    - `## Project Context` (config.yaml verbatim) when present + the project-knowledge directive
    - **Hard read-only constraint**: *"Review and report ONLY. Do NOT edit any file, do NOT create commits, do NOT dispatch other agents. Return findings as a structured report."*
    - **Analytical depth — `review-engineer` / `security-engineer` / `qa-engineer` only**: read `${CLAUDE_PLUGIN_ROOT}/references/reviewer-depth.md` and include its block verbatim in each of those dispatches. **One copy per agent, so a sharded run carries it into every shard** — each agent then enumerates its coverage over its own shard, which is what stops a shard reviewer silently narrowing to whatever caught its eye. That file also names who must NOT receive it and why; `performance-engineer` is excluded there and gets its own mandate in the `performance-engineer` bullet below instead.
-   - performance-engineer: capacity analysis is **static**; output is a per-path verdict (SAFE / RISKY / WILL NOT SCALE). **MANDATORY for any backend/data/batch code in scope — the primary OOM defense: exhaustively enumerate every point where an external store's data is loaded into memory and give each a boundedness verdict; do NOT report only the slow-looking ones. When a path's size is unknown, emit `NEEDS:` for the row count instead of guessing a threshold.**
+   - performance-engineer: capacity analysis is **static**; output is a per-path verdict (SAFE / RISKY / WILL NOT SCALE, or `未評估` where a project `never-read` path blocked assessment). **MANDATORY for any backend/data/batch code in scope — the primary OOM defense: exhaustively enumerate every point where an external store's data is loaded into memory and give each a boundedness verdict; do NOT report only the slow-looking ones. When a path's size is unknown, emit `NEEDS:` for the row count instead of guessing a threshold.**
 
    **Keep them alive.** Do NOT treat reviewers as one-shot. After they report, they stay backgrounded — follow-up questions and re-reviews go back to the **same** agent via **SendMessage** (its context, loaded skills, and the files it already read are intact), which avoids re-paying agent startup. Only spawn a fresh reviewer if its context was lost or the target changed substantially.
 
@@ -118,7 +118,7 @@ Two entry conditions, same read-only contract:
 
    ### quality — review-engineer        [no findings / N findings]
    ### security — security-engineer      [SECURE / N findings]
-   ### performance — performance-engineer [verdict table: SAFE/RISKY/WILL NOT SCALE]
+   ### performance — performance-engineer [verdict table: SAFE/RISKY/WILL NOT SCALE/未評估]
    ### e2e — qa-engineer                 [PASSED / FAILED / SMOKE-ONLY / SKIPPED — no spec]
 
    ### 位置未確認 (unanchored) — 非 blocking
