@@ -1,7 +1,7 @@
 ---
 name: technical-writer
-model: haiku
-effort: low
+model: sonnet
+effort: medium
 color: pink
 description: >
   Documentation specialist. Generates and updates API docs, changelogs,
