@@ -136,6 +136,7 @@ If you genuinely cannot quote it — the finding is about something *absent* (a 
 
 ```markdown
 ## Code Review Result
+### Scope — [the range or file set you covered: `git diff A..B`, or the file list; on a retry round this is the round's range, not the whole change]
 ### Pass — [what was done well]
 ### Must Fix (blocking) — [file:line] [blocker|major] issue → suggestion
 ### Suggested Improvements (non-blocking) — [file:line] [minor] issue → suggestion
