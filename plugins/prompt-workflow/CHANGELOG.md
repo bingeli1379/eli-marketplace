@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.7] - 2026-08-28
+
+### Added
+- Writing a skill now has a stated shape: `SKILL.md` holds the procedure, and the body of knowledge each step applies gets a name of its own. That unit never refers back to the step that called it, so you can replace it without rereading the whole flow.
+- Pulling material into its own file gains a fifth accepted reason, a second owner or a variant that genuinely exists. An imagined one still does not count, so the rules will not talk you into abstractions nothing needs yet.
+- The borderline between keeping something inline and splitting it out is now settled by the shape of the content. An enumeration the world keeps adding to moves out while it is small; a closed thing like a two-rule precedence or a fixed field set stays put however often you edit it.
+- A rule is stated as what is true rather than narrated. The audit now catches a rule written as an entry in the file's own diary ("also remember to check Y") or as a first-person plan ("I should read X first"), and rewrites it instead of leaving you to spot the voice yourself.
+
+### Changed
+- The audit gains criterion `y`. Knowledge dissolved into step prose with no name is fixed during the pass, while a named block that could move to its own file is reported for you to decide, since creating a file is a restructure only you can approve.
+
 ## [0.2.6] - 2026-08-24
 
 ### Added
