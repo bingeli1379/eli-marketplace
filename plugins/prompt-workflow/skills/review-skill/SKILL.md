@@ -7,7 +7,7 @@ description: "Use when auditing or reviewing a skill or agent prompt file — it
 
 Audit prompt files — a skill, an agent, an output style, or the references and templates they bundle — on two levels: whether the prompt still **says** the right thing (the text pass) and whether the procedure it describes actually **behaves** correctly when executed, without duplicated or drifting content around it (the deep lenses). **Zero errors > correctness > speed > brevity.**
 
-- **Text pass** — single-file text quality: removed rules, broken references, bloat, hardcoded values, cross-file consistency, wording contradictions, and steering effectiveness. It audits against two sources: criteria a–x in `${CLAUDE_PLUGIN_ROOT}/skills/review-skill/references/text-criteria.md`, and the shared authoring catalogue in `${CLAUDE_PLUGIN_ROOT}/references/authoring-rules.md` — the same file the write-time side follows, so both sides move together.
+- **Text pass** — single-file text quality: removed rules, broken references, bloat, hardcoded values, cross-file consistency, wording contradictions, and steering effectiveness. It audits against two sources: criteria a–y in `${CLAUDE_PLUGIN_ROOT}/skills/review-skill/references/text-criteria.md`, and the shared authoring catalogue in `${CLAUDE_PLUGIN_ROOT}/references/authoring-rules.md` — the same file the write-time side follows, so both sides move together.
 - **Lens A — procedural logic** — trace the steps as a state machine and find where the procedure breaks, corrupts state, loses data, or deadlocks.
 - **Lens B — duplication & SSOT** — find substantial content copied across files and concepts with no canonical home. Lens A and B live in `${CLAUDE_PLUGIN_ROOT}/skills/review-skill/references/logic-lenses.md`.
 
@@ -62,7 +62,7 @@ Audit prompt files — a skill, an agent, an output style, or the references and
 2. **Text pass — read each target IN FULL, diff it, and apply the criteria and the shared authoring rules**
 
    Read **both** of these now, and audit from them rather than from memory — every criterion and every rule applied to every target, with N/A stated explicitly where one does not apply:
-   - `${CLAUDE_PLUGIN_ROOT}/skills/review-skill/references/text-criteria.md` — the rating scale and criteria a–x.
+   - `${CLAUDE_PLUGIN_ROOT}/skills/review-skill/references/text-criteria.md` — the rating scale and criteria a–y.
    - `${CLAUDE_PLUGIN_ROOT}/references/authoring-rules.md` — the shared authoring catalogue, which is what the write-time side follows. **Each entry is a criterion here**: its `→ check:` clause tells you how the violation is visible, and an entry marked `→ process` governs what the author did rather than what the file says, so skip it — skipping those is correct, not a coverage gap. This is the one file that keeps the two sides in step: a rule added there is audited here without editing this skill.
 
    For each target file:
