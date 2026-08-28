@@ -25,11 +25,20 @@ Chain visibility (one line per hop, in call order):
   # A factual note, not a recommendation. Accumulated across investigations it is the
   # evidence for which services are worth instrumenting next.
 
-Request outcome (HARD RULE 6 — error count is not failure count). Impact needs a number for
-EACH of the three outcomes, so each has a line here; "n/a" is allowed, silence is not:
+Request outcome (HARD RULE 6 — error count is not failure count; HARD RULE 8 — failure count is not
+lost users). Impact needs a number for EACH outcome, so each has a line here; "n/a" is allowed,
+silence is not:
 - Status of the traced request(s): <200 / 5xx / not obtained>
 - Structured access fields available? <yes → count of status>=500 in window | no → how outcome was established>
 - Failed: <N> (<statuses>, <paths>)
+- Recovered (HARD RULE 8): <M> of those <N> retried on their own and succeeded, gaps <…>s measured
+  from the END of the failed attempt | none, window ran to <ts> with no further attempt | n/a — nothing failed | not checked + why
+  # A retry lands AFTER the burst, so the incident window cannot contain it and an empty result there
+  # is indistinguishable from "nobody retried". Extend past the last failure until nothing new appears.
+- Distinct users affected: <N> — from the stream's user-identity field when it has one (SKILL.md step 4),
+  which is already per-user. Only where that field is absent is the count derived from requests, and then
+  it must be deduped ACROSS the buckets in this block, since one person's failure and their retry occupy
+  two of them. Say so when client address is the only identity available.
 - Succeeded but degraded: <N>  | latency spread: median <x>s, max <y>s, bands <…>  | n/a + why
   # Pulled and bucketed client-side; the cut is chosen FROM the distribution, not guessed
   # in advance — a guessed threshold sweeps in whatever slowness the service always has.
@@ -38,7 +47,8 @@ EACH of the three outcomes, so each has a line here; "n/a" is allowed, silence i
   a failure count. If not obtained: it goes in Unknowns; do NOT substitute the error count.
 
 Co-affected callers (fill whenever the breadth classifier returned fleet-wide — SKILL.md 5d):
-- <svc>: <N> failed / <N> degraded / <N> distinct users     (same signature, same window)
+- <svc>: <N> failed / <N> of those recovered by retry / <N> degraded / <N> distinct users   (same signature, same window)
+  # `recovered: not checked` is legal per caller — but then Impact must say the failure count is not a user-loss count.
 - Peeled until the breadth query returned 0? <yes → all callers accounted for | no → who is missing>
 - Any caller NOT quantified ⇒ Impact is a LOWER BOUND and must say so, naming who is missing.
 # A shared-layer root cause with one named victim contradicts itself; this block is what stops
@@ -121,6 +131,16 @@ If any block is empty or says "skipped", the work is incomplete — go back and 
 
 7. **止血建議要對得起你自己量到的數字，而且「擋得住這件事的開關是關的」永遠是一條 How to Resolve。** 這兩件事在調查途中就已經拿到，卻最容易在寫報告時掉——因為此刻眼前只有這份模板：告警／SOP 附的第一時間處置（step 2b「Alert URL / alert context」已要求驗證而非照抄），以及能擋住這類事件的設定現值（step 1c 的 config / settings lookup）。收尾前檢查兩項：**你的 infra 數字有沒有否證掉告警指定的動作**（有 → 明說哪一項無效與依據，不可把它原文寫成建議），以及**那顆旋鈕現在是什麼值**（關著／設錯 → 指名設定與現值，那通常就是真正的長期解）。查不到值就進 Unknowns，**不可寫「建議調整相關設定」這種沒有受詞的句子**——它讀起來像有結論，實際沒有。
 
+8. **請求失敗 ≠ 使用者流失。把失敗筆數寫進 Impact 之前，先查那些人有沒有自己回來重試成功。**
+   規則 6 擋的是「error 筆數當成失敗數」，這條擋下一層：一個失敗的請求，如果使用者二十秒後自己重送就成功了，跟一個真的把人弄丟的請求是兩種嚴重度。工單優先度、要不要通知使用者、要不要補償，全掛在這個差別上。
+   - **成本接近零，因為資料已經在手上。** 規則 6 為了拿 status 就撈出了每筆失敗的 client 識別（access 行的 client address，或該 stream 有的 user／session id）跟時間；拿同一個識別去比對後續的成功即可。**比對方式看該 stream 給什麼**：有結構化 client 欄位就 server-side 過濾，只有 access 行的話那個位址在不可過濾的 log 文字裡，要沿用同一套 client-side 解析（SKILL.md step 4 的 recovery 段落）。對不可過濾的欄位下 `match_phrase` 會回 false `0`，而那個 0 讀起來正好就是「沒人重試」。
+   - **視窗一定要越過 burst 尾端。** 重試依定義發生在失敗之後，所以它就落在事故視窗外面：照事故視窗查必然查不到，而那個「查不到」跟「真的沒人重試」長得一模一樣。從最後一筆失敗往後延，延到**再也沒有新的重試出現**為止；沒走完這步就寫「無人重試」，那個結論是沒有根據的。
+   - **間隔從失敗請求的「結束」起算，不是開始。** 那才是使用者看到錯誤的時刻，也才是「他等多久才願意再試」這個數字的意思。用開始時間算會多算一整個 timeout 的長度。
+   - **三類請求結果算的是「請求數」，受影響使用者算的是「人數」，不可混。** 同一個人的失敗與重試會各佔一格，所以人數必須跨格去重。沒去重就會把 N 個人報成 2N 個人，而且讀報告的人無從發現。
+   - Impact 要同時給兩個數：**失敗 <N> 筆 / 其中 <M> 人自行重試成功 / 真正流失 <N−M>**。
+   - **只有 client address 可用時，明寫那是代理不是身分**——同一出口位址可能是不同人，同一人也可能換位址。
+   - **「大家都自己回來了」不是「不用修」。** 他們回得來是因為 burst 比使用者的耐心短，換一次更長的就不是這個結果。報告要把這句寫進去，否則這個數字會被直接拿去降優先度。
+
 ## Output
 
 Output **two versions**: Traditional Chinese first (full detail, the user reads it), then English (super-short, the user pastes to Jira / shares with others who only ask "what happened" + "how bad").
@@ -148,9 +168,9 @@ No "中文版" / "English" headings. Output the report blocks directly. Separate
 - <call chain / infra 數據 補充>
 
 **Impact**
-- 受影響使用者：~<N>（distinct customerId）or n/a
+- 受影響使用者：~<N>（distinct customerId；**跨下面三類去重**，同一人的失敗與重試各佔一格）or n/a
 - 請求結果（三類都要有數字，缺的寫 n/a + 原因）：
-  - 失敗：<N> 筆（<主要 status>），端點：<path…>
+  - 失敗：<N> 筆（<主要 status>），端點：<path…>；其中 <M> 人自行重試成功、真正流失 <N−M>
   - 成功但顯著變慢：<N> 筆，<延遲分佈，見下>
   - 未受影響：<N> 筆 or「同窗其餘請求正常」
 - 延遲（只在有「慢但成功」時）：中位數 <x>s、最大 <y>s；區間：<<5s: N>、<5–10s: N>、<10–20s: N>、<>20s: N>
@@ -205,6 +225,7 @@ Only **two lines**: `Root cause:` and `Impact:`. No fix, no unknowns, no time wi
 - Each line ≤ 25 words.
 - Root cause: name the call chain in one sentence (e.g. `serviceA calls serviceB and serviceB CPU high can't respond`).
 - Impact: numbers + behavior in one sentence (e.g. `~N user actions failed, button shows generic error`).
+- When the affected users retried and got in, that clause is NOT optional (`N failed, all retried within Xs and succeeded`). This is the line people paste into a ticket, and a bare `N failed` is read there as N users lost.
 - Skip articles / be terse like a chat message — this is for quick "what's up" replies.
 
 ```

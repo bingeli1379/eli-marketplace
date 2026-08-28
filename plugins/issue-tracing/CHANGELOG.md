@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.3] - 2026-08-28
+
+### Fixed
+- An incident report no longer reads as if more people were affected than actually were. Failed requests and slow-but-successful ones were counted as separate groups, so one person who failed and then tried again appeared as two — a real run reported six affected users when there were four, and the wrong figure reached a ticket before it was caught.
+- A report now says whether the affected people came back and got in by themselves. A failure someone retried into a success twenty seconds later is a very different incident from one that lost them, and that difference is what decides how urgent the ticket is. The check deliberately looks past the end of the burst, because a retry always happens after the failure and so could never appear inside the incident window; the same question is now asked of every other service the same root cause hit.
+
 ## [1.12.2] - 2026-08-24
 
 ### Fixed
