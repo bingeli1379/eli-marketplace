@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.11.2] - 2026-08-29
+
+### Fixed
+- `/quick` and `/apply` share a front half that had drifted apart. They now run the same order: grounding before pre-lint, config read once, and a run missing its spec artifacts bails out before pre-lint can leave a stray cleanup commit behind. `/quick`'s pre-lint also moves to the background, so it no longer makes you wait.
+- The pre-lint gate staged every changed file. It could sweep an uncommitted task-list update into the lint cleanup commit, leaving the checkbox commit with nothing to record and making a later revert of the lint churn take your task state with it. Both gates now stage only what lint actually touched.
+- Two reviewer rules lived only in `/quick`, so `/apply` and `/review` dispatched reviewers without them. All three now get the same rules.
+- `/apply-all` pointed at the wrong step for the multi-repo config rule.
+
+### Changed
+- The architect is now told to anchor each operation to an existing implementation in your codebase on every dispatch, not just during `/propose`. The three rival designers in design-it-twice get it too.
+
 ## [3.11.1] - 2026-08-27
 
 ### Changed
