@@ -36,34 +36,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
    Always announce: "Implementing change: **<name>**" (and append "(dev-mode)" when the flag is set, so the user can confirm parsing).
 
-2. **Confirm current branch (MANDATORY)**
-
-   Use the current branch as-is. Do NOT create or switch branches — the user manages branches themselves.
-   - Announce: "Branch: **<current-branch>**"
-
-   Phase 1 is **sequential single-writer on this branch** — agents commit directly here, one group at a time, and the orchestrator squashes each group in place (`git reset --soft`). There are no worktrees, so there is no worktree-base mismatch to guard against: a feature branch ahead of `master` is exactly what we want each group's agent to build on. (See `orchestrator.md` Phase 1.)
-
-   **Multi-repo mode**: the same applies inside each child repo (`git -C <repo> ...`). Groups bound to *different* child repos may run in parallel because separate repos are already isolated working directories; groups within one repo stay sequential.
-
-3. **Pre-lint and commit (clean slate — runs in background)**
-
-   In **no-git** mode (Step 0), skip this entire step — there is no repo to commit the cleanup to.
-
-   First, check `${CLAUDE_PLUGIN_ROOT}/company-conventions.md` for pre-lint skip rules. If the current project matches a skip condition (e.g., .NET project), skip this entire step silently.
-
-   **Multi-repo**: there is no umbrella `feature-spec/config.yaml` (per `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md`, config is per-project only) — read `lint_commands` from `<repo>/feature-spec/config.yaml` for **each child repo this change touches**, and run + commit that repo's lint inside it (`git -C <repo> ...`). A touched repo with no config gets no pre-lint.
-
-   Otherwise, if `lint_commands` are configured (single-repo: `feature-spec/config.yaml`):
-   1. Run all lint commands **in the background** (`run_in_background: true`) to fix any pre-existing formatting issues
-   2. **Do NOT wait for lint to finish** — proceed to Step 4 (read context) and Step 5 (parse tasks) immediately
-   3. **Before dispatching Phase 1 agents**, check if lint has completed:
-      - If lint produced changes: stage all changed files and commit with message: `chore: pre-lint cleanup before apply`
-      - If lint is still running: wait for it to finish, then commit if needed
-      - If no changes, skip silently
-
-   This ensures agents start from a clean state without blocking the orchestrator's preparation work.
-
-4. **Read all context files (grounding)**
+2. **Read all context files (grounding)**
 
    Follow `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` — consult any project-knowledge skill for the working repo(s), read the curated context below, and resolve external facts with available lookup tools rather than guessing (you carry the tools the worker agents lack; resolving their `NEEDS` is your job — Step 7).
 
@@ -95,6 +68,33 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    If either signal fires, warn once and continue: `⚠ spec may be stale — last updated <age>; N of M "Files to Modify" paths missing (<list>); confirm before continuing or re-run /propose`
 
    **This check itself never edits and never blocks** — dispatching against a stale design is the risk being surfaced, and the call is the user's. (Step 5b's reconcile does legitimately write `- [x]` back to `tasks.md`; that is a separate mechanism and is unaffected by this rule.) Environment drift is already covered by the config.yaml staleness check above; do not duplicate it. Task-completion drift (a `- [x]` whose commit is gone) is deliberately NOT checked: Step 5c (squash un-squashed per-task commits) strips task-number prefixes, so a healthy completed group has no numbered commit to find and the check would fire on every clean run.
+
+3. **Confirm current branch (MANDATORY)**
+
+   Use the current branch as-is. Do NOT create or switch branches — the user manages branches themselves.
+   - Announce: "Branch: **<current-branch>**"
+
+   Phase 1 is **sequential single-writer on this branch** — agents commit directly here, one group at a time, and the orchestrator squashes each group in place (`git reset --soft`). There are no worktrees, so there is no worktree-base mismatch to guard against: a feature branch ahead of `master` is exactly what we want each group's agent to build on. (See `orchestrator.md` Phase 1.)
+
+   **Multi-repo mode**: the same applies inside each child repo (`git -C <repo> ...`). Groups bound to *different* child repos may run in parallel because separate repos are already isolated working directories; groups within one repo stay sequential.
+
+4. **Pre-lint and commit (clean slate — runs in background)**
+
+   In **no-git** mode (Step 0), skip this entire step — there is no repo to commit the cleanup to.
+
+   First, check `${CLAUDE_PLUGIN_ROOT}/company-conventions.md` for pre-lint skip rules. If the current project matches a skip condition (e.g., .NET project), skip this entire step silently.
+
+   **Multi-repo**: there is no umbrella `feature-spec/config.yaml` (per `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md`, config is per-project only) — use the per-repo `lint_commands` already read in Step 2 for **each child repo this change touches**, and run + commit that repo's lint inside it (`git -C <repo> ...`). A touched repo with no config gets no pre-lint.
+
+   Otherwise, if `lint_commands` are configured (read in Step 2):
+   1. Run all lint commands **in the background** (`run_in_background: true`) to fix any pre-existing formatting issues
+   2. **Do NOT wait for lint to finish** — proceed to Step 5 (parse tasks) immediately
+   3. **Before dispatching Phase 1 agents**, check if lint has completed:
+      - If lint produced changes: stage **only the paths lint modified** and commit with message: `chore: pre-lint cleanup before apply`. **NEVER `git add .` or `git add -A`** — `orchestrator.md` Phase 1 step e states that rule and its reason, and it binds here too. In particular never stage anything under `feature-spec/`: Step 5b's `tasks.md` reconcile is deliberately left uncommitted at this point, waiting for the orchestrator's own Phase 1 checkbox commit, and sweeping it in here both mislabels it as lint cleanup and leaves that commit with nothing to record.
+      - If lint is still running: wait for it to finish, then commit if needed
+      - If no changes, skip silently
+
+   This ensures agents start from a clean state without blocking the orchestrator's preparation work.
 
 5. **Parse tasks, detect interrupted state, and show progress**
 
@@ -200,7 +200,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - Give each agent a descriptive `name` (e.g., `"dotnet-search-api"`, `"vue-search-page"`)
    - Dispatch implementation/fix (write) agents **sequentially** — wait for one to commit before dispatching the next. Only read-only reviewers (Phase 2) are dispatched simultaneously.
    - You will be **automatically notified** when each background agent completes — do NOT poll or sleep
-   - **Enforce analytical depth for reviewer agents only**: read `${CLAUDE_PLUGIN_ROOT}/references/reviewer-depth.md` and include its block verbatim in every `review-engineer` / `security-engineer` / `qa-engineer` dispatch — Phase 2 initial run AND all fresh-review retry rounds. That file also names who must NOT receive it (Phase 1 implementation agents, Phase 2 fix agents, `performance-engineer`, Phase 3 technical-writer) and why; honor that exclusion.
+   - **Enforce analytical depth for reviewer agents only**: read `${CLAUDE_PLUGIN_ROOT}/references/reviewer-depth.md` and include its block verbatim in every `review-engineer` / `security-engineer` / `qa-engineer` dispatch — Phase 2 initial run AND all fresh-review retry rounds. That file also states the two things you must settle **before** dispatching — cross-repo questions, and asserting only what you verified — which are the dispatcher's, not the reviewer's. That file also names who must NOT receive it (Phase 1 implementation agents, Phase 2 fix agents, `performance-engineer`, Phase 3 technical-writer) and why; honor that exclusion.
 
    **Handling a NEEDS return (orchestrator) — applies to every phase:**
 

@@ -69,7 +69,7 @@ Repo topology (single-repo / multi-repo / no-git) is detected **once at batch st
    a. Announce: `[N/M] Applying: <change-name>` and record start time.
 
    b. Execute the full `/apply` logic (Steps 2–9 from `apply/SKILL.md` — Step 0 topology already ran once at batch start, and Step 1 change selection is this skill's Steps 1–2):
-      - **Cache invariant files once at batch start**: Read `orchestrator.md` and the project `config.yaml` once before the first change — single-repo `feature-spec/config.yaml`; **multi-repo** the per-child-repo `<repo>/feature-spec/config.yaml` of every repo the batch touches (there is no umbrella config — see `/apply` Step 4). These are invariant across the batch — reuse them for all changes instead of re-reading each time.
+      - **Cache invariant files once at batch start**: Read `orchestrator.md` and the project `config.yaml` once before the first change — single-repo `feature-spec/config.yaml`; **multi-repo** the per-child-repo `<repo>/feature-spec/config.yaml` of every repo the batch touches (there is no umbrella config — see `/apply` Step 2, the grounding read). These are invariant across the batch — reuse them for all changes instead of re-reading each time.
       - **Re-read change-specific files fresh for each change** (proposal.md, design.md, tasks.md, specs/). Each change has different specs — do NOT reuse these from the previous change. Prior context may also have been compressed.
       - Read context → parse tasks → act as orchestrator → sequential single-writer dispatch with in-place squash → all phases (implementation → review+QA parallel read-only → docs) → verify checkboxes and commit history
       - **Do NOT ask implementation questions** — make reasonable choices, flag ambiguities in report

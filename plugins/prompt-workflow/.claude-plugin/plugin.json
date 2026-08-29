@@ -3,7 +3,7 @@
   "name": "prompt-workflow",
   "displayName": "Prompt Workflow",
   "description": "Look after the AI setup itself: write and audit the prompt files that steer it, feed real-usage problems back into their source, and audit which installed MCP servers and skills actually get used",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
