@@ -1,10 +1,10 @@
-# Text criteria (a–y) — detection and rating
+# Text criteria (a–z) — detection and rating
 
 The text pass's criteria, loaded by `/review-skill` step 2 alongside `${CLAUDE_PLUGIN_ROOT}/references/authoring-rules.md`.
 
 **Division of labour, so no rule lives in two places:** the shared catalogue holds *the rules* — what good looks like and how a violation is visible. This file holds what the catalogue does not: **how to rate a violation, what to auto-fix versus surface, and the criteria that exist only at audit time** (nothing was written wrong; something was lost or is unverifiable). Where a criterion's rule lives in the catalogue, the entry below carries only its letter, its name, its rating policy, and a pointer — deliberately **not** a second copy of the rule.
 
-**Letters are permanent.** Other files cite `criterion t`, `criteria p and q`, `criteria a–y`. Never renumber or drop a letter; retire one by marking it, not by deleting it.
+**Letters are permanent.** Other files cite `criterion t`, `criteria p and q`, `criteria a–z`. Never renumber or drop a letter; retire one by marking it, not by deleting it.
 
 **Every criterion is applied to every target; state N/A explicitly rather than silently skipping one** — a pass that quietly covers half its rungs reads exactly like a clean one.
 
@@ -139,9 +139,17 @@ Criteria a–t ask whether the prompt still *says* the right thing. These four a
 **x. Information hierarchy — is each piece at the right depth?** — rule: catalogue *Where content lives* (the extract/don't-extract tests and pointer wording).
 - Audit adds three ratings. A must-have behind a vague pointer is a **variance bug**: **RISKY**, and fix the wording first (name what is behind it and the condition for reaching it); only pull material back inline if sharpened wording still cannot be trusted. And **length itself is a finding, but disclosure is the cure — not deletion**: a file can be too long even when every line is live, unique, and battle-tested. **Report length as a NOTE**; never resolve it by removing rules, and never at the cost of (k). **The frontmatter `description` is carved out of that NOTE**: a body's length is a trade-off only the author can weigh, while a description's budget and the way to meet it are both stated — the catalogue's *Compress every description by default* — so an over-budget description is **RISKY** and fixed in the pass, under that entry's before/after list, which is what stops the trim narrowing what reaches the skill. The situations it checked go in that fix's `### 已修` entry; an unreported list is an unrun one.
 
+
 ## Structure (applies to ALL file types)
 
 **y. Flow / knowledge seam — is the procedure separable from what it applies?** — rule: catalogue *`SKILL.md` carries the flow* and *The flow names the knowledge*.
 - Audit adds the ratings, and only written-down coupling is actionable. **RISKY** when a reference or template conditions a rule on which step invoked it, or hands control back to the procedure; when a step restates what the unit it points at already holds (a copy spanning two files is also Lens B class 10); or when an extracted file exists for a variant or owner that does not exist — the catalogue's fifth reason taken speculatively, which buys a hop and nothing else.
 - **Two different defects, two different ratings — do not collapse them.** Knowledge dissolved into step prose, with no heading or file to name it by, is **RISKY** and fixed in the pass: giving a block a name creates no file, moves nothing, and is what the catalogue's first *Where content lives* rule demands. Extracting that named block into a file is the separate, deferred call below.
 - **An unmade extraction is a NOTE, never applied in the pass.** A named block that stays inline is only reportable when moving it out would satisfy one of the catalogue's five reasons — name the block and the reason — and the restructure is then the author's call, the same design change (u) refuses to make on its own. Inline knowledge that buys none of the five is correct as it stands and is not reported at all; flagging it manufactures the speculative abstraction the paragraph above rates RISKY. **Precedence against (n)**: where the block duplicates — or belongs in — a reference file that **already exists**, that is (n), RISKY and fixed in the pass; y covers only material with no home yet, where creating one is the design change the author must approve.
+
+## Wording economy (applies to ALL file types)
+
+**z. Wording that could tighten, and wording that tightened too far** — rule: catalogue *Cost* step 5 (tighten how the surviving rules are worded, syntax only).
+- Audit adds the two ratings, and they are opposites. **The opportunity is a NOTE**: a sentence that could drop a repeated subject, a filler adverb, or a spliced clause and still match the same cases is reported, never auto-applied. The individual edit is safe; applying it across a whole file in one pass is a mass rewrite of battle-tested prose, and when to spend that pass is the author's call — same reasoning (w) uses, and (k) still governs the burden of proof.
+- **A trim that already landed and widened a rule is BROKEN**, and it is fixed in the pass — the catalogue entry's `→ check:` names what the sentence must still scope. It reads as tightening, which is exactly what makes it invisible in a diff — the surrounding words are unchanged and nothing was deleted, so (a) and (i) both pass it. Restore what scoped it.
+- **Precedence against (x)**: x reports a file's *length* as a NOTE and forbids resolving it by removing rules. This criterion removes no rule, so the BROKEN half is not that finding and is fixed rather than reported.
