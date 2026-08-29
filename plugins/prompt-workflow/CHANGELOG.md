@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.10] - 2026-08-29
+
+### Fixed
+- The last release told you the "could say this in fewer words" band was 4-5% of a file's prose. That number was a hand pass counting its own over-trimming as a saving. Measured properly on two unrelated prompt files, it is 0.13% and 0.02% — so if the audit reports almost nothing here, that is the honest answer, not a miss.
+- Filler adverbs ("actually", "genuinely", "simply") no longer count as trimmable. In a prompt file they are almost always doing real work — "only when a simpler option genuinely fails" means something different without it — so the audit no longer suggests removing them, and no longer widens your rules by doing so.
+
 ## [0.2.9] - 2026-08-29
 
 ### Added
