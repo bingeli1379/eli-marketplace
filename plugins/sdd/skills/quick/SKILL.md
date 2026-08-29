@@ -44,18 +44,23 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    Announce: "Branch: **<current-branch>**"
    **Multi-repo**: there is no single branch — announce the current branch of each child repo the task will touch (`git -C <repo> branch --show-current`). All commits for a repo's tasks land on that repo's current branch.
 
-4. **Pre-lint and commit (clean slate)**
+4. **Pre-lint and commit (clean slate — runs in background)**
 
    In **no-git** mode (Step 0), skip this entire step — there is no repo to commit to.
 
    First, check `${CLAUDE_PLUGIN_ROOT}/company-conventions.md` for pre-lint skip rules. If the current project matches a skip condition (e.g., .NET project), skip this entire step silently.
 
-   **Multi-repo**: there is no umbrella `feature-spec/config.yaml` — read `lint_commands` from `<repo>/feature-spec/config.yaml` for **each child repo this task touches**, and run + commit that repo's lint inside it (`git -C <repo> ...`). A touched repo with no config gets no pre-lint.
+   **Multi-repo**: there is no umbrella `feature-spec/config.yaml` — use the per-repo `lint_commands` already read in Step 2 for **each child repo this task touches**, and run + commit that repo's lint inside it (`git -C <repo> ...`). A touched repo with no config gets no pre-lint.
 
-   Otherwise, if `lint_commands` are configured (single-repo: `feature-spec/config.yaml`):
-   1. Run all lint commands to fix pre-existing formatting issues
-   2. If lint produced changes: stage and commit with `chore: pre-lint cleanup before quick`
-   3. If no changes, skip silently
+   Otherwise, if `lint_commands` are configured (read in Step 2):
+   1. Run all lint commands **in the background** (`run_in_background: true`) to fix pre-existing formatting issues
+   2. **Do NOT wait for lint to finish** — proceed to Step 5 (analyze the task) immediately. That step is in-memory and writes no files, so it cannot collide with lint's edits; it does *read* files lint may be reformatting, which is safe because the affected-files inventory records paths and reasons, not line numbers.
+   3. **Before dispatching in Step 6**, check if lint has completed:
+      - If lint produced changes: stage **only the paths lint modified** and commit with message: `chore: pre-lint cleanup before quick`. **NEVER `git add .` or `git add -A`** — `orchestrator.md` Phase 1 step e states that rule and its reason, and it binds here too: anything else dirty in the tree is the user's own work, not this run's.
+      - If lint is still running: wait for it to finish, then commit if needed
+      - If no changes, skip silently
+
+   This ensures agents start from a clean state without blocking the Step 5 analysis.
 
 5. **Analyze the task (inline propose)**
 
@@ -189,9 +194,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - You will be **automatically notified** when each background agent completes — do NOT poll
    - **Stamp each of step 8's `Time` rows at its boundary with `date`, and each dispatched agent's spawn and return.** Step 8's final report prints the breakdown. The numbers are only cheap at the boundary: a returning agent's report carries no elapsed time, and `ListAgents` gives an age relative to now, so once a later round starts an earlier one's cost is no longer recoverable.
    - **Handling a NEEDS return**: if an agent's report contains a `NEEDS:` line, treat it as *paused awaiting an external fact*, not done. Resolve it with whatever tools/knowledge you (the orchestrator) have, then **resume the SAME agent with `SendMessage`** (context intact — do NOT re-dispatch). Because agents run in the background you can service several concurrently. `CONFLICT:` → resolve with the user; `BLOCKED:` → re-scope or re-dispatch with corrected context. See `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns* for the vocabulary.
-   - **Resolve cross-repo questions BEFORE dispatching a reviewer.** A reviewer's scope is the repo it was bound to, so a question that can only be settled in another repo comes back unresolved every round no matter how many rounds run — who else consumes this shared library, whether any caller constructs it directly instead of through the sanctioned entry point, whether a contract is relied on elsewhere. Answer those yourself and hand the answer over as context. Discovering after two rounds that a grep would have settled it costs both rounds.
-   - **A reviewer's prompt carries only what you verified; everything else is asked, not asserted.** A premise stated as fact and later found wrong spends that reviewer's coverage correcting you instead of reading the diff, and it can steer the whole review — observed: a dispatch asserting the change removed a network call from a failure path, when that path had always been in-memory. State what you checked, and for what you did not, ask the reviewer to establish it.
-   - **Enforce analytical depth for reviewer agents only**: read `${CLAUDE_PLUGIN_ROOT}/references/reviewer-depth.md` and include its block verbatim in every `review-engineer` / `security-engineer` / `qa-engineer` dispatch. Quick mode usually has no specs, so the `qa-engineer` line resolves to "every affected user-facing flow" — that conditional is in the file. It also names who must NOT receive it (implementation and fix agents, `performance-engineer`, technical-writer) and why; honor that exclusion.
+   - **Enforce analytical depth for reviewer agents only**: read `${CLAUDE_PLUGIN_ROOT}/references/reviewer-depth.md` and include its block verbatim in every `review-engineer` / `security-engineer` / `qa-engineer` dispatch. That file also states the two things you must settle **before** dispatching — cross-repo questions, and asserting only what you verified — which are the dispatcher's, not the reviewer's. Quick mode usually has no specs, so the `qa-engineer` line resolves to "every affected user-facing flow" — that conditional is in the file. It also names who must NOT receive it (implementation and fix agents, `performance-engineer`, technical-writer) and why; honor that exclusion.
 
    **Phase execution based on complexity:**
 

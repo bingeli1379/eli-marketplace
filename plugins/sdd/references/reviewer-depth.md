@@ -1,6 +1,6 @@
 # Reviewer Analytical Depth
 
-The **Analytical depth requirement** every reviewer dispatch must carry. Single source for `/apply` (Phase 2 initial run AND every fresh-review retry round), `/quick` (all complexity tiers), and `/review` (every lens dispatch, one copy per agent when the scope is sharded).
+The **Analytical depth requirement** every reviewer dispatch must carry, plus the two things the dispatcher settles before composing it. Single source for `/apply` (Phase 2 initial run AND every fresh-review retry round), `/quick` (all complexity tiers), and `/review` (every lens dispatch, one copy per agent when the scope is sharded).
 
 **Who gets it:** `review-engineer`, `security-engineer`, `qa-engineer`.
 
@@ -13,6 +13,11 @@ The **Analytical depth requirement** every reviewer dispatch must carry. Single 
 **Rationale:** structurally enforcing exhaustive scanning and auditable coverage is the primary safeguard — a reviewer that reports only what caught its eye has silently chosen its own scope.
 
 **A returned report that violates these requirements gets bounced, not papered over.** Severity is what decides whether the run stops, and silence on a category is defined below as a skipped category — so a finding with no severity, or a category the report never mentions, leaves a verdict that cannot be acted on. Send it back to the same agent with `SendMessage` naming the missing part; its context is intact, so this is far cheaper than a re-dispatch, and cheaper than assigning the severity yourself — a dispatcher-invented severity is a guess wearing the reviewer's judgement. Observed: a security report returned one finding with no severity and the round was accepted anyway.
+
+**Before composing that block, two things the dispatcher settles and the reviewer never can.** Neither goes into the prompt below; they are what makes the prompt worth sending.
+
+- **Resolve cross-repo questions BEFORE dispatching.** A reviewer's scope is the repo it was bound to, so a question that can only be settled in another repo comes back unresolved every round no matter how many rounds run — who else consumes this shared library, whether any caller constructs it directly instead of through the sanctioned entry point, whether a contract is relied on elsewhere. Answer those yourself and hand the answer over as context. Discovering after two rounds that a grep would have settled it costs both rounds.
+- **The prompt carries only what you verified; everything else is asked, not asserted.** A premise stated as fact and later found wrong spends that reviewer's coverage correcting you instead of reading the diff, and it can steer the whole review — observed: a dispatch asserting the change removed a network call from a failure path, when that path had always been in-memory. State what you checked, and for what you did not, ask the reviewer to establish it.
 
 ---
 
