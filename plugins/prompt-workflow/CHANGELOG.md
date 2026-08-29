@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.9] - 2026-08-29
+
+### Added
+- The audit now points out sentences that could say the same thing in fewer words: a subject the entry before it already established, a filler adverb, a clause spliced onto the previous sentence. On one always-loaded file that band was roughly 4-5% of its English prose, paid on every turn it loads. It only ever reports these — rewriting a whole file's prose in one pass is your call, not something an audit does on its own.
+- It also catches the opposite, which nothing caught before: a trim that already happened and quietly widened a rule. Drop "closing the line" from "a bare verb stub closing the line" and the sentence reads tighter while matching cases it never did. Nothing was deleted and the surrounding words are unchanged, so the removed-rule and item-count checks both waved it through. That one gets fixed during the pass.
+
 ## [0.2.8] - 2026-08-29
 
 ### Added
