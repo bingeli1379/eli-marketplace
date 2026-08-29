@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.8] - 2026-08-29
+
+### Added
+- Merging two overlapping rules now has to account for what the merged wording dropped. Deciding they overlap used to be the whole test; now each clause of the old text has to be findable in the new one, and a clause with nowhere to land either goes back or gets said out loud. The audit also names the one case that check cannot see: an inverted lead, where every clause survives but the main sentence flips, so "this is fine, just not the default" quietly becomes "this is the usual mistake" and steers you into over-correcting.
+
 ## [0.2.7] - 2026-08-28
 
 ### Added
