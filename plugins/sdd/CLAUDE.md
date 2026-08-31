@@ -72,6 +72,8 @@ feature-spec/
       tasks.md                # Implementation checklist (grouped by reviewable unit, one agent type per group)
       specs/                  # Delta specs (acceptance criteria)
         <capability>/spec.md
+      reviews/                # Phase 2 reviewer reports, one per dispatched agent (references/reviewer-depth.md requirement 4)
+        <agent>.md
 ```
 
 After `/complete`, completed changes are deleted (not archived). `config.yaml` persists across changes. The plugin does not generate or maintain `context.md` / `knowledge.md`, and it does not read the project's own docs — `config.yaml` is the single, authoritative project context that `/propose`, `/apply`, and `/quick` consume. Keep its `architecture` block accurate.
