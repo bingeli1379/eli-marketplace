@@ -155,6 +155,7 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
    a. **Capture the group base, then dispatch.** First record the current tip: `GROUP_BASE=$(git rev-parse HEAD)` — this is the `<prev-group-sha>` used by step c (for the first group it is the Phase 1 base; for later groups it is HEAD *after* the previous group's squash — the checkbox commit no longer sits between groups, it happens once at step e). Then dispatch one specialist agent for the group, **directly on the current branch** (omit the `isolation` parameter on the Agent tool). Give it a descriptive `name` (e.g., `"dotnet-search-api"`, `"vue-search-page"`).
       - The agent reads the current committed code (including prior groups' work), implements its tasks, and makes **one commit per task** on the current branch.
       - Agents do NOT modify `tasks.md` — the orchestrator handles checkbox updates after squashing.
+      - **Fill the dispatch's `## Change Directory` section, then read the report the agent writes there.** The Agent Prompt Template sends an implementation agent's full report to `<change directory>/reports/<agent>.md` and leaves the reply carrying the `DONE:` lines, any signal, and that path — leave the section empty and the agent has nowhere to write, which costs a round-trip to recover what the reply size limit cut. Step b assesses the group on that report, so read it before squashing.
 
    b. **Wait** for the agent to complete, then assess its result (signal vocabulary is defined in `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*). Note: a background agent frequently signals completion only as a runtime **idle/available notification, not an explicit `DONE`** — so confirm completion **against git** (are the group's commits present + tree healthy?), do not block waiting for a DONE message that may never arrive:
 
@@ -182,7 +183,7 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
 
    e. **Once Phase 1 has no pending groups left, commit every group's checkboxes in ONE commit** (skipped entirely in no-git mode, and when the cwd is not itself a git repo in multi-repo mode — see c.4). This fires even when a resume found every group already committed and dispatched nothing — the reconcile at step 5b writes `- [x]` back to disk, and those marks need the same commit:
       - First `git status --short`, and if anything unexpected is **staged**, `git stash` it, commit, then `git stash pop`. A commit takes the whole index, not just what you added, so a stray staged entry rides along — and the last group does not always end on a squash commit: step c.3 leaves a single clean commit alone, so the last git write may have been the *agent's*, which can leave the index dirty. **This check runs ONCE here, not once per group** — that is the whole saving, and it is not a reason to drop the check.
-      - Stage ONLY the tasks.md file by exact path: `git add <path-to-tasks.md>`. **NEVER `git add .` or `git add -A`** — that stages unrelated files (e.g. lint-staged auto-fixes) into a metadata commit, and reverting it later takes real code with it.
+      - Stage `tasks.md` and this change's `reports/` directory, each by exact path: `git add <path-to-tasks.md> <change-directory>/reports`. **NEVER `git add .` or `git add -A`** — that stages unrelated files (e.g. lint-staged auto-fixes) into a metadata commit, and reverting it later takes real code with it. `reports/` is named because nothing else ever stages it, and it holds the measured evidence the agents produced — left out, it is untracked when `/complete` deletes the directory.
       - `git commit -m "chore: mark phase 1 tasks complete"`
       - **Interrupted before this step, the on-disk `tasks.md` is still the resume input** — nothing is lost, and step 5's reconcile re-marks anything the file missed. What the file records that git cannot: **a squashed group's commit message no longer carries its task numbers**, so for every group already squashed the checkboxes are the only record of what is done. That is why c.4 writes them to disk immediately and why this commit exists at all.
 
@@ -268,6 +269,7 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
    The orchestrator has been updating `tasks.md` checkboxes after squashing each group in Phase 1.
    After all phases complete, **re-read `tasks.md` from disk** to verify all completed tasks are checked.
    If any were missed, update them now.
+   **Read `<change directory>/reports/` for every group this session did not dispatch** — a resumed run skips step b for the groups already committed, so their measured evidence was never in this session's context and the files are the only place it survives.
    Compile the final report and return it to the caller.
 
 ### Report Format (Spec-Driven)
