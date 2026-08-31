@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.13.0] - 2026-09-01
+
+### Added
+- Implementation agents now do what reviewers already do: the full report goes into the change's `reports/` folder, and the reply carries just the `DONE:` lines and the path. Four such reports on one run came back cut off mid-table, each costing a round-trip to ask for the missing half — the test counts and command output the run is actually judged on. `/apply` commits `reports/` together with the task list so the evidence survives the cleanup, and it re-reads the folder for groups a resumed run never dispatched. `/quick` writes no files, so its agents put the evidence at the top of the reply instead.
+
+### Changed
+- A task whose verification never actually ran now stays unchecked, with a note on what was and was not established. Before, a run whose code all landed could tick a check the environment could never reach — a uat step, a command nobody executed — and `/complete` reads a checked box as done. It also names the one task shape that looks runnable where it sits and is not: one whose premise a later group sets up, which fails for the wrong reason if you run it early.
+
+### Fixed
+- `/complete` no longer deletes a change directory that no commit holds. It reads the directory's state first and asks you before removing it. In multi-repo the planning folder sits outside every repo, so nothing ever committed it, and a plain delete took the whole run's record with it: the measured results, the tasks marked un-executed and why, and the places the design turned out not to match the code. Reviewer reports are exposed in every mode too, since a clean review round has no commit of its own to carry them.
+
 ## [3.12.0] - 2026-08-31
 
 ### Added
