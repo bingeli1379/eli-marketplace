@@ -118,7 +118,7 @@ skill file lives in a pack) so `scripts/update-skills.sh` can sync it — the sc
 resolves each skill's actual home by searching `plugins/*/skills/<name>`. Skills with
 `repo: original` are maintained here and not pulled from upstream.
 
-**Skill loading is per-agent and eager.** A subagent's `skills:` frontmatter is injected in full at spawn (not progressive), so each declared skill costs its SKILL.md body on every dispatch (`references/` stay on-demand). To keep dispatches lean, agents declare only **cross-task-universal** skills eagerly and invoke **stack-/datastore-/infra-specific** skills **on demand via the Skill tool** after their Stack Detection step (see database/performance/dotnet/python engineers' "Load skills on demand" sections).
+**Skill loading is per-agent and eager.** A subagent's `skills:` frontmatter is injected in full at spawn (not progressive), so each declared skill costs its SKILL.md body on every dispatch (`references/` stay on-demand). To keep dispatches lean, agents declare only **cross-task-universal** skills eagerly and invoke **stack-/datastore-/infra-specific** skills **on demand via the Skill tool** after their Stack Detection step. **The gate is whether the skill is needed on essentially every dispatch of that agent, not whether the agent is a stack specialist** — a core reviewer carries conditional weight too, so `qa-engineer` loads `playwright-best-practices` only on the web-app branch and `architect` loads `ddd` only when the change reshapes the domain model. Each demotion pairs with a named, signal-gated pointer at the step that consumes it; without one, demoting silently kills the triggering.
 
 ## Routing a defect back to its source
 

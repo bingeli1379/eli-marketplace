@@ -10,7 +10,6 @@ description: >
 skills:
   - agent-guidelines
   - clean-architecture
-  - ddd
   - codebase-design
 ---
 
@@ -63,6 +62,8 @@ Status codes: 200, 400, 404, ...
 - Entity definitions with relationships
 - Required database migrations
 - Indexes and constraints worth noting
+
+**When the change introduces or reshapes the domain model** — a new aggregate, a value object, a domain event, an entity whose invariants move — **load the `ddd` skill (Skill tool) before writing this section and the `## Domain Model` section of `design.md`.** It is not preloaded: a change that adds no aggregate, value object or domain event needs none of it, and that is the common case. State in `design.md` that the domain model is unchanged when it is; do not load the skill to conclude that.
 
 ### 4. Frontend Spec
 What the frontend agent needs to implement:
