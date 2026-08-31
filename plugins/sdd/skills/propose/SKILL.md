@@ -64,6 +64,8 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
    **ZERO MISSES. Thoroughness over speed. This step is MANDATORY.**
 
+   **Read `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` → *Enumerating what is in the repo* now, and sweep by it.** It holds the rules that decide whether this inventory is actually complete — hand on the grep instead of a count, take every hit one hop outward before calling it the last, and sweep declaratively wired code (attributes, filters, middleware, model binding) separately because a call-chain walk cannot reach it. They apply to every stack; the stack-specific procedures further down this step apply only when their own trigger fires.
+
    Scan the actual project codebase before clarifying requirements:
    - User specified scope → scan every file within it. No scope → scan entire project.
    - Use `Glob` to list ALL files, then read/inspect each that could be affected.
