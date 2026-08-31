@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.11] - 2026-08-31
+
+### Added
+- The audit now catches a prompt file growing one example at a time. Every block an edit adds has to be a rule covering a class of cases, a genuine exception, or evidence for a rule already there — an added block that is just one more instance of an existing rule means widening that rule instead. Nothing caught this before: the two rules meant to prevent it govern what the author did, which no audit can see from the file. Measured over three large prompt files, 30 successive revisions shrank twice.
+
 ## [0.2.10] - 2026-08-29
 
 ### Fixed

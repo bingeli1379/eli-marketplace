@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.12.0] - 2026-08-31
+
+### Added
+- Reviewers now write their full report into the change's `reviews/` folder and reply with just the verdict and counts. Long reviews used to get cut off mid-finding, losing exactly the part that decides what happens next — three of six reports on one run came back truncated.
+- The design step now has to show its working when it claims it found everything. "Five places", "the only caller", "13 files" — a number cannot be re-checked, so it hands you the search instead, follows every hit one step further out, and separately sweeps the code that is attached rather than called (validation attributes, filters, middleware), which tracing from an entry point can never reach. On one run that gap shipped a design naming five character-set tables where a single search finds seven, and missing the one that runs first.
+
+### Changed
+- A fix that only touched test files no longer buys another full review round. Nothing a re-review could find lives in a test-only change, and one measured round over 50 lines returned a single minor finding. Fixes touching real code still get the round.
+- The QA and architect agents no longer carry Playwright and DDD guidance into every dispatch — they load it when the work actually needs it. That is 25KB and 11KB per dispatch, spent on repos with no browser tests and on changes that add no domain model.
+
 ## [3.11.2] - 2026-08-29
 
 ### Fixed
