@@ -12,6 +12,14 @@ The principle is **environment-agnostic by design**: sdd defines *what* to groun
 
 3. **External facts (front-load before designing/implementing)** — identify every fact the work will hinge on that is NOT obtainable from the repo or specs: a runtime/production config value (feature flags, rollout rates, limits), a cross-repo/service contract, live infrastructure state. For each one, **before you assume a value or let a plausible default stand, check whether an available tool can look it up** — a connected MCP server, a query/lookup tool, a project-knowledge skill — and **if such a tool exists you MUST use it rather than guess**. Resolve what you can NOW and feed the values into downstream context (the architect's prompt, the implementer's prompt, the design doc), recording how/when each was obtained.
 
+## Enumerating what is in the repo — the claim is only as good as the sweep behind it
+
+The three sources above answer "what is the fact"; this answers "have I found all of them". It is a different failure: nothing here is invented, the scan is simply partial, and it gets written up as complete — so no hallucination check catches it, and every consumer downstream is scoped to a set that is missing members.
+
+- **Record the command, not the count.** A set found by a grep is specified by that grep, so hand the grep on. A number written into an artifact is wrong the moment a file is added, and its reader cannot re-derive it.
+- **Every hit gets one hop outward before you call it the last one.** A symbol found once is not a symbol used once: wrapper methods, interface members and re-exports put the real caller one or two names away from the literal you searched, so "no callers" drawn from a single hit is the failure to expect.
+- **Declaratively wired code is unreachable by a call-chain walk, so sweep for it separately.** Validation attributes, filters, middleware, DI interceptors and model binding are attached rather than called; tracing outward from an entry point can never arrive at them. Enumerate them by their declaration — the attribute or registration name — and treat that as a second sweep alongside the call-chain one.
+
 ## What you cannot ground → signal, never guess
 
 Anything you genuinely cannot resolve with the tools at hand is an **external unknown**. Do NOT pick a plausible default. Use the `NEEDS` / `CONFLICT` / `BLOCKED` vocabulary defined in `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*:
