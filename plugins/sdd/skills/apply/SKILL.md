@@ -147,6 +147,9 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    ```
    You are working on change "<change-name>", group "<group-heading>".
 
+   ## Change Directory
+   [absolute path of `feature-spec/changes/<change-name>/` — where this agent writes its report, per the reporting rule below]
+
    ## Your Role
    [auto-loaded by dispatching `subagent_type` (see `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md`) — do NOT read/embed the agent file. Only the absent-pack fallback embeds the routing-table brief into a `general-purpose` dispatch.]
 
@@ -183,6 +186,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - Do NOT modify `tasks.md` — the orchestrator handles checkbox updates after squashing your work.
    - Do NOT batch multiple tasks into one commit — one commit per task, no exceptions
    - After the commit, report back: "DONE: <task-number> <task-description>"
+   - **A report carrying measured evidence goes in a file, not the reply.** Write the full report to `<the ## Change Directory path>/reports/<your dispatched name>.md`, creating `reports/` if absent, and reply with the `DONE:` lines, any `NEEDS:` / `CONFLICT:` / `BLOCKED:` signal, and that path. The reply size limit cuts mid-table, and what it takes is the command output and the numbers the orchestrator triages on — four implementation-agent reports on one measured run were truncated, each costing a round-trip to ask for the missing half. This changes where the report is delivered, never what it contains.
    - **Completion contract** — binding, per *Completion Contract — do NOT end your turn early* in `agent-guidelines` (already in your context): not finished until every assigned task is committed with a `DONE:` line each; the only valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:` (below).
    - Only add code comments for business logic that is not obvious from the code — if good naming makes it clear, skip the comment
    - Do NOT narrate your actions ("Now I will...", "Let me..."). Report only structured output: task status, files changed, test results.
