@@ -72,6 +72,8 @@ feature-spec/
       tasks.md                # Implementation checklist (grouped by reviewable unit, one agent type per group)
       specs/                  # Delta specs (acceptance criteria)
         <capability>/spec.md
+      reports/                # Phase 1 implementation-agent reports, one per dispatched agent (skills/apply/SKILL.md → Agent Prompt Template)
+        <agent>.md
       reviews/                # Phase 2 reviewer reports, one per dispatched agent (references/reviewer-depth.md requirement 4)
         <agent>.md
 ```
