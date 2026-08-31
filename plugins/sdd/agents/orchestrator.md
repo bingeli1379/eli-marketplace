@@ -209,6 +209,8 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
 
    Include `BASE_SHA` and `HEAD_SHA` in each reviewer's prompt so they can `git diff BASE_SHA..HEAD_SHA` for a precise scope.
 
+   **Name this change's directory in each reviewer's dispatch, then read the report it writes there.** `references/reviewer-depth.md` requirement 4 delivers the full report as `<change directory>/reviews/<agent>.md` when the dispatch names one, and inline when it does not — so a spec-driven run that omits the directory silently downgrades every reviewer to the inline path the size limit truncates. The reply then carries the verdict, the range and a count per severity; the findings are in the file, and step 1 of the loop below branches on them, so read it before triaging.
+
    **Conditional 4th reviewer — performance-engineer (data-scale, static, report-only):**
    Inspect the Phase 1 diff. If it touches a **performance-sensitive surface** — a new/changed API endpoint, a stored-procedure / SQL / Dapper / EF query, a repository or data-access path, a batch/data-pipeline job, or a list/report endpoint — dispatch **performance-engineer in the same parallel message** as the trio. Skip it for diffs that are purely frontend-presentational, config, docs, or test-only.
    - It performs **static data-scale capacity analysis only** (no load tests, no profilers, no `EXPLAIN` on live data) and **does not edit code** — it reports a capacity verdict (SAFE / RISKY / WILL NOT SCALE, or `未評估` for a path the project's `never-read` list put out of reach) per data path.
