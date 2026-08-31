@@ -90,6 +90,15 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
 
 3. **Delete change artifacts**
 
+   **First establish that this change's directory is committed as it now stands** — `git status --porcelain -- feature-spec/changes/<name>/` in the repo that carries it (the cwd repo in single-repo; the umbrella in multi-repo). **Any untracked or modified path in that output means this `rm` is its last moment.** **No repo to ask — the multi-repo umbrella is not one, or no-git mode — makes the whole directory uncommitted by definition**, so treat it as the same finding rather than as a check that passed. Either way, use **AskUserQuestion** — copy the directory somewhere durable first, or delete anyway — and delete only on the second.
+
+   Three reasons the directory routinely holds evidence no commit contains, all of them by design elsewhere in the workflow:
+   - `tasks.md` carries `/apply`'s implementation record — measured results, tasks it marked un-executed and why, divergences it found between `design.md` and what the code turned out to be — and those annotations land *after* the Phase 1 checkbox commit.
+   - `reviews/` is written in Phase 2, after the checkbox commit that stages `reports/`, and Phase 2 has no commit of its own unless a reviewer found something to fix — so a clean review round leaves every reviewer report untracked.
+   - Multi-repo with a non-repo umbrella was never committable at all — Step 4 skips the commit, and no child repo carries the directory.
+
+   **Test the directory's current state, not whether a path has history**: `git log -- <path>` passes as soon as any commit touched a file, which the checkbox commit guarantees while everything appended since is still uncommitted.
+
    ```bash
    rm -rf feature-spec/changes/<name>
    ```
