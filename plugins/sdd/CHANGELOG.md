@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.16.0] - 2026-09-02
+
+### Changed
+- Adding, removing, or upgrading a dependency now regenerates the lock file and commits it together with the manifest. Changing only the manifest left the lock describing the old dependency tree, so a clean install from that commit failed and the next person picked up an unrelated lock diff on their first build. Where the install genuinely cannot run, the agent now says so instead of committing half the change.
+
 ## [3.15.0] - 2026-09-02
 
 ### Changed
