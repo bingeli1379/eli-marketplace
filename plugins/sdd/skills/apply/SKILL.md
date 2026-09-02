@@ -101,6 +101,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    Parse `tasks.md`:
    - Identify task groups (## headings) and their agent mapping
    - Count total tasks, completed (`- [x]`), and pending (`- [ ]`)
+   - **Count only checkboxes under a `## N.` group heading.** A `## 交付後由你執行` section (written by `/propose` → Step 7e) holds work only the user can perform — deployments they trigger, approvals they give, credentials only they hold — as plain `- ` bullets, deliberately outside the numbering. It is never counted, never dispatched, and never marked complete by this workflow; it is carried verbatim into the final report's handoff block (Step 9). Folding it into the denominator reports a finished change as incomplete, which is what the section exists to prevent.
    - If all tasks are complete: congratulate, suggest `/complete <name>` to extract knowledge and clean up
 
    **Detect and recover interrupted state** (runs every time, not just after crashes). **Multi-repo**: each group committed inside its own child repo, so run the `git log` reconcile (step b) against each pending task's **owning child repo** (`git -C <repo> log`), and read tasks.md from the umbrella cwd on disk — see `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md`. **No-git**: skip this whole recovery block (there is no history to reconcile against).
@@ -186,7 +187,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - Do NOT modify `tasks.md` — the orchestrator handles checkbox updates after squashing your work.
    - Do NOT batch multiple tasks into one commit — one commit per task, no exceptions
    - After the commit, report back: "DONE: <task-number> <task-description>"
-   - **A report carrying measured evidence goes in a file, not the reply.** Write the full report to `<the ## Change Directory path>/reports/<your dispatched name>.md`, creating `reports/` if absent, and reply with the `DONE:` lines, any `NEEDS:` / `CONFLICT:` / `BLOCKED:` signal, and that path. The reply size limit cuts mid-table, and what it takes is the command output and the numbers the orchestrator triages on — four implementation-agent reports on one measured run were truncated, each costing a round-trip to ask for the missing half. This changes where the report is delivered, never what it contains.
+   - **A report carrying measured evidence goes in a file, not the reply.** Write the full report to `<the ## Change Directory path>/reports/<your dispatched name>.md`, creating `reports/` if absent, and reply with the `DONE:` lines, any `NEEDS:` / `CONFLICT:` / `BLOCKED:` signal, any `MOCKED:` line (a completed task whose external dependency you stubbed — see *Signaling Unknowns* in `agent-guidelines`), and that path. The reply size limit cuts mid-table, and what it takes is the command output and the numbers the orchestrator triages on — four implementation-agent reports on one measured run were truncated, each costing a round-trip to ask for the missing half. This changes where the report is delivered, never what it contains.
    - **Completion contract** — binding, per *Completion Contract — do NOT end your turn early* in `agent-guidelines` (already in your context): not finished until every assigned task is committed with a `DONE:` line each; the only valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:` (below).
    - Only add code comments for business logic that is not obvious from the code — if good naming makes it clear, skip the comment
    - Do NOT narrate your actions ("Now I will...", "Let me..."). Report only structured output: task status, files changed, test results.
@@ -275,10 +276,13 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    ```
    ## 實作完成：<change-name>
    **進度：** M/M 任務 | Code Review: [result] | Security: [result] | E2E: [result]
+   **成本：** <D> 次派工 · <T>m · diff <F> 檔 / +<A>−<R> 行
    ### Commits
    [最終 commit 清單]
    ### 已完成任務
    [task list with checkmarks]
+   ### 接下來由你執行       ← print whenever tasks.md carries a `## 交付後由你執行` section, an agent returned a `MOCKED:` line, or this run left a task un-executed; omit when there is none of the three
+   [每一條：動作、在哪個環境或系統、怎麼判斷成功。tasks.md 那一節的內容逐條照搬，接著是每一筆 `MOCKED:` 的替換動作，最後列本次跑不動而留 `- [ ]` 的任務及其原因]
    ### 事後檢討            ← include this entire section ONLY when DEV_MODE = true; omit silently otherwise
    [執行過程中遇到的錯誤、意外狀況、手動介入]
    - 每個問題：發生什麼、根因、如何解決
@@ -297,6 +301,8 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    [同完成格式 — 列出目前為止所有錯誤/問題]
    你想怎麼處理？
    ```
+
+   **The `成本：` line prints on every run, `DEV_MODE` or not.** `<D>` is every Agent dispatch this run made, Phase 1 groups + reviewers + fix agents + technical-writer, counting each retry round's reviewers separately; `<T>` is wall-clock from the first dispatch; the diff figures come from `git diff --shortstat <base-sha>..HEAD` in the repo that carries the change (each repo on its own line in multi-repo). Together they are the only place the pipeline's cost meets the size of what it produced — a version bump landing 13 lines across 8 files once cost 10 dispatches over 46 minutes, and nothing in the report said so, so nobody could weigh it. **This reports the cost, it does not authorize cutting anything to lower it**: no phase, reviewer, or acceptance criterion is skipped on account of this line. What it feeds is the size judgement one level up (`skills/propose/SKILL.md` → Step 6c, *Assess size*), where a change this shape is routed to `/quick` before the pipeline ever runs.
 
    **Retrospective gating**: when `DEV_MODE = false` (the default), do not print the `### 事後檢討` heading or its body — drop the entire block. End users get a clean report; plugin authors re-run with `dev-mode` to surface lessons learned. This applies to BOTH completion and pause outputs without exception.
 

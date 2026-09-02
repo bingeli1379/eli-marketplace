@@ -194,6 +194,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - **Writes single-threaded**: dispatch implementation/fix agents **one at a time** in dependency order, each committing before the next starts. Only read-only reviewers (Phase 2) are dispatched simultaneously. (Multi-repo exception: agents in *different* child repos may run concurrently.)
    - You will be **automatically notified** when each background agent completes — do NOT poll
    - **Stamp each of step 8's `Time` rows at its boundary with `date`, and each dispatched agent's spawn and return.** Step 8's final report prints the breakdown. The numbers are only cheap at the boundary: a returning agent's report carries no elapsed time, and `ListAgents` gives an age relative to now, so once a later round starts an earlier one's cost is no longer recoverable.
+   - **Handling a MOCKED return**: a `MOCKED:` line is **not a stop** — that task is done and committed with one external dependency stubbed (`skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*). Proceed as with DONE, and carry every such line into your final report as work the user still has to do: the swap they perform and how they check it. `/quick` writes no artifacts, so this report is the only place it can survive — dropping it ships a stub nobody knows about.
    - **Handling a NEEDS return**: if an agent's report contains a `NEEDS:` line, treat it as *paused awaiting an external fact*, not done. Resolve it with whatever tools/knowledge you (the orchestrator) have, then **resume the SAME agent with `SendMessage`** (context intact — do NOT re-dispatch). Because agents run in the background you can service several concurrently. `CONFLICT:` → resolve with the user; `BLOCKED:` → re-scope or re-dispatch with corrected context. See `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns* for the vocabulary.
    - **Enforce analytical depth for reviewer agents only**: read `${CLAUDE_PLUGIN_ROOT}/references/reviewer-depth.md` and include its block verbatim in every `review-engineer` / `security-engineer` / `qa-engineer` dispatch. That file also states the two things you must settle **before** dispatching — cross-repo questions, and asserting only what you verified — which are the dispatcher's, not the reviewer's. Quick mode usually has no specs, so the `qa-engineer` line resolves to "every affected user-facing flow" — that conditional is in the file. It also names who must NOT receive it (implementation and fix agents, `performance-engineer`, technical-writer) and why; honor that exclusion.
 
@@ -281,6 +282,9 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    | Phase 2 review (<k> dispatches) | <n>m |
    | fix + re-review (<r> rounds) | <n>m |
 
+   ### 接下來由你執行                    ← print whenever an agent returned a `MOCKED:` line; omit otherwise
+   [每一筆：被 stub 掉的是什麼、你要做的那一個替換動作、怎麼判斷成功]
+
    ### Notes
    [issues encountered, decisions made, follow-up suggestions]
    ```
@@ -305,7 +309,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
 If during analysis (step 5) you determine the task is:
 - Touching 3+ independent capabilities
-- Would produce 15+ tasks
+- Has a production edit surface no one could review in one sitting — measured by the files it writes, not by task count, which verification and constraint items inflate without carrying edits (`skills/propose/SKILL.md` → Step 6c, *Assess size*)
 - Requires significant architectural decisions
 - Iterates an unbounded population or performs bulk external mutation (batch API writes, mass updates, migrations, backfills) — quick mode never asks for data volume or hard runtime limits, and those decide the execution model
 - Needs cross-team coordination

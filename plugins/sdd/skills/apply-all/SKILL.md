@@ -82,7 +82,7 @@ Repo topology (single-repo / multi-repo / no-git) is detected **once at batch st
 
    d. Record end time, duration, and result (COMPLETE or PAUSED with reason).
 
-   e. Announce: `[N/M] <change-name>: COMPLETE (8/8 tasks, 25m)` and **automatically proceed to next change**.
+   e. Announce: `[N/M] <change-name>: COMPLETE (8/8 tasks, 25m, 10 派工, diff 8 檔/+13−9)` — the same cost figures `/apply` prints (`skills/apply/SKILL.md` → Step 9), which matter more here because an unattended batch multiplies them — and **automatically proceed to next change**.
 
    f. **If a change pauses** (review/QA failure after retries): record the reason, **add it to the paused/failed set** (the prerequisite gate above then parks its dependents transitively), and **continue to next change** — do NOT stop the batch. User can fix later with `/apply <name>`.
 
@@ -104,6 +104,9 @@ Repo topology (single-repo / multi-repo / no-git) is detected **once at batch st
 
    **暫停的 changes：**
    - `add-user-profile`: [原因]. 執行 `/apply add-user-profile` 重跑
+
+   **接下來由你執行：**      ← aggregate every change's handoff items here; omit the block when there are none
+   - `add-user-registration`: [該 change 的 `## 交付後由你執行` 逐條，加上任何 `MOCKED:` 的替換動作]
 
    **事後檢討：**            ← include this entire block ONLY when DEV_MODE = true; omit silently otherwise
    [彙整所有 changes 中遇到的錯誤、意外狀況、手動介入]
