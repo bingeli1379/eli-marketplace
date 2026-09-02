@@ -91,11 +91,12 @@ Prefer a package-path baseline (`git log --oneline -1 --grep='release v' -- <pac
 - Only ask the user when the files are **genuinely independent artifacts** (different packages with their own version lifecycles), not when they are mirror manifests of one package
 - Preserve each file's existing formatting
 - After editing, verify each JSON manifest still parses (e.g. `python3 -m json.tool <file> >/dev/null`) before committing — a version edit that breaks the manifest ships a broken plugin, worse than a stale version
+- **Refresh any lock file that records the package's own version.** Some lock files pin the package being released, not just its dependencies (`package-lock.json` does) — grep the **old** version string in each lock file inside the package, **and in the workspace root's lock file** when the package is a workspace member: an npm/pnpm workspace keeps one lock at the root recording every member's version, so a package-scoped look finds nothing and the stale entry ships. A hit means the lock may carry the package's own version, so refresh it with the ecosystem's metadata-only command (`npm install --package-lock-only` and its equivalents) and confirm the lock now names the **new** version. Do NOT verify by the old string disappearing — an unrelated dependency pinned at that same version keeps it present forever. No such command available → say so and release without it rather than hand-editing the lock
 
 ### 7. Commit
 
 - Show the changelog entry and version diff, then immediately commit without waiting for user confirmation
-- Stage and commit all release changes (the target's CHANGELOG + version file(s)) with a conventional commit message
+- Stage and commit all release changes (the target's CHANGELOG + version file(s) + any lock file refreshed in step 6) with a conventional commit message
 - In a multi-package repo, scope the commit to the released package: `chore(<package>): release vX.Y.Z`
 
 ## Changelog Format
