@@ -276,10 +276,13 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    ```
    ## 實作完成：<change-name>
    **進度：** M/M 任務 | Code Review: [result] | Security: [result] | E2E: [result]
+   **成本：** <D> 次派工 · <T>m · diff <F> 檔 / +<A>−<R> 行
    ### Commits
    [最終 commit 清單]
    ### 已完成任務
    [task list with checkmarks]
+   ### 接下來由你執行       ← print whenever tasks.md carries a `## 交付後由你執行` section, an agent returned a `MOCKED:` line, or this run left a task un-executed; omit when there is none of the three
+   [每一條：動作、在哪個環境或系統、怎麼判斷成功。tasks.md 那一節的內容逐條照搬，接著是每一筆 `MOCKED:` 的替換動作，最後列本次跑不動而留 `- [ ]` 的任務及其原因]
    ### 事後檢討            ← include this entire section ONLY when DEV_MODE = true; omit silently otherwise
    [執行過程中遇到的錯誤、意外狀況、手動介入]
    - 每個問題：發生什麼、根因、如何解決

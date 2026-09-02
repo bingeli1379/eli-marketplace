@@ -309,7 +309,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
 If during analysis (step 5) you determine the task is:
 - Touching 3+ independent capabilities
-- Would produce 15+ tasks
+- Has a production edit surface no one could review in one sitting — measured by the files it writes, not by task count, which verification and constraint items inflate without carrying edits (`skills/propose/SKILL.md` → Step 6c, *Assess size*)
 - Requires significant architectural decisions
 - Iterates an unbounded population or performs bulk external mutation (batch API writes, mass updates, migrations, backfills) — quick mode never asks for data volume or hard runtime limits, and those decide the execution model
 - Needs cross-team coordination
