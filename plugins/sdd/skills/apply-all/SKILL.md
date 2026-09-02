@@ -82,7 +82,7 @@ Repo topology (single-repo / multi-repo / no-git) is detected **once at batch st
 
    d. Record end time, duration, and result (COMPLETE or PAUSED with reason).
 
-   e. Announce: `[N/M] <change-name>: COMPLETE (8/8 tasks, 25m)` and **automatically proceed to next change**.
+   e. Announce: `[N/M] <change-name>: COMPLETE (8/8 tasks, 25m, 10 派工, diff 8 檔/+13−9)` — the same cost figures `/apply` prints (`skills/apply/SKILL.md` → Step 9), which matter more here because an unattended batch multiplies them — and **automatically proceed to next change**.
 
    f. **If a change pauses** (review/QA failure after retries): record the reason, **add it to the paused/failed set** (the prerequisite gate above then parks its dependents transitively), and **continue to next change** — do NOT stop the batch. User can fix later with `/apply <name>`.
 
