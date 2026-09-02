@@ -116,7 +116,7 @@ Most rules are **ERROR** level — any ERROR causes FAIL. A few rules are marked
 |-------|------|
 | Capability → spec mapping | Every capability in proposal.md `## Capabilities` MUST have a corresponding `specs/<capability-name>/spec.md` |
 | Spec → capability mapping | Every `specs/<name>/` directory MUST correspond to a capability in proposal.md. **Enumerate directories, not `specs/*/spec.md` files** — an orphan left by an abandoned naming attempt is usually *empty*, so a file-glob walk never sees it while `/apply` still reads it as a capability with no acceptance criteria. An empty `specs/<name>/` is an ERROR whether or not its name matches a capability |
-| Spec → task coverage | Every spec Requirement MUST be traceable to at least one task in tasks.md, **or to a bullet under `## 交付後由你執行`** (by keyword or description overlap). That section holds the work only the user can perform (`propose` → Step 7e), so a Requirement whose acceptance is an environment deployment or a manual approval is covered when a handoff bullet names it. Covered by neither is an ERROR |
+| Spec → task coverage | Every spec Requirement MUST be traceable to at least one task in tasks.md, **or to a bullet under `## 交付後由你執行`** (by keyword or description overlap). A handoff bullet naming the Requirement covers it, whatever kind of work it describes — `propose` → Step 7e is what decides which work belongs in that section, and re-adjudicating the kind here just ERRORs a correctly-structured change. Covered by neither is an ERROR |
 
 ---
 
