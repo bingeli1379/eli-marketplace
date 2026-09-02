@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.1.0] - 2026-09-02
+
+### Fixed
+- Releasing a package now refreshes a lock file that records the package's own version, including the one at the workspace root that a member package's own folder never contains. A version bump used to leave the lock on the old number, so a clean install from the release commit failed.
+- Splitting your changes into commits no longer separates a lock file from the manifest change that produced it. The lock was sorted into a maintenance commit by its filename alone, which left the manifest commit carrying a lock that did not match it.
+
 ## [4.0.1] - 2026-08-23
 
 ### Fixed
