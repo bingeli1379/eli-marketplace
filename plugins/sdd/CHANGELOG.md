@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.14.0] - 2026-09-02
+
+### Added
+- A change's task list no longer mixes in steps you have to run yourself. Deployments you trigger, approvals you give, credentials only you hold now sit in their own `交付後由你執行` section at the end, as plain bullets. `/apply` stops counting them, so a finished change reads as finished instead of 13/18 with five boxes nobody could ever tick, and `/complete` prints that list to you before it deletes the change folder.
+- When a third-party service cannot be reached from your machine, an agent no longer abandons the whole task to save one missing value. It builds the real code path against a stub, tests it, and hands you the single swap to make — the credential or endpoint — plus how to check it worked. The stub is always visible as a stub and never reported as a verified integration.
+- `/apply` now tells you what the run cost: how many agents it dispatched, how long it took, and how big the resulting change was. Nothing is skipped to make that number smaller; it is there so a run that spends an hour on a dozen lines is visible instead of invisible.
+
+### Changed
+- Deciding whether a change deserves the full spec flow now looks at how much code it actually writes, not how many tasks it lists. Verification steps and "do not touch this" notes inflated the count, so a version bump that produced one commit of 13 lines cleared the threshold and ran the whole pipeline — ten agents over 46 minutes. Work shaped like that is now pointed at `/quick` up front.
+- A rollout plan is written once, in the handoff section, as the steps you actually take. The design document keeps only why that order was chosen, so the sequence no longer exists twice with two copies free to drift.
+
 ## [3.13.0] - 2026-09-01
 
 ### Added
