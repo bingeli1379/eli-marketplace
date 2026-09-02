@@ -162,6 +162,7 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
       - **DONE**: Proceed to squash.
       - **DONE_WITH_CONCERNS**: Read concerns. If about correctness or scope, dispatch a fix before squashing. If observations (e.g., "file is getting large"), note in report and proceed.
       - **NEEDS** (report contains a `NEEDS:` line): the agent is *paused awaiting an external fact*, NOT failed. Resolve each NEEDS using whatever tools/knowledge YOU (the orchestrator) have — connected MCP servers, lookup tools, project-knowledge skills, or the user — then **resume the SAME agent with `SendMessage`**: its context is intact, so do NOT re-dispatch a fresh agent and do NOT make it redo work. If a resolved fact contradicts an assumption in `design.md` / `tasks.md`, surface it to the user before resuming — a NEEDS can legitimately invalidate part of the plan. sdd names no specific resolving tool; use what the environment provides, and if a NEEDS is genuinely unresolvable, ask the user.
+      - **MOCKED** (report contains a `MOCKED:` line): **not a stop** — the task is done and committed, with one external dependency stubbed because its credential or endpoint is unreachable from here (`skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*). Squash and proceed as with DONE. Carry each line into your final report's handoff block, and do **not** record the stubbed integration as verified against the live system. Resolve it like a NEEDS only when you can actually supply the missing value — then resume that agent with `SendMessage` to swap the stub for the real one.
       - **CONFLICT** (report contains a `CONFLICT:` line): the agent disagrees with the spec/design. Collect conflicts and resolve with the user via **AskUserQuestion**, then align the losing side (spec or design) before continuing.
       - **BLOCKED**: the agent cannot proceed for a *non-external* reason — wrong/insufficient context, task too large, or the plan itself is unsound. Re-dispatch with corrected context, break into sub-groups, or escalate to the user. Do NOT retry the same agent without changing something. (Contrast with NEEDS: BLOCKED warrants a fresh re-dispatch; NEEDS warrants resolve-and-resume with the agent's work preserved.)
       - **IDLE / "available" notification — AMBIGUOUS, verify via git first (do NOT assume failure)**: a backgrounded agent normally commits its work and *then* yields, which reaches you as a runtime `idle` / `available` notification that looks **identical whether the agent finished or stalled** — and it often does NOT push an explicit `DONE`. So treat an idle/available signal as "go check," not "failed":
@@ -295,9 +296,14 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
 ### 文件更新
 [Files updated/created — or SKIPPED if no doc changes needed]
 
+### 接下來由你執行
+[tasks.md 的 `## 交付後由你執行` 逐條照搬，加上每一筆 `MOCKED:` 的替換動作，以及本次跑不動而留 `- [ ]` 的任務與原因。三者皆無則整節省略]
+
 ### 備註
 [issues encountered, tasks skipped, follow-up suggestions]
 ```
+
+**`進度：N/M` counts only checkboxes under a `## N.` group heading.** The `## 交付後由你執行` section is the user's work, written as plain `- ` bullets outside the numbering (`skills/propose/SKILL.md` → Step 7e), and counting it reports a finished change as incomplete.
 
 ## Interaction Style
 

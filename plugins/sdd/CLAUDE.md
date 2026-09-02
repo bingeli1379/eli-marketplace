@@ -69,7 +69,7 @@ feature-spec/
     <name>/
       proposal.md             # What & why
       design.md               # How (domain model, API contract, shared types, decisions)
-      tasks.md                # Implementation checklist (grouped by reviewable unit, one agent type per group)
+      tasks.md                # Implementation checklist (grouped by reviewable unit, one agent type per group), plus a trailing `## 交付後由你執行` section holding the work only the user can perform — plain `- ` bullets, never checkboxes, never counted or dispatched
       specs/                  # Delta specs (acceptance criteria)
         <capability>/spec.md
       reports/                # Phase 1 implementation-agent reports, one per dispatched agent (skills/apply/SKILL.md → Agent Prompt Template)

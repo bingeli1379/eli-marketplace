@@ -105,6 +105,9 @@ Repo topology (single-repo / multi-repo / no-git) is detected **once at batch st
    **暫停的 changes：**
    - `add-user-profile`: [原因]. 執行 `/apply add-user-profile` 重跑
 
+   **接下來由你執行：**      ← aggregate every change's handoff items here; omit the block when there are none
+   - `add-user-registration`: [該 change 的 `## 交付後由你執行` 逐條，加上任何 `MOCKED:` 的替換動作]
+
    **事後檢討：**            ← include this entire block ONLY when DEV_MODE = true; omit silently otherwise
    [彙整所有 changes 中遇到的錯誤、意外狀況、手動介入]
    - 每個問題：哪個 change、發生什麼、根因、如何解決
