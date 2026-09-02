@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.15.0] - 2026-09-02
+
+### Changed
+- A find-and-replace change no longer treats every grep hit as something to change. Each match is classified by the construct it actually sits in first, and the ones that turn out to be something else are recorded as excluded with a reason. This was shipping real bugs: a label rename swept a string that also appeared in a country dropdown, renamed a country, and the acceptance criterion — a count copied from the same sweep — verified green on the way out, because the number already had the mistake in it.
+- The pattern for such a sweep is now taken from the construct rather than from whatever one file's formatting happened to look like, so the same thing laid out differently is still found. That is also what finds a second copy of the same mechanism living in another module or repo, which the first copy's string never will.
+- A verification is now written as an assertion on the thing that produces the value wherever that is possible, and only what genuinely emerges from rendering stays a look. One change had asked for twelve separate environment visits to confirm a label that six classes emit; one assertion covers all twelve, in the repo, on every future run.
+- Judging whether something *looks* right is now the user's, and it goes in the handoff section instead of becoming a numbered task. An available environment does not change that — an appearance judgement closes on somebody's eye, not on evidence — so the task list stays entirely completable and a layout requirement covered by a handoff bullet no longer fails validation.
+- Before recording a task as unrunnable because the environment cannot be reached, that has to be measured once and the response quoted. A run had called ten verification items unreachable for its whole duration and only tested it at the end when asked; the conclusion held, and nothing before that had earned it.
+
 ## [3.14.0] - 2026-09-02
 
 ### Added
