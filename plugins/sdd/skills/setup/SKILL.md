@@ -59,15 +59,15 @@ This file holds the flow, the SCAN-report contract, the question rules, and the 
 
 ### 1. Auto-detect tech stack
 
-Load `references/detection-rules.md` § 1 and follow it.
+Load `references/detection-rules.md` § 1, *Auto-detect tech stack*, and follow it.
 
 ### 2. Auto-detect lint and verification commands
 
-Load `references/detection-rules.md` § 2 and follow it.
+Load `references/detection-rules.md` § 2, *Auto-detect lint and verification commands*, and follow it.
 
 ### 3. Auto-detect architecture baseline
 
-Load `references/detection-rules.md` § 3 and follow it. Detect only the fields that go into `config.yaml`: `pattern`, `layers`, `entry_points`, `hard_rules`. Tag each with the 4-level confidence scale defined in `detection-rules.md § Confidence tagging`: ✅ High / ⚠️ Medium / ○ N/A / ❌ Low (only ❌ triggers a question).
+Load `references/detection-rules.md` § 3, *Auto-detect architecture baseline*, and follow it. Detect only the fields that go into `config.yaml`: `pattern`, `layers`, `entry_points`, `hard_rules`. Tag each with the 4-level confidence scale defined in `detection-rules.md § Confidence tagging`: ✅ High / ⚠️ Medium / ○ N/A / ❌ Low (only ❌ triggers a question).
 
 ### 4. Present scan report and ask up to 3 confirmation questions
 
