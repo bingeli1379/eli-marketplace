@@ -32,13 +32,19 @@ Read these files if they exist and synthesize a **one-line** `tech_stack` string
 - Use the project's package manager based on lock file
 - **Before generating**, check `${CLAUDE_PLUGIN_ROOT}/company-conventions.md` for pre-lint skip rules. Skip matching tooling.
 
-**Verification commands** — use the **exact script name** from `package.json`:
+**Verification commands** — record what actually gates a change, which is the project's own CI:
+
+- **Read the repo's pipeline definition first and record the build/test invocation it runs, configuration and flags included** — `.gitlab-ci.yml`, `.github/workflows/*`, `Jenkinsfile`, `azure-pipelines.yml`, or the build stage of a `Dockerfile` the pipeline builds. That invocation is the gate; a conventional local equivalent that differs from it is not, and verifying against the local one reports green on a commit CI then rejects. The gap is rarely visible in the command name — a different configuration, a different SDK or toolchain version, or a stricter analyser set is enough.
+- Where CI's command cannot run on a developer machine (it needs a container, a credential, a service), record it anyway and note what it needs. An unrunnable gate the user can trigger beats a runnable one that proves nothing.
+- Where the repo ships no pipeline, or CI only invokes a script the repo owns, fall back to the conventional entry points below.
+
+Conventional entry points — use the **exact script name** from `package.json`:
 - `type-check` / `typecheck` / `tsc`
 - `test` / `test:unit` / `test:e2e`
 - `build`
 - For .NET: `dotnet build`, `dotnet test`
 - For Godot (`project.godot` present): import/parse check `<godot-bin> --headless --import` (the universal baseline — catches parse and import errors); tests via the repo's runner — gdUnit4 (`addons/gdUnit4/runtest.sh` / `.cmd`), GUT (`<godot-bin> --headless -s addons/gut/gut_cmdln.gd`), or a custom `tools/*runner*`. C# track adds `<godot-bin> --headless --build-solutions` and/or `dotnet test`. The Godot binary path is machine-specific — record the command shape and let the project override the binary.
-- **CRITICAL**: never hardcode tool flags (e.g., `vue-tsc --noEmit`) — different projects configure tools differently.
+- **CRITICAL**: never invent tool flags of your own (e.g., `vue-tsc --noEmit`) — different projects configure tools differently. Flags the project's own CI or scripts already carry are part of the command and are recorded verbatim.
 
 ---
 
@@ -116,7 +122,7 @@ Key principle: the only thing that triggers a question is a **signal that should
 |---|---|---|---|
 | Tech stack | Manifest files parse cleanly | Manifest exists but non-standard / sparse | No manifest but repo is **code-bearing** → ❌ Low. Config-only / docs-only → force ○. |
 | Lint commands | `package.json` has `lint`/`lint:fix` OR `dotnet format` applicable OR config files present | One config file exists but no script wired up | Code-bearing repo with no lint setup → ❌ Low. Config-only / docs-only → force ○. |
-| Verification commands | Standard `type-check` / `test` / `build` scripts OR `*.csproj` present | Non-standard script names implying verification ("ci", "check") | Code-bearing repo with no buildable/testable manifest → ❌ Low. Config-only / docs-only → force ○. |
+| Verification commands | A CI pipeline definition names the build/test invocation, OR standard `type-check` / `test` / `build` scripts OR `*.csproj` present | Non-standard script names implying verification ("ci", "check") | Code-bearing repo with no buildable/testable manifest → ❌ Low. Config-only / docs-only → force ○. |
 | Pattern | Top-level folders match a known pattern (Clean / Nuxt / MVC) | Folder structure exists but matches no known pattern — describe literally | Single dir or no `src/` / `app/` |
 | Layers | ≥2 architectural folders matching the detected pattern | folders exist but ambiguous mapping | No `src/` / `app/`, or single dir |
 | Entry points | ≥1 conventional location resolves, OR a non-standard entry kind matches | Some locations resolve but unconventional naming | Code-bearing repo with no resolvable entry locations and no non-standard kind → ❌ Low. Docs-only → force ○. |

@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.17.0] - 2026-09-08
+
+### Changed
+- `/setup` now records the build and test commands your CI actually runs, instead of a stock default for your stack. A .NET project was handed `dotnet build` while its pipeline ran `dotnet publish -c Release`: the work verified green against the config, reported every acceptance criterion met, and CI rejected the same commit over an analyser the Debug build never reaches. A project with no pipeline still gets the conventional entry points, and a CI command that cannot run on your machine is recorded anyway together with what it needs, so you can trigger it yourself instead of trusting a local command that proves nothing.
+- With no config file present, the `/propose` dry-run and `/apply`'s agents used to fall back to reading `package.json` scripts, which finds nothing at all on a project that does not have one — so they verified nothing and said so to no one. Both now fall back to what the project's CI runs.
+
 ## [3.16.0] - 2026-09-02
 
 ### Changed
