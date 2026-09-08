@@ -25,8 +25,10 @@ architecture:
 #     - pnpm eslint --fix .
 #     - dotnet format
 
-# Verification commands to run after implementation (optional). Use the EXACT
-# script name from package.json — never hardcode tool-specific flags.
+# Verification commands to run after implementation (optional). Record what the
+# project's own CI actually gates on, flags and configuration included; where it
+# ships no pipeline, use the exact script name the project defines. Never invent
+# tool-specific flags of your own.
 #   verification_commands:
 #     type_check: npm run type-check
 #     unit_test: npm run test:unit

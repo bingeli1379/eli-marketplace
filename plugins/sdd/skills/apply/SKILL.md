@@ -172,7 +172,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    ## Verification Commands (from config.yaml)
    [verification_commands from config.yaml. Example: type_check: "npm run type-check", unit_test: "npm run test:unit"]
    IMPORTANT: Use ONLY these commands for verification. NEVER hardcode tool-specific commands (e.g., "npx vue-tsc --noEmit") — the project's scripts may configure tools with different flags that change behavior.
-   If not configured: detect from package.json scripts at runtime.
+   If not configured: run the build/test invocation the project's own CI runs, falling back to its conventional entry points.
    **Bound every run, and treat silence as a symptom.** A suite that needs backing services (a database, a broker) does not fail fast when one is unhealthy — it retries the connection, so the run produces no output and looks merely slow. Give each command an explicit timeout generous against its known healthy duration, and when it trips do NOT simply re-run it: check whether the dependency is actually up, and read which tests failed rather than assuming the suite is slow. A suite whose healthy run takes a minute and has produced nothing for twenty is not running; something it needs is gone. **This binds whoever executes the command — the implementing agent and the orchestrator alike.**
 
    ## Instructions
