@@ -198,7 +198,7 @@ public async Task<IActionResult> CreateOrder(CreateOrderRequest request)
 
 ## API Standards
 - RESTful resource-oriented naming, unified `ApiResponse<T>` format
-- Errors: Problem Details (RFC 9457), XML doc comments on all endpoints
+- Errors: Problem Details (RFC 9457); XML doc comments on endpoints only where the repo already documents its own (the *Precedence over `dotnet-best-practices`* rule above — a published API surface, not internal service code)
 - Swagger/OpenAPI via Swashbuckle
 
 ## TDD (Test-Driven Development)
