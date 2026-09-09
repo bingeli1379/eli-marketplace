@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.18.0] - 2026-09-09
+
+### Added
+- A change that wants a feature flag, a global setting, or a config kill switch now asks you first, with the cost attached. Those are cheap to write and expensive to own — someone has to create the key in every environment, sequence the flips, and know which switch retires which half of the change, and none of that is in what you asked for. One measured run proposed three runtime switches across four deployments, each for a sound reason, and you would have first heard about them in the final handoff.
+- After detecting your repo layout, the workflow now resolves the actual task paths to the repos that own them and stops to ask when some fall outside the one you are standing in. Detection answers where your working directory is, which is a different question from which repos the change touches: one change whose spec lived in a single repo had four of its five groups targeting three siblings, and the cross-repo half had to be improvised. The branch those sibling repos commit to is part of the same question, since they sit on their default branch.
+
+### Fixed
+- QA now runs on its own after the code and security reviewers, instead of alongside them. Proving a guard can actually fail means temporarily breaking the code it guards, so QA writes to your working tree while it runs — and a security reviewer reading that half-applied state reported a real-looking blocker with no bearing on the committed code. Its report now states the resulting gap rather than leaving it implied.
+- Three verification steps that were passing on the wrong evidence: a fix is checked against the diff body rather than the file-count summary, which is blind to a BOM or a line-ending flip; a ruling that corrects the design is now carried into the specs QA verifies against; and a baseline reads the command's own exit status rather than a pipeline's, after a typecheck reported as clean turned out to have five errors.
+
 ## [3.17.0] - 2026-09-08
 
 ### Changed
