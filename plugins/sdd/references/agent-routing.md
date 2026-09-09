@@ -59,7 +59,7 @@ borrow its `skills:` list). Resolve the file by the role's **Home**:
 - **pack** → the file lives in a sibling plugin; locate it without assuming the
   install layout:
   ```bash
-  find ~/.claude/plugins -type f -path "*/<pack>/agents/<role>.md" 2>/dev/null | head -1
+  find "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins" -type f -path "*/<pack>/agents/<role>.md" 2>/dev/null | head -1
   ```
   (e.g. `<pack>=sdd-vue`, `<role>=vue-engineer`). If nothing is found, the pack is
   not installed:

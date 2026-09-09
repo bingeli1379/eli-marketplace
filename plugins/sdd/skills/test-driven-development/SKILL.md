@@ -25,7 +25,7 @@ Write the test first. Watch it fail. Write minimal code to pass.
 - Refactoring
 - Behavior changes
 
-**Exceptions (ask the user):**
+**Exceptions (ask the user — or, dispatched under `/apply` / `/quick` where questions are forbidden, decide per `agent-guidelines` → *Spec-Driven Input* and flag the choice in your report):**
 - Throwaway prototypes
 - Generated code
 - Configuration files
@@ -98,7 +98,7 @@ Vague name, tests mock not code
 
 ### Verify RED - Watch It Fail
 
-**MANDATORY. Never skip.**
+**MANDATORY. Never skip.** Run the project's own test command (the `verification_commands` entry when one is configured); the invocation below is only the shape:
 
 ```bash
 npm test path/to/test.test.ts
@@ -340,7 +340,7 @@ Never fix bugs without a test.
 
 ## Testing Anti-Patterns
 
-When adding mocks or test utilities, read @testing-anti-patterns.md to avoid common pitfalls:
+When adding mocks or test utilities, read `${CLAUDE_SKILL_DIR}/testing-anti-patterns.md` to avoid common pitfalls:
 - Testing mock behavior instead of real behavior
 - Adding test-only methods to production classes
 - Mocking without understanding dependencies

@@ -66,7 +66,7 @@ You MUST complete each phase before proceeding to the next.
    - What are the exact steps?
    - Does it happen every time?
    - If not reproducible → gather more data, don't guess
-   - **This is the single highest-leverage move in debugging.** Before theorising, construct a *tight, red-capable* loop — one command you can run that goes red on THIS bug and green once fixed. With it, bisection/hypothesis-testing/instrumentation all just consume it; without it, no amount of staring at code will save you. For the construction taxonomy (failing test → curl → CLI snapshot → headless → replay → harness → fuzz → bisect → differential → HITL), how to tighten it, the perf-regression variant, and the completion gate, see `feedback-loop.md` in this directory.
+   - **This is the single highest-leverage move in debugging.** Before theorising, construct a *tight, red-capable* loop — one command you can run that goes red on THIS bug and green once fixed. With it, bisection/hypothesis-testing/instrumentation all just consume it; without it, no amount of staring at code will save you. For the construction taxonomy (failing test → curl → CLI snapshot → headless → replay → harness → fuzz → bisect → differential → HITL), how to tighten it, the perf-regression variant, and the completion gate, see `${CLAUDE_SKILL_DIR}/feedback-loop.md`.
 
 3. **Check Recent Changes**
    - What changed that could cause this?
@@ -116,7 +116,7 @@ You MUST complete each phase before proceeding to the next.
 
    **WHEN error is deep in call stack:**
 
-   See `root-cause-tracing.md` in this directory for the complete backward tracing technique.
+   See `${CLAUDE_SKILL_DIR}/root-cause-tracing.md` for the complete backward tracing technique.
 
    **Quick version:**
    - Where does bad value originate?
@@ -283,7 +283,7 @@ If systematic investigation reveals issue is truly environmental, timing-depende
 
 ## Supporting Techniques
 
-These techniques are part of systematic debugging and available in this directory:
+These techniques are part of systematic debugging, each at `${CLAUDE_SKILL_DIR}/<file>`:
 
 - **`feedback-loop.md`** - Construct, tighten, and gate the red-capable reproduction loop (Phase 1's core move)
 - **`root-cause-tracing.md`** - Trace bugs backward through call stack to find original trigger
