@@ -229,7 +229,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
 7. **Generate artifacts in dependency order**
 
-   Generate each artifact following the templates in this skill's `templates/` directory. The dependency order is:
+   Generate each artifact following the templates in `${CLAUDE_SKILL_DIR}/templates/`. The dependency order is:
 
    ```
    proposal (standalone)
@@ -242,7 +242,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    ```
 
    For each artifact:
-   - Read the corresponding template from `templates/` for structure guidance
+   - Read the corresponding template from `${CLAUDE_SKILL_DIR}/templates/` for structure guidance
    - Read completed dependency artifacts for context
    - Apply project context from `config.yaml` as constraints (do NOT copy into the file)
    - Write the artifact file
@@ -262,7 +262,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - Scenarios should also cover: error cases, authorization (if applicable)
    - Spec THEN clauses define the **acceptance criteria** — these become constraints for the architect
    - **Grounding requirements for THEN clauses** (prevents the four common hallucination patterns):
-     1. **Tool-behavior assertions** ("pnpm does X", "vitest emits Y", "npm includes Z by default") MUST be verifiable via a concrete command (`pnpm … --dry-run`, `npm pack --dry-run`, `node -e …`). Prefer "the THEN output is whatever `<command>` produces at BASE_SHA" over asserting a specific string from memory. When uncertain about a tool's semantics, run the command against the current repo during propose and quote the actual output.
+     1. **Tool-behavior assertions** ("pnpm does X", "vitest emits Y", "npm includes Z by default") MUST be verifiable via a concrete command (`pnpm … --dry-run`, `npm pack --dry-run`, `node -e …`). Prefer "the THEN output is whatever `<command>` produces at the current HEAD" over asserting a specific string from memory. When uncertain about a tool's semantics, run the command against the current repo during propose and quote the actual output.
      2. **Historical / temporal references** ("retained from the previous fix", "preserved from v1.1.0", "as introduced in commit X") MUST cite a specific SHA plus the exact line the claim refers to, or be removed. Phrases like "前次修復保留" / "previously fixed" without a SHA are hallucination bait — the model fabricates plausible-sounding history that never happened.
      3. **Exact-string invariants** (`files: ["dist"]`, `types: ["vitest/globals"]`) MUST be rewritten as **necessary-condition invariants** (`files MUST at least include "dist"`, `types MUST include "vitest/globals" and "node"`) unless the exact-match is genuinely load-bearing. Ecosystem conventions (Changesets adding `CHANGELOG.md`, tool defaults injecting metadata) will routinely extend these arrays in valid ways; over-tight specs force agents to fight the ecosystem.
      4. **Domain values used in examples** — an enum member, a status, a tier or role name, a config key — MUST be read from the declaration, even when the value is only illustrating a scenario. Naming a real type and inventing one of its members is what slips through: the type resolves, so the clause looks grounded. And an example value does not stay in the spec — every downstream task prompt quotes it, implementers put it in test data, and it reaches user-facing documentation as an instruction. One invented value therefore costs every consumer a separate discovery and correction. Grep the declaration and use a real value; where a placeholder genuinely reads better, make it obviously not a value (`<currency>`, `<tier>`) rather than a plausible-looking invention.
@@ -291,7 +291,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
      - **Routine** = reversible, low blast-radius, or effectively determined by an existing project convention / the named Reference implementation. For these, **one line stating the choice and why is enough** — do NOT manufacture 2-3 candidates to compare. Naming the convention/Reference it follows IS the justification.
 
      The bar: a high-stakes decision presented as a single option with no alternatives considered is incomplete; a routine decision padded into a 3-candidate comparison is over-engineered. Match the analysis to the decision. (Reversibility was already assessed per area on the Step 6b Reversibility axis — reuse that classification here.)
-   - **CRITICAL — feed pre-collected context**: The prompt MUST include the **complete affected-files inventory from Step 5** (including the **Reference implementation pointers** found there), the proposal.md content, **all completed spec files from Step 7b**, the **full contents of the `config.yaml`(s) read in Step 4** — single-repo `feature-spec/config.yaml`, multi-repo one per touched child repo, each labelled with its repo (there is no umbrella config) — (the `architecture` block and `hard_rules` are constraints the design MUST honor — surface `hard_rules` to the architect as non-negotiable), existing specs from `feature-spec/specs/`, and the design.md template from `templates/`. Include any file contents you already read during the codebase scan (store definitions, key interfaces, usage patterns, etc.). Do not forward the project's own docs — config.yaml is the only project context. If `config.yaml` does not exist, omit that section entirely — do not fabricate placeholder content.
+   - **CRITICAL — feed pre-collected context**: The prompt MUST include the **complete affected-files inventory from Step 5** (including the **Reference implementation pointers** found there), the proposal.md content, **all completed spec files from Step 7b**, the **full contents of the `config.yaml`(s) read in Step 4** — single-repo `feature-spec/config.yaml`, multi-repo one per touched child repo, each labelled with its repo (there is no umbrella config) — (the `architecture` block and `hard_rules` are constraints the design MUST honor — surface `hard_rules` to the architect as non-negotiable), existing specs from `feature-spec/specs/`, and the design.md template from `${CLAUDE_SKILL_DIR}/templates/design.md`. Include any file contents you already read during the codebase scan (store definitions, key interfaces, usage patterns, etc.). Do not forward the project's own docs — config.yaml is the only project context. If `config.yaml` does not exist, omit that section entirely — do not fabricate placeholder content.
    - **CRITICAL — record patterns to mirror, per operation**: Do NOT restate the rule here — it is `agents/architect.md` → *Design Principles*, which the dispatch auto-loads. Instruct only the two things that file cannot know: the **Reference implementations** come from the Step 5 affected-files inventory forwarded below, and each operation's anchor must be named in `design.md`.
    - **CRITICAL — implementation strategy**: The prompt MUST instruct the architect to decide and record the implementation strategy — **Contract-First (the default)** or **Walking Skeleton** — in `design.md` `## Decisions`, with its reason. Do NOT restate the selection criteria here: they live in its own `agents/architect.md` → *Implementation Strategy Selection*, which the dispatch auto-loads. Instruct only the two things it cannot get from there: **Contract-First is the default, so a departure needs an explicit reason**, and if it picks Walking Skeleton the decision record MUST carry the three required specifics that section lists.
    - **CRITICAL — specs are constraints**: Explicitly instruct the architect: "The spec THEN clauses are acceptance criteria that your design MUST satisfy. If you believe a spec THEN clause should be different, do NOT silently override it. Instead, mark it as `CONFLICT:` in your design.md with your reasoning, so the orchestrator can resolve it with the user."
@@ -384,8 +384,8 @@ After all artifacts are created, **automatically runs validation** (`validate` s
      - `(Godot)` → godot-engineer (GDScript/C#, scenes, nodes, autoloads, signals, game systems; includes unit tests, TDD style)
      - `(Database)` → database-engineer (schema, migration, indexing)
      - `(DevOps)` → devops-engineer (Docker, CI/CD, K8s)
-     - `(Performance)` → performance-engineer
-     - `(Security)` → security-engineer (security audit, hardening)
+     - `(Performance)` → performance-engineer (a static, report-only capacity / performance review of a named path; the fix it recommends is a task tagged by the stack that owns the code)
+     - `(Security)` → security-engineer (a read-only security review of a named surface; hardening code is a task tagged by the stack that owns it — this agent never commits)
      - `(Documentation)` → technical-writer (API docs, changelog, ADR)
      - `(E2E)` → qa-engineer (Playwright E2E tests for AC verification)
    - The orchestrator dispatches **one agent per group**, sequentially in dependency order on the current branch (single-writer). Each group's agent reads the prior groups' committed code.

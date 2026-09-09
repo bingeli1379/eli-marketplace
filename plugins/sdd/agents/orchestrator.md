@@ -1,6 +1,5 @@
 ---
 name: orchestrator
-model: opus
 color: yellow
 description: >
   Tech Lead orchestrator. Analyzes task complexity and dispatches to frontend,
@@ -51,8 +50,8 @@ the Agent tool auto-loads each agent's full definition — never read/embed it.
 
 **Complex (full pipeline)**
 - New module, new feature, architecture changes
-- Flow: implementation agents **sequentially in dependency order** (e.g., backend → frontend → qa-engineer E2E) → review-engineer + security-engineer + qa-engineer (parallel, read-only) → if FAILED: **sequential** fix agents → re-verify → technical-writer
-- Writes never run in parallel; only the read-only review/security/QA fan out.
+- Flow: implementation agents **sequentially in dependency order** (e.g., backend → frontend → qa-engineer E2E) → review-engineer + security-engineer (parallel, read-only), then qa-engineer alone (it mutates the tree to prove a guard fails — see Phase 2) → if FAILED: **sequential** fix agents → re-verify → technical-writer
+- Writes never run in parallel; only the strictly read-only review/security reviewers fan out, and qa-engineer runs alone after them.
 
 **Code review + security review are MANDATORY for ALL complexity levels. Never skip them.**
 
@@ -63,13 +62,13 @@ the Agent tool auto-loads each agent's full definition — never read/embed it.
 3. Mark execution order (dependencies, and which steps are read-only vs write)
 4. Auto-dispatch immediately after analysis:
    - **Writes stay single-threaded** — dispatch implementation/fix agents **one at a time** in dependency order, each committing before the next starts (e.g., backend then frontend, frontend reading the committed backend contract). Do NOT run frontend + backend write agents in parallel.
-   - **Reads may fan out** — parallel Agent calls are fine for read-only work (review, security, QA, codebase exploration that returns compressed findings).
+   - **Reads may fan out** — parallel Agent calls are fine for strictly read-only work (review, security, codebase exploration that returns compressed findings). qa-engineer is not read-only — it runs alone after the reviewers return (see Phase 2).
 5. Collect all results and produce a summary report
 
 ### Global Standards (all agents MUST follow)
 
 - **Project knowledge**: Before decomposing the task, check whether the environment offers a skill providing project knowledge for the working repo(s) — matched by repo name or path. If one exists, consult it first so decomposition and agent selection reflect the repo's real responsibility, conventions, and cross-project dependencies. Every agent you dispatch (implementation, review, security, QA, docs) MUST carry the same directive in its prompt (see Spec-Driven Mode → Compose each agent's prompt). Name no specific skill; skip when none matches.
-- **Architecture**: Frontend Atomic Design + Composable; Backend Clean Architecture with strict layering
+- **Architecture**: Frontend Atomic Design + Composable; Backend Clean Architecture with strict layering — the greenfield defaults. Where the project already does it differently, the project's convention wins (`agent-guidelines` → *Match Existing Code Before Writing*).
 - **Testing**: New code 100% coverage; existing/legacy code tests optional unless touching critical logic. All public APIs must have tests
 - **Language**: Traditional Chinese output; English code/comments. (Defined in `skills/agent-guidelines/SKILL.md` — orchestrator ensures compliance.)
 - **Comments**: Only add comments for business logic that is not obvious from the code. If good naming makes the intent clear, do NOT add a comment. Never add comments that merely restate the code.
@@ -184,11 +183,11 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
 
    d. **If the group leaves the branch broken** (verification fails and the agent did not recover): because work is on the live branch you can unwind it cleanly — `git reset --soft $GROUP_BASE` to drop the group's commits while keeping the changes staged, then either re-dispatch the agent with the failure output, or break the group into smaller pieces and re-dispatch. Do NOT proceed to the next group on a broken base. **If c.4 already checked this group's boxes, un-check them in the same breath as the reset** — the code that backed them is gone, and a `- [x]` with no commit behind it is the one state that makes a resume skip work that was never done.
 
-   e. **Once Phase 1 has no pending groups left, commit every group's checkboxes in ONE commit** (skipped entirely in no-git mode, and when the cwd is not itself a git repo in multi-repo mode — see c.4). This fires even when a resume found every group already committed and dispatched nothing — the reconcile at step 5b writes `- [x]` back to disk, and those marks need the same commit:
+   e. **Once Phase 1 has no pending groups left, commit every group's checkboxes in ONE commit** (skipped entirely in no-git mode, and when the cwd is not itself a git repo in multi-repo mode — see c.4). This fires even when a resume found every group already committed and dispatched nothing — `/apply` Step 5b (the tasks.md reconcile) writes `- [x]` back to disk, and those marks need the same commit:
       - First `git status --short`, and if anything unexpected is **staged**, `git stash` it, commit, then `git stash pop`. A commit takes the whole index, not just what you added, so a stray staged entry rides along — and the last group does not always end on a squash commit: step c.3 leaves a single clean commit alone, so the last git write may have been the *agent's*, which can leave the index dirty. **This check runs ONCE here, not once per group** — that is the whole saving, and it is not a reason to drop the check.
       - Stage `tasks.md` and this change's `reports/` directory, each by exact path: `git add <path-to-tasks.md> <change-directory>/reports`. **NEVER `git add .` or `git add -A`** — that stages unrelated files (e.g. lint-staged auto-fixes) into a metadata commit, and reverting it later takes real code with it. `reports/` is named because nothing else ever stages it, and it holds the measured evidence the agents produced — left out, it is untracked when `/complete` deletes the directory.
       - `git commit -m "chore: mark phase 1 tasks complete"`
-      - **Interrupted before this step, the on-disk `tasks.md` is still the resume input** — nothing is lost, and step 5's reconcile re-marks anything the file missed. What the file records that git cannot: **a squashed group's commit message no longer carries its task numbers**, so for every group already squashed the checkboxes are the only record of what is done. That is why c.4 writes them to disk immediately and why this commit exists at all.
+      - **Interrupted before this step, the on-disk `tasks.md` is still the resume input** — nothing is lost, and `/apply` Step 5b (the tasks.md reconcile) re-marks anything the file missed. What the file records that git cannot: **a squashed group's commit message no longer carries its task numbers**, so for every group already squashed the checkboxes are the only record of what is done. That is why c.4 writes them to disk immediately and why this commit exists at all.
 
    **Example with 3 groups (single-repo):**
    ```
@@ -198,7 +197,7 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
    ```
    All on one branch, in dependency order — zero merges, zero worktrees.
 
-7. **Phase 2 — Review + Security + QA (parallel)** (MANDATORY — do NOT skip):
+7. **Phase 2 — Review + Security (parallel), then QA alone** (MANDATORY — do NOT skip):
    After ALL Phase 1 groups are committed, capture the diff range:
 
    ```bash
