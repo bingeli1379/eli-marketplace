@@ -173,7 +173,7 @@ Confirm:
 After green only:
 - Remove duplication
 - Improve names
-- Extract helpers
+- Extract a helper only where this change gives it a second caller — a one-caller helper reads worse than the lines it hides, and a design that described the behaviour did not ask for the function
 
 Keep tests green. Don't add behavior.
 
