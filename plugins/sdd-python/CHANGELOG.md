@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.5] - 2026-09-09
+
+### Fixed
+- A schema or stored-procedure change the design did not record used to make the Python engineer stop and ask — but a dispatched agent has nobody to ask, so the run stalled. It now raises a `CONFLICT` signal that the orchestrator resolves with you. Its on-demand SQL skills live in the database pack; when that pack is not installed it now says so and tunes against the repo's own precedent instead of failing the load.
+
 ## [1.1.4] - 2026-08-24
 
 ### Changed
