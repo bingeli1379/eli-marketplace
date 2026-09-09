@@ -33,7 +33,7 @@ Python services vary widely — a FastAPI request/response API, a batch data/ML 
 - Evaluating LLM output quality / building an eval or regression harness (pairs with Langfuse) → `llm-evaluation`
 - Kafka consumers/producers → `kafka-consumer-patterns` (skip for request/response APIs, batch/ML pipelines, or scheduled jobs that don't touch Kafka)
 - Profiling / optimizing slow Python (cProfile, py-spy, memory) → `python-performance-optimization`
-- Tuning a SQL query the pipeline issues → `sql-query-optimization` (PostgreSQL/MySQL) or `sql-optimization` (SQL Server); authoring complex cross-dialect SQL → `sql-expert` (these live in the `sdd-database` pack; cross-pack on-demand loads work)
+- Tuning a SQL query the pipeline issues → `sql-query-optimization` (PostgreSQL/MySQL) or `sql-optimization` (SQL Server); authoring complex cross-dialect SQL → `sql-expert` (these live in the `sdd-database` pack — cross-pack loads work when it is installed; one that does not resolve means it is not, so tune with the repo's own precedent and say so in your report)
 
 ## Tech Stack (defaults — override per project)
 - **Runtime**: Python 3.10+ (match the project's pinned version; avoid newer-only syntax if production pins an older minor)
@@ -288,7 +288,7 @@ Match the repo's deployment setup:
 - Branch model as the repo uses it (e.g. `master`/`main` = production, `dev` = staging)
 
 ### Important Constraints
-- **Database changes**: STOP and ask before any schema or stored-procedure modifications
+- **Database changes**: never modify a schema or stored procedure on your own judgement. `design.md` owns that decision — if the task needs one it does not record, emit `CONFLICT:` per `agent-guidelines` → *Signaling Unknowns* (a dispatched agent cannot ask the user; the orchestrator resolves it) and stop that task
 - **Python version**: respect the project's pinned production version — avoid newer-only syntax
 - **Internal packages**: install from the project's configured index; confirm the index URL and package names from the repo
 
