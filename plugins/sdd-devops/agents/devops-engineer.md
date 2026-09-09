@@ -40,6 +40,8 @@ Detect the **CI system first**, then load the matching CI skill **on demand via 
 
 ### 1. Dockerfiles
 
+The image tags in these examples (`sdk:8.0`, `node:20-alpine`, `postgres:17`) are illustrative — pin to the runtime the repo actually targets.
+
 ```dockerfile
 # Backend: ASP.NET Core multi-stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build

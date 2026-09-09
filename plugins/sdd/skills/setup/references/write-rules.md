@@ -6,7 +6,7 @@ Rules for Phase 2 of `/setup` — writing `feature-spec/config.yaml`. Load this 
 
 ## Write `feature-spec/config.yaml`
 
-Read the template at `templates/config.yaml` and fill it in:
+Read the template at `${CLAUDE_SKILL_DIR}/templates/config.yaml` and fill it in:
 
 - `tech_stack:` — the one-line stack string from detection § 1. Single source of truth for versions.
 - `architecture:`

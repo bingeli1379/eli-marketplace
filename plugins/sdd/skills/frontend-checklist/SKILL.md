@@ -19,7 +19,7 @@ Also load `engineering-checklist` — it contains common rules for all engineers
 ## Principles — follow these while writing code
 
 1. **`.value` is not optional** — `ref()` objects MUST use `.value` in script; templates auto-unwrap but script does not
-2. **Know where each function comes from** — verify each destructured function exists in that composable's source; store values belong in `computed(() => store.state.X)`, not composables
+2. **Know where each function comes from** — verify each destructured function exists in that composable's source; store values belong in a `computed` over the store (`store.state.X` in Vuex, `store.x` in Pinia), not in composables
 3. **Top-level await is a silent trap** — `await` at top level of `<script setup>` silently requires `<Suspense>`; wrap in IIFE or `onMounted`
 4. **Prefer computed over watch** — only use `watch` for genuine side effects (API calls, DOM, logging); if it just derives a value, use `computed`
 5. **SFC block order** — `<script setup>` → `<template>` → `<style>`; during reordering, diff carefully to avoid losing template elements
@@ -49,7 +49,7 @@ Also load `engineering-checklist` — it contains common rules for all engineers
 ### Composable Source Attribution
 
 - [ ] Function destructures attributed to the CORRECT composable — cross-referenced against source file
-- [ ] Store-derived values accessed via `computed(() => store.state.X)`, NOT from composables
+- [ ] Store-derived values accessed via a `computed` over the store (`store.state.X` in Vuex, `store.x` in Pinia), NOT from composables
 - [ ] Each destructured function verified to actually exist in the composable it's imported from
 - [ ] No rest spread destructuring on composables (`const { ...xxx } = useXXX()` is forbidden)
 - [ ] Composable destructuring explicitly lists each used member

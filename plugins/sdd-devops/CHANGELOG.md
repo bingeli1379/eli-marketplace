@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1] - 2026-09-09
+
+### Fixed
+- The Dockerfile examples now state that their image tags (`sdk:8.0`, `node:20-alpine`, `postgres:17`) are illustrative and that the runtime the repo actually targets is the one to pin.
+
 ## [1.1.0] - 2026-08-22
 
 ### Added

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.3] - 2026-09-09
+
+### Fixed
+- The schema-design and query-optimization skills pointed at `templates/*.sql` files in nineteen places, and neither skill ships a templates directory — every pointer led nowhere. They now point at the reference files that hold the same DDL, every bundled read carries its base path, and line-number citations that broke on the next edit are gone.
+
 ## [1.1.2] - 2026-08-24
 
 ### Changed

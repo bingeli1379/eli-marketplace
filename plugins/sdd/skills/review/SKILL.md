@@ -195,7 +195,7 @@ Load the `codebase-design` skill and use its vocabulary throughout (**module / i
 
 ## Guardrails
 
-- **Review side is read-only** — reviewers never edit, commit, change branches, or dispatch other agents. Fixes happen ONLY when the user explicitly asks, and ONLY by **dispatching the owning specialist** — the main loop never hand-edits code (no specialist skills / project grounding loaded). This delegation is what keeps `/sdd:review` consistent with sdd's "never self-implement, even trivial" rule.
+- **Review side is read-only** — reviewers never edit, commit, change branches, or dispatch other agents. Fixes happen ONLY when the user explicitly asks, and ONLY by **dispatching the owning specialist** — the main loop never hand-edits code (no specialist skills / project grounding loaded). This delegation is what keeps `/sdd:review` consistent with `/apply`'s rule that the dispatcher never self-implements, even something trivial (`/quick`'s inline tier is the deliberate exception, and it borrows the specialist's skills first).
 - **No automatic fix loop** — unlike `/quick`/`/apply`, there is no auto fix→re-review→commit cycle. Fixes are user-driven, one ask at a time, and `/sdd:review` never commits.
 - **Reuse agents via SendMessage, don't re-spawn** — reviewers and fix specialists are backgrounded and kept alive; follow-ups and re-reviews continue the same agent (context intact) to avoid startup cost. Spawn fresh only on lost context or a substantially changed target.
 - **You ARE the dispatcher** — do NOT spawn a separate orchestrator agent.

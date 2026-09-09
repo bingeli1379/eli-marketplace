@@ -19,26 +19,13 @@ Comprehensive database schema design patterns for PostgreSQL and MySQL with norm
 
 ## Quick Start (10 Minutes)
 
-**Step 1**: Choose your schema pattern from templates:
-```bash
-# Basic schema with users, products, orders
-cat templates/basic-schema.sql
-
-# Relationship patterns (1:1, 1:M, M:M)
-cat templates/relationships.sql
-
-# Constraint examples
-cat templates/constraints.sql
-
-# Audit patterns
-cat templates/audit-columns.sql
-```
+**Step 1**: Choose your schema pattern — `${CLAUDE_SKILL_DIR}/references/schema-design-patterns.md` (audit columns, soft delete, versioning, multi-tenancy) and `${CLAUDE_SKILL_DIR}/references/relationship-patterns.md` (1:1, 1:M, M:M, hierarchies) hold the worked DDL.
 
 **Step 2**: Apply normalization rules (at minimum 3NF):
 - **1NF**: No repeating groups, atomic values
 - **2NF**: No partial dependencies on composite keys
 - **3NF**: No transitive dependencies
-- **Load** `references/normalization-guide.md` for detailed examples
+- **Load** `${CLAUDE_SKILL_DIR}/references/normalization-guide.md` for detailed examples
 
 **Step 3**: Add essential elements to every table:
 ```sql
@@ -228,22 +215,22 @@ CREATE TABLE products (
 CREATE INDEX idx_products_attributes ON products USING GIN(attributes);
 ```
 
-**Load** `references/error-catalog.md` for all 12 errors with detailed fixes.
+**Load** `${CLAUDE_SKILL_DIR}/references/error-catalog.md` for all 12 errors with detailed fixes.
 
 ---
 
 ## Common Schema Patterns
 
-| Pattern | Use Case | Template |
+| Pattern | Use Case | Reference |
 |---------|----------|----------|
-| **Basic CRUD** | Standard users/products/orders | `templates/basic-schema.sql` |
-| **One-to-One** | User → Profile | `templates/relationships.sql` (lines 7-17) |
-| **One-to-Many** | User → Orders | `templates/relationships.sql` (lines 23-34) |
-| **Many-to-Many** | Students ↔ Courses | `templates/relationships.sql` (lines 40-60) |
-| **Hierarchical** | Categories tree, org chart | `templates/relationships.sql` (lines 66-83) |
-| **Soft Delete** | Mark deleted, keep history | `templates/audit-columns.sql` (lines 55-80) |
-| **Versioning** | Track changes over time | `templates/audit-columns.sql` (lines 86-108) |
-| **Multi-Tenant** | Isolated data per organization | `references/schema-design-patterns.md` (lines 228-258) |
+| **Basic CRUD** | Standard users/products/orders | `${CLAUDE_SKILL_DIR}/references/schema-design-patterns.md` |
+| **One-to-One** | User → Profile | `${CLAUDE_SKILL_DIR}/references/relationship-patterns.md` |
+| **One-to-Many** | User → Orders | `${CLAUDE_SKILL_DIR}/references/relationship-patterns.md` |
+| **Many-to-Many** | Students ↔ Courses | `${CLAUDE_SKILL_DIR}/references/relationship-patterns.md` |
+| **Hierarchical** | Categories tree, org chart | `${CLAUDE_SKILL_DIR}/references/relationship-patterns.md` |
+| **Soft Delete** | Mark deleted, keep history | `${CLAUDE_SKILL_DIR}/references/schema-design-patterns.md` |
+| **Versioning** | Track changes over time | `${CLAUDE_SKILL_DIR}/references/schema-design-patterns.md` |
+| **Multi-Tenant** | Isolated data per organization | `${CLAUDE_SKILL_DIR}/references/schema-design-patterns.md` |
 
 ---
 
@@ -260,7 +247,7 @@ CREATE INDEX idx_products_attributes ON products USING GIN(attributes);
 
 **Recommendation**: Design to 3NF, denormalize only with measured performance data.
 
-**Load** `references/normalization-guide.md` for detailed examples with before/after.
+**Load** `${CLAUDE_SKILL_DIR}/references/normalization-guide.md` for detailed examples with before/after.
 
 ---
 
@@ -372,14 +359,14 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 attributes JSON
 ```
 
-**Load** `references/data-types-guide.md` for comprehensive type selection guide.
+**Load** `${CLAUDE_SKILL_DIR}/references/data-types-guide.md` for comprehensive type selection guide.
 
 ---
 
 ## When to Load References
 
 ### Schema Design Process
-**Load** `references/schema-design-patterns.md` when:
+**Load** `${CLAUDE_SKILL_DIR}/references/schema-design-patterns.md` when:
 - Starting a new database design
 - Need pattern examples (audit columns, soft deletes, versioning)
 - Implementing multi-tenancy
@@ -387,35 +374,35 @@ attributes JSON
 - Following naming conventions
 
 ### Normalization
-**Load** `references/normalization-guide.md` when:
+**Load** `${CLAUDE_SKILL_DIR}/references/normalization-guide.md` when:
 - Schema has data duplication
 - Unsure what normal form you're in
 - Need to normalize existing schema
 - Planning database structure
 
 ### Relationships
-**Load** `references/relationship-patterns.md` when:
+**Load** `${CLAUDE_SKILL_DIR}/references/relationship-patterns.md` when:
 - Defining table relationships
 - Implementing junction tables
 - Creating hierarchical structures
 - Setting up cascade rules
 
 ### Data Types
-**Load** `references/data-types-guide.md` when:
+**Load** `${CLAUDE_SKILL_DIR}/references/data-types-guide.md` when:
 - Choosing column types
 - Migrating between PostgreSQL/MySQL
 - Optimizing storage
 - Implementing JSON fields
 
 ### Constraints
-**Load** `references/constraints-catalog.md` when:
+**Load** `${CLAUDE_SKILL_DIR}/references/constraints-catalog.md` when:
 - Adding validation rules
 - Implementing CHECK constraints
 - Setting up foreign key cascades
 - Creating unique constraints
 
 ### Error Prevention
-**Load** `references/error-catalog.md` when:
+**Load** `${CLAUDE_SKILL_DIR}/references/error-catalog.md` when:
 - Schema review needed
 - Troubleshooting schema issues
 - All 12 documented errors with fixes
@@ -517,25 +504,19 @@ All 12 documented errors prevented:
 11. ✅ Missing ON DELETE/UPDATE cascades → Cascade rules
 12. ✅ EAV anti-pattern → Structured schema + JSONB
 
-**See**: `references/error-catalog.md` for detailed fixes
+**See**: `${CLAUDE_SKILL_DIR}/references/error-catalog.md` for detailed fixes
 
 ---
 
 ## Resources
 
-**Templates**:
-- `templates/basic-schema.sql` - Users, products, orders starter
-- `templates/relationships.sql` - All relationship types
-- `templates/constraints.sql` - Constraint examples
-- `templates/audit-columns.sql` - Audit patterns + triggers
-
 **References**:
-- `references/normalization-guide.md` - 1NF through 5NF detailed
-- `references/relationship-patterns.md` - Relationship types
-- `references/data-types-guide.md` - PostgreSQL vs MySQL types
-- `references/constraints-catalog.md` - All constraints
-- `references/schema-design-patterns.md` - Best practices
-- `references/error-catalog.md` - All 12 errors documented
+- `${CLAUDE_SKILL_DIR}/references/normalization-guide.md` - 1NF through 5NF detailed
+- `${CLAUDE_SKILL_DIR}/references/relationship-patterns.md` - Relationship types
+- `${CLAUDE_SKILL_DIR}/references/data-types-guide.md` - PostgreSQL vs MySQL types
+- `${CLAUDE_SKILL_DIR}/references/constraints-catalog.md` - All constraints
+- `${CLAUDE_SKILL_DIR}/references/schema-design-patterns.md` - Best practices
+- `${CLAUDE_SKILL_DIR}/references/error-catalog.md` - All 12 errors documented
 
 **Official Documentation**:
 - PostgreSQL Data Types: https://www.postgresql.org/docs/current/datatype.html

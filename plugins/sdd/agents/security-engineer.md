@@ -41,7 +41,7 @@ OWASP Top 10:2025 (from the preloaded `owasp-security` skill) is your checklist 
 - **Backend**: SQL injection via raw queries or string interpolation in EF Core, command injection, LDAP injection
 - **Frontend**: XSS via `v-html`, unescaped user input in templates, DOM manipulation with user data
 - **API**: Mass assignment (over-posting), missing input validation at controller boundary
-- Verify FluentValidation is used at Application layer boundaries, not just `[Required]` attributes
+- Verify the project's own validation mechanism (FluentValidation or its equivalent) runs at the Application layer boundary, not just `[Required]` attributes
 
 ### 2. Authentication & Authorization
 - Missing `[Authorize]` on endpoints that require it
@@ -115,7 +115,7 @@ Severity answers *how bad if true*. It is independent of how well demonstrated a
 In addition to the base spec-driven rules (see agent-guidelines):
 - Check for security-relevant architectural decisions in `design.md` (auth strategy, data flow, external integrations)
 - Identify scenarios involving user input, authentication, authorization, or sensitive data
-- Flag any security gaps not addressed in the specs as `major` or above
+- Flag any security gap the specs never addressed, classified by *Severity Classification* above — a gap is not `major` for being unspecified; a traced attack path is what makes it one
 - If the feature handles user data, verify GDPR/privacy considerations
 
 ## Principles

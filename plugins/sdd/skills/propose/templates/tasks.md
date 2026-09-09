@@ -1,7 +1,7 @@
 <!-- Each group = one reviewable unit = one final commit after squash. -->
 <!-- Each group contains a single agent type. Group heading describes the concern, not the agent type. -->
 <!-- Dependency annotation: <!-- depends: N[, M...] --> on the heading line. Omit if no dependency. -->
-<!-- Valid agent tags: Backend, Frontend, Electron, Database, DevOps, Performance, Security, Documentation, E2E -->
+<!-- Valid agent tags: Backend, Frontend, Python, Electron, Godot, Database, DevOps, Performance, Security, Documentation, E2E -->
 <!-- NOTE: Unit tests are included within Backend/Frontend tasks (TDD). E2E tests get their own group. -->
 
 <!-- Example: a "User Search" feature split into reviewable units -->

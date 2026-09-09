@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.2] - 2026-09-09
+
+### Fixed
+- The API standards still said "XML doc comments on all endpoints", contradicting the rule two sections above that limits them to a published API surface. Endpoints get XML docs only where the repo already documents its own.
+
 ## [1.2.1] - 2026-08-23
 
 ### Changed

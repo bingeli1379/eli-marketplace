@@ -66,17 +66,17 @@ Repo topology (single-repo / multi-repo / no-git) is detected **once at batch st
 
    **Prerequisite gate (check before running each change)**: if any change in this change's `## Dependencies` → `Depends on` is in the paused/failed set, do **NOT** run it — its tasks reference prerequisite code (API/types/schema) that was never completed, so its agents would hit missing symbols and produce broken output. Park it as PAUSED (reason: `prerequisite <X> not complete`), add it to the paused/failed set (so its own dependents park transitively down the chain), announce the skip, and continue to the next change. Do not dispatch its agents. Otherwise proceed:
 
-   a. Announce: `[N/M] Applying: <change-name>` and record start time.
+   a. Announce: `[N/M] Applying: <change-name>` and record the start time and `git rev-parse HEAD` (the branch tip before this change — 3f reads it).
 
    b. Execute the full `/apply` logic (Steps 2–9 from `apply/SKILL.md` — Step 0 topology already ran once at batch start, and Step 1 change selection is this skill's Steps 1–2):
-      - **Cache invariant files once at batch start**: Read `orchestrator.md` and the project `config.yaml` once before the first change — single-repo `feature-spec/config.yaml`; **multi-repo** the per-child-repo `<repo>/feature-spec/config.yaml` of every repo the batch touches (there is no umbrella config — see `/apply` Step 2, the grounding read). These are invariant across the batch — reuse them for all changes instead of re-reading each time.
+      - **Cache `config.yaml` once at batch start; re-read `orchestrator.md` per change**: read the project `config.yaml` once before the first change — single-repo `feature-spec/config.yaml`; **multi-repo** the per-child-repo `<repo>/feature-spec/config.yaml` of every repo the batch touches (there is no umbrella config — see `/apply` Step 2, the grounding read). Config is invariant across the batch — reuse it for every change. `orchestrator.md` is not cached: `/apply` Step 6 re-reads it every time because context may have been compressed, and a batch running for hours is exactly where that happens — the second change would otherwise run on whatever the compaction kept.
       - **Re-read change-specific files fresh for each change** (proposal.md, design.md, tasks.md, specs/). Each change has different specs — do NOT reuse these from the previous change. Prior context may also have been compressed.
       - Read context → parse tasks → act as orchestrator → sequential single-writer dispatch with in-place squash → all phases (implementation → review+security parallel read-only, then QA alone → docs) → verify checkboxes and commit history
       - **Do NOT ask implementation questions** — make reasonable choices, flag ambiguities in report
 
    c. **Mandatory completion checkpoint — Do NOT proceed to next change until ALL are satisfied:**
       - [ ] Phase 1-3 ALL dispatched (orchestrator never pre-judges whether a phase is "needed" — always dispatch, let the agent decide scope)
-      - [ ] Phase 2 all three verdicts pass: code review APPROVED (or APPROVED WITH COMMENTS), security SECURE, QA PASSED — a change is NOT complete until all three pass
+      - [ ] Phase 2's Fix → Re-verify Loop exited on its own terms (`agents/orchestrator.md` → *Fix → Re-verify Loop*, step 5): no `blocker` / `major`, no FAILED QA, no newly introduced `WILL NOT SCALE` — a verdict carrying only `minor`s (`APPROVED WITH COMMENTS`, `ISSUES FOUND` with minors) satisfies it; the round limit reached with one of those still standing is PAUSED (3f)
       - [ ] Step 9 tasks.md re-read from disk and checkboxes verified
       - [ ] Final commits are clean conventional-commit messages with no task numbers
 
@@ -84,9 +84,9 @@ Repo topology (single-repo / multi-repo / no-git) is detected **once at batch st
 
    e. Announce: `[N/M] <change-name>: COMPLETE (8/8 tasks, 25m, 10 派工, diff 8 檔/+13−9)` — the same cost figures `/apply` prints (`skills/apply/SKILL.md` → Step 9), which matter more here because an unattended batch multiplies them — and **automatically proceed to next change**.
 
-   f. **If a change pauses** (review/QA failure after retries): record the reason, **add it to the paused/failed set** (the prerequisite gate above then parks its dependents transitively), and **continue to next change** — do NOT stop the batch. User can fix later with `/apply <name>`.
+   f. **If a change pauses** (review/QA failure after retries): record the reason, **add it to the paused/failed set** (the prerequisite gate above then parks its dependents transitively), and **continue to next change** — do NOT stop the batch. User can fix later with `/apply <name>`. **One condition stops the batch instead**: when the paused change left task-number-prefixed per-task commits unsquashed on the branch (`git log --oneline <HEAD recorded at 3a>..HEAD` shows any `<type>: N.M …`), stop after it and report — task numbers restart at `1.1` in every change, so the next change's `/apply` Step 5b reconcile would match those commits as its own and skip work never done. The user squashes or removes them, then resumes with `/apply-all`.
 
-   g. **Unresolvable NEEDS in unattended mode**: when a worker emits a `NEEDS:` (see `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*), resolve it with the tools available and resume the agent as in `/apply`. But because the batch runs unattended, if a NEEDS can only be answered by the user and no resolving tool is available, do NOT hang waiting — **park that change as PAUSED** (reason: `unresolved NEEDS: <question>`), add it to the paused/failed set, and continue to the next. The user resolves it later with `/apply <name>`.
+   g. **Unresolvable NEEDS in unattended mode**: when a worker emits a `NEEDS:` (see `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*), resolve it with the tools available and resume the agent as in `/apply`. But because the batch runs unattended, if a NEEDS can only be answered by the user and no resolving tool is available, do NOT hang waiting — **park that change as PAUSED** (reason: `unresolved NEEDS: <question>`), add it to the paused/failed set, and continue to the next. The user resolves it later with `/apply <name>`. 3f's unsquashed-commit stop applies here too — a `NEEDS` is emitted after the agent committed what it safely could, so this is the path most likely to leave numbered commits behind.
 
 4. **Show final batch report**
 
@@ -139,7 +139,7 @@ After responding to the user, **resume batch execution automatically** — do NO
 - **All worker agents run in background** (`run_in_background: true`)
 - **Only ask execution order when ambiguous** (independent changes at same level) — if order is deterministic, execute directly
 - **Do NOT ask implementation questions** — make reasonable decisions and flag ambiguities in the report
-- **Do NOT stop the batch if one change fails** — skip it and continue to next
+- **Do NOT stop the batch if one change fails** — skip it and continue to next; the one exception is Step 3f's unsquashed per-task commits, which would poison the next change's reconcile
 - **After responding to user messages, resume automatically** — never wait for follow-up input unless the user explicitly says "stop"
 - **Zero-misses: ALL phases (1-3) are mandatory** — see Step 3c checkpoint for the complete checklist
 - Each change runs sequentially (single-writer) on the current branch — do NOT create or switch branches
