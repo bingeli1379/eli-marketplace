@@ -49,7 +49,7 @@ Self-check: *"Would a senior engineer call this overcomplicated?"*
 
 Write a comment only for business logic that the code cannot carry on its own. If naming makes the intent clear, there is no comment to write. Never restate what the line does.
 
-**The failure mode to avoid is over-commenting, not under-commenting.** When you are working from a design document, its rationale is the strongest pull toward writing too much: the decisions feel important, so they get copied into the code as defensive paragraphs. Resist it — **the design document is where rationale lives, and it is already written down.** In code, state the constraint in one line and point at the document (`(see design.md D4)`) instead of reproducing the argument for it.
+**The failure mode to avoid is over-commenting, not under-commenting.** When you are working from a design document, its rationale is the strongest pull toward writing too much: the decisions feel important, so they get copied into the code as defensive paragraphs. Resist it — **the design document is where rationale lives, and it is already written down.** In code, state the constraint in one line and point at where the reasoning will still be readable after the change ships — the ticket key or the commit — instead of reproducing the argument for it. Never point at `design.md`: `/complete` deletes it, so that pointer is dead the day the change lands.
 
 Concretely, do NOT write:
 - the *reasoning* behind a decision — why an alternative was rejected, what the numbers were, what would break otherwise;

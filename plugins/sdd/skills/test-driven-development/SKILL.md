@@ -174,6 +174,7 @@ After green only:
 - Remove duplication
 - Improve names
 - Extract a helper only where this change gives it a second caller — a one-caller helper reads worse than the lines it hides, and a design that described the behaviour did not ask for the function
+- Delete every comment you wrote in RED/GREEN that fails the `agent-guidelines` self-check (*what would a reader get wrong without it?*) — the pull to explain a design decision in code is strongest right after implementing it, so this pass is where those paragraphs go
 
 Keep tests green. Don't add behavior.
 
