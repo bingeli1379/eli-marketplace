@@ -25,6 +25,19 @@ fi
 
 Child-repo detection is **immediate children only** — nested repos deeper in the tree are out of scope. Announce the detected mode (and, in multi-repo, the list of child repos) before proceeding.
 
+### The detection reads cwd; the change may not live there
+
+The three modes above are a fact about **where you are standing**, and that is not the same question as **which repos the change touches**. `/apply` and `/quick` are the ones that hit this, because by then `tasks.md` names real paths: cwd sits inside one repo, so detection says single-repo, while some of the task groups target *sibling* repos the detection never looked at. Measured: a change whose `feature-spec/` lived inside one repo had four of its five groups targeting three siblings; single-repo mode has no path for that, and the whole cross-repo half of the run had to be improvised.
+
+**So after detecting the mode, check it against the work.** Take the file paths in `tasks.md` (`/apply`) or the paths you are about to edit (`/quick`) and resolve each to its owning repo. When every path lands inside the cwd repo, the detected mode is right and you continue. When some do not, **stop and tell the user before dispatching anything** — this is a scope fact they own, and the two readings produce materially different runs:
+
+- **Sibling-spanning** — proceed across the siblings, applying the multi-repo rules below (one group per repo, `git -C <repo> …`, groups in different repos may run in parallel). `feature-spec/` stays where it already is, inside the cwd repo, rather than moving to an umbrella; it is planning state for the change, not for any one repo. The other repos' commits carry no `feature-spec/` files.
+- **This repo only** — run the groups that live here and leave the rest for a separate run, saying plainly which groups you are not running and why.
+
+Ask with the consequence attached, the way `/propose`'s Step 6e asks: name the sibling repos you found and what each unrun group would leave undone. **Do not resolve it by picking the reading that needs no question** — the cost of guessing wrong is a half-implemented cross-repo change with no record of which half.
+
+**Sibling repos are not on a branch you chose.** A sibling routinely sits on its default branch, and `/apply`'s Step 3 forbids creating or switching branches — the user manages branches. That rule holds, so committing group work into a sibling means **either** the user creates the branch first **or** they authorise you to create one, and you ask for that in the same message as the scope question rather than discovering it at dispatch time. Never commit onto a sibling's default branch on your own judgement.
+
 ---
 
 ## Where `feature-spec/` lives
