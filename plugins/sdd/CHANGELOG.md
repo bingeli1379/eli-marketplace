@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.19.0] - 2026-09-09
+
+### Added
+- The architect now writes the design at contract level: the files it creates or touches, the behaviour of each, and the assertions that prove it — never a function, constant or helper inside a file. A name written into `design.md` is built exactly as written, so single-caller helpers the engineer would never have extracted were shipping anyway and passing review as design compliance. Decision records rank the repo's existing mechanism first, and a decision that contradicts a stated Non-Goal is escalated to you instead of quietly decided.
+
+### Fixed
+- QA-alone had landed in Phase 2 but three older copies of the rule still ran QA alongside the read-only reviewers — the orchestrator's free-form flows and four spots in `/quick`. Every copy now says review + security in parallel, QA on its own afterwards.
+- `/apply-all` demanded a fully clean security and code-review verdict before moving on, while the fix loop deliberately finishes on minor-only findings, so a change with a single minor could never pass its checkpoint. It now uses the loop's own exit. It also re-reads the orchestrator rules for each change rather than trusting a copy from hours earlier, and it stops the batch when a paused change leaves numbered per-task commits behind — the next change's resume would otherwise claim them as its own and skip work that was never done.
+- `/setup`'s `保留現有` choice had nowhere to go and fell straight through to writing the file, overwriting the config it had just been told to keep. SCAN still runs; BUILD now writes nothing and says so.
+- Two knowledge skills and three workflow steps read their bundled files by bare relative path, which resolves against your working directory and finds nothing; every bundled read now carries its base. The structure check also learned to count that form, so it no longer reports those files as orphaned.
+- Agent files disagreed with the pipeline that dispatches them: the performance engineer's description promised load tests and profiling it is never allowed to run, the security engineer forced every unspecified gap to `major` against its own severity table, and `(Security)` / `(Performance)` tasks were described as hardening work for agents that only ever return a verdict. A core agent loading a skill from an optional pack now says what it does when that pack is absent instead of stalling on the load.
+- Code comments no longer point at `design.md` for their rationale — `/complete` deletes that file, so the pointer was dead the day the change landed. They point at the ticket or the commit instead, and reviewers stop asking for more comments unless they can say what a reader would get wrong without one.
+
 ## [3.18.0] - 2026-09-09
 
 ### Added
