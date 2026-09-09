@@ -4,7 +4,7 @@ The **Analytical depth requirement** every reviewer dispatch must carry, plus th
 
 **Who gets it:** `review-engineer`, `security-engineer`, `qa-engineer`.
 
-**Who must NOT get it:** every implementation and fix agent (Backend / Frontend / Python / Godot / Electron / Database / DevOps / **Performance**), and the Phase 3 `technical-writer`. They are executors — category enumeration there produces over-engineered code and padded docs. This exclusion is the reason the block lives here rather than in `agent-guidelines` (which every agent loads eagerly).
+**Who must NOT get it:** every implementation and fix agent (Backend / Frontend / Python / Godot / Electron / Database / DevOps), `performance-engineer` (next paragraph), and the Phase 3 `technical-writer`. They are executors — category enumeration there produces over-engineered code and padded docs. This exclusion is the reason the block lives here rather than in `agent-guidelines` (which every agent loads eagerly).
 
 `performance-engineer` stays excluded even when dispatched as a reviewer in its own right (Phase 2's conditional 4th reviewer, or `/review`'s `performance` lens): its own agent file already prescribes a per-data-path verdict table (anchor / growth driver / verdict / degrade threshold), which is its coverage discipline. Layering this block on top would duplicate that structure rather than enforce it.
 

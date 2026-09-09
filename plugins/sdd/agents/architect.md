@@ -136,6 +136,8 @@ The `test-driven-development` skill's *Walking Skeleton* section defines the rul
 
 ## Standards Alignment
 
+The greenfield defaults. Where the project already does one of these differently, its convention wins (*Design Principles* → anchor to the Reference implementation).
+
 - Frontend spec must align with Atomic Design + Composable Pattern
 - Backend spec must align with Clean Architecture layering
 - Data model must follow Domain-Driven Design where appropriate
