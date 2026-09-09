@@ -174,9 +174,12 @@ skill file lives in a pack) so `update-skills.sh` can sync it.
    (`agent-guidelines`, `engineering-checklist`, `test-driven-development`, …) — verified
    to work cross-plugin, no duplication. Declare only its own stack skills beyond those.
 3. Add a row to [`references/agent-routing.md`](references/agent-routing.md)
-   (tag → `subagent_type` → home → fallback brief). This is the only core file to touch.
-4. Register the pack in the root `marketplace.json`. Add a `.codex-plugin/plugin.json`
-   if publishing to Codex.
+   (tag → `subagent_type` → home → fallback brief), and add the role to
+   `skills/role/SKILL.md`'s frontmatter `description` and `argument-hint` — the one literal
+   list the routing table cannot replace. Core agents and workflow skills stay untouched.
+4. Register the pack in **both** root manifests — `.claude-plugin/marketplace.json` and the
+   Codex mirror `.agents/plugins/marketplace.json` — plus a `.codex-plugin/plugin.json`;
+   `scripts/check-structure.sh` fails on a mismatch.
 5. Add the pack's skills to core `skills/SOURCES.yaml`.
 
 See `skills/` for the full list of bundled skills.
@@ -197,13 +200,17 @@ See `skills/` for the full list of bundled skills.
 ```
 feature-spec/
   config.yaml               # Tool commands + architecture baseline (persists; one-time, not auto-synced)
+  specs/                    # Accumulated main specs (cleaned up after all changes complete)
+    <capability>/spec.md
   changes/
     <name>/
       proposal.md            # What & why
       design.md              # How (domain model, API contract, shared types, decisions)
-      tasks.md               # TDD-structured implementation checklist
+      tasks.md               # TDD-structured implementation checklist, plus a trailing `## 交付後由你執行` handoff section
       specs/                 # Delta specs (acceptance criteria)
         <capability>/spec.md
+      reports/               # Phase 1 implementation-agent reports
+      reviews/               # Phase 2 reviewer reports
 ```
 
 After `/complete`, change artifacts are deleted. `feature-spec/config.yaml` persists across changes — it is the single source of project context the workflow reads (the plugin keeps no prose docs and does not read yours).
