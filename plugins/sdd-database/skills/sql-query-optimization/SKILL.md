@@ -11,13 +11,6 @@ license: MIT
 ---
 # SQL Query Optimization
 
-**Status**: Production Ready ✅
-**Last Updated**: 2025-12-15
-**Latest Versions**: PostgreSQL 17, MySQL 8.4
-**Dependencies**: None
-
----
-
 ## Quick Start (10 Minutes)
 
 ### 1. Identify Slow Query
@@ -134,7 +127,7 @@ SELECT * FROM orders WHERE user_id = 123;
 **Fix**: `ANALYZE table_name` after bulk operations
 **Impact**: Correct query plan selection
 
-**See `references/error-catalog.md` for all 12 errors with detailed solutions.**
+**See `${CLAUDE_SKILL_DIR}/references/error-catalog.md` for all 12 errors with detailed solutions.**
 
 ---
 
@@ -198,51 +191,35 @@ long_query_time = 1
 ## When to Load References
 
 **Performance Analysis**:
-- Load `references/explain-analysis.md` when: Reading EXPLAIN output, understanding query plans, analyzing buffer statistics, comparing PostgreSQL vs MySQL EXPLAIN
-- Load `references/performance-monitoring.md` when: Setting up monitoring, tracking slow queries over time, monitoring cache hit ratios, identifying bloated tables
+- Load `${CLAUDE_SKILL_DIR}/references/explain-analysis.md` when: Reading EXPLAIN output, understanding query plans, analyzing buffer statistics, comparing PostgreSQL vs MySQL EXPLAIN
+- Load `${CLAUDE_SKILL_DIR}/references/performance-monitoring.md` when: Setting up monitoring, tracking slow queries over time, monitoring cache hit ratios, identifying bloated tables
 
 **Index Optimization**:
-- Load `references/index-strategies.md` when: Choosing index type (B-Tree, GIN, GiST, Hash), creating composite indexes, determining column order, using covering indexes, implementing partial indexes, monitoring index usage
+- Load `${CLAUDE_SKILL_DIR}/references/index-strategies.md` when: Choosing index type (B-Tree, GIN, GiST, Hash), creating composite indexes, determining column order, using covering indexes, implementing partial indexes, monitoring index usage
 
 **Query Optimization**:
-- Load `references/query-rewrites.md` when: Rewriting slow queries, converting subqueries to JOINs, eliminating N+1 queries, implementing pagination, optimizing LIKE queries, batching operations
+- Load `${CLAUDE_SKILL_DIR}/references/query-rewrites.md` when: Rewriting slow queries, converting subqueries to JOINs, eliminating N+1 queries, implementing pagination, optimizing LIKE queries, batching operations
 
 **Systematic Process**:
-- Load `references/optimization-workflow.md` when: Following step-by-step optimization process, creating optimization hypothesis, measuring improvements, monitoring long-term performance
+- Load `${CLAUDE_SKILL_DIR}/references/optimization-workflow.md` when: Following step-by-step optimization process, creating optimization hypothesis, measuring improvements, monitoring long-term performance
 
 **Error Resolution**:
-- Load `references/error-catalog.md` when: Debugging specific errors (sequential scans, missing indexes, N+1 queries, etc.), understanding root causes, implementing verified solutions
+- Load `${CLAUDE_SKILL_DIR}/references/error-catalog.md` when: Debugging specific errors (sequential scans, missing indexes, N+1 queries, etc.), understanding root causes, implementing verified solutions
 
 ---
 
 ## Using Bundled Resources
 
-### Templates (Copy-Paste SQL)
-
-```bash
-# EXPLAIN query templates
-templates/explain-query.sql
-
-# Index creation patterns
-templates/index-examples.sql
-
-# Query rewrite examples
-templates/query-rewrites.sql
-
-# Monitoring queries
-templates/monitoring-queries.sql
-```
-
 ### References (Deep Dives)
 
 ```bash
 # Comprehensive guides
-references/error-catalog.md              # All 12 errors + solutions
-references/explain-analysis.md           # Reading query plans
-references/index-strategies.md           # Index types & selection
-references/query-rewrites.md             # Before/after optimizations
-references/performance-monitoring.md     # Long-term monitoring
-references/optimization-workflow.md      # Systematic process
+${CLAUDE_SKILL_DIR}/references/error-catalog.md              # All 12 errors + solutions
+${CLAUDE_SKILL_DIR}/references/explain-analysis.md           # Reading query plans
+${CLAUDE_SKILL_DIR}/references/index-strategies.md           # Index types & selection
+${CLAUDE_SKILL_DIR}/references/query-rewrites.md             # Before/after optimizations
+${CLAUDE_SKILL_DIR}/references/performance-monitoring.md     # Long-term monitoring
+${CLAUDE_SKILL_DIR}/references/optimization-workflow.md      # Systematic process
 ```
 
 ---
