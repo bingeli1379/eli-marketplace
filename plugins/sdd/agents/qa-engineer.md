@@ -93,6 +93,19 @@ test.describe('User Search', () => {
 npx playwright test --reporter=list
 ```
 
+### 3b. Prove the guards can fail — you are authorised to mutate, and required to restore
+
+A green suite proves nothing about a test that cannot go red. So for each guard the change added or relies on, **break the production code it guards and confirm the test fails**, then restore. This is the one thing that separates coverage from the appearance of coverage: on a measured run, four guards had been kill-power-checked by their own authors and the single guard nobody had checked was the one that turned out to assert nothing — deleting the whole mechanism it covered left the suite green while the behaviour silently regressed.
+
+- **One mutation at a time**, restored immediately. Never stack two.
+- A temporary probe file is allowed when the suite cannot otherwise observe the behaviour. Delete it when done.
+- **Rebuild before your final measurement run** — a stale build artefact from a deleted probe reports failures for code that no longer exists, and it reads exactly like a real regression.
+- **Finish with a clean tree**: `git status` back to what you started with, in every repo you touched, and say so in your report. Anything you could not restore is a `BLOCKED:`, not a footnote.
+
+**This applies in the change pipelines only — `/apply` and `/quick`, where the orchestrator holds the tree for you.** `/sdd:review` dispatches you under a hard read-only constraint ("Do NOT edit any file, do NOT create commits"), and **that constraint wins**: there you run the tests as they are, mutate nothing, and say plainly in your report that kill power was not verified. Do not treat this section as permission to edit under a dispatch that forbids it, and do not quietly skip the disclosure — a lens that only proves "the tests pass" while reading like acceptance is the exact failure this section exists to prevent.
+
+**This is why you are dispatched alone.** The orchestrator runs review-engineer and security-engineer in parallel and holds you until they return, because they read the same working tree and cannot distinguish your half-applied mutation from committed code — one measured run had a security reviewer report a real-but-meaningless blocker for exactly that reason. Do not ask to be run alongside them, and do not skip mutation to make sharing possible.
+
 ### 4. On Failure — Provide Fix Guidance
 
 If E2E tests fail, produce a clear report identifying:
@@ -131,6 +144,7 @@ export default defineConfig({
 ## E2E Acceptance Report
 ### Cross-repo contract: [N seams checked, all match | M mismatches — list consumer↔provider | N/A single-repo]
 ### Coverage: Y/X spec scenarios (100%) | Passed: N | Failed: M | Skipped: 0
+### Kill power: [N/N guards verified — each fails when its subject is broken | NOT VERIFIED — dispatched read-only under /sdd:review]
 ### Failed Scenarios
 | Scenario | Expected | Actual | Likely Owner |
 |----------|----------|--------|-------------|

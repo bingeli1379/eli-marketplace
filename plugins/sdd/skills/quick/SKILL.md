@@ -209,12 +209,12 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **Medium tasks:**
    - Phase 1: Implementation agents **sequentially** in dependency order (contract-first)
-   - Phase 2: review-engineer + security-engineer + qa-engineer (all parallel, read-only)
+   - Phase 2: review-engineer + security-engineer in parallel (read-only), then qa-engineer alone — it mutates the tree to prove a guard fails, so it must not share it with a reader
    - Done.
 
    **Complex tasks (full pipeline):**
    - Phase 1: Implementation agents **sequentially** in dependency order (then qa-engineer for E2E test writing)
-   - Phase 2: review-engineer + security-engineer + qa-engineer (all parallel, read-only — code review, security review, and E2E tests run simultaneously)
+   - Phase 2: review-engineer + security-engineer in parallel (read-only — code review and security review run simultaneously), then qa-engineer alone; it mutates the tree to prove a guard fails, and a reader sharing that tree cannot tell a half-applied mutation from committed code
    - Phase 3: technical-writer (if documentation changes needed)
 
    **Conditional Phase 2 reviewer — performance-engineer (all complexity levels):** if the diff touches a **performance-sensitive surface** (new/changed API endpoint, stored-procedure / SQL / Dapper / EF query, data-access/repository path, batch or data-pipeline job, list/report endpoint), add **performance-engineer** to the Phase 2 parallel dispatch. It does **static data-scale capacity analysis only** (no load tests/profilers; no code edits) and reports a per-path verdict (SAFE / RISKY / WILL NOT SCALE, or `未評估` where a project `never-read` path blocked assessment); findings are advisory recommendations routed to the owning agent. Skip for purely frontend-presentational, config, docs, or test-only diffs.
