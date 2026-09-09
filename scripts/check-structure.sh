@@ -210,8 +210,9 @@ done < <(grep -rHoE '[Ss]tep[0-9]+' plugins/*/skills 2>/dev/null | sort -u)
 # skipped (SOURCES.yaml `repo:` is a URL): their bodies are replaced on the next sync, so a
 # pointer added there is lost and the warning would never clear.
 for p in plugins/*/; do
-  # both spellings count as a mention: a bare `name.md` and a path-shaped `references/name.md`
-  mentioned=$(grep -rhoE '`[A-Za-z0-9._/-]+\.md`' "$p" 2>/dev/null | tr -d '`' | sed -E 's|.*/||' | sort -u)
+  # all three spellings count as a mention: a bare `name.md`, a path-shaped `references/name.md`,
+  # and a based one `${CLAUDE_SKILL_DIR}/references/name.md` — the form the authoring rules ask for
+  mentioned=$(grep -rhoE '`[A-Za-z0-9._/${}-]+\.md`' "$p" 2>/dev/null | tr -d '`' | sed -E 's|.*/||' | sort -u)
   mentioned_set=$'\n'"$mentioned"$'\n'
   for r in "$p"skills/*/references/*.md; do
     [[ -f "$r" ]] || continue
