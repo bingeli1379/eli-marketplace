@@ -46,7 +46,7 @@ Multi-agent dispatch (`/apply`) needs the experimental Agent Teams flag:
 
 1. **Setup** — auto-detect project context, create `feature-spec/` directory
 2. **Propose** — clarify requirements and define feature boundaries, dispatch architect for design, generate specs (SDD), domain model (DDD), API contract, tasks (TDD structure). Auto-validates and fixes until all checks pass.
-3. **Apply** — act as orchestrator, dispatching the agent team **sequentially (single-writer)** to implement, then parallel read-only review and verify. User can interact with the orchestrator anytime.
+3. **Apply** — act as orchestrator, dispatching the agent team **sequentially (single-writer)** to implement, then review and security in parallel (read-only) and QA on its own to verify. User can interact with the orchestrator anytime.
 4. **Complete** — confirm tasks done, delete change artifacts, commit cleanup
 
 ## Usage
@@ -92,7 +92,7 @@ The orchestrator dispatches agents through a 3-phase pipeline:
 Phase 1 (sequential single-writer): groups implemented one at a time in dependency order,
                     committing on the current branch, squashed in place (TDD).
                     Multi-repo: groups in different child repos may run in parallel.
-Phase 2 (parallel read-only): Code Review + Security Review + QA (all 3 simultaneous) → sequential fix agents
+Phase 2: Code Review + Security Review in parallel (read-only) → QA alone → sequential fix agents
 Phase 3:            Documentation
 ```
 

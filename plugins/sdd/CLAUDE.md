@@ -186,7 +186,8 @@ Phase 1 (sequential single-writer): Groups dispatched one at a time in dependenc
   each committing on the current branch → in-place squash into one clean commit per group.
   Writes stay single-threaded (no parallel worktrees, no merge step); reads may fan out.
   Multi-repo exception: groups in different child repos may run in parallel.
-Phase 2 (parallel read-only review): Code Review + Security Review + QA (+ performance-engineer
+Phase 2: Code Review + Security Review in parallel (read-only), then QA alone (it mutates to prove
+  a guard fails) (+ performance-engineer
   if the diff touches an API/DB surface — advisory, report-only) → sequential fix agents → squash
 Phase 3: Documentation
 ```
