@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.12] - 2026-09-09
+
+### Added
+- When you audit a skill, the review now also reads the sibling reference files that split the work with whatever you changed — the one that states a budget the other spends, or that declares which of the two owns a case. Stopping at the changed file's owner missed exactly those, because the two halves of a split share no wording for the duplication sweep to find, so each half read as correct on its own and the contradiction only surfaced the next time someone followed the stale one. A sibling picked up this way is compared against your change and nothing more, and the report says which files were read at that reduced depth.
+
+### Fixed
+- `/improve-skill` now finds a repo's own authoring conventions when its maintenance skills are committed under the plugin they serve. It only looked in the live `.claude/skills/`, which is routinely git-ignored and holds symlinks into that committed source, so an empty directory was read as "this repo states no conventions" and the edit fell back to generic instinct.
+
 ## [0.2.11] - 2026-08-31
 
 ### Added
