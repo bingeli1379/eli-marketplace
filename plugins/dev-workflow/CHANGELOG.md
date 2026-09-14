@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.1.1] - 2026-09-14
+
+### Changed
+- `/commit` no longer reproduces the Conventional Commits spec. It keeps what is this repo's own preference: title under 50 characters, body wrapped at 72, no attribution block, and a lock file committed alongside the manifest that changed it.
+- `/release` now has one rule for when it stops to ask you: only when the answer is not in the repo. Its version-file priority table and four baseline strategies become the goal plus the gotcha each existed for. First-release detection, the scope-tag warning and the workspace-root lock file check are untouched.
+
 ## [4.1.0] - 2026-09-02
 
 ### Fixed
