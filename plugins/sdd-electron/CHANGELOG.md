@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.6] - 2026-09-14
+
+### Changed
+- The agent no longer carries textbook code samples. They pulled it toward copying a typical shape instead of the one your repo already uses, which is the opposite of what it is told to do. It keeps what only it can supply: the signals that identify your stack, which skill to load for which job, and any place it overrides a bundled best-practice skill.
+- Its security rules stay in full, since those are the one part no stack detection can supply.
+
 ## [1.0.5] - 2026-08-24
 
 ### Changed
