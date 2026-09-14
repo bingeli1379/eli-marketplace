@@ -1,12 +1,12 @@
 # Report production (loaded at step 6's GATE)
 
-## Pre-report evidence dump (NOT a checkbox list)
+## Pre-report evidence dump
 
 Two notes already written in chat during the trace loop:
 - the running scope/chain note (each hop's role: erroring / slow-but-healthy / root cause / boundary)
-- the infra Plan block + all planned queries dispatched (whenever the infra check fired)
+- the infra query list + every query dispatched against it (whenever the infra check fired)
 
-Before writing the report, paste the evidence below in chat verbatim. **No ticking boxes — paste real numbers, queries, and excerpts.** Empty fields are visible; faking data is harder than checking a box.
+Before writing the report, paste the evidence below in chat verbatim — real numbers, queries, and excerpts; an empty field stays visible.
 
 ```
 === Pre-report evidence ===
@@ -33,8 +33,7 @@ silence is not:
 - Failed: <N> (<statuses>, <paths>)
 - Recovered (HARD RULE 8): <M> of those <N> retried on their own and succeeded, gaps <…>s measured
   from the END of the failed attempt | none, window ran to <ts> with no further attempt | n/a — nothing failed | not checked + why
-  # A retry lands AFTER the burst, so the incident window cannot contain it and an empty result there
-  # is indistinguishable from "nobody retried". Extend past the last failure until nothing new appears.
+  # The window must run past the burst end (SKILL.md step 4, recovery paragraph).
 - Distinct users affected: <N> — from the stream's user-identity field when it has one (SKILL.md step 4),
   which is already per-user. Only where that field is absent is the count derived from requests, and then
   it must be deduped ACROSS the buckets in this block, since one person's failure and their retry occupy
@@ -87,14 +86,14 @@ Infra metrics (one block per upstream named in the incident):
 
 Frontend behavior (when impact will describe user-visible behavior — MANDATORY to fill if the frontend repo is present, per SKILL.md step 5b):
 - Repo: <path or "genuinely absent — listed in Unknowns">
-- Call site: <file:line of API call>   # if an endpoint-name grep missed, you MUST have widened to route-path / client-method / component / i18n key / shared header-footer repo before writing "not found" — a single name-grep miss is NOT grounds to punt
+- Call site: <file:line of API call>   # a name-grep miss is not "not found" — widen per SKILL.md 5b first
 - Error handling: <caught? fallback? retry?>
 - User sees: <one-line plain-language description — read from the call site, not guessed>
 
 === End evidence ===
 ```
 
-If any block is empty or says "skipped", the work is incomplete — go back and fill it. Producing the report with empty evidence blocks violates the skill.
+An empty or "skipped" block means the work is incomplete — go back and fill it.
 
 ## HARD RULES (read before writing)
 
@@ -134,8 +133,7 @@ If any block is empty or says "skipped", the work is incomplete — go back and 
 8. **請求失敗 ≠ 使用者流失。把失敗筆數寫進 Impact 之前，先查那些人有沒有自己回來重試成功。**
    規則 6 擋的是「error 筆數當成失敗數」，這條擋下一層：一個失敗的請求，如果使用者二十秒後自己重送就成功了，跟一個真的把人弄丟的請求是兩種嚴重度。工單優先度、要不要通知使用者、要不要補償，全掛在這個差別上。
    - **成本接近零，因為資料已經在手上。** 規則 6 為了拿 status 就撈出了每筆失敗的 client 識別（access 行的 client address，或該 stream 有的 user／session id）跟時間；拿同一個識別去比對後續的成功即可。**比對方式看該 stream 給什麼**：有結構化 client 欄位就 server-side 過濾，只有 access 行的話那個位址在不可過濾的 log 文字裡，要沿用同一套 client-side 解析（SKILL.md step 4 的 recovery 段落）。對不可過濾的欄位下 `match_phrase` 會回 false `0`，而那個 0 讀起來正好就是「沒人重試」。
-   - **視窗一定要越過 burst 尾端。** 重試依定義發生在失敗之後，所以它就落在事故視窗外面：照事故視窗查必然查不到，而那個「查不到」跟「真的沒人重試」長得一模一樣。從最後一筆失敗往後延，延到**再也沒有新的重試出現**為止；沒走完這步就寫「無人重試」，那個結論是沒有根據的。
-   - **間隔從失敗請求的「結束」起算，不是開始。** 那才是使用者看到錯誤的時刻，也才是「他等多久才願意再試」這個數字的意思。用開始時間算會多算一整個 timeout 的長度。
+   - **視窗要越過 burst 尾端、間隔從失敗請求的「結束」起算** —— 兩條都在 SKILL.md step 4 的 recovery 段落；沒照那段量出來的「無人重試」沒有根據。
    - **三類請求結果算的是「請求數」，受影響使用者算的是「人數」，不可混。** 同一個人的失敗與重試會各佔一格，所以人數必須跨格去重。沒去重就會把 N 個人報成 2N 個人，而且讀報告的人無從發現。
    - Impact 要同時給兩個數：**失敗 <N> 筆 / 其中 <M> 人自行重試成功 / 真正流失 <N−M>**。
    - **只有 client address 可用時，明寫那是代理不是身分**——同一出口位址可能是不同人，同一人也可能換位址。

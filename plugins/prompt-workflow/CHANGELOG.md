@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.13] - 2026-09-14
+
+### Changed
+- `/review-skill` can remove a rule now. It used to need proof that the model never makes a given mistake, which nothing can supply, so an audit could only ever add. A rule is kept when something is recorded behind it — a measured failure, a project convention, a harness fact — and may go when it scripts a route the model can find itself, restates a model default with nothing recorded against it, or duplicates a rule that already has a home. Every removal is named in the report with the reason that applied.
+- Emphasis is now separable from the rule it sits on. Dropping caps, a third restatement or a "this is NOT optional" counts as trimming; turning a `must` into a `consider` is still reported as softening and put back.
+- The rules and criteria themselves lost their arguments and anecdotes. Every harness fact, report contract and deterministic check is unchanged.
+
 ## [0.2.12] - 2026-09-09
 
 ### Added

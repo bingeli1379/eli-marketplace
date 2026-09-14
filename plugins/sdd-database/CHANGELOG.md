@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.4] - 2026-09-14
+
+### Changed
+- The two SQL skills drop their quick-start walkthroughs, shell commands and performance claims. They keep the rule tables, the section on shipping a schema as reviewable artifacts, and an index of which reference to read when.
+- The database engineer keeps its SSDT and DACPAC conventions, its dated stored-procedure naming, its skill routing, and the rule that sends it to the vendor docs for a threshold instead of quoting one from memory.
+
 ## [1.1.3] - 2026-09-09
 
 ### Fixed

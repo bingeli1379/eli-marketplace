@@ -1,16 +1,10 @@
 # Gate B — what is worth reporting
 
-**What makes a review expensive is not how many items it has. It is the items that take minutes to
-settle.** Ten renames cost the reader ten glances. One paragraph arguing toward a failure with no
-demonstrated trigger costs them the reasoning you did not finish — they have to reconstruct your
-logic, go and check reachability themselves, and often find it does not happen. So every item is
-charged by **what it costs the reader to settle**, and that charge fixes its shape.
-
-**Gate A and gate B are judged with the same care, and they fail differently.** A wrong skip in gate
-A shows up in its counts as a file nobody opened, and the reader can ask for it. A wrong suppression
-here shows up as nothing at all: the defect was seen, dismissed, and the report is indistinguishable
-from one where it never existed. Nothing recovers that, which is why nothing below suppresses on
-doubt.
+**Every item is charged by what it costs the reader to settle, and that charge fixes its shape.**
+Ten renames cost ten glances; one paragraph arguing toward a failure with no demonstrated trigger
+costs the reasoning you did not finish. And a wrong suppression here shows up as nothing at all —
+the defect was seen, dismissed, and the report reads like one where it never existed — which is why
+nothing below suppresses on doubt.
 
 ## Three shapes, and one that is banned
 
@@ -20,12 +14,10 @@ doubt.
 | **suggestion** | correct as it stands, and worth changing anyway — naming, inline this, a stray literal, a dead import, an asset out of proportion | the change **and its reason, always** — for an obvious one the reason is a word (`typo`), for the rest a clause saying what it buys. Never a chain of reasoning: if justifying it runs to a paragraph, it is not a suggestion |
 | **unconfirmed** | a suspicion you could not demonstrate, **and only where confirming it would produce a finding** | one line, the claim plus **what would settle it**, so the reader is deciding whether to spend that, not whether to worry |
 
-**Keep the last two apart.** A suggestion asks the reader to apply or drop it; an unconfirmed item
-asks them to decide whether to go and check. Interleaved, every line has to be re-weighed for how
-sure it is, which is the cost this gate exists to remove.
-
-**Neither is a smaller finding.** A typo, a dead field and an oversized asset all run correctly, and
-a suspicion has no trigger. Promoting them dilutes the one list that is supposed to be defects.
+**Keep the last two apart** — a suggestion asks the reader to apply or drop it, an unconfirmed item
+asks them to decide whether to go and check; interleaved, every line has to be re-weighed for how
+sure it is. **Neither is a smaller finding**: a typo, a dead field and an oversized asset all run
+correctly, and a suspicion has no trigger.
 
 **The unconfirmed row has an entry test, and it is strict**: would the confirmed version clear the
 bar? No — confirming it would only produce a suggestion — then drop it entirely rather than writing
@@ -88,14 +80,11 @@ resemblance during a run.
 
 ## Doubt is a line, never a silence
 
-**If you cannot demonstrate it and its confirmed form would be a finding, write the unconfirmed
-line.** Suppression is a positive claim that the item belongs to one of the four classes above;
-anything you cannot place there was never eligible for silence. What doubt costs it is the shape,
-not its existence — one line instead of a paragraph.
-
-**Nor does the count suppress.** There is no cap on either shape. A cap drops a real defect the
-moment the count runs over, which is exactly the failure this gate exists to avoid, and suggestions
-are cheap by construction. What handles a long list is the split above and the ordering below.
+**Suppression is a positive claim that the item belongs to one of the four classes above**; anything
+you cannot place there gets the unconfirmed line if it passes that row's entry test. What doubt costs
+it is the shape, not its existence. **Nor does the count suppress**: there is no cap on any shape —
+a cap drops a real defect the moment the count runs over; a long list is handled by the split above
+and the ordering below.
 
 ## Order by what it costs to be wrong
 
@@ -103,9 +92,8 @@ Findings first, in this order: what breaks in production, then traps, then proje
 Within a tier, the one that is cheapest to fix goes first. Suggestions come next in file order,
 then the unconfirmed lines — both are checklists, not rankings.
 
-The reader works top-down and stops when they run out of time, so ordering is the same job as the
-bar, one layer finer. A report whose first item is its least consequential has failed this gate even
-when every item in it is real.
+The reader works top-down and stops when they run out of time — a report whose first item is its
+least consequential has failed this gate even when every item in it is real.
 
 ## The report
 
@@ -143,8 +131,6 @@ order: the language whoever asked for the review states outright — a dispatchi
 in the prompt it hands you, and it names it there precisely because the prompt itself is not written
 in it; failing that, the language the request came in; failing both, the language of the repo's own
 comments. The counting lines
-keep their keys as written, so a reader can compare two runs.
-
-A suppression the reader cannot see is one they can never disagree with, and disagreement is the
-only way a wrong suppression is ever found. That is what the second line buys, and it is why the
-count stays even when the section does not.
+keep their keys as written, so a reader can compare two runs — and the suppression count stays even
+when the section does not, because a suppression the reader cannot see is one they can never
+disagree with.

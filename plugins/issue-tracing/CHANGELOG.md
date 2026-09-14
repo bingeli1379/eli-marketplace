@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.4] - 2026-09-14
+
+### Changed
+- Every false-zero mechanism, tool quirk and report rule is unchanged. What is gone is the argument attached to each gate, eight guardrails that repeated the body, and three rules that were each stated in four places and now have one home with pointers to it.
+- The infra query plan is one sentence now: list the instances you mean to cover, then send two or three per call, because the backend falls over past that.
+
 ## [1.12.3] - 2026-08-28
 
 ### Fixed

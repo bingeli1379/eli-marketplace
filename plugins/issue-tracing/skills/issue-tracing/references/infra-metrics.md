@@ -10,18 +10,7 @@ When in doubt about which category the error falls into, default to REQUIRED —
 
 **Approach: query the datasource directly. Do NOT start from dashboards.** Dashboards are visualization for humans; for an agent, they are stale, full of unresolved scopedVars, and may not exist for the right tier. The metrics live in the datasource — go there first.
 
-**GATE — Plan-then-batch execution. The Plan block is required.** Before issuing any infra query, you MUST write a Plan block in chat with this shape:
-
-```
-Infra query plan:
-- Datasources: <list with type + uid>
-- Hosts/instances: <list>
-- Metrics per host: <CPU, Memory, ...>
-- Time range: <from> ~ <to>
-- Total queries: <N>
-```
-
-Then dispatch the queries in **bounded-concurrency batches — at most 2–3 calls per tool-use block** — and wait for each batch to return before sending the next. **Do NOT fire all N in one block.** The ELK / Grafana MCP backends sit behind a connection / rate ceiling; a large parallel fan-out exhausts it and the whole investigation hangs (observed repeatedly — the symptom is calls that never return). If any query comes back with a connection / timeout / rate error, **drop to sequential (one call at a time)** for the remainder. The Plan block still enumerates all N up front so nothing is missed — it controls *pacing*, not a single mega-batch. No Plan block → no queries; skipping it is how the agent ends up missing entire datasources or instances.
+**Enumerate, then batch.** Before the first infra query, list in chat the full set you will cover — datasources (type + uid), hosts / instances, metrics per host, time range — so a datasource or instance cannot drop out unnoticed; that list is the infra query list `report.md`'s evidence dump expects. Then dispatch in **bounded-concurrency batches — at most 2–3 calls per tool-use block** — and wait for each batch to return before sending the next. The ELK / Grafana MCP backends sit behind a connection / rate ceiling; a larger parallel fan-out exhausts it and the calls never return (observed repeatedly). On any connection / timeout / rate error, **drop to sequential (one call at a time)** for the remainder.
 
 ## 11.0 Anchor on prod config FIRST
 

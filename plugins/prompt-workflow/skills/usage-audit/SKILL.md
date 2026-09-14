@@ -6,15 +6,15 @@ disable-model-invocation: true
 
 # Audit the toolset against what you actually use
 
-**What an unused skill costs is its description, on every single request.** A model-selectable skill's `description` sits in context permanently while its body is lazy-loaded, so one that never fires is a fixed per-turn charge for nothing — while a command-only one is not in context at all and costs nothing however long it is (step 1 keeps that straight) — and that charge, not the number of skills, is what a prune is ranked by: thirty terse skills can cost less than six verbose ones. The second cost, a wider field of candidates making the right one harder to select, is real and is not measurable from here — say so rather than putting a number on it.
+**What an unused skill costs is its description, on every single request.** A model-selectable skill's `description` sits in context permanently while its body is lazy-loaded; a command-only one is not in context at all and costs nothing however long it is (step 1 keeps that straight). That charge, not the number of skills, is what a prune is ranked by. The second cost — a wider field of candidates making the right one harder to select — is real and not measurable from here; say so rather than putting a number on it.
 
-**Zero usage means two opposite things, and conflating them is the failure this skill exists to avoid.** An MCP server nobody called is surplus. A skill nobody called is often a skill that never got the chance, in a plugin that is doing its job by another route — deleting that is a loss, and keeping it is not free either.
+**Zero usage means two opposite things, and conflating them is the failure this skill exists to avoid.** An MCP server nobody called is surplus. A skill nobody called is often one that never got the chance, in a plugin doing its job by another route.
 
 ## 1. Collect
 
 Run `${CLAUDE_PLUGIN_ROOT}/skills/usage-audit/scripts/collect.py` with python3. It emits one JSON object and does the whole measurement, including the per-plugin arithmetic: its header documents every source it reads and why no single one is sufficient.
 
-**Use the script rather than composing the scan or the totals inline.** The sources are several and each is incomplete in a different way, and the arithmetic on top of them is identical every run — both are what a per-run improvisation gets wrong.
+**Use the script rather than composing the scan or the totals inline** — several incomplete sources plus fixed arithmetic is exactly what a per-run improvisation gets wrong.
 
 The keys the steps below consume:
 
@@ -28,13 +28,13 @@ The keys the steps below consume:
 | `coverage` | `transcript_files`, and the window as `window_start` / `window_end`, already `YYYY-MM-DD` — taken from the messages, not from file mtimes, and printed as given rather than reformatted. `files_without_timestamp` is how many transcripts contributed no date to it |
 | `unavailable` | the sources that could not be read |
 
-**Two populations charge nothing and are already reported as zero — never re-add them as a cost.** A command-only skill (`disable-model-invocation: true`, flagged `command_only`) is absent from the model's skill listing, so its description is never in context however long it is; it still fires as `/plugin:skill`, so it belongs in the Keep table at 0. A disabled plugin is dropped from the inventory entirely. Both were once the largest rows of a real run, and both were phantom.
+**Two populations charge nothing and are already reported as zero — never re-add them as a cost.** A command-only skill (`disable-model-invocation: true`, flagged `command_only`) is absent from the model's skill listing, so its description is never in context; it still fires as `/plugin:skill`, so it belongs in the Keep table at 0. A disabled plugin is dropped from the inventory entirely. Both were once the largest rows of a real run, and both were phantom.
 
-**A row carries two costs and they answer different questions — `description_chars` / `approx_tokens` cover its never-fired skills ONLY, `all_description_chars` / `all_approx_tokens` cover every skill it ships.** The never-fired pair accumulates in the same branch that increments `never_fired`, so a plugin whose every skill fires reads 0 there while its `all_` pair reads its real weight. Step 3's plugin table prints both, ranks on the `all_` pair, and decides on the never-fired one. Neither is the field for a *skill*: one skill's own cost is `skills_installed[<name>].description_chars`, and the totals over every plugin and personal skill are `description_cost.all_chars` / `all_approx_tokens` — a population that excludes the built-in skills, which step 3 (report) states rather than leaves implied.
+**A row carries two costs — `description_chars` / `approx_tokens` cover its never-fired skills ONLY, `all_description_chars` / `all_approx_tokens` every skill it ships.** A plugin whose every skill fires reads 0 in the first pair and its real weight in the second. Step 3's plugin table prints both, ranks on the `all_` pair, decides on the never-fired one. One skill's own cost is `skills_installed[<name>].description_chars`; the totals over every plugin and personal skill are `description_cost.all_chars` / `all_approx_tokens`, a population that excludes the built-in skills — step 3 (report) states that.
 
 **If python3 is not on the machine, stop and say so.** Every verdict rests on this collection, and there is no reduced version of the run worth reporting.
 
-**Read `unavailable` before anything else.** Every entry is a source that could not be read, and each one silently removes a verdict the report would otherwise be entitled to make. Carry those entries to step 3 (report) verbatim.
+**Read `unavailable` before anything else** — each entry is a source that could not be read and a verdict the report is not entitled to make. Carry them to step 3 (report) verbatim.
 
 **If `skills_installed` or `mcp_servers` came back empty, that population is reported usage-only** — ranked by what was used, with no claim about what is unused, and the report says so.
 
@@ -50,9 +50,9 @@ Records that JSON. Steps 2 (classify) and 3 (report) both read it.
 | **保留** | plugin | Its skills never fired, but the plugin is reached another way |
 | **無判定** | plugin | It ships no skill and no MCP server, so it holds nothing this run can count — or its install path is gone |
 
-**An empty `other_components` means nothing recognised is on disk, never that the plugin ships nothing.** The three `*-lsp` plugins on this machine hold a README and a LICENSE and not one component directory, their capability declared somewhere no source here reads — so a zero-skill plugin earns a verdict from the one thing that is measurable, an MCP server it declares, and is otherwise left unjudged with its contents printed. Reading an empty list as an empty plugin retires all three on evidence never taken, which is this skill's opening failure with a new population to happen to.
+**An empty `other_components` means nothing recognised is on disk, never that the plugin ships nothing** — an `*-lsp` plugin holds a README and a LICENSE and declares its capability where no source here reads. A zero-skill plugin earns a verdict from the one measurable thing, an MCP server it declares, and is otherwise left unjudged with its contents printed.
 
-**Among the plugins that ship skills, the split is whether anything in the plugin is reached at all — not who owns it.** Two routes are visible from here: another of its skills fires (`never_fired` < `installed`), or its own MCP server does (`server_calls` > 0). A route this run cannot see is the third state, **無判定** per the paragraph above, and never a **該處理** arrived at by default. Which remedy a **該處理** row deserves — uninstall it, or rewrite the descriptions where the source is the user's — is theirs to pick and needs no column.
+**Among the plugins that ship skills, the split is whether anything in the plugin is reached at all.** Two routes are visible: another of its skills fires (`never_fired` < `installed`), or its own MCP server does (`server_calls` > 0). A route this run cannot see is **無判定**, never a **該處理** by default. Which remedy a **該處理** row deserves — uninstall, or rewrite the descriptions — is the user's and needs no column.
 
 The signals, first match wins:
 
@@ -71,13 +71,13 @@ The signals, first match wins:
 
 State each recommendation with the signal that produced it. Acting on it is the user's — they read the same table and may know a capability is kept deliberately for work that has not come up yet.
 
-**A recorded name with nothing installed behind it is out of scope — it gets no verdict and is never merged into one.** It may be a rename, a merge of two skills, or something from a marketplace that no longer exists, and nothing in the data tells those apart; matching by name guesses wrong in both directions at once, folding two live siblings together while missing a rename that changed the name. Counts are therefore read exactly as recorded, and a run diagnosing the current setup has nothing to say about a name that is no longer part of it. The cost is that a renamed item's history stays under its old name and its current count reads low — low and true beats complete and guessed.
+**A recorded name with nothing installed behind it is out of scope — no verdict, never merged into one.** It may be a rename, a merge, or a vanished marketplace, and nothing in the data tells those apart. Counts are read exactly as recorded; a renamed item's history stays under its old name and its current count reads low — low and true beats complete and guessed.
 
-**Read `project_exists` before `project_sessions` — a declaration whose project directory is absent is decided, not unmeasured.** The entry stayed behind in `~/.claude.json` while the path went away, and the server cannot load while it is gone, so its zero needs no window at all: verdict **Remove**, reported as dead config rather than an unused capability. Quote the path and say only that it is absent — a directory check cannot tell a deleted project from one sitting on an unmounted volume, and the user can. Only when the directory still stands does the paragraph below apply. Getting the order wrong is this skill's opening failure one level down: an unmeasured zero and an impossible one read identically, and a single directory check separates them.
+**Read `project_exists` before `project_sessions` — a declaration whose project directory is absent is decided, not unmeasured.** The entry stayed in `~/.claude.json` while the path went away, so the server cannot load: verdict **Remove**, reported as dead config. Quote the path and say only that it is absent — a directory check cannot tell a deleted project from an unmounted volume, and the user can.
 
-**A project-scoped server whose project still exists is only loaded inside it, so its zero is only evidence when the window contains sessions from there.** At `project_sessions` 0 **or `null`** the server gets **no verdict**, and the two say different things: 0 means the window holds no session from that project, `null` here means the project is still there but no transcript directory for it could be found, so nothing was measured either way — a `null` with `project_exists` false is the paragraph above, not this one. State which of the two it was. Even with sessions behind it, a project-scoped server costs nothing in any other project, which makes removing it worth less than removing a `user` or `plugin` one; rank it below them and say so.
+**A project-scoped server whose project still exists is only loaded inside it, so its zero is only evidence when the window contains sessions from there.** At `project_sessions` 0 **or `null`** it gets **no verdict**, and the two differ: 0 means no session from that project in the window, `null` means no transcript directory for it could be found — state which. A project-scoped server costs nothing in any other project, so removing it is worth less than a `user` or `plugin` one; rank it below them and say so.
 
-**MCP verdicts are given at server level, never per tool.** Which tools a server exposes is knowable only by connecting to it, so a tool that never fired cannot be distinguished from a tool that does not exist. A server that never fired can be, and that is the actionable unit anyway.
+**MCP verdicts are given at server level, never per tool.** Which tools a server exposes is knowable only by connecting, so a never-fired tool cannot be told from a nonexistent one; a never-fired server can, and is the actionable unit.
 
 Records one verdict per item. Step 3 (report) prints them.
 
@@ -85,7 +85,7 @@ Records one verdict per item. Step 3 (report) prints them.
 
 **Written in Traditional Chinese; identifiers stay in English** — server and skill names, scopes, paths, and every command, which are copied and run rather than read.
 
-**Emit exactly these five blocks, in this order, with these headings and these columns.** The shape is fixed so two runs can be compared, and so no count is printed without a header saying what it counts — a bare number beside a name is unreadable, and the reader cannot tell a total from a remainder. A block with no rows still prints, with its count as 0. **Keep the column count as written**: every added column narrows the rest until cells wrap, and a wrapped table is harder to read than the prose it replaced, so a fact belonging to an existing column goes in that cell, not in a new one.
+**Emit exactly these five blocks, in this order, with these headings and these columns** — fixed so two runs can be compared and no count is printed without a header saying what it counts. A block with no rows still prints, with its count as 0. **Keep the column count as written**: a fact belonging to an existing column goes in that cell, not in a new one.
 
 ```
 ## 每輪成本
@@ -113,59 +113,58 @@ Records one verdict per item. Step 3 (report) prints them.
 
 ### Why the cost block carries three numbers
 
-**Spent, wasted, and recoverable are three different figures, and printing fewer than three makes the report lie in a predictable direction.** The never-fired total counts every silent skill, including the ones inside plugins the reader is keeping for another route — those are unreachable by uninstalling anything and come back only by rewriting a description that fails to trigger. Printing the wasted figure alone reads as the saving, so the reader budgets for it, acts, and recovers a fraction; the difference between the two is the part that needs different work, which is why it is stated as its own clause rather than left to subtraction. Whether the recoverable figure is worth acting on is theirs to judge, and it is the one number this whole report exists to produce.
+**Spent, wasted, and recoverable are three different figures; printing fewer than three makes the report lie in a predictable direction** — the wasted figure alone reads as the saving, while the part inside plugins the reader keeps for another route comes back only by rewriting a description. The recoverable figure is the one number this report exists to produce.
 
 ### The built-in skills the collection cannot see
 
-**They charge every turn and the totals exclude them, so the cost block's first line states how many there are and stops.** They ship inside the CLI binary rather than on disk, which is why the collection reports them under `unavailable` instead of counting them — but the run itself is looking at them: they are in this session's own skill listing, the same way a connected server's `instructions` block is, and counting the entries in that listing is a count, not an estimate. **Give the number and no token figure.** A description's length read off a listing is the eyeballed `≈` that *The MCP table*'s instructions rule forbids, and it would land beside figures the script measured with nothing marking which is which. The user cannot uninstall a built-in anyway, so the number is there to keep the total honest, not to be acted on — never rank them, and never fold them into the prune arithmetic.
+**They charge every turn and the totals exclude them, so the cost block's first line states how many there are and stops.** They ship inside the CLI binary, so the collection reports them under `unavailable`; the run itself sees them in this session's own skill listing, and counting those entries is a count, not an estimate. **Give the number and no token figure** — a length read off a listing by eye is the `≈` *The MCP table* forbids. Never rank them, never fold them into the prune arithmetic.
 
 ### The MCP table
 
-**Every declared or observed server is a row, not only the silent ones** — a report of zeros cannot show a server sliding toward zero, and that one (a handful of calls where its neighbours have hundreds) is the row worth seeing before it dies. The zero rows are what the reader acts on, so bold them; the rest is the standing state they are read against.
+**Every declared or observed server is a row, not only the silent ones** — a server sliding toward zero is the row worth seeing before it dies. Bold the zero rows.
 
-**The bolded rows plus the sentence under the table ARE step 2's **Remove** verdict — this table is where it lands, and it is the only place it appears.** Name the zero-call servers there (or 「無」), and name separately every server that got **no verdict** with which case it was, since a bolded row and an unbolded one look identical for a server nobody could measure. Without that sentence the verdict step 2 recorded is never printed, and a table sorted by call count reads as a ranking with nothing decided.
+**The bolded rows plus the sentence under the table ARE step 2's **Remove** verdict — the only place it appears.** Name the zero-call servers there (or 「無」), and separately every server that got **no verdict** with which case it was.
 
-**`宣告在哪` names the config surface, never a path that repeats another column.** A plugin's `installPath` is where its body is installed, which `plugin@marketplace` already says in the form the reader can act on — printing it again spends the widest cell in the table on a duplicate. Derive the cell:
+**`宣告在哪` names the config surface, never a path that repeats another column.** Derive the cell:
 
 | scope | 宣告在哪 |
 |---|---|
 | `user` | `~/.claude.json` |
-| `project` | the project path in `where` — this is the one scope where the path IS the fact, since it says which project loads it |
-| `plugin` | plugin 自帶 `<the row's `manifest` value>` — quote what the collection recorded rather than picking between `.mcp.json` and `mcp.json`, which is a coin flip printed as a fact |
+| `project` | the project path in `where` — the one scope where the path IS the fact, since it says which project loads it |
+| `plugin` | plugin 自帶 `<the row's `manifest` value>` — quote what the collection recorded rather than picking between `.mcp.json` and `mcp.json` |
 | `observed` | 只在 transcripts 看得到 — say the declaration cannot be read, and never invent a path for it |
 
-**A zero-call row names how to remove it — a command or a named action, never a category.** The scope alone leaves the reader to find out which project or which plugin, and the sentence under the table is where it lands, one line per zero-call server. Derive it:
+**A zero-call row names how to remove it — a command or a named action, never a category**, one line per zero-call server in the sentence under the table. Derive it:
 
 | scope | 怎麼移除 |
 |---|---|
 | `user` | `claude mcp remove <server> -s user` |
 | `project`, directory still there | `cd <where> && claude mcp remove <server> -s project` |
-| `project`, directory gone | drop that project's whole entry from `~/.claude.json`'s `projects` map — `claude mcp remove` needs a directory to run in, so the command above cannot execute at all here. Name the key, say to back the file up first, and leave the edit to the user |
-| `plugin` | uninstall `<plugin>@<marketplace>` via `/plugin` — a plugin-shipped server has no config entry to edit, and the marketplace is half the address: the same plugin name can exist in more than one |
+| `project`, directory gone | drop that project's whole entry from `~/.claude.json`'s `projects` map — `claude mcp remove` needs a directory to run in. Name the key, say to back the file up first, and leave the edit to the user |
+| `plugin` | uninstall `<plugin>@<marketplace>` via `/plugin` — a plugin-shipped server has no config entry to edit, and the same plugin name can exist in more than one marketplace |
 | `observed` | seen only in transcripts and declared nowhere the run can read: say the removal path is unknown rather than guessing one |
 
-**The table carries no token column, and the line under it states what a silent server actually charges rather than calling the whole cost unmeasurable.** "This collection cannot see it" reads as zero, and zero is wrong — a server's per-turn charge has two halves, and only one of them is out of reach:
+**The table carries no token column, and the line under it states what a silent server actually charges rather than calling the whole cost unmeasurable.** A server's per-turn charge has two halves:
 
-- **Its `instructions` block is a fixed per-turn charge of exactly the same shape as a skill `description`**, and for a server the running session is connected to, that text is sitting in this session's own context — so it is not unmeasured, it is measurable by the run itself, converting with `description_cost.chars_per_token`. The collection never sees this block (it reaches the session from the server at connect time, not from any config file on disk), which is a limit of the script, not of the report. **The character count must come from an actual count of that text, never from reading its length off by eye** — an eyeballed number lands in the report beside figures the script measured, with nothing marking which is which, and a fabricated `≈` is what this whole audit exists not to print.
-  **Three states, and collapsing any two is this skill's own opening failure in miniature:** measured (give the figure); **connected but shipping no `instructions` block at all** — a real zero, so say it charges nothing for instructions rather than that it was not measured; and not connected this session — not measured, and name which servers that covers. **What separates those last two is whether that server's tools are present in this session at all** — loaded, or listed as deferred: tools present with no instructions text is the real zero, no tools at all is not connected. The absence of instructions text is never the answer on its own, because that is the one reading under which the two states are indistinguishable.
-- **Its tool schemas are knowable only by connecting**, which is the same limit that keeps verdicts at server level, and under tool deferral they are not even a per-turn charge until something fetches them. Never estimate this half, and never fetch schemas just to size them — that charges the context for the measurement and reports a number the server does not normally cost.
+- **Its `instructions` block is a fixed per-turn charge of the same shape as a skill `description`**, and for a server this session is connected to, that text is in this session's own context — measurable by the run, converting with `description_cost.chars_per_token`; the collection never sees it (it arrives from the server at connect time, not from any file on disk). **The character count must come from an actual count of that text, never from reading its length off by eye** — a fabricated `≈` beside script-measured figures is what this audit exists not to print. **Three states, never collapsed**: measured (give the figure); **connected but shipping no `instructions` block** — a real zero, say it charges nothing for instructions; not connected this session — not measured, name which servers. **What separates the last two is whether that server's tools are present in this session at all** — loaded or listed as deferred: tools present with no instructions text is the real zero, no tools at all is not connected.
+- **Its tool schemas are knowable only by connecting**, and under tool deferral are not a per-turn charge until something fetches them. Never estimate this half, and never fetch schemas just to size them.
 
 ### The two skill tables, and why they are two
 
-**Table 3 excludes `rollup_by_plugin`'s `(personal)` row** — that population is table 2, expanded one row per `skills_installed` entry whose `owner` is `(personal)`, with its heading total taken from that same rollup row. Leaving it in prints that whole population's tokens twice under two different headings, and the reader has no way to tell it is one population counted once. It gets no **保留** / **該處理** verdict either — those are per plugin, and table 2 has no 建議 column — so table 3's heading total is the sum of the rows it actually shows.
+**Table 3 excludes `rollup_by_plugin`'s `(personal)` row** — that population is table 2, expanded one row per `skills_installed` entry whose `owner` is `(personal)`, with its heading total from that same rollup row; leaving it in counts one population twice. It gets no **保留** / **該處理** verdict — those are per plugin — so table 3's heading total is the sum of the rows it shows.
 
-**Local skills are expanded per skill; marketplace skills are rolled up per plugin.** They are pruned differently, and that is the whole reason for the split: a local skill is a directory the user owns and removes one at a time, so the actionable unit is the skill; a plugin arrives and leaves whole, so listing its skills individually offers a cut nobody can make. Never merge the two tables, and never expand a plugin's skills into rows.
+**Local skills are expanded per skill; marketplace skills are rolled up per plugin** — a local skill is removed one at a time, a plugin arrives and leaves whole. Never merge the two tables, never expand a plugin's skills into rows.
 
-**Table 2 sorts by call count, then by cost within a tie** — it is read as "what am I actually using", so the used ones lead and the silent tail sorts by what it charges. Its header line carries the population's total and the never-fired share of it, since a per-skill table alone never adds up to the number the reader wants.
+**Table 2 sorts by call count, then by cost within a tie**; its header line carries the population's total and the never-fired share.
 
-**A zero-skill plugin is a row like any other, and its `每輪 ≈tokens` of 0 is a real zero.** It ships no description, so it charges nothing per turn while still being installed — the 建議 cell is the whole content of that row, and 無判定 rows say there what could not be measured. Dropping them because they cost nothing puts the plugin inventory back to listing only the plugins that happen to ship skills, which is what left a 41-call server out of the table entirely.
+**A zero-skill plugin is a row like any other, and its `每輪 ≈tokens` of 0 is a real zero** — the 建議 cell is the whole content of that row, and 無判定 rows say there what could not be measured. Dropping them puts the inventory back to listing only skill-shipping plugins, which once left a 41-call server out of the table entirely.
 
-**Table 3 carries two token columns and needs both.** `all_approx_tokens` is how heavy the plugin is — that is what it ranks on. `approx_tokens` is the never-fired share, which is what pruning would actually save. One alone answers neither question: a large total tells you nothing about whether to act, and a large wasted share tells you nothing about the plugin's weight. Label them `每輪 ≈tokens` and `沒在用的 ≈tokens`. Its **該處理** rows are the same set the cost block's third number sums, so that number is printed there and never restated here — and these rows have to add up to it, since a headline the table below contradicts is worse than either number alone.
+**Table 3 carries two token columns and needs both.** `all_approx_tokens` is how heavy the plugin is and what it ranks on; `approx_tokens` is the never-fired share, what pruning would save. Label them `每輪 ≈tokens` and `沒在用的 ≈tokens`. Its **該處理** rows are the set the cost block's third number sums, so they have to add up to it.
 
-**Table 4 repeats rows from tables 2 and 3, deliberately.** Those two are ranked by cost within their own population; this one ranks the whole inventory by use, which is the only view that puts the most-called skill next to a once-called one. Its `每輪 ≈tokens` is that one skill's own cost — `skills_installed[<name>].description_chars` ÷ `chars_per_token` — because firing is not the same as being worth its charge: a skill called once or twice on a fat description is the one place a rewrite pays.
+**Table 4 repeats rows from tables 2 and 3, deliberately** — the only view that puts the most-called skill next to a once-called one. Its `每輪 ≈tokens` is that one skill's own cost, `skills_installed[<name>].description_chars` ÷ `chars_per_token`, because a skill called once or twice on a fat description is where a rewrite pays.
 
-**One row per item, never two merged into one.** Rows sharing a count are still separate rows: merging costs the reader one-line-per-thing scanning and hides which name the number belongs to.
+**One row per item, never two merged into one.**
 
-**Counts from different sources are not comparable and never share a column.** Skill counts are lifetime totals from the harness's own counter; MCP counts come from transcripts, which rotate, so they cover a recent window. State which is which wherever a number appears.
+**Counts from different sources are not comparable and never share a column.** Skill counts are lifetime totals from the harness's counter; MCP counts come from transcripts, which rotate, so they cover a recent window. State which is which wherever a number appears.
 
 **The report recommends; it changes nothing.** Disabling a server or uninstalling a plugin edits the user's setup and is theirs to run.
