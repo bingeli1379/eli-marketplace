@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.4] - 2026-09-14
+
+### Changed
+- The reading gate is stated as what it has to hold rather than as a procedure to walk. The four counts still have to add up to the changed-file count, a rename is still grepped in five casings, and "no repo access" is still kept distinct from "read it and found nothing".
+- Four passages telling the reviewer not to go quiet on a doubt become one. Every table and report template is unchanged.
+
 ## [0.1.3] - 2026-08-24
 
 ### Fixed
