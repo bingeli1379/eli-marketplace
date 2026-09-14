@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.3] - 2026-09-14
+
+### Changed
+- The agent no longer carries textbook code samples. They pulled it toward copying a typical shape instead of the one your repo already uses, which is the opposite of what it is told to do. It keeps what only it can supply: the signals that identify your stack, which skill to load for which job, and any place it overrides a bundled best-practice skill.
+- It also keeps the two places it overrides `dotnet-best-practices`, on XML documentation and on the test stack, and the markers that identify a legacy ASP.NET project so Clean Architecture is not forced onto one.
+
 ## [1.2.2] - 2026-09-09
 
 ### Fixed
