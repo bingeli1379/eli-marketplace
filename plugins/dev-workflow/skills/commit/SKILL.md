@@ -11,7 +11,7 @@ allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git l
 
 ## Context (gather first)
 
-Before doing anything else, run these and read the output:
+Run these and read the output:
 
 - `git status --short` — what changed (untracked files show as `??`)
 - `git diff --stat HEAD` — per-file change size
@@ -22,11 +22,9 @@ User instruction (optional): `$ARGUMENTS` (the text passed after the command; em
 ## Flow
 
 1. **Honor the user instruction first.** If `$ARGUMENTS` says how to commit (e.g. "one commit", "split X and Y", named files, or a fixed message), follow it and skip any grouping decision it already resolves.
-2. **Default = split by concern.** Group changes into the smallest set of cohesive commits: one concern per commit. A feature, a bug fix, and a chore must NOT share a commit. Untracked files show as `??` in status — include them.
-   - **Read frugally.** Work from the `--stat` output first. Open the full diff (`git diff HEAD -- <file>`) ONLY for files whose intent isn't clear from path + stat. Skip pure renames, deletions, and obvious-from-path changes.
-   - **Never read generated/vendored content.** Lock files (`package-lock.json`, `pnpm-lock.yaml`, `*.sum`), `dist/`, `*.min.js`, snapshots, etc. — classify as `chore` by filename alone, do not open them.
+2. **Default = split by concern.** Group changes into the smallest set of cohesive commits: one concern per commit. Untracked files show as `??` in status — include them.
+   - Work from the `--stat` output; open a diff only where the intent is not clear from path and stat. **Never open generated or vendored content** — lock files (`package-lock.json`, `pnpm-lock.yaml`, `*.sum`), `dist/`, `*.min.js`, snapshots — classify those as `chore` by filename alone.
    - **A lock file goes in the commit that changed its manifest**, not in a `chore` commit of its own. When the same changeset touches a dependency manifest (`package.json`, `*.csproj`, `pyproject.toml`, `go.mod`), the lock beside it is part of that change: splitting them leaves the manifest commit with a lock that does not match it, and a checkout there fails a frozen-lockfile install. A lock changed with no manifest change in the set is a `chore` commit as above.
-   - **One read, not N.** When the changeset is small, run a single `git diff HEAD` instead of one call per file; switch to targeted per-file reads only when the diff is large.
 3. **Match this repo's style** from the recent-commits log (scope usage, casing, prefixes) on top of the format rules below.
 4. For each group, in dependency order: stage only that group's files (`git add <files>`), then `git commit`. Never `git add -A` when splitting.
 5. After committing, report the result (`git log --oneline -<n>`).
@@ -36,54 +34,12 @@ User instruction (optional): `$ARGUMENTS` (the text passed after the command; em
 - Write in English
 - Only describe technical content
 - Generate the message from the actual diff, not the file names alone
+- No promotional or attribution blocks
 
 ### Format
-```
-<type>(<scope>)!: <title>
 
-<body>
+Conventional Commits: `<type>(<scope>)!: <title>`, blank line, body, footer. Types are the standard set (`feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `chore`, `ci`, `build`); a breaking change carries `!` after type/scope and a `BREAKING CHANGE: <description>` footer naming what breaks and the migration path.
 
-<footer>
-```
-`(<scope>)` and the breaking-change `!` are both optional — see below.
-
-### Scope
-- Optional, lowercase noun in parens: `feat(parser): ...`
-- In a monorepo / multi-package repo, scope to the affected package or plugin (e.g. `feat(dev-workflow):`, `fix(sdd):`)
-- Omit when the change is repo-wide or spans many packages
-- Splitting by concern usually leaves one package per commit — let that drive the scope
-
-### Breaking changes
-- Append `!` after type/scope, before the colon: `feat!:` or `feat(api)!:`
-- Also add a `BREAKING CHANGE: <description>` footer explaining what breaks and the migration path
-
-### Types
-| Type | Purpose |
-|------|---------|
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `refactor` | Code change (no feature/fix) |
-| `perf` | Performance improvement |
-| `test` | Adding or updating tests |
-| `docs` | Documentation changes |
-| `style` | Formatting, whitespace |
-| `chore` | Maintenance, dependencies |
-| `ci` | CI/CD changes |
-| `build` | Build system changes |
-
-### Description Rules
-- Imperative mood: "add" not "added"
-- Lowercase first letter
-- No period at the end
-- Keep under 50 characters
-
-### Body
-- Separate from title with blank line
-- Wrap at 72 characters
-- Explain "what" and "why", not "how"
-- Skip for self-explanatory changes
-
-### DO NOT
-- Use past tense ("added", "fixed")
-- Write vague descriptions ("bug", "changes", "stuff")
-- Add promotional or attribution blocks
+- **Scope**: in a monorepo / multi-package repo, scope to the affected package or plugin (e.g. `feat(dev-workflow):`, `fix(sdd):`); omit when the change is repo-wide or spans many packages
+- **Title**: imperative mood ("add" not "added"), lowercase first letter, no trailing period, under 50 characters
+- **Body**: wrap at 72 characters; explain "what" and "why", not "how"; skip for self-explanatory changes
