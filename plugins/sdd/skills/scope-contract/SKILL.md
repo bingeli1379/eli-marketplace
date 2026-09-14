@@ -53,10 +53,6 @@ Produce a **Scope Contract** for a change and show it back to the user as a regu
 - **Use action verbs in expanded chains, readable for a non-engineer** — "元件拼 CSS class 名" not "`:class` binding"; "後端產生 token 寫 DB" not "`TokenService.generate()`".
 - **Length signal**: if the contract can't fit under ~25 lines even after collapsing one-liners, the change is too large — suggest splitting into sub-changes.
 
-## Why this exists
-
-The single most common cause of review blockers is **a downstream consumer being missed** — a callsite not updated (refactor) or a flow step unaccounted for (new feature). The one-line 現在 → 改成 entries catch "you forgot to replace X" or "you changed it to the wrong thing"; the expanded behavior chains catch "you didn't trace this change to its terminal consumers" — the format-mismatch class of bug that otherwise surfaces only deep into review.
-
 ## One correction round only
 
 If the user pushes back, incorporate the corrections and proceed — do NOT loop on this checkpoint. More than one round of correction is a signal the contract was under-specified; treat that as self-feedback, not a reason to keep asking.

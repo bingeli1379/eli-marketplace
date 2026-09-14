@@ -24,7 +24,7 @@ Read-only understanding pass over an area of the codebase, producing a **researc
 
 **Steps**
 
-0. **Detect repo topology (MANDATORY first)**
+0. **Detect repo topology (first)**
 
    Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode. In **multi-repo** mode, resolve the area to the child repo(s) that contain it and scan each; the findings file lives at the umbrella cwd and labels every path with its owning repo.
 
@@ -54,9 +54,9 @@ Read-only understanding pass over an area of the codebase, producing a **researc
 
    Do not read the project's own prose docs as authority. If a doc contradicts the code, **the code wins** — and that contradiction is itself a finding worth recording.
 
-3. **Scan the area (thoroughness over speed)**
+3. **Scan the area**
 
-   Reuse the discipline of `propose`'s exhaustive scan, minus the change planning: `Glob` to enumerate, then open every file that could matter. Do not conclude from filenames. Reads may fan out to sub-agents that return compressed findings; nothing writes.
+   `Glob` to enumerate, then open every file that could matter — do not conclude from filenames — and sweep by `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` → *Enumerating what is in the repo* (one hop outward from every hit; declaratively wired code swept separately). Reads may fan out to sub-agents that return compressed findings; nothing writes.
 
    Collect, with a `file:line` anchor for every claim:
    - **Entry points** — how execution reaches this area (route, command, event, signal, scheduled job, UI action)
@@ -69,9 +69,9 @@ Read-only understanding pass over an area of the codebase, producing a **researc
 
 4. **Ground every claim (no invention)**
 
-   Same guard the architect works under: every path, symbol, and endpoint in the findings MUST come from what you actually read. Behaviour claims about a tool or framework MUST be verifiable by a concrete command or cite official docs.
+   Every path, symbol, and endpoint in the findings comes from what you actually read; a behaviour claim about a tool or framework is verifiable by a concrete command or cites official docs.
 
-   For a fact you cannot obtain from the repo — a runtime/production value, a contract owned by another service, live infrastructure state — check whether your available tools can resolve it (connected MCP servers, lookup tools, project-knowledge skills) and use them deliberately rather than assuming. Anything still unresolved is written into the findings under **Open questions** with what would answer it. Never fill a gap with a plausible guess; an unanswered question is a useful finding, a fabricated answer is a liability in a handoff doc.
+   For a fact the repo cannot supply, follow `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` → *External facts*: look it up with the tools available, and write anything still unresolved under **Open questions** with what would answer it. An unanswered question is a useful finding; a fabricated answer is a liability in a handoff doc.
 
 5. **Write the findings document**
 

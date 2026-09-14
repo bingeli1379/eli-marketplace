@@ -6,17 +6,9 @@ Auto-detection logic for Phase 1 of `/setup`. Load this file when SCAN reaches t
 
 ## 1. Auto-detect tech stack
 
-Read these files if they exist and synthesize a **one-line** `tech_stack` string:
+Synthesize a **one-line** `tech_stack` string from the repo's manifests, build/framework configs, container files, and lock files (language + version, framework, build tool, CSS framework, package manager, containerization). One stack whose signals are non-obvious:
 
-- `package.json` → frontend framework, dependencies, node version, scripts
-- `*.csproj` / `*.sln` / `global.json` → .NET version, target framework
-- `tsconfig.json` → TypeScript config (strict mode, paths)
-- `nuxt.config.ts` / `vite.config.ts` / `next.config.*` → build tool, framework
-- `tailwind.config.*` / `unocss.config.*` → CSS framework
-- `docker-compose.yml` / `Dockerfile` → containerization
-- `go.mod` / `Cargo.toml` / `pyproject.toml` / `requirements.txt` → other languages
-- `project.godot` → Godot game project. Read `config/features` for the engine version (e.g. `"4.6"`) and renderer (`Forward Plus` / `Mobile` / `GL Compatibility`). Language track = GDScript by default; **C# (Mono/.NET) only if a `.csproj` / `.cs` files are present**. Note both when mixed.
-- Lock files → package manager (pnpm/npm/yarn)
+- `project.godot` → Godot game project. Read `config/features` for the engine version (e.g. `"4.6"`) and renderer (`Forward Plus` / `Mobile` / `GL Compatibility`). Language track = GDScript by default; **C# (Mono/.NET) only if `.csproj` / `.cs` files are present**. Note both when mixed.
 
 `tech_stack` is the **single source of truth** for versions. Do not repeat version numbers anywhere else in `config.yaml`.
 
@@ -44,7 +36,7 @@ Conventional entry points — use the **exact script name** from `package.json`:
 - `build`
 - For .NET: `dotnet build`, `dotnet test`
 - For Godot (`project.godot` present): import/parse check `<godot-bin> --headless --import` (the universal baseline — catches parse and import errors); tests via the repo's runner — gdUnit4 (`addons/gdUnit4/runtest.sh` / `.cmd`), GUT (`<godot-bin> --headless -s addons/gut/gut_cmdln.gd`), or a custom `tools/*runner*`. C# track adds `<godot-bin> --headless --build-solutions` and/or `dotnet test`. The Godot binary path is machine-specific — record the command shape and let the project override the binary.
-- **CRITICAL**: never invent tool flags of your own (e.g., `vue-tsc --noEmit`) — different projects configure tools differently. Flags the project's own CI or scripts already carry are part of the command and are recorded verbatim.
+- Never invent tool flags of your own (e.g., `vue-tsc --noEmit`) — different projects configure tools differently. Flags the project's own CI or scripts already carry are part of the command and are recorded verbatim.
 
 ---
 
@@ -52,22 +44,9 @@ Conventional entry points — use the **exact script name** from `package.json`:
 
 Draft the four `architecture` fields that go into `config.yaml`. Keep everything **pointer-form** — `name → path`, never file lists.
 
-- **pattern** — infer from top-level folder names:
-  - `src/Domain/`, `src/Application/`, `src/Infrastructure/`, `src/Api/` → Clean Architecture
-  - `pages/`, `composables/`, `components/`, `server/` → Nuxt / Vue
-  - `controllers/`, `models/`, `views/` → MVC
-  - `project.godot` present → "Godot scene/node composition". Note the layout variant: **feature-folder** (assets co-located with scenes, the official recommendation) vs **type-split** (`scenes/ scripts/ assets/ data/`). Flag autoload-centric global state if `project.godot` has an `[autoload]` block.
-  - Combine front/back when both present (e.g. "Clean Architecture (backend) + Atomic Design (frontend)").
+- **pattern** — infer from the top-level folder layout (Clean Architecture, Nuxt / Vue, MVC, …); combine front/back when both present (e.g. "Clean Architecture (backend) + Atomic Design (frontend)"). Godot (`project.godot` present) → "Godot scene/node composition", noting the layout variant — **feature-folder** (assets co-located with scenes, the official recommendation) vs **type-split** (`scenes/ scripts/ assets/ data/`) — and flagging autoload-centric global state if `project.godot` has an `[autoload]` block.
 - **layers** — the architectural folders that define the pattern, as `name → path` pointers (e.g. `domain → src/Domain/`). Do not enumerate files inside them.
-- **entry_points** — scan **all** conventional locations and list each that exists as `kind → path`. Missing one silently breaks AI's ability to add features there:
-  - HTTP API: `src/**/Endpoints/`, `src/**/Controllers/`, `server/api/`, `server/routes/`
-  - Frontend pages: `pages/**/*.vue`, `app/pages/`, `app/routes/`, `src/views/`
-  - Middleware: `middleware/`, `server/middleware/`
-  - Plugins / modules: `plugins/`, `modules/`, `src/Modules/`
-  - Background jobs: `src/**/Jobs/`, `src/**/Workers/`, `worker/`
-  - Event handlers: `src/**/EventHandlers/`, `src/**/Handlers/`
-  - CLI / scripts: `bin/`, `scripts/`, `src/Cli/`
-  - Godot: main scene (`project.godot` `run/main_scene`), autoloads (`project.godot` `[autoload]` → each global script — the cross-scene entry points), scenes (`scenes/` or feature folders' `*.tscn`), input actions (`project.godot` `[input]`)
+- **entry_points** — every kind of place a feature is added from, listed as `kind → path` for each that exists: HTTP API, frontend pages, middleware, plugins / modules, background jobs, event handlers, CLI / scripts. A kind left out silently breaks AI's ability to add features there, so check each kind, not only the ones the pattern suggests. Godot's kinds: main scene (`project.godot` `run/main_scene`), autoloads (`project.godot` `[autoload]` → each global script — the cross-scene entry points), scenes (`scenes/` or feature folders' `*.tscn`), input actions (`project.godot` `[input]`).
 - **hard_rules** — read existing `CLAUDE.md`, `AGENTS.md`, `.cursor/rules/`, `.github/copilot-instructions.md`, `eslint.config.*` / `.eslintrc*`, `.editorconfig`; extract imperative rules and **classify each** (below). Also infer **data-access / query conventions** from the code when the evidence is consistent across the codebase — these are exactly the invariants engineers must not break and that a code scan alone may not make obvious. Capture them as hard_rules when a quick grep confirms the pattern is followed everywhere, e.g.:
   - data access always goes through stored procedures / a repository layer, never inline SQL or a direct `DbContext` in endpoints
   - read queries use a specific convention (a locking hint like `NOLOCK`, a shared query helper, a standard pagination shape)

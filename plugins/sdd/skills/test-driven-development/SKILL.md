@@ -9,187 +9,47 @@ user-invocable: false
 
 # Test-Driven Development (TDD)
 
-## Overview
+Write the test first, watch it fail, write the minimal code that passes, then refactor.
 
-Write the test first. Watch it fail. Write minimal code to pass.
+**Core principle:** a test you never saw fail has not proved it can catch the bug. Production code counts as covered only once a test for it has been seen **red** and then **green** — this is the invariant, and it is what everything below protects. Code written before its test is not covered yet: write the test, make it fail against the code (revert or disable the behaviour it checks), then restore and watch it pass. Keeping the code is fine; skipping the red is not.
 
-**Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing.
+## When to use
 
-**Violating the letter of the rules is violating the spirit of the rules.**
+Every feature, bug fix, refactor, and behaviour change.
 
-## When to Use
+**Exceptions** — ask the user, or, when dispatched under `/apply` / `/quick` where questions are forbidden, decide per `agent-guidelines` → *Spec-Driven Input* and flag the choice in your report: throwaway prototypes, generated code, configuration files.
 
-**Always:**
-- New features
-- Bug fixes
-- Refactoring
-- Behavior changes
+**One exception already decided upstream:** a **walking-skeleton group** — a task group whose stated job is to prove a cross-layer integration path with placeholder data, explicitly marked `SKELETON:` and scheduled to be replaced by later harden groups. It is a disposable integration probe, not production code. The decision is recorded in `design.md` and visible to the user before implementation starts, so as the implementer you neither choose it nor re-confirm it. See *Walking Skeleton* below; everything outside such a group follows the core principle in full.
 
-**Exceptions (ask the user — or, dispatched under `/apply` / `/quick` where questions are forbidden, decide per `agent-guidelines` → *Spec-Driven Input* and flag the choice in your report):**
-- Throwaway prototypes
-- Generated code
-- Configuration files
+## Red → Green → Refactor
 
-**One exception you do not need to ask about, because it was already decided upstream:** a **walking-skeleton group** — a task group whose stated job is to prove a cross-layer integration path with placeholder data, explicitly marked `SKELETON:` and scheduled to be replaced by later harden groups. It is a disposable integration probe, not production code. The decision is recorded in `design.md` and visible to the user before implementation starts, so as the implementer you neither choose it nor re-confirm it. See *Walking Skeleton* below; everything outside such a group follows the Iron Law.
+### RED — write one failing test
 
-Thinking "skip TDD just this once"? Stop. That's rationalization.
+One behaviour, a name that states it, against real code (mocks only when unavoidable — a test that asserts on a mock's call count tests the mock).
 
-## The Iron Law
+### Verify RED — watch it fail
 
-```
-NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
-```
+Run the project's own test command (the `verification_commands` entry when one is configured). Confirm it **fails** rather than errors, and fails because the behaviour is missing, not from a typo. A test that passes here is testing existing behaviour — fix the test. A test that errors is fixed and re-run until it fails correctly.
 
-Write code before the test? Delete it. Start over.
+### GREEN — the simplest code that passes
 
-**No exceptions:**
-- Don't keep it as "reference"
-- Don't "adapt" it while writing tests
-- Don't look at it
-- Delete means delete
+Just enough to pass this test: no extra parameters, options, or generality the test did not ask for, no refactoring of other code.
 
-Implement fresh from tests. Period.
+### Verify GREEN — watch it pass
 
-*(Scope note: this "no exceptions" list is about **not keeping test-less code you already wrote** — it is absolute. The one scope carve-out is the walking-skeleton group named in *When to Use*: its placeholders are a disposable integration probe, not production code, so the Iron Law does not reach them. Every line of real implementation, including all harden work replacing those placeholders, is fully governed by the Iron Law.)*
+Same command. The new test passes, the other tests still pass, the output is clean of errors and warnings. The test fails → fix the code, not the test. Another test fails → fix it now, before the next cycle.
 
-## Red-Green-Refactor
+### REFACTOR — after green only
 
-### RED - Write Failing Test
+- Remove duplication, improve names; keep the tests green and add no behaviour.
+- Extract a helper only where this change gives it a second caller — a one-caller helper reads worse than the lines it hides, and a design that described the behaviour did not ask for the function.
+- Delete every comment written in RED/GREEN that fails the `agent-guidelines` self-check (*what would a reader get wrong without it?*) — the pull to explain a design decision in code is strongest right after implementing it, so this pass is where those paragraphs go.
 
-Write one minimal test showing what should happen.
+Then the next failing test.
 
-<Good>
-```typescript
-test('retries failed operations 3 times', async () => {
-  let attempts = 0;
-  const operation = () => {
-    attempts++;
-    if (attempts < 3) throw new Error('fail');
-    return 'success';
-  };
+## Anti-pattern: horizontal slicing
 
-  const result = await retryOperation(operation);
-
-  expect(result).toBe('success');
-  expect(attempts).toBe(3);
-});
-```
-Clear name, tests real behavior, one thing
-</Good>
-
-<Bad>
-```typescript
-test('retry works', async () => {
-  const mock = jest.fn()
-    .mockRejectedValueOnce(new Error())
-    .mockRejectedValueOnce(new Error())
-    .mockResolvedValueOnce('success');
-  await retryOperation(mock);
-  expect(mock).toHaveBeenCalledTimes(3);
-});
-```
-Vague name, tests mock not code
-</Bad>
-
-**Requirements:**
-- One behavior
-- Clear name
-- Real code (no mocks unless unavoidable)
-
-### Verify RED - Watch It Fail
-
-**MANDATORY. Never skip.** Run the project's own test command (the `verification_commands` entry when one is configured); the invocation below is only the shape:
-
-```bash
-npm test path/to/test.test.ts
-```
-
-Confirm:
-- Test fails (not errors)
-- Failure message is expected
-- Fails because feature missing (not typos)
-
-**Test passes?** You're testing existing behavior. Fix test.
-
-**Test errors?** Fix error, re-run until it fails correctly.
-
-### GREEN - Minimal Code
-
-Write simplest code to pass the test.
-
-<Good>
-```typescript
-async function retryOperation<T>(fn: () => Promise<T>): Promise<T> {
-  for (let i = 0; i < 3; i++) {
-    try {
-      return await fn();
-    } catch (e) {
-      if (i === 2) throw e;
-    }
-  }
-  throw new Error('unreachable');
-}
-```
-Just enough to pass
-</Good>
-
-<Bad>
-```typescript
-async function retryOperation<T>(
-  fn: () => Promise<T>,
-  options?: {
-    maxRetries?: number;
-    backoff?: 'linear' | 'exponential';
-    onRetry?: (attempt: number) => void;
-  }
-): Promise<T> {
-  // YAGNI
-}
-```
-Over-engineered
-</Bad>
-
-Don't add features, refactor other code, or "improve" beyond the test.
-
-### Verify GREEN - Watch It Pass
-
-**MANDATORY.**
-
-```bash
-npm test path/to/test.test.ts
-```
-
-Confirm:
-- Test passes
-- Other tests still pass
-- Output pristine (no errors, warnings)
-
-**Test fails?** Fix code, not test.
-
-**Other tests fail?** Fix now.
-
-### REFACTOR - Clean Up
-
-After green only:
-- Remove duplication
-- Improve names
-- Extract a helper only where this change gives it a second caller — a one-caller helper reads worse than the lines it hides, and a design that described the behaviour did not ask for the function
-- Delete every comment you wrote in RED/GREEN that fails the `agent-guidelines` self-check (*what would a reader get wrong without it?*) — the pull to explain a design decision in code is strongest right after implementing it, so this pass is where those paragraphs go
-
-Keep tests green. Don't add behavior.
-
-### Repeat
-
-Next failing test for next feature.
-
-## Anti-Pattern: Horizontal Slicing
-
-**DO NOT write all tests first, then all implementation.** Treating RED as "write every test" and GREEN as "write every impl" is *horizontal slicing*, and it produces crap tests:
-
-- Tests written in bulk verify *imagined* behaviour, not *actual* behaviour.
-- You end up testing the *shape* of things (data structures, signatures) rather than user-facing behaviour.
-- Tests become insensitive to real changes — they pass when behaviour breaks, fail when behaviour is fine.
-- You outrun your headlights, committing to test structure before understanding the implementation.
+**Do not write all the tests first, then all the implementation.** Tests written in bulk verify *imagined* behaviour: they test the shape of things (signatures, data structures) rather than what the code does, pass when behaviour breaks and fail when it is fine, and commit you to a test structure before the implementation has taught you anything.
 
 ```
 WRONG (horizontal):           RIGHT (vertical, tracer bullets):
@@ -198,9 +58,7 @@ WRONG (horizontal):           RIGHT (vertical, tracer bullets):
                                 RED→GREEN: test3→impl3
 ```
 
-**Correct approach — vertical slices.** One test → one implementation → repeat. Each test responds to what the previous cycle taught you. Because you just wrote the code, you know exactly what behaviour matters and how to verify it. The first cycle is your **tracer bullet** — it proves the path works end-to-end before you widen coverage.
-
-This matters most in `/apply`, where an agent implementing a whole task group is tempted to batch all tests up front. Stay vertical: one behaviour at a time.
+One test → one implementation → repeat; each test responds to what the previous cycle showed. The first cycle is the **tracer bullet** that proves the path end-to-end before coverage widens. This bites hardest in `/apply`, where an agent holding a whole task group is tempted to batch its tests up front.
 
 ## Walking Skeleton (integration probe — a different axis, not an exception to vertical slicing)
 
@@ -215,141 +73,26 @@ A walking skeleton is the *tracer bullet* above widened to the whole system: ins
 
 ### When it applies
 
-**You do not decide this — `design.md` already did.** The strategy is picked at design time against the criteria in the architect's *Implementation Strategy Selection* (the single authority for that test; Contract-First is the default). If `design.md` does not name Walking Skeleton, this whole section does not apply and the Iron Law governs every line you write. If it does, the rules below are binding for the skeleton group only.
+**You do not decide this — `design.md` already did.** The strategy is picked at design time against the criteria in the architect's *Implementation Strategy Selection* (the single authority for that test; Contract-First is the default). If `design.md` does not name Walking Skeleton, this whole section does not apply and the core principle governs every line you write. If it does, the rules below are binding for the skeleton group only.
 
 ### Rules inside a skeleton group
 
-1. **No unit TDD for the placeholder code.** The skeleton is a disposable probe; unit tests written against placeholder returns test nothing and get deleted with them. This is the exception named in *When to Use* above.
+1. **No unit TDD for the placeholder code.** The skeleton is a disposable probe; unit tests written against placeholder returns test nothing and get deleted with them. This is the exception named in *When to use* above.
 2. **The integration path itself must be proven**, not assumed — the group is not done until the end-to-end path actually runs (a request reaching the UI, an IPC round-trip completing, a signal arriving). Proving it by hand is acceptable; proving it with one end-to-end test is better.
 3. **Every placeholder MUST carry a `SKELETON:` marker comment** (e.g. `// SKELETON: replace in harden phase`) — in the **source file's comment syntax**, never in markdown or docs (the completion gate excludes `*.md` precisely so documenting the convention does not trip it). This is what the harden groups and `/complete`'s completion gate locate.
 4. **Every `SKELETON:` site MUST have a harden task** that replaces it with the real implementation — and that harden work is **full TDD, no exception**: RED → GREEN → REFACTOR, vertical slices, per rules above.
 5. **Residual `SKELETON:` markers mean the change is unfinished.** `/complete` blocks on them. A skeleton that shipped is a bug, not a shortcut.
 
-## Good Tests
+## Done when
 
-| Quality | Good | Bad |
-|---------|------|-----|
-| **Minimal** | One thing. "and" in name? Split it. | `test('validates email and domain and whitespace')` |
-| **Clear** | Name describes behavior | `test('test1')` |
-| **Shows intent** | Demonstrates desired API | Obscures what code should do |
+- Every new behaviour has a test that was seen red, then green, for the expected reason.
+- The full suite passes with clean output; tests exercise real code, edge cases and error paths included.
+- A walking-skeleton group is checked against rule 2 of *Walking Skeleton* instead — "the end-to-end path actually runs"; every harden group and all other work is checked against this list.
 
-## Common Rationalizations
+## Bugs
 
-| Excuse | Reality |
-|--------|---------|
-| "Too simple to test" | Simple code breaks. Test takes 30 seconds. |
-| "I'll test after" | Tests written after pass immediately — which proves nothing. They may test the wrong thing, test the implementation instead of the behavior, or miss the edge case you forgot. You never watched it fail, so you never proved it can catch the bug. Test-first forces that failure. |
-| "Tests after achieve same goals (spirit not ritual)" | Tests-after answer "what does this do?"; tests-first answer "what should this do?" Tests written after are biased by the code you already wrote — you verify the cases you remembered, not the ones you'd have discovered. Coverage without proof the tests work. |
-| "Already manually tested" | Manual testing is ad-hoc: no record of what you covered, no way to re-run it when the code changes, easy to forget cases under pressure. "Worked when I tried it" ≠ comprehensive. Automated tests run the same way every time. |
-| "Deleting X hours is wasteful" | Sunk cost fallacy — that time is already spent either way. The real choice: rewrite with TDD (high confidence) vs. keep it and bolt tests on after (low confidence, likely bugs). Keeping code you can't trust is the waste. |
-| "Keep as reference, write tests first" | You'll adapt it. That's testing after. Delete means delete. |
-| "Need to explore first" | Fine. Throw away exploration, start with TDD. |
-| "Test hard = design unclear" | Listen to test. Hard to test = hard to use. |
-| "TDD will slow me down" | TDD IS the pragmatic path: catches bugs before commit, prevents regressions, lets you refactor without fear. "Pragmatic" shortcuts mean debugging in production — slower, not faster. |
-| "Manual test faster" | Manual doesn't prove edge cases. You'll re-test every change. |
-| "Existing code has no tests" | You're improving it. Add tests for existing code. |
+A bug gets a failing test that reproduces it before the fix — the test proves the fix and prevents the regression (`systematic-debugging` Phase 4).
 
-## Red Flags - STOP and Start Over
+## Testing anti-patterns
 
-- Code before test
-- Test after implementation
-- Test passes immediately
-- Can't explain why test failed
-- Tests added "later"
-- Rationalizing "just this once"
-- "I already manually tested it"
-- "Tests after achieve the same purpose"
-- "It's about spirit not ritual"
-- "Keep as reference" or "adapt existing code"
-- "Already spent X hours, deleting is wasteful"
-- "TDD is dogmatic, I'm being pragmatic"
-- "This is different because..."
-
-**All of these mean: Delete code. Start over with TDD.**
-
-*(The sole non-rationalization is a group `design.md` designated a walking skeleton — see *Walking Skeleton*. "This is different because I decided it is" is a red flag; "this is the skeleton group the approved design defined" is not.)*
-
-## Example: Bug Fix
-
-**Bug:** Empty email accepted
-
-**RED**
-```typescript
-test('rejects empty email', async () => {
-  const result = await submitForm({ email: '' });
-  expect(result.error).toBe('Email required');
-});
-```
-
-**Verify RED**
-```bash
-$ npm test
-FAIL: expected 'Email required', got undefined
-```
-
-**GREEN**
-```typescript
-function submitForm(data: FormData) {
-  if (!data.email?.trim()) {
-    return { error: 'Email required' };
-  }
-  // ...
-}
-```
-
-**Verify GREEN**
-```bash
-$ npm test
-PASS
-```
-
-**REFACTOR**
-Extract validation for multiple fields if needed.
-
-## Verification Checklist
-
-Before marking work complete:
-
-- [ ] Every new function/method has a test
-- [ ] Watched each test fail before implementing
-- [ ] Each test failed for expected reason (feature missing, not typo)
-- [ ] Wrote minimal code to pass each test
-- [ ] All tests pass
-- [ ] Output pristine (no errors, warnings)
-- [ ] Tests use real code (mocks only if unavoidable)
-- [ ] Edge cases and errors covered
-
-Can't check all boxes? You skipped TDD. Start over.
-
-*(A walking-skeleton group is checked against rule 2 of *Walking Skeleton* instead — "the end-to-end path actually runs" — not against this list. Every harden group and all other work is checked against this list in full.)*
-
-## When Stuck
-
-| Problem | Solution |
-|---------|----------|
-| Don't know how to test | Write wished-for API. Write assertion first. Ask the user. |
-| Test too complicated | Design too complicated. Simplify interface. |
-| Must mock everything | Code too coupled. Use dependency injection. |
-| Test setup huge | Extract helpers. Still complex? Simplify design. |
-
-## Debugging Integration
-
-Bug found? Write failing test reproducing it. Follow TDD cycle. Test proves fix and prevents regression.
-
-Never fix bugs without a test.
-
-## Testing Anti-Patterns
-
-When adding mocks or test utilities, read `${CLAUDE_SKILL_DIR}/testing-anti-patterns.md` to avoid common pitfalls:
-- Testing mock behavior instead of real behavior
-- Adding test-only methods to production classes
-- Mocking without understanding dependencies
-
-## Final Rule
-
-```
-Production code → test exists and failed first
-Otherwise → not TDD
-```
-
-No exceptions without the user's permission. A walking-skeleton group does not breach this: its placeholders are not production code, and the strategy is stated in `design.md` for the user to see before implementation rather than improvised by you at commit time — see *Walking Skeleton*.
+When adding mocks or test utilities, read `${CLAUDE_SKILL_DIR}/testing-anti-patterns.md`: testing mock behaviour instead of real behaviour, test-only methods on production classes, mocking without understanding the dependency.

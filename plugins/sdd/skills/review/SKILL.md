@@ -29,7 +29,7 @@ Two entry conditions, same read-only contract:
 
 ## Steps
 
-0. **Detect repo topology (MANDATORY first)**
+0. **Detect repo topology (first)**
 
    Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode. In **multi-repo** mode, resolve the target to the child repo(s) that contain it; each review agent is bound to the repo holding its target (`git -C <repo> ...`).
 
@@ -137,7 +137,7 @@ Two entry conditions, same read-only contract:
    > 要追問或直接修嗎?跟我說要看哪項或改哪幾項 — 追問我問回原 reviewer,修我派對應 specialist。
    ```
 
-   **Each lens section opens with that agent's coverage line** — the categories it enumerated, ahead of everything else in the section, from the analytical-depth block it was dispatched with (5b); where the reviewer also loaded review criteria, that line sits above their layout rather than displacing any of it. Drop it and the block's audit half is produced and then discarded here, which is the whole point of enforcing it: a reviewer that skipped a category reads exactly like one that found nothing in it.
+   **Each lens section opens with that agent's scope line and its not-covered list** — what it was dispatched to read and what inside that it did not examine, ahead of everything else in the section, from the analytical-depth block it was dispatched with (5b); where the reviewer also loaded review criteria, those lines sit above their layout rather than displacing any of it. Drop them and a reviewer that skipped half its shard reads exactly like one that found nothing in it.
 
    **A reviewer that loaded review criteria hands you a section those criteria already laid out — reproduce it, do not reshape it.** Its counting lines, its item shapes, and its section order come through verbatim; rewriting them into this template's prose is the reflex a consolidation step has, and it is the one move that undoes what loading those criteria bought. What stays yours is the frame *around* the lens sections — the header, the `Triage:` counts, `位置未確認`, `scope 外`, and the recommendations — because those are cross-reviewer facts no single reviewer's criteria can see. A lens whose reviewer found no such criteria says so in one line and follows this template as usual, so the two cases stay distinguishable.
 
@@ -153,7 +153,7 @@ Two entry conditions, same read-only contract:
 
    - **A reviewer returns a `NEEDS:`** (it cannot verify a finding without an external fact — a production value, a cross-repo/service contract, live infra state): resolve it with whatever tools you have and **SendMessage the same reviewer** to finish that check (context intact); if unresolvable, surface it to the user and report the item as explicitly *unverified* — never let the reviewer guess. See `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*.
 
-   - **"Fix N" / "改第 2 跟第 4 個"** → **always dispatch the owning specialist** (the engineer per the routing table — vue / dotnet / python / godot / electron / database / devops), never edit the file yourself. The specialist loads its domain skills, consults project-knowledge, and matches repo conventions — the main loop has none of that, so a "small" main-loop edit risks breaking project-specific rules. Keep the specialist **backgrounded and alive** so successive fix rounds reuse it via **SendMessage** instead of re-spawning.
+   - **"Fix N" / "改第 2 跟第 4 個"** → **always dispatch the owning specialist** (the engineer per the routing table — vue / dotnet / python / godot / electron / database / devops), never edit the file yourself. The specialist's `skills:` frontmatter loads its stack skills at spawn and its agent file carries the stack detection and precedence rules; the main loop would have to borrow all of that by hand (`/quick`'s inline tier does exactly that, and it is the deliberate exception), and here the read-only contract is the point. Keep the specialist **backgrounded and alive** so successive fix rounds reuse it via **SendMessage** instead of re-spawning.
      - Compose the fix prompt from the relevant finding(s) + scope + `## Project Context`.
      - This is the one place `/sdd:review` produces changes — and it does so by **delegating to a specialist**, exactly like `/quick`'s fix path. (For multi-finding or cross-cutting fixes, suggest `/quick "<summary>"` instead.)
 
@@ -195,7 +195,7 @@ Load the `codebase-design` skill and use its vocabulary throughout (**module / i
 
 ## Guardrails
 
-- **Review side is read-only** — reviewers never edit, commit, change branches, or dispatch other agents. Fixes happen ONLY when the user explicitly asks, and ONLY by **dispatching the owning specialist** — the main loop never hand-edits code (no specialist skills / project grounding loaded). This delegation is what keeps `/sdd:review` consistent with `/apply`'s rule that the dispatcher never self-implements, even something trivial (`/quick`'s inline tier is the deliberate exception, and it borrows the specialist's skills first).
+- **Review side is read-only** — reviewers never edit, commit, change branches, or dispatch other agents. Fixes happen ONLY when the user explicitly asks, and ONLY by **dispatching the owning specialist** (Step 7) — the main loop never hand-edits code here.
 - **No automatic fix loop** — unlike `/quick`/`/apply`, there is no auto fix→re-review→commit cycle. Fixes are user-driven, one ask at a time, and `/sdd:review` never commits.
 - **Reuse agents via SendMessage, don't re-spawn** — reviewers and fix specialists are backgrounded and kept alive; follow-ups and re-reviews continue the same agent (context intact) to avoid startup cost. Spawn fresh only on lost context or a substantially changed target.
 - **You ARE the dispatcher** — do NOT spawn a separate orchestrator agent.

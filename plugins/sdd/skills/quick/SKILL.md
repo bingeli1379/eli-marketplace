@@ -15,7 +15,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
 **Steps**
 
-0. **Detect repo topology (MANDATORY first)**
+0. **Detect repo topology (first)**
 
    Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode. In **multi-repo** mode: the scan covers every child repo the task touches; per-repo grounding is read per touched repo (Step 2); each dispatched agent is bound to one child repo and does its work + commits inside that repo (`git -C <repo> ...`); cross-repo work is ordered contract-first.
 
@@ -26,7 +26,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    If no description is provided, use **AskUserQuestion** (open-ended) to ask:
    > "What do you want to do? Describe the task."
 
-   Do NOT proceed without a clear task description.
+   Do not proceed without a clear task description.
 
 2. **Read project context (grounding)**
 
@@ -66,15 +66,9 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    This is the core difference from `/apply`. Instead of reading spec files, you **perform the analysis yourself** — similar to what `/propose` does, but entirely in-memory without writing any files.
 
-   **ZERO MISSES — exhaustive codebase scan (MANDATORY):**
-   Scope specified → scan every file within it. No scope → scan entire project.
-   Use Glob to list ALL files, read/inspect each that could be affected. Build affected-files inventory (file + WHY).
+   **Codebase scan:** scope specified → every file within it; no scope → scope it from what the task reaches and state that scope in the Step 8 report (`agent-guidelines` → *Scanning Coverage*). Glob to enumerate, open every file that could be affected, and build the affected-files inventory (file + WHY) — the same sweep rules as `propose` Step 5 (`${CLAUDE_PLUGIN_ROOT}/references/grounding.md` → *Enumerating what is in the repo*).
 
-   **a. Scope analysis:**
-   - What is the task trying to achieve?
-   - Which layers are affected? (Frontend, Backend, Database, DevOps, etc.)
-   - What are the key design decisions? (API shape, data model changes, UI approach)
-   - What are the acceptance criteria? (When X happens, then Y should be the result)
+   **a. Scope analysis** — produce what the Step 6 prompt template consumes: the affected layers, the key design decisions (API shape, data model changes, UI approach), and the acceptance criteria as WHEN/THEN.
    - **External facts → look up, don't guess:** if a decision hinges on a runtime/production value (feature flag, rollout rate, limit), a cross-repo/service contract, or live infra state not in the repo, check whether your available tools can resolve it (a connected MCP server, a query/lookup tool, a project-knowledge skill) and **use it before assuming a value** — lookup tools have no auto-trigger, so reach for them deliberately. What you genuinely can't resolve becomes a `NEEDS` a dispatched agent raises later.
 
    **b. Task breakdown:**
@@ -91,13 +85,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - **Medium** (2-3 groups, cross-cutting) → sequential single-writer dispatch → review
    - **Complex** (full pipeline): new module/feature → full 4-phase pipeline (sequential implementation)
 
-   **d. Identify ambiguities and unknowns:**
-   - Are there vague requirements? ("improve" → improve what exactly?)
-   - Missing edge case handling? (empty input, concurrent access, error states)
-   - Unclear integration points with existing code?
-   - Design decisions that could go multiple ways?
-
-   **e. Present the plan (one message, then dispatch):**
+   **d. Present the plan (one message, then dispatch):**
 
    **Read `${CLAUDE_PLUGIN_ROOT}/skills/scope-contract/SKILL.md` in full before composing this message.** That skill is the single source for the 變更（現在 → 改成）block — its template, the depth rule (single-hop → one line; multi-execution-path → expanded behavior chain), the format-change tracing rule, and the terminal-state rule. Do NOT reconstruct it from memory.
 
@@ -173,7 +161,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - Implement each task in order
    - Follow the design decisions — do NOT deviate
    - **Implementation Protocol** — follow *Match Existing Code Before Writing* → *Decision order when modifying existing code* from `agent-guidelines` (Read → Look up → Decide → Implement → Verify). **It is already in your context — apply it; do NOT load it again.**
-   - **CRITICAL — Committing is EXPLICITLY REQUIRED by the user as part of this workflow. You are authorized and expected to commit after every task. This is NOT optional.** (**No-git mode** — only when Step 0 detected no git repo: there is nothing to commit to, so implement directly and skip every per-task commit; the user commits later. **Still print the `DONE:` line per task** — with no git history to verify against, it is the orchestrator's only completion signal. The rest of this clause assumes a git repo is present.) After completing each task, you MUST:
+   - **Commit after every task — the user has authorized committing as part of this workflow.** (**No-git mode** — only when Step 0 detected no git repo: there is nothing to commit to, so implement directly and skip every per-task commit; the user commits later. **Still print the `DONE:` line per task** — with no git history to verify against, it is the orchestrator's only completion signal. The rest of this clause assumes a git repo is present.) After completing each task, you MUST:
      1. Stage all changed files with `git add` (specify files by name)
      2. Run all lint commands listed above (if any) — stage any changes they produce
      3. Commit following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`). Format: `<type>[optional scope]: <task-number> <description>` (e.g., `fix: 1.1 resolve login redirect loop`)
@@ -200,7 +188,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    **Phase execution based on complexity:**
 
    **Trivial / Simple tasks (orchestrator implements inline — NO dispatch):**
-   - **First, borrow the specialist's skills (MANDATORY — do NOT skip).** Implementing inline means you do NOT get the mapped agent's eagerly-loaded skills automatically, so load them yourself: resolve the agent file per `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md` (*Agent-file resolution* — core agents in `agents/`, pack agents via `find "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins" -path "*/<pack>/agents/<role>.md"`), take its `skills:` frontmatter list, and invoke each via the **Skill tool** before writing (e.g., a `(Frontend)` task → load `vue-best-practices`, `frontend-checklist`, `engineering-checklist`, `test-driven-development`; a `(Backend)` task → `dotnet-best-practices`, `clean-architecture`, `engineering-checklist`, `test-driven-development`). Then load any stack-/datastore-specific skill the task needs on demand, exactly as that agent would after its Stack Detection step. If the mapped pack is not installed, the file resolution finds nothing → load `agent-guidelines` first (it is on every agent's list and carries the Implementation Protocol you are about to apply), then the other core skills (`engineering-checklist`, `test-driven-development`, …), and note the degradation. This gives inline work the same skill context a dispatched agent would have had — without it, inline output silently loses the specialist's best-practices.
+   - **First, borrow the specialist's skills.** Implementing inline means you do NOT get the mapped agent's eagerly-loaded skills automatically, so load them yourself: resolve the agent file per `${CLAUDE_PLUGIN_ROOT}/references/agent-routing.md` (*Agent-file resolution* — core agents in `agents/`, pack agents via `find "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins" -path "*/<pack>/agents/<role>.md"`), take its `skills:` frontmatter list, and invoke each via the **Skill tool** before writing (e.g., a `(Frontend)` task → load `vue-best-practices`, `frontend-checklist`, `engineering-checklist`, `test-driven-development`; a `(Backend)` task → `dotnet-best-practices`, `clean-architecture`, `engineering-checklist`, `test-driven-development`). Then load any stack-/datastore-specific skill the task needs on demand, exactly as that agent would after its Stack Detection step. If the mapped pack is not installed, the file resolution finds nothing → load `agent-guidelines` first (it is on every agent's list and carries the Implementation Protocol you are about to apply), then the other core skills (`engineering-checklist`, `test-driven-development`, …), and note the degradation. This gives inline work the same skill context a dispatched agent would have had — without it, inline output silently loses the specialist's best-practices.
    - Phase 1: **you (the orchestrator / main thread) implement it directly** — read the reference/sibling code, write the change, run the project's verification + lint, and commit it yourself following the same per-task → squash discipline. Do NOT spawn a background implementation agent; you are the single writer. (A background specialist here is overkill and its dominant failure mode is going idle mid-task without committing.)
    - Phase 2: review-engineer + security-engineer (parallel, read-only) — still mandatory; you wrote the code, so an independent review is the safeguard.
    - Done.
@@ -218,7 +206,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **Conditional Phase 2 reviewer — performance-engineer (all complexity levels):** if the diff touches a **performance-sensitive surface** (new/changed API endpoint, stored-procedure / SQL / Dapper / EF query, data-access/repository path, batch or data-pipeline job, list/report endpoint), add **performance-engineer** to the Phase 2 parallel dispatch. It does **static data-scale capacity analysis only** (no load tests/profilers; no code edits) and reports a per-path verdict (SAFE / RISKY / WILL NOT SCALE, or `未評估` where a project `never-read` path blocked assessment); findings are advisory recommendations routed to the owning agent. Skip for purely frontend-presentational, config, docs, or test-only diffs.
 
-   If review, security, or QA fails: collect all issues, group by responsible agent, dispatch **fix agents sequentially** (one write agent at a time), and **read each fix agent's diff yourself — one `git diff` per agent, then tick each of its findings off against that single read — to confirm that specific defect is gone before accepting it** — an agent reporting `DONE` over a green suite can still have closed only part of a multi-part finding, and nothing else in the pipeline sees that. Then **triage by severity, exactly as `/apply` and `agents/orchestrator.md` → *Fix → Re-verify Loop* do**: a `blocker` / `major`, a FAILED QA run, or a `WILL NOT SCALE` capacity verdict earns a **fresh review round** (not owed when every fix commit in the round touched test files only) — every reviewer **spawned again**, in the same shape as the first round (review + security in parallel, qa alone after), **scoped to `git diff <previous round's HEAD>..HEAD`, not to every changed file**, with the round's report stating the range it covered. Fresh is the point: fixes can introduce new bugs, and a reviewer still holding its own earlier verdict is predisposed to confirm its finding closed rather than to re-open what it already called clean, and still carries whatever framing its first dispatch gave it, a wrong premise included. Scoping is the other half: a fix-introduced bug lives in the fix range or in an importer/dependent of it, both of which the code reviewers' own scan already reaches, while a cold re-read of files no fix touched is a second look for what the first look missed. Findings that are only `minor`, with no capacity verdict newly reading `WILL NOT SCALE`, end the loop once fixed and self-verified, recorded as follow-ups rather than spending another round — **that branch is terminal, so no reviewer is dispatched after its fixes either**. Those are the only severities reviewers here report — `reviewer-depth.md` defines `blocker` / `major` / `minor` and nothing else. **Reuse a backgrounded reviewer with `SendMessage` only where the code did not change** — a follow-up question about what it already read, or confirming one local fix closed the single finding it raised. That saves the spawn's skill re-load, and it is `/review`'s own rule read with its escape clause intact: a target that changed substantially gets a fresh reviewer, and in this loop the target always changed. Max 3 rounds; only pause and report to user if a blocker/major — or a newly introduced `WILL NOT SCALE` verdict — still stands after them.
+   If review, security, or QA fails, run the **Fix → Re-verify Loop exactly as `agents/orchestrator.md` defines it** (that section is the single home for the loop: sequential fix agents, your own per-agent `git diff` check that each finding is gone, severity triage, fresh reviewers scoped to the fix range, the test-only carve-out, the terminal `minor` branch, max 3 rounds). Two quick-mode facts it does not carry: a `WILL NOT SCALE` verdict from the conditional performance-engineer counts like a `blocker` / `major` for the re-round decision, and a backgrounded reviewer is reused via `SendMessage` only where the code did not change — a follow-up question, or confirming one local fix closed the single finding it raised.
 
    **Commit consolidation (per group, single-writer):**
 
@@ -292,16 +280,9 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
 ## Guardrails
 
-- **You ARE the orchestrator** — do NOT spawn a separate orchestrator agent
-- **All worker agents run in background** (`run_in_background: true`, `mode: "bypassPermissions"`)
 - **No spec files are written** — analysis stays in-memory and is passed to agents via prompts
-- `config.yaml` (when present) MUST be forwarded verbatim into every worker agent's prompt as `## Project Context` — the cwd repo's in single-repo mode, and in multi-repo the config of the child repo that agent is bound to (there is no umbrella config). `hard_rules` are binding. The project's own docs are never read or forwarded — config.yaml is the only project context. Skip the section silently if config.yaml is missing.
-- **Execute first, report after** — show the plan and dispatch immediately, do NOT wait for user confirmation
-- **Code review + security review are MANDATORY** for all complexity levels — never skip them
-- If review/QA fails → auto-dispatch fix → confirm each fix's diff yourself → **triage by severity** (`blocker`/`major`, FAILED QA, or a `WILL NOT SCALE` verdict earns a fresh review round, unless every fix commit touched test files only — reviewers **re-spawned**, not re-prompted, since a fix changed the target — reuse stays only for a same-code follow-up, and the round is **scoped to the fix range**, not to every changed file; `minor` with no new `WILL NOT SCALE` ends the loop once fixed and self-verified, terminally) → max 3 rounds → only then pause
-- **One commit per task during implementation** — atomic commits with task-number prefix. **Squashed into one clean group commit (no task numbers) after Phase 1 completes**, matching `/apply` final commit style.
-- Work on the current branch — do NOT create or switch branches
-- Keep the plan concise — this is quick mode, not a full spec
+- **Execute first, report after** — show the plan and dispatch immediately; wait only when the plan carries genuine questions (Step 5d)
+- **Code review + security review run at every complexity level** — never skipped
 - **Language**: All output in Traditional Chinese. Code and comments in English.
 
 ## When to Suggest Full Spec Instead

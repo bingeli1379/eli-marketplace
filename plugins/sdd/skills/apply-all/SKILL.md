@@ -75,7 +75,7 @@ Repo topology (single-repo / multi-repo / no-git) is detected **once at batch st
       - **Do NOT ask implementation questions** — make reasonable choices, flag ambiguities in report
 
    c. **Mandatory completion checkpoint — Do NOT proceed to next change until ALL are satisfied:**
-      - [ ] Phase 1-3 ALL dispatched (orchestrator never pre-judges whether a phase is "needed" — always dispatch, let the agent decide scope)
+      - [ ] Every phase dispatched, or skipped with its reason recorded for the change's report (`/apply` Step 7 — review-engineer + security-engineer are never skipped)
       - [ ] Phase 2's Fix → Re-verify Loop exited on its own terms (`agents/orchestrator.md` → *Fix → Re-verify Loop*, step 5): no `blocker` / `major`, no FAILED QA, no newly introduced `WILL NOT SCALE` — a verdict carrying only `minor`s (`APPROVED WITH COMMENTS`, `ISSUES FOUND` with minors) satisfies it; the round limit reached with one of those still standing is PAUSED (3f)
       - [ ] Step 9 tasks.md re-read from disk and checkboxes verified
       - [ ] Final commits are clean conventional-commit messages with no task numbers
@@ -101,6 +101,9 @@ Repo topology (single-repo / multi-repo / no-git) is detected **once at batch st
    - [x] add-user-roles — 完成 (4/4 任務, 12m)
 
    **摘要：** 2/3 changes 完成, 1 暫停
+
+   **略過的階段：**          ← omit when no change skipped a phase
+   - `add-user-roles`: Phase 3 technical-writer — [原因]
 
    **暫停的 changes：**
    - `add-user-profile`: [原因]. 執行 `/apply add-user-profile` 重跑
@@ -141,7 +144,7 @@ After responding to the user, **resume batch execution automatically** — do NO
 - **Do NOT ask implementation questions** — make reasonable decisions and flag ambiguities in the report
 - **Do NOT stop the batch if one change fails** — skip it and continue to next; the one exception is Step 3f's unsquashed per-task commits, which would poison the next change's reconcile
 - **After responding to user messages, resume automatically** — never wait for follow-up input unless the user explicitly says "stop"
-- **Zero-misses: ALL phases (1-3) are mandatory** — see Step 3c checkpoint for the complete checklist
+- **A skipped phase is printed with its reason, never silent** — see the Step 3c checkpoint
 - Each change runs sequentially (single-writer) on the current branch — do NOT create or switch branches
 - If a change has no pending tasks (all `- [x]`), skip it and note in the report
 - Track and report duration for each change and total batch time
