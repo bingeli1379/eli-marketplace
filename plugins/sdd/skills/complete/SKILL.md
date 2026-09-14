@@ -18,7 +18,7 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
 
 **Steps**
 
-0. **Detect repo topology (MANDATORY first)**
+0. **Detect repo topology (first)**
 
    Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. It only affects Step 4 (the cleanup commit): in **single-repo** mode the `feature-spec/` deletion is committed in the cwd repo; in **multi-repo** mode the code commits already landed per child repo during `/apply`, so `/complete` just deletes `feature-spec/` and commits that deletion only if cwd is itself a git repo (otherwise plain `rm`).
 
@@ -34,7 +34,7 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
    - If no changes qualify, report: "No fully completed changes found." and list each change with its status (e.g., `add-user-search: 3/5 tasks complete`, `draft-x: no tasks.md — not implemented`)
    - If one or more qualify, display them and proceed to complete **all** of them sequentially (steps 2–4 for each)
 
-   **IMPORTANT**: Batch mode does NOT ask for confirmation — it completes all fully finished changes automatically.
+   Batch mode does not ask for confirmation — it completes all fully finished changes automatically.
 
 2. **Check task completion status**
 
@@ -47,7 +47,7 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
    - Use **AskUserQuestion** to confirm: "Complete with N incomplete tasks?" / "Cancel"
    - Proceed only if user confirms
 
-   **Walking-skeleton residue gate (MANDATORY — blocks completion):** search for residual `SKELETON:` markers in **tracked source only**. Use `git grep`, not plain `grep -r` — a recursive filesystem grep also hits `node_modules/`, build output, and vendored code, producing false blocks:
+   **Walking-skeleton residue gate (blocks completion):** search for residual `SKELETON:` markers in **tracked source only**. Use `git grep`, not plain `grep -r` — a recursive filesystem grep also hits `node_modules/`, build output, and vendored code, producing false blocks:
 
    The marker is a **code comment** by convention, so the scan excludes documentation (`*.md`) — otherwise a project that merely *documents* the `SKELETON:` convention in its own docs would be blocked forever, including this workflow's own docs:
 
@@ -149,10 +149,6 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
 
 ## Guardrails
 
-- Batch mode (no name provided) only completes fully finished changes — never completes incomplete ones without explicit naming.
-- **Residual `SKELETON:` markers block completion unconditionally** (Step 2 gate) — in single-repo and in every touched child repo. Not overridable by user confirmation, and checked even when all tasks are `- [x]`; a shipped skeleton placeholder is a bug, not a completed change.
-- When a name is explicitly provided, allow completing incomplete changes with user confirmation.
-- **No knowledge extraction, no doc maintenance**: `/complete` does not write `knowledge.md`, sync `context.md`, or edit CLAUDE.md / README. Those artifacts are not part of this workflow anymore — the project owns its own docs.
+- **No knowledge extraction, no doc maintenance**: `/complete` does not write `knowledge.md`, sync `context.md`, or edit CLAUDE.md / README — the project owns its own docs.
 - Always keep `feature-spec/config.yaml` — never delete it.
-- Show a clear summary of what happened.
 - Never push to remote — only commit locally.

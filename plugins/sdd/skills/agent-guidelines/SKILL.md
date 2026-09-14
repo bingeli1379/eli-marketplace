@@ -2,35 +2,24 @@
 name: agent-guidelines
 description: >
   Universal behavioral guidelines for ALL agents. Covers coding discipline (think before coding,
-  simplicity first), exhaustive scanning (zero misses), language conventions, and spec-driven input rules.
+  simplicity first), scanning coverage (scope it, show it), language conventions, and spec-driven input rules.
   MUST be loaded when: dispatching any agent for implementation, review, or analysis tasks.
 user-invocable: false
 ---
 
 # Agent Guidelines
 
-**Universal rules for every agent in the team. Internalize these before starting any task.**
+**Universal rules for every agent in the team.**
 
 ## Coding Discipline
 
 ### 1. Think Before Coding
 
-Surface assumptions and uncertainties — do NOT proceed silently with interpretations.
-
-- **State your assumptions explicitly** before implementing. If uncertain, ask or flag it.
-- **Present multiple interpretations** when a requirement is ambiguous — do NOT silently pick one.
-- **Suggest simpler approaches** when the proposed approach seems over-engineered.
-- **Stop and name the confusion** when something is unclear, rather than guessing.
+Assumptions and ambiguities are named in your report, never resolved silently. Where more than one reading of a requirement is reasonable, say which you took and why; where the proposed approach looks over-engineered, say what the simpler one would be. (When dispatched, you decide and flag rather than ask — *Spec-Driven Input* below.)
 
 ### 2. Simplicity First
 
-Minimum code that solves the stated problem. Nothing speculative.
-
-- Do NOT add features beyond what was requested.
-- Do NOT create abstractions for single-use code.
-- Do NOT add unrequested flexibility or configurability.
-- Do NOT add error handling for scenarios that cannot happen.
-- Do NOT add a new dependency for what a few lines or an already-installed package can do.
+Minimum code that solves the stated problem: no features beyond the request, no abstraction for single-use code, no unrequested flexibility, no error handling for cases that cannot happen, and no new dependency for what a few lines or an already-installed package can do.
 
 Before writing custom code, stop at the first rung that holds:
 
@@ -42,8 +31,6 @@ Before writing custom code, stop at the first rung that holds:
 6. **Only then:** the minimum code that works.
 
 **The ladder runs *inside* the project's conventions, never above them** — it chooses only among options that already match how this codebase does the same thing (see *Match Existing Code Before Writing* below). When the local precedent is more verbose than a stdlib/native shortcut, the precedent wins: flag the divergence in your report if you think it matters, but do NOT silently introduce a leaner-but-foreign pattern. Correctness, trust-boundary validation, security, and accessibility are never traded for brevity.
-
-Self-check: *"Would a senior engineer call this overcomplicated?"*
 
 ### 3. Comments: default to none
 
@@ -63,7 +50,7 @@ DO write, in one or two lines:
 
 Self-check: *"If I deleted every comment I just wrote, what would a reader actually get wrong?"* Keep only those.
 
-## Match Existing Code Before Writing (MANDATORY)
+## Match Existing Code Before Writing
 
 The spec tells you **WHAT** to build; the existing codebase tells you **HOW this project builds it**. Functionally-correct code that ignores local convention is a defect here — it makes the codebase feel inconsistent. The anchor is **how the project performs each technical operation**, NOT "the nearest feature that looks like mine". Before writing any new code:
 
@@ -89,9 +76,9 @@ Local precedent (above) is step one, but it does not settle a framework API you 
 4. **Implement.**
 5. **Verify** — does the new code match surrounding style? Did you introduce a pattern the file did not already use?
 
-## Exhaustive Scanning (Zero Misses)
+## Scanning Coverage (Zero Misses)
 
-**ZERO MISSES (highest priority):** Before acting on any task, exhaustively scan all files in scope. No scope specified → scan entire project. Scope specified → every file within it. Open and read files to confirm — never rely on filename guessing alone.
+Coverage is **yours to scope and yours to show**. Decide what the task requires reading — the files named in scope, plus whatever the change reaches through imports, references, and shared mechanisms — and open those files rather than judging them by filename. Then make the coverage visible: your report states what was scanned (paths or globs) and what was deliberately left out, so a gap is a line the reader can see rather than a silence. An exhaustiveness claim ("the only caller", "N files") carries the command that produced it.
 
 ## Language
 
