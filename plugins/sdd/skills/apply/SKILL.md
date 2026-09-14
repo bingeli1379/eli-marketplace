@@ -9,7 +9,7 @@ user-invocable: true
 
 Implement tasks from a spec change. Reads all spec artifacts, prepares context, then **becomes the orchestrator** — the main Claude assumes the orchestrator role directly so the user can interact naturally via chat.
 
-**IMPORTANT**: Specs are the single source of truth. If specs are incomplete, suggest running `/validate` first.
+Specs are the single source of truth. If specs are incomplete, suggest running `/validate` first.
 
 ---
 
@@ -17,7 +17,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
 **Steps**
 
-0. **Detect repo topology (MANDATORY first)**
+0. **Detect repo topology (first)**
 
    Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode and, in multi-repo, list the child repos. Every git operation below follows the per-mode rules in that file:
    - **single-repo** — all git ops run against the cwd repo. The steps below are written for this mode.
@@ -69,7 +69,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
    **This check itself never edits and never blocks** — dispatching against a stale design is the risk being surfaced, and the call is the user's. (Step 5b's reconcile does legitimately write `- [x]` back to `tasks.md`; that is a separate mechanism and is unaffected by this rule.) Environment drift is already covered by the config.yaml staleness check above; do not duplicate it. Task-completion drift (a `- [x]` whose commit is gone) is deliberately NOT checked: Step 5c (squash un-squashed per-task commits) strips task-number prefixes, so a healthy completed group has no numbered commit to find and the check would fire on every clean run.
 
-3. **Confirm current branch (MANDATORY)**
+3. **Confirm current branch**
 
    Use the current branch as-is. Do NOT create or switch branches — the user manages branches themselves.
    - Announce: "Branch: **<current-branch>**"
@@ -125,7 +125,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
 6. **Become the orchestrator**
 
-   Read `${CLAUDE_PLUGIN_ROOT}/agents/orchestrator.md` to load the orchestrator role definition. **You MUST actually read this file every time** — do NOT rely on memory from a previous change or earlier in the conversation, as context may have been compressed. **You are now the orchestrator.** Do NOT spawn a separate orchestrator agent — you act as the orchestrator directly in the main conversation.
+   Read `${CLAUDE_PLUGIN_ROOT}/agents/orchestrator.md` to load the orchestrator role definition — read it every time, not from memory of an earlier change, because context may have been compressed since. **You are now the orchestrator.** Do not spawn a separate orchestrator agent — you act as the orchestrator directly in the main conversation.
 
    This means:
    - The user can talk to you naturally at any time
@@ -180,7 +180,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    - Follow the spec scenarios as acceptance criteria
    - Follow the design decisions — do NOT deviate
    - **Implementation Protocol** — follow *Match Existing Code Before Writing* → *Decision order when modifying existing code* from `agent-guidelines` (Read → Look up → Decide → Implement → Verify). **It is already in your context — apply it; do NOT load it again.**
-   - **CRITICAL — Committing is EXPLICITLY REQUIRED by the user as part of this workflow. You are authorized and expected to commit after every task. This is NOT optional.** (Multi-repo mode: all staging and committing for this group happen inside the group's target child repo — `git -C <repo> ...` — never at the umbrella root. **No-git mode** — only when Step 0 detected no git repo at all: there is nothing to commit to, so implement the code directly and skip every per-task commit; the user commits later. **Still print the `DONE:` line per task** — with no git history to verify against, it is the orchestrator's only completion signal. Everything below assumes a git repo is present.) After completing each task, you MUST:
+   - **Commit after every task — the user has authorized committing as part of this workflow.** (Multi-repo mode: all staging and committing for this group happen inside the group's target child repo — `git -C <repo> ...` — never at the umbrella root. **No-git mode** — only when Step 0 detected no git repo at all: there is nothing to commit to, so implement the code directly and skip every per-task commit; the user commits later. **Still print the `DONE:` line per task** — with no git history to verify against, it is the orchestrator's only completion signal. Everything below assumes a git repo is present.) After completing each task, you MUST:
      1. Stage all changed files with `git add` (specify files by name)
      2. Run all lint commands listed above (if any) to fix formatting — stage any changes they produce
      3. Commit code + lint fixes following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`). **Read the skill for type list, description rules, and format.** The only sdd-specific addition: prefix the description with the task number — `<type>[optional scope]: <task-number> <description>` (e.g., `feat: 1.1 add UserSearch entity`, `test: 2.3 add unit tests for search service`).
@@ -215,15 +215,15 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    3. Because the Phase 1 agent runs in the background, the orchestrator stays unblocked while it works; resolve its NEEDS as they arrive and resume it before moving to the next group.
    4. If a resolved fact contradicts an assumption baked into `design.md` / `tasks.md` (e.g. the real production value makes a planned step wrong), surface it to the user before resuming — a NEEDS can legitimately invalidate part of the plan, and silently coding around it reintroduces the guessing the protocol exists to prevent.
 
-   **Phase execution (mandatory, in order):**
+   **Phase execution (in order):**
 
-   **Zero-misses principle: orchestrator ALWAYS dispatches every phase — the agent decides scope, not you.** Do NOT skip any phase based on your own judgement (e.g., "this is just a migration", "changes are mechanical", "only config files changed"). If there is genuinely nothing to do, the dispatched agent will report that. The ONLY way to skip a phase is if `config.yaml` explicitly provides a skip option for it.
+   **Every phase is dispatched by default; skipping one is a decision you print, not a judgement you keep to yourself.** When you skip a phase or a reviewer (a config-only change with nothing for technical-writer, a change with no user-facing flow for qa-engineer), the Step 9 report carries one line per skip — which phase, and why — so the user can see what the run chose not to check. Phase 2's review-engineer + security-engineer are never skipped. The cost line in Step 9 is why this is a decision rather than a reflex: a version bump that landed 13 lines across 8 files once cost 10 dispatches over 46 minutes, most of them phases dispatched to confirm there was nothing to do.
 
    - **Phase 1 — Sequential single-writer development**: Dispatch groups one at a time in dependency order, each agent committing on the current branch. After each group completes, squash its per-task commits into a single clean commit in place (`git reset --soft <prev-group-sha>`, where `<prev-group-sha>` is the authoritative `GROUP_BASE` = HEAD *after* the previous group's squash; + re-commit). Each group's `tasks.md` checkboxes are written to disk as it finishes and committed in a single commit once no pending groups remain, so no metadata commit sits between groups. The next group's agent reads the committed result. See `orchestrator.md` Phase 1 (steps a–e) for full details.
-   - **Phase 2 — Review + Security, then QA**: After all Phase 1 groups are committed, dispatch review-engineer + security-engineer **simultaneously in one message** (both are strictly read-only, so they fan out safely), and dispatch qa-engineer **alone once they have returned** — it mutates the working tree to prove a guard can fail, and a reviewer sharing that tree reads half-applied state as if it were committed code. `agents/orchestrator.md` → *Phase 2* carries the reason and the measured failure. A change is NOT complete until the Fix → Re-verify Loop below has exited — no `blocker` / `major`, no FAILED QA, no newly introduced `WILL NOT SCALE`; a verdict carrying only `minor`s is a finished loop, not a failing one. Even if no E2E specs exist, dispatch qa-engineer — let it confirm there is nothing to verify.
-     - **Reviewer context (MANDATORY)**: each reviewer's prompt MUST include the same grounding the implementers got — the full `feature-spec/config.yaml` (so `hard_rules` can be checked line by line) and `design.md` (so the **Reference implementation** named per group is the analog the conformance review diffs against). In multi-repo mode, pass the config(s) of the repos under review. Without this, review-engineer's Convention Conformance and hard_rules checks have nothing to anchor to.
+   - **Phase 2 — Review + Security, then QA**: After all Phase 1 groups are committed, dispatch review-engineer + security-engineer **simultaneously in one message** (both are strictly read-only, so they fan out safely), and dispatch qa-engineer **alone once they have returned** — it mutates the working tree to prove a guard can fail, and a reviewer sharing that tree reads half-applied state as if it were committed code. `agents/orchestrator.md` → *Phase 2* carries the reason and the measured failure. A change is NOT complete until the Fix → Re-verify Loop below has exited — no `blocker` / `major`, no FAILED QA, no newly introduced `WILL NOT SCALE`; a verdict carrying only `minor`s is a finished loop, not a failing one. With no E2E specs and no user-facing flow, qa-engineer may be skipped — with the printed reason above.
+     - **Reviewer context**: each reviewer's prompt includes the same grounding the implementers got — the full `feature-spec/config.yaml` (so `hard_rules` can be checked line by line) and `design.md` (so the **Reference implementation** named per group is the analog the conformance review diffs against). In multi-repo mode, pass the config(s) of the repos under review. Without this, review-engineer's Convention Conformance and hard_rules checks have nothing to anchor to.
      - **Cross-repo QA (multi-repo)**: when the change spans repos, tell qa-engineer it is a multi-repo change and pass `design.md`'s cross-repo integration points plus the relevant files from both the provider and consumer repos, so its Step 0 contract check can diff the seams.
-   - **Phase 3 — Documentation**: After Phase 2 passes, dispatch technical-writer in background (on the current branch). Even if changes seem trivial, dispatch — let the writer decide whether docs are needed.
+   - **Phase 3 — Documentation**: After Phase 2 passes, dispatch technical-writer in background (on the current branch), or skip it with the printed reason when the change touches nothing a doc describes.
 
    If review, security, or QA fails: **collect all issues from all reviewers**, group by responsible agent, then dispatch **fix agents sequentially** — one responsible agent at a time, each committing before the next (fixing is a write task and stays single-threaded). **Read each fix agent's diff yourself — one `git diff` per agent, then tick each of its findings off against that single read — and confirm that specific defect is gone before accepting it** — an agent reporting `DONE` over a green test suite can still have closed only part of a multi-part finding, and nothing else in the pipeline sees that. Then **triage by severity**: a `blocker` / `major` / FAILED QA, or a newly introduced `WILL NOT SCALE` capacity verdict, earns a **fresh review round** — all three reviewers again, newly spawned, in the same shape as the first round (review + security in parallel, qa alone after) — **scoped to `git diff <previous round's HEAD>..HEAD` rather than to every changed file** — the fix range plus the importer/dependent scan the code reviewers already run is where a fix-introduced bug lands, and the round's report states the range it covered. **That round is not owed when every fix commit in it touched test files only**, and `agents/orchestrator.md` → *Fix → Re-verify Loop* states the two conditions for taking that carve-out. Findings that are only `minor` / `low`, with no capacity verdict newly reading `WILL NOT SCALE`, end the loop once fixed and self-verified, recorded as follow-ups rather than spending another trio; **that branch is terminal — the fixes it dispatches do not buy a review round back**. Max 3 rounds; only pause and report to the user if a blocker/major — or a newly introduced `WILL NOT SCALE` verdict — still stands after them. Full rules: `agents/orchestrator.md` → *Fix → Re-verify Loop*.
    - **Incremental E2E on retries**: On retry rounds (not the first QA run), qa-engineer may run only the previously-failing tests first. If those pass, run the full suite once to catch regressions.
@@ -237,14 +237,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
 8. **Interactive control — respond to user messages**
 
-   While agents are running in the background, you remain available in the main conversation. Respond to user messages:
-
-   - **"status" / "進度"** — show current group/phase, which agent is running, which tasks are done
-   - **"pause" / "暫停"** — stop dispatching new agents (already-running agents will finish)
-   - **"skip <task>"** — mark a task as skipped and continue
-   - **"dispatch <agent> <instruction>"** — manually dispatch a specific agent with custom instructions
-   - **"reprioritize"** — re-read tasks.md and adjust dispatch order
-   - **Any other message** — interpret as orchestrator instruction and act accordingly
+   While agents are running in the background, you remain available in the main conversation. A status request shows the current group/phase and running agent; "pause" stops dispatching new agents (running ones finish); "skip <task>" marks it skipped and continues; "dispatch <agent> <instruction>" and "reprioritize" do what they say; any other message is an orchestrator instruction.
 
    When a background agent completes, announce briefly:
    ```
@@ -259,7 +252,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
 9. **After all phases complete, verify and report**
 
-   - **MUST re-read `tasks.md` from disk** (not from memory) and verify all completed tasks are checked `- [x]`. The orchestrator updates checkboxes after squashing each group, but this step is the safety net. Do NOT skip because "agents all reported DONE."
+   - **Re-read `tasks.md` from disk** (not from memory) and verify all completed tasks are checked `- [x]` — the orchestrator updates checkboxes after each squash, and this is the safety net for a run where one write was lost.
    - If any completed task was missed, update it now
    - **Verify commit history**: `git log --oneline <base-sha>..HEAD` — each commit should be a clean, single-concern conventional commit with no task numbers. The expected pattern:
      ```
@@ -283,6 +276,8 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    [task list with checkmarks]
    ### 接下來由你執行       ← print whenever tasks.md carries a `## 交付後由你執行` section, an agent returned a `MOCKED:` line, or this run left a task un-executed; omit when there is none of the three
    [每一條：動作、在哪個環境或系統、怎麼判斷成功。tasks.md 那一節的內容逐條照搬，接著是每一筆 `MOCKED:` 的替換動作，最後列本次跑不動而留 `- [ ]` 的任務及其原因]
+   ### 略過的階段           ← print only when a phase or reviewer was skipped (Step 7); omit otherwise
+   [每一條：略過哪個 phase / reviewer、為什麼]
    ### 事後檢討            ← include this entire section ONLY when DEV_MODE = true; omit silently otherwise
    [執行過程中遇到的錯誤、意外狀況、手動介入]
    - 每個問題：發生什麼、根因、如何解決
@@ -302,7 +297,7 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
    你想怎麼處理？
    ```
 
-   **The `成本：` line prints on every run, `DEV_MODE` or not.** `<D>` is every Agent dispatch this run made, Phase 1 groups + reviewers + fix agents + technical-writer, counting each retry round's reviewers separately; `<T>` is wall-clock from the first dispatch; the diff figures come from `git diff --shortstat <base-sha>..HEAD` in the repo that carries the change (each repo on its own line in multi-repo). Together they are the only place the pipeline's cost meets the size of what it produced — a version bump landing 13 lines across 8 files once cost 10 dispatches over 46 minutes, and nothing in the report said so, so nobody could weigh it. **This reports the cost, it does not authorize cutting anything to lower it**: no phase, reviewer, or acceptance criterion is skipped on account of this line. What it feeds is the size judgement one level up (`skills/propose/SKILL.md` → Step 6c, *Assess size*), where a change this shape is routed to `/quick` before the pipeline ever runs.
+   **The `成本：` line prints on every run, `DEV_MODE` or not.** `<D>` is every Agent dispatch this run made, Phase 1 groups + reviewers + fix agents + technical-writer, counting each retry round's reviewers separately; `<T>` is wall-clock from the first dispatch; the diff figures come from `git diff --shortstat <base-sha>..HEAD` in the repo that carries the change (each repo on its own line in multi-repo). Together they are the only place the pipeline's cost meets the size of what it produced — a version bump landing 13 lines across 8 files once cost 10 dispatches over 46 minutes, and nothing in the report said so, so nobody could weigh it. **This reports the cost; it never trims an acceptance criterion to lower it**, and a phase skipped for it is printed with its reason (Step 7). What it mainly feeds is the size judgement one level up (`skills/propose/SKILL.md` → Step 6c, *Assess size*), where a change this shape is routed to `/quick` before the pipeline ever runs.
 
    **Retrospective gating**: when `DEV_MODE = false` (the default), do not print the `### 事後檢討` heading or its body — drop the entire block. End users get a clean report; plugin authors re-run with `dev-mode` to surface lessons learned. This applies to BOTH completion and pause outputs without exception.
 
@@ -310,22 +305,8 @@ Implement tasks from a spec change. Reads all spec artifacts, prepares context, 
 
 ## Guardrails
 
-- **You ARE the orchestrator** — do NOT spawn a separate orchestrator agent. You dispatch worker agents directly.
-- **All agents run on the current branch** (`run_in_background: true`, `mode: "bypassPermissions"`, no `isolation`). The `mode: "bypassPermissions"` is critical — without it, background agents hang on invisible permission prompts.
-- **One write agent at a time**: writes are single-threaded. Do NOT dispatch a second implementation or fix agent while one is still running — concurrent edits on the same branch diverge and collide. Only the strictly read-only reviewers (Phase 2's review-engineer and security-engineer) run simultaneously; qa-engineer runs alone after them. (Multi-repo exception: agents in *different* child repos may run concurrently.)
-- **Specs are the single source of truth** — avoid asking questions unless something is truly blocking and cannot be reasonably inferred. When in doubt, make a reasonable decision and flag it in the report.
-- Always read ALL context files before dispatching agents
-- `config.yaml` (when present) MUST be forwarded verbatim into every worker agent's prompt as the `## Project Context` section — the cwd repo's in single-repo mode, and in multi-repo the config of the child repo that agent is bound to (there is no umbrella config). `hard_rules` from config.yaml are non-negotiable. The project's own docs are never read or forwarded — config.yaml is the only project context. Skip the section silently if config.yaml is missing — never fabricate placeholder content.
-- Only dispatch agents for PENDING tasks (skip completed `- [x]` tasks)
-- Agents do NOT modify `tasks.md` — the orchestrator updates checkboxes after squashing each group
+- **Specs are the single source of truth** — ask the user only when something is truly blocking and cannot be reasonably inferred; otherwise decide and flag it in the report.
+- Only dispatch agents for PENDING tasks (skip completed `- [x]` tasks).
 - **Checkbox updates: write per group, commit once.** Each group's checkboxes are written to disk right after its squash (that on-disk file is what a resume reads), and **one** `chore: mark phase 1 tasks complete` commit covers all of them after the last group — not one metadata commit per group. That commit still runs the full safety sequence — `git status --short` first, stash anything unexpectedly staged, stage ONLY tasks.md and this change's `reports/` directory by exact path (`git add <path-to-tasks.md> <change-directory>/reports`), **NEVER `git add .`** — because a commit takes the whole index and the last group does not always end on our own squash commit. What changed is that the sequence runs **once** instead of once per group; it was not dropped.
-- If `lint_commands` are configured in `config.yaml`, agents MUST run them before every commit — no exceptions. **Exception**: if the project matches a pre-lint skip rule in `company-conventions.md`, lint commands are not required.
-- If a task genuinely cannot be implemented (missing dependency, unclear spec), skip it and flag it in the report — do NOT block the entire pipeline
-- Keep code changes minimal and scoped to each task
-- **One commit per task on the branch** — format follows `conventional-commits` skill with task-number prefix. These per-task commits are squashed in place into one clean commit per group (`git reset --soft`). Final commit messages follow `conventional-commits` skill (`skills/conventional-commits/SKILL.md`) rules with NO task numbers.
-- Work on the current branch — do NOT create or switch branches
-- **Zero-misses: ALL phases (1-3) are mandatory** — orchestrator always dispatches, agent decides scope. See Step 7 for details.
-- If review, security, or QA fails: collect all issues, group by responsible agent, dispatch **fix agents sequentially** (one write agent at a time), **verify each fix's diff closes the finding** — then a fresh review round, scoped to the fix range, only when a `blocker` / `major` / FAILED QA, or a newly introduced `WILL NOT SCALE` verdict, was fixed **and the fix range holds at least one production file** (a test-only fix round ends at the fix-diff check); a `minor`-only round with no new `WILL NOT SCALE` ends the loop once fixed, and no reviewer follows those fixes (max 3 rounds). Only pause and report if a blocker/major, or a newly introduced `WILL NOT SCALE` verdict, still stands.
-- Pass full `design.md` to each agent for context, but only RELEVANT specs to keep focus
-- **Retrospective is dev-mode only**: the `### 事後檢討` block in Step 9's report is suppressed unless `DEV_MODE = true` (parsed from a `dev-mode` token in the arguments). Default behavior is silent — end users do not see lessons-learned content. Plugin authors re-run with `dev-mode` when they want it. Applies to both completion and pause outputs.
-- When background agents complete, briefly announce results to the user — don't wait for them to ask
+- If a task genuinely cannot be implemented (missing dependency, unclear spec), skip it and flag it in the report — do not block the entire pipeline.
+- **A skipped phase or reviewer is printed with its reason** (Step 7); review-engineer + security-engineer are never skipped.

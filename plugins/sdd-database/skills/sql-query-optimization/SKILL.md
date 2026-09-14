@@ -11,306 +11,42 @@ license: MIT
 ---
 # SQL Query Optimization
 
-## Quick Start (10 Minutes)
-
-### 1. Identify Slow Query
-
-```sql
--- PostgreSQL: Enable pg_stat_statements
-CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
-
--- Find slowest queries
-SELECT query, mean_exec_time, calls
-FROM pg_stat_statements
-ORDER BY mean_exec_time DESC
-LIMIT 10;
-```
-
-### 2. Analyze with EXPLAIN
-
-```sql
-EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
-SELECT * FROM orders WHERE user_id = 123;
-
--- Look for:
--- - Seq Scan on large tables → needs index
--- - High "Rows Removed by Filter" → poor selectivity
--- - Temp read/written → increase work_mem
-```
-
-### 3. Create Index
-
-```sql
--- Add missing index
-CREATE INDEX CONCURRENTLY idx_orders_user
-ON orders(user_id);
-
--- Verify improvement
-EXPLAIN (ANALYZE, BUFFERS)
-SELECT * FROM orders WHERE user_id = 123;
--- Execution time should drop 10-100x
-```
-
----
-
-## Critical Rules
-
-### Always Do ✓
-
-| Rule | Why | Example |
-|------|-----|---------|
-| Index foreign keys | JOINs need indexed columns | `CREATE INDEX idx_orders_user ON orders(user_id)` |
-| Use EXPLAIN ANALYZE before production | Verify query plan is optimal | `EXPLAIN (ANALYZE, BUFFERS) <query>` |
-| Select specific columns | Reduces data transfer 90% | `SELECT id, name FROM users` not `SELECT *` |
-| Add LIMIT to unbounded queries | Prevents memory exhaustion | `SELECT * FROM logs ORDER BY id LIMIT 100` |
-| Use prepared statements | Prevents SQL injection + faster | `db.query('SELECT * FROM users WHERE id = $1', [id])` |
-| Run ANALYZE after bulk operations | Updates query planner statistics | `ANALYZE table_name` |
-| Monitor pg_stat_statements | Track query performance over time | Review daily for regressions |
-| Use connection pooling | Reduces connection overhead 10x | `new Pool({ max: 20 })` |
-
-### Never Do ✗
-
-| Anti-Pattern | Problem | Fix |
-|--------------|---------|-----|
-| SELECT * in production | Fetches unnecessary columns | Select specific columns only |
-| Leading wildcard LIKE '%term%' | Cannot use index | Use full-text search instead |
-| String concatenation for SQL | SQL injection vulnerability | Use parameterized queries |
-| No LIMIT on large results | Memory exhaustion | Always add LIMIT + pagination |
-| N+1 queries in loops | Network latency × N | Use JOIN or batch loading |
-| Ignoring EXPLAIN output | Deploy slow queries to production | Always EXPLAIN before deploy |
-| Multiple INSERTs in loop | Slow bulk operations | Use batch INSERT with multiple VALUES |
-| OFFSET for pagination | O(n) time, scans skipped rows | Use cursor-based pagination |
-
----
-
-## Top 7 Critical Errors
-
-### 1. Sequential Scan on Large Table
-**Symptom**: `Seq Scan on orders (cost=0.00..150000.00)` on 1M+ rows
-**Cause**: No index on filter column
-**Fix**: `CREATE INDEX idx_orders_column ON orders(column)`
-**Impact**: 10-100x faster
-
-### 2. Missing Index on Foreign Key
-**Symptom**: Slow JOINs (5+ seconds)
-**Cause**: Foreign key columns not indexed
-**Fix**: `CREATE INDEX idx_orders_user_id ON orders(user_id)`
-**Impact**: 50-500x faster JOINs
-
-### 3. N+1 Query Problem
-**Symptom**: 1 + N queries for N records
-**Cause**: ORM lazy loading in loop
-**Fix**: Use JOIN or eager loading: `SELECT u.*, o.* FROM users u LEFT JOIN orders o ON u.id = o.user_id`
-**Impact**: N queries → 1 query
-
-### 4. Leading Wildcard LIKE
-**Symptom**: `WHERE name LIKE '%search%'` sequential scan
-**Cause**: Index cannot match middle of string
-**Fix**: Use full-text search (GIN index) or trigrams
-**Impact**: 100-1000x faster
-
-### 5. SELECT * in Production
-**Symptom**: High network traffic, slow responses
-**Cause**: Fetches all 50 columns instead of needed 3
-**Fix**: `SELECT id, name, email` (explicit column list)
-**Impact**: 90% less data transfer
-
-### 6. Missing LIMIT on Large Results
-**Symptom**: Server out of memory, query timeout
-**Cause**: Attempting to return 5M rows
-**Fix**: `SELECT * FROM logs WHERE ... LIMIT 100` + pagination
-**Impact**: Constant memory usage
-
-### 7. Stale Statistics After Bulk Load
-**Symptom**: Wrong query plan chosen despite index
-**Cause**: PostgreSQL statistics outdated
-**Fix**: `ANALYZE table_name` after bulk operations
-**Impact**: Correct query plan selection
-
-**See `${CLAUDE_SKILL_DIR}/references/error-catalog.md` for all 12 errors with detailed solutions.**
-
----
-
-## Common Patterns Summary
-
-| Pattern | Use Case | Example | Performance |
-|---------|----------|---------|-------------|
-| **B-Tree Index** | Equality, range, sort queries | `CREATE INDEX idx ON t(col)` | Default, best general purpose |
-| **Composite Index** | Multi-column WHERE clauses | `CREATE INDEX idx ON t(c1, c2)` | 5-50x faster than single index |
-| **Covering Index** | Include all query columns | `CREATE INDEX idx ON t(c1) INCLUDE (c2)` | 2-10x faster (no heap fetch) |
-| **Partial Index** | Filter subset of rows | `CREATE INDEX idx ON t(c) WHERE status='active'` | 50-90% smaller index |
-| **JOIN Rewrite** | Replace IN subquery | `INNER JOIN users u ON o.user_id = u.id` | 5-20x faster than subquery |
-| **Batch INSERT** | Bulk data loading | `INSERT INTO t VALUES (..),(..)` | 10-100x faster than individual |
-| **Cursor Pagination** | Large offset performance | `WHERE id > last_id LIMIT 100` | Constant time vs O(n) |
-
----
-
-## Configuration Summary
-
-### PostgreSQL Config
-
-```sql
--- Increase work_mem for complex queries (reloadable - no restart needed)
-SET work_mem = '256MB';
-
--- Increase shared_buffers for better caching (25% of RAM)
-ALTER SYSTEM SET shared_buffers = '8GB';
-
--- IMPORTANT: shared_buffers requires a full PostgreSQL server restart!
--- This setting is NOT reloadable via pg_reload_conf()
---
--- To apply shared_buffers change:
--- 1. Stop PostgreSQL:   sudo systemctl stop postgresql
--- 2. Start PostgreSQL:  sudo systemctl start postgresql
--- OR use:              sudo systemctl restart postgresql
---
--- Verify the change took effect:
--- SHOW shared_buffers;
-
--- Enable auto-vacuum (reloadable - can use pg_reload_conf)
-ALTER SYSTEM SET autovacuum = on;
-
--- Reload config (ONLY works for parameters that don't require restart)
--- This will NOT reload shared_buffers - restart required for that!
-SELECT pg_reload_conf();
-```
-
-### MySQL Config
-
-```ini
-# my.cnf
-[mysqld]
-innodb_buffer_pool_size = 8G  # 70% of RAM
-max_connections = 500
-slow_query_log = 1
-long_query_time = 1
-```
-
----
-
-## When to Load References
-
-**Performance Analysis**:
-- Load `${CLAUDE_SKILL_DIR}/references/explain-analysis.md` when: Reading EXPLAIN output, understanding query plans, analyzing buffer statistics, comparing PostgreSQL vs MySQL EXPLAIN
-- Load `${CLAUDE_SKILL_DIR}/references/performance-monitoring.md` when: Setting up monitoring, tracking slow queries over time, monitoring cache hit ratios, identifying bloated tables
-
-**Index Optimization**:
-- Load `${CLAUDE_SKILL_DIR}/references/index-strategies.md` when: Choosing index type (B-Tree, GIN, GiST, Hash), creating composite indexes, determining column order, using covering indexes, implementing partial indexes, monitoring index usage
-
-**Query Optimization**:
-- Load `${CLAUDE_SKILL_DIR}/references/query-rewrites.md` when: Rewriting slow queries, converting subqueries to JOINs, eliminating N+1 queries, implementing pagination, optimizing LIKE queries, batching operations
-
-**Systematic Process**:
-- Load `${CLAUDE_SKILL_DIR}/references/optimization-workflow.md` when: Following step-by-step optimization process, creating optimization hypothesis, measuring improvements, monitoring long-term performance
-
-**Error Resolution**:
-- Load `${CLAUDE_SKILL_DIR}/references/error-catalog.md` when: Debugging specific errors (sequential scans, missing indexes, N+1 queries, etc.), understanding root causes, implementing verified solutions
-
----
-
-## Using Bundled Resources
-
-### References (Deep Dives)
-
-```bash
-# Comprehensive guides
-${CLAUDE_SKILL_DIR}/references/error-catalog.md              # All 12 errors + solutions
-${CLAUDE_SKILL_DIR}/references/explain-analysis.md           # Reading query plans
-${CLAUDE_SKILL_DIR}/references/index-strategies.md           # Index types & selection
-${CLAUDE_SKILL_DIR}/references/query-rewrites.md             # Before/after optimizations
-${CLAUDE_SKILL_DIR}/references/performance-monitoring.md     # Long-term monitoring
-${CLAUDE_SKILL_DIR}/references/optimization-workflow.md      # Systematic process
-```
-
----
-
-## Dependencies
-
-**PostgreSQL Extensions**:
-- `pg_stat_statements` - Query performance tracking (built-in)
-- `pg_trgm` - Trigram similarity search (optional, for fuzzy matching)
-
-**MySQL**:
-- `performance_schema` - Performance monitoring (enabled by default in 8.0+)
-
-**No additional dependencies required.**
-
----
-
-## Known Issues Prevention
-
-| Issue | Symptom | Prevention |
-|-------|---------|------------|
-| Sequential scans | Seq Scan on 1M+ rows | Index filter columns before production |
-| Missing FK indexes | Slow JOINs | Always index foreign keys |
-| N+1 queries | 1+N database calls | Use JOIN or eager loading |
-| Leading wildcards | LIKE '%x%' slow | Use full-text search (GIN) |
-| SELECT * bloat | High network traffic | Select specific columns |
-| No LIMIT | Memory exhaustion | Always LIMIT unbounded queries |
-| Stale statistics | Wrong query plans | ANALYZE after bulk operations |
-| Wrong index order | Index exists but not used | Match query pattern |
-| Missing composite | Multiple WHERE slow | Create composite index |
-| No connection pool | High latency | Implement pooling (20-50 connections) |
-| SQL injection | Security vulnerability | Use prepared statements only |
-| Temp spills | Disk I/O on sorts | Increase work_mem |
-
----
-
-## Complete Setup Checklist
-
-Production Deployment:
-- [ ] Enable pg_stat_statements or performance_schema
-- [ ] Index all foreign key columns
-- [ ] Index columns in WHERE, JOIN, ORDER BY clauses
-- [ ] Replace SELECT * with specific columns
-- [ ] Add LIMIT to all unbounded queries
-- [ ] Use prepared statements (parameterized queries)
-- [ ] Implement connection pooling (20-50 connections)
-- [ ] Configure work_mem (256MB-1GB per connection)
-- [ ] Configure shared_buffers (25% of RAM for PostgreSQL)
-- [ ] Enable slow query logging (threshold: 100-1000ms)
-- [ ] Run EXPLAIN ANALYZE on all critical queries
-- [ ] Set up daily monitoring of pg_stat_statements
-- [ ] Schedule ANALYZE after nightly bulk operations
-- [ ] Monitor cache hit ratio (target: >99%)
-- [ ] Review and drop unused indexes monthly
-
----
-
-## Production Example
-
-**Before Optimization**:
-```sql
--- Query: Fetch user orders
-SELECT * FROM orders WHERE user_id = 123;
-
--- Performance:
--- Execution time: 2500ms
--- Seq Scan on orders (1M rows scanned)
--- Network: 50MB transferred
--- No index on user_id
-```
-
-**After Optimization**:
-```sql
--- Add index
-CREATE INDEX CONCURRENTLY idx_orders_user_id ON orders(user_id);
-
--- Optimize query
-SELECT id, total, status, created_at
-FROM orders
-WHERE user_id = 123
-LIMIT 100;
-
--- Performance:
--- Execution time: 12ms (208x faster!)
--- Index Scan using idx_orders_user_id (100 rows)
--- Network: 50KB transferred (1000x less!)
--- Covering index with INCLUDE
-```
-
-**Result**: 208x faster execution, 1000x less data transfer
-
----
-
-**For comprehensive optimization guidance, error resolution, and production patterns, load the appropriate reference files listed in "When to Load References" above.**
+Tune a PostgreSQL or MySQL query from evidence: the plan (`EXPLAIN (ANALYZE, BUFFERS)`), the statement statistics (`pg_stat_statements` / `performance_schema`), and a before/after measurement on the same data. A change proposed without a plan to point at is a guess.
+
+**Every threshold, ratio, or config value you are about to recommend is checked against the current official docs for the engine version in use, and cited** — memory-limit and planner defaults move between major versions, and the "x times faster" figures that circulate are from someone else's table.
+
+## What to look for
+
+| Finding | How it shows | What to do |
+|---|---|---|
+| Sequential scan on a large filtered table | `Seq Scan` with a high `Rows Removed by Filter` | Index the filter column(s); re-run EXPLAIN to confirm the plan switched |
+| Foreign key without an index | Slow JOINs / cascades on the referencing table | Index every FK column (neither engine does it for you on the referencing side) |
+| N+1 | One query per row of a parent result, usually ORM lazy loading | JOIN / eager load / batch by key |
+| `SELECT *` on a wide table | Large row width in the plan, heavy network | Name the columns; a covering index (`INCLUDE`) is only possible once the column list is known |
+| Unbounded result | No `LIMIT`; memory or timeout at the client | `LIMIT` + pagination |
+| `OFFSET` pagination on deep pages | Cost grows with the offset; skipped rows are still scanned | Keyset (cursor) pagination on an indexed, unique ordering |
+| Leading-wildcard `LIKE '%term%'` | B-tree index unusable | Trigram (`pg_trgm`) or full-text index, per engine |
+| Sort / hash spilling to disk | `Sort Method: external merge`, temp blocks read/written | Fix the query or index first; `work_mem` is per operation per connection, so raising it globally is the last resort |
+| Stale planner statistics | Good index exists, plan ignores it, estimates far from actuals | `ANALYZE` after bulk loads; check autovacuum/autoanalyze is reaching the table |
+| Row-by-row INSERT in a loop | Many single-row statements | Multi-row `VALUES` / `COPY` / bulk load |
+| Wrong composite index column order | Index exists but is not used, or used with a filter | Leading columns must match the equality predicates; range column last |
+| String-built SQL | Concatenated literals | Parameterize — correctness and plan reuse, not only injection |
+
+Never "fix" a query by adding an index without reading the plan first: an index that the planner cannot use costs every write and buys nothing.
+
+## When to load references
+
+Each at `${CLAUDE_SKILL_DIR}/references/`:
+
+| Read | When |
+|---|---|
+| `explain-analysis.md` | Reading plan output, buffer statistics, PostgreSQL vs MySQL EXPLAIN differences |
+| `index-strategies.md` | Choosing an index type (B-Tree, GIN, GiST, Hash), composite column order, covering and partial indexes, index-usage monitoring |
+| `query-rewrites.md` | Subquery → JOIN, N+1 elimination, pagination, LIKE, batching — before/after shapes |
+| `performance-monitoring.md` | `pg_stat_statements` / slow-query log setup, cache-hit ratio, bloat |
+| `optimization-workflow.md` | The measure → hypothesis → change → re-measure loop, and long-term tracking |
+| `error-catalog.md` | The full catalogue of the failure shapes above with worked fixes |
+
+## Reporting
+
+For each query: the plan node that hurts, the change, and the before/after measurement on the same data set — with the engine version and the doc you checked for any number you name.

@@ -8,6 +8,8 @@ description: "Use when cutting a release, bumping a version, or generating a cha
 **Type**: Automated release workflow
 **Goal**: Detect current version, compare changes since that version, generate changelog, and bump version number
 
+**Ask only when the answer is not in the repo** — which package to release, where the version lives when no manifest or tag says, which baseline when none can be found. Everything the repo already settles — the bump, mirror manifests, the commit — is applied without confirmation.
+
 ## Instructions
 
 ### 1. Resolve target & detect version source
@@ -20,20 +22,7 @@ description: "Use when cutting a release, bumping a version, or generating a cha
 - a package with commits there has unreleased work; a package with none is up to date, skip it.
 Note a single change can land under a package via a commit whose scope tag names a *different* package (see step 3) — path-filtering by `-- <package>/` is what catches it, not the commit message.
 
-Within the target package's directory, search for version files in this priority order. Stop at the first match:
-
-| Source | File | Field / Pattern |
-|--------|------|-----------------|
-| Plugin manifest | `.*-plugin/plugin.json` (e.g. `.claude-plugin/`, `.codex-plugin/`) | `"version": "x.y.z"` |
-| npm / Node.js | `package.json` | `"version": "x.y.z"` |
-| .NET | `*.csproj`, `Directory.Build.props` | `<Version>x.y.z</Version>` or `<PackageVersion>` |
-| Python | `pyproject.toml` | `version = "x.y.z"` |
-| Rust | `Cargo.toml` | `version = "x.y.z"` |
-| Go | `version.go` or constant | `const Version = "x.y.z"` |
-| Plain | `version.txt`, `VERSION` | raw semver string |
-
-- If no version file is found, check git tags (`git tag --sort=-v:refname`) as fallback
-- If nothing is found, ask the user where the version lives
+**Version source.** Within the target package's directory, find the file that carries its version — a plugin manifest (`.*-plugin/plugin.json`), a language manifest (`package.json`, `*.csproj` / `Directory.Build.props`, `pyproject.toml`, `Cargo.toml`, a `version.go` constant), or a plain `VERSION` / `version.txt`. When a plugin manifest and a language manifest sit side by side, the plugin manifest is the version that ships. No version file → fall back to git tags (`git tag --sort=-v:refname`); nothing there either → ask the user where the version lives.
 
 **Parallel manifests (same artifact, multiple files):** one logical package may declare its version in several sibling manifests — e.g. a plugin that ships both `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`. Glob for ALL of them (`<package>/.*-plugin/plugin.json`) and treat them as ONE version source that must move together. They may currently be out of sync (one lagging behind); the release re-syncs them all to the new version. Use the highest existing version among them as the current baseline. This lockstep applies ONLY within the chosen target package — manifests belonging to *different* packages are independent and must never be bumped together.
 
@@ -41,20 +30,13 @@ Record: **current version**, **all version file paths** (every parallel manifest
 
 ### 2. Find the previous version baseline
 
-**First, settle whether there is a previous release at all** — the strategies below all assume one, and each will manufacture a false baseline when there is none. It is a first release when no `release v` commit for the package exists AND no tag names an earlier version AND `CHANGELOG.md` either does not exist or its newest heading already equals the version on disk. **Look for that commit, not for a change to the version file** — a first release that kept the version as it stands leaves the manifest untouched, so every later release of that package would otherwise re-detect it as never released and replay its whole history into the changelog. Then the range is the whole of the package's history, step 4 (determine version bump) keeps the version as it stands, and nothing is asked — there is no earlier version for the user to pick. **Check this before strategy 2 in particular**: a first release's newest changelog heading IS the current version, so that strategy would report a baseline equal to what is being released.
+**First, settle whether there is a previous release at all** — every baseline source below assumes one, and each will manufacture a false baseline when there is none. It is a first release when no `release v` commit for the package exists AND no tag names an earlier version AND `CHANGELOG.md` either does not exist or its newest heading already equals the version on disk. **Look for that commit, not for a change to the version file** — a first release that kept the version as it stands leaves the manifest untouched, so every later release of that package would otherwise re-detect it as never released and replay its whole history into the changelog. Then the range is the whole of the package's history, step 4 (determine version bump) keeps the version as it stands, and nothing is asked — there is no earlier version for the user to pick. **Check this before reading the changelog heading in particular**: a first release's newest changelog heading IS the current version, so it would report a baseline equal to what is being released.
 
-Otherwise use the following strategy to determine what changed since the last release:
-
-1. **Git log of the version file**: `git log --oneline -10 -- <version-file>` — find the commit that last changed the version, use it as baseline
-2. **CHANGELOG.md**: parse the most recent `## [x.y.z]` heading to find the last documented version
-3. **Git tags**: if tags exist, find the latest semver tag before the current version
-4. **If none works**: show the last 30 commits and ask the user to pick a baseline
+Otherwise the baseline is the package's last release commit: `git log --oneline -1 --grep='release v' -- <package>/`. Filter by the package **directory** (the reason step 1 gives), and grep for `release v` (the `release vX.Y.Z` message pattern), NOT a bare `release` — a feature commit whose message merely mentions "release" (e.g. "harden the release flow") would otherwise be picked as the baseline. Prefer this over a bare version tag when the history contains merges — a tag can sit on a tangled topology where `tag..HEAD` sweeps in unrelated branches. When no release commit exists, fall back to the most recent `## [x.y.z]` heading in `CHANGELOG.md`, then to the latest semver tag before the current version; when none settles it, show the last 30 commits and ask the user to pick a baseline.
 
 Once the baseline commit is identified, scope every range query **to the target package's path**. In a multi-package repo, merges from other feature branches pollute an unfiltered `<baseline>..HEAD` range with unrelated commits (other plugins, other features) — the changelog must be built from the package-scoped list only:
 - `git log <baseline>..HEAD --oneline -- <package>/` for the commit list
 - `git diff <baseline>..HEAD --stat -- <package>/` for the change summary
-
-Prefer a package-path baseline (`git log --oneline -1 --grep='release v' -- <package>/`, filtered by the package directory for the reason step 1 gives) over a bare version tag when the history contains merges — a tag can sit on a tangled topology where `tag..HEAD` sweeps in unrelated branches. Grep for `release v` (the `release vX.Y.Z` message pattern), NOT a bare `release` — a feature commit whose message merely mentions "release" (e.g. "harden the release flow") would otherwise be picked as the baseline.
 
 ### 3. Categorize changes
 
@@ -65,78 +47,35 @@ Prefer a package-path baseline (`git log --oneline -1 --grep='release v' -- <pac
 
 ### 4. Determine version bump
 
-- **major**: any commit contains `BREAKING CHANGE` or `!` after type
-- **minor**: any `feat` commit
-- **patch**: only `fix`, `perf`, `refactor`, or other non-feature changes
-- Compute the new number from the current version: major → `(x+1).0.0`, minor → `x.(y+1).0`, patch → `x.y.(z+1)`
+- Bump per Conventional Commits: `BREAKING CHANGE` or `!` after type → major `(x+1).0.0`; any `feat` → minor `x.(y+1).0`; otherwise patch `x.y.(z+1)`
 - **Pre-1.0 (`0.y.z`)**: shift down one level — a breaking change bumps minor (`0.(y+1).0`), a `feat` bumps patch (`0.y.(z+1)`). Never auto-promote a `0.x` package to `1.0.0`; do that only if the user explicitly asks
-- Apply the suggested bump automatically without asking for confirmation
 - **A package that has never been released does not get bumped.** When step 2 (find the previous version baseline) took its never-released branch, the version on disk *is* this release: keep it, bring the changelog entry up to what actually ships, and commit `chore(<pkg>): release vX.Y.Z` at that same number. Bumping instead assigns a version to work that was never published, and leaves a gap nobody can install.
 
 ### 5. Generate changelog entry
 
-- Format: [Keep a Changelog](https://keepachangelog.com/) style
-- Sections: Added, Fixed, Changed, Removed (only include non-empty sections)
+- Format: [Keep a Changelog](https://keepachangelog.com/) style — `## [x.y.z] - YYYY-MM-DD` (today's date), sections Added / Fixed / Changed / Removed, only non-empty ones
 - Each entry: one line describing what changed + why it matters to the user
-- Do NOT include commit hashes — they add noise for end users
-- Aggressively merge related changes into a single entry
-- Aim for **3–7 entries total** per release; if you have more, you're being too granular
-- Date: use today's date (YYYY-MM-DD)
+- Merge related changes into a single entry (e.g. 5 commits fixing the same form → 1 entry); batch trivial fixes into "Minor bug fixes and stability improvements" if individually uninteresting. Aim for **3–7 entries total** per release; exceed only for genuinely large releases
+- No commit hashes — they add noise for end users
 - Prepend the new entry to the **target package's** `CHANGELOG.md` — the one alongside its version manifest (e.g. `plugins/<name>/CHANGELOG.md`), NOT the repo root. Create if not exists, keep existing entries
 
 ### 6. Bump version number
 
 - Update the version field in the detected version file(s)
-- **Parallel manifests of the same package** (e.g. `.claude-plugin/plugin.json` + `.codex-plugin/plugin.json`) MUST all be bumped to the same new version in lockstep — do NOT ask which to update, update every one
-- Only ask the user when the files are **genuinely independent artifacts** (different packages with their own version lifecycles), not when they are mirror manifests of one package
+- **Parallel manifests of the same package** (e.g. `.claude-plugin/plugin.json` + `.codex-plugin/plugin.json`) are all bumped to the same new version in lockstep, every one of them
 - Preserve each file's existing formatting
 - After editing, verify each JSON manifest still parses (e.g. `python3 -m json.tool <file> >/dev/null`) before committing — a version edit that breaks the manifest ships a broken plugin, worse than a stale version
 - **Refresh any lock file that records the package's own version.** Some lock files pin the package being released, not just its dependencies (`package-lock.json` does) — grep the **old** version string in each lock file inside the package, **and in the workspace root's lock file** when the package is a workspace member: an npm/pnpm workspace keeps one lock at the root recording every member's version, so a package-scoped look finds nothing and the stale entry ships. A hit means the lock may carry the package's own version, so refresh it with the ecosystem's metadata-only command (`npm install --package-lock-only` and its equivalents) and confirm the lock now names the **new** version. Do NOT verify by the old string disappearing — an unrelated dependency pinned at that same version keeps it present forever. No such command available → say so and release without it rather than hand-editing the lock
 
 ### 7. Commit
 
-- Show the changelog entry and version diff, then immediately commit without waiting for user confirmation
+- Show the changelog entry and version diff, then commit
 - Stage and commit all release changes (the target's CHANGELOG + version file(s) + any lock file refreshed in step 6) with a conventional commit message
 - In a multi-package repo, scope the commit to the released package: `chore(<package>): release vX.Y.Z`
 
-## Changelog Format
-```markdown
-## [x.y.z] - YYYY-MM-DD
+## Changelog rules
 
-### Added
-- Short description of what's new — what this means for you
-
-### Fixed
-- Short description of what was broken — how it behaves now
-
-### Changed
-- Short description of what's different — what you need to do (if anything)
-
-### Removed
-- Short description of what's gone — what to use instead (if applicable)
-```
-
-## Rules
-
-### Voice & audience
-- Write for **end users who don't read code** — describe behavior, not implementation
-- Use plain language; avoid jargon like "refactor", "migrate", "normalize"
-- Each entry answers: "What changed, and why should I care?"
-- English, imperative mood
-
-### What to include
-- Only changes the user will **notice or need to act on**
-- If a change has no visible effect, it doesn't belong in the changelog
-
-### What to omit (silently)
-- Internal refactors, code reorganization, renaming
-- Dependency bumps (unless they fix a user-visible bug or add a feature)
-- CI/CD, build, lint, style, test-only changes
-- Documentation-only changes (unless it's a new user-facing guide)
-
-### Compression
+- Write for **end users who don't read code** — describe behavior, not implementation; plain language, no jargon like "refactor", "migrate", "normalize"; English, imperative mood
+- Each entry answers: "What changed, and why should I care?" — only changes the user will **notice or need to act on**
+- Omit silently: internal refactors and renames, dependency bumps (unless they fix a user-visible bug or add a feature), CI/CD, build, lint, style, test-only changes, documentation-only changes (unless it's a new user-facing guide)
 - **Be as concise as possible WITHOUT distorting meaning** — trim filler, but never at the cost of accuracy. A shorter entry that misstates or over-generalizes what changed is worse than a longer, correct one. When concision and fidelity conflict, fidelity wins
-- Merge related commits into **one entry** (e.g., 5 commits fixing the same form → 1 entry)
-- Batch trivial fixes into "Minor bug fixes and stability improvements" if individually uninteresting
-- Target **3–7 entries** per release; exceed only for genuinely large releases
-- No commit hashes — users don't need them

@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.19.1] - 2026-09-14
+
+### Changed
+- A phase can be skipped, and the run prints one line saying which and why. Review and security are never skipped. Every phase used to be dispatched unconditionally, which the workflow's own cost line had measured at 10 dispatches over 46 minutes for a change of 13 lines.
+- `/validate` no longer fails a change over the shape of its prose. A missing file, a broken mapping or a bad checkbox still stops it; a short Why, a long requirement, a missing SHALL or only one scenario now warn and let the work proceed.
+- A reviewer declares its coverage by listing what it did not read and why, instead of enumerating every category it did. Silence now means covered, so a clean review is short again.
+- An agent scopes its own scan and reports what it left out, rather than being ordered to read the whole project when no scope was given.
+
+### Fixed
+- `/validate` demanded an alternative on every decision while `/propose` forbids inventing candidates for a routine one, so no design could satisfy both. Alternatives are checked on high-stakes decisions only.
+- The architect was told it had abilities the orchestrator lacks and the orchestrator was told it could not load a skill; neither was true. The split is by role now, and the file inventory is handed over as a starting point the architect may verify and extend rather than a boundary it must not cross.
+- Test-driven development no longer tells an agent to delete working code and start over. A test still has to be seen failing before the code counts as covered, and writing the test afterwards and making it fail is now the stated way to get there.
+
 ## [3.19.0] - 2026-09-09
 
 ### Added

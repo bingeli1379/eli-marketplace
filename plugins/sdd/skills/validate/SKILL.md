@@ -7,7 +7,7 @@ description: >
 user-invocable: true
 ---
 
-Validate spec artifacts for a change. Checks structural completeness, content quality, and referential integrity. Most rules are ERROR level and block implementation; a few are WARN (advisory, non-blocking) — see *Validation Rules* below.
+Validate spec artifacts for a change. **Structural and referential checks are ERROR** — a missing file or section, a broken mapping, a checkbox where none may be — because `/apply` and `/complete` parse exactly those. **Content-quality checks are WARN** — they describe what a good artifact usually looks like, and a spec that reads well without hitting the number is not blocked on it. Read-only: this skill never modifies an artifact.
 
 ---
 
@@ -41,7 +41,7 @@ Validate spec artifacts for a change. Checks structural completeness, content qu
 
 ## Validation Rules
 
-Most rules are **ERROR** level — any ERROR causes FAIL. A few rules are marked **WARN** (e.g. mixed agent types in a group, missing `Reference:` line): they surface a quality risk but do **not** block implementation. Report both, but only ERRORs flip the verdict to FAIL.
+Any **ERROR** causes FAIL. **WARN** surfaces a quality risk and does **not** block implementation. Report both; only ERRORs flip the verdict. A rule is ERROR unless marked WARN.
 
 ### File Existence
 
@@ -56,7 +56,7 @@ Most rules are **ERROR** level — any ERROR causes FAIL. A few rules are marked
 
 | Check | Rule |
 |-------|------|
-| `## Why` section | MUST exist and be non-empty (at least 50 characters) |
+| `## Why` section | MUST exist and be non-empty |
 | `## What Changes` section | MUST exist and be non-empty |
 | `## Capabilities` section | MUST exist |
 | `### New Capabilities` or `### Modified Capabilities` | At least one MUST list capabilities |
@@ -79,7 +79,7 @@ Most rules are **ERROR** level — any ERROR causes FAIL. A few rules are marked
 | `## Data Migration & Rollback` section | SHOULD exist when proposal.md signals a schema/data-model change (keywords in What Changes / Impact: migration, schema, column, table, index, alter, backfill, drop). WARN if missing — a schema change with no backfill/rollback plan is a common production incident |
 | `## Decisions` section | MUST exist with at least one decision |
 | Implementation strategy | `## Decisions` MUST state the implementation strategy — Contract-First or Walking Skeleton — with a reason. WARN if absent (the architect defaulted silently); ERROR if it states Walking Skeleton without naming the end-to-end path the skeleton proves, what is placeholdered per layer, and the harden order |
-| Decision alternatives | Each decision MUST mention at least one alternative considered |
+| Decision alternatives | Each **high-stakes** decision (irreversible, high blast-radius, or genuinely competing approaches — the classification `propose` → Step 7c hands the architect) names at least one rejected alternative. WARN if one does not. A **routine** decision is one line naming the convention or Reference it follows — that IS its justification; never flag it for lacking alternatives |
 | `## Risks / Trade-offs` section | MUST exist and be non-empty |
 
 ### tasks.md
@@ -93,7 +93,7 @@ Most rules are **ERROR** level — any ERROR causes FAIL. A few rules are marked
 | Dependency annotation format | If `<!-- depends: N[, M...] -->` is present on a heading, referenced group numbers MUST exist in tasks.md |
 | Shared file conflict | If `design.md` has an Affected Files section, two independent groups (no dependency between them) MUST NOT both list the same file. ERROR — must add a dependency or merge the groups. This is a backstop only: it catches collisions only when files are enumerated per group. Catch-all wording ("rewrite all N consumers") hides the real paths, so the primary collision check is propose's Step 9a self-review (grep the inventory). Do NOT assume this rule covers refactors. |
 | Task numbering | Tasks MUST use `N.M` numbering (e.g., `1.1`, `1.2`, `2.1`) |
-| Task verb | Each task description MUST start with a verb (e.g., Create, Implement, Add, Write, Configure) |
+| Task verb | Each task description starts with a verb (Create, Implement, Add, Write, Configure). WARN |
 | Empty groups | Groups MUST NOT be empty (no tasks under heading) |
 | Reference pointer | Each group SHOULD carry a `Reference:` line mapping its technical operations to the existing code that already performs each (DB access → …, DI → …, error handling → …), `none` only for an operation with no precedent anywhere. WARN if missing, or if it collapses to a bare `Reference: none` for the whole group — the implementing and reviewing agents lose their per-operation anchor and the change risks style drift. |
 | Repo annotation (multi-repo) | If a group heading carries a `<!-- repo: <path> -->` annotation, `<path>` MUST resolve to a directory on disk. ERROR if it does not. |
@@ -104,11 +104,11 @@ Most rules are **ERROR** level — any ERROR causes FAIL. A few rules are marked
 | Check | Rule |
 |-------|------|
 | `### Requirement:` heading | Each spec MUST have at least one Requirement |
-| SHALL/MUST keyword | Each Requirement text MUST contain `SHALL` or `MUST` |
+| SHALL/MUST keyword | Each Requirement text contains `SHALL` or `MUST`. WARN |
 | `#### Scenario:` blocks | Each Requirement MUST have at least one Scenario |
 | WHEN/THEN format | Each Scenario MUST contain `**WHEN**` and `**THEN**` lines |
-| Requirement length | Requirement text MUST NOT exceed 500 characters |
-| Scenario coverage | Each Requirement MUST have at least 2 Scenarios (happy path + edge case) |
+| Requirement length | Requirement text over ~500 characters is usually two requirements. WARN |
+| Scenario coverage | Each Requirement has at least 2 Scenarios (happy path + edge case). WARN |
 
 ### Referential Integrity
 
@@ -129,12 +129,12 @@ Most rules are **ERROR** level — any ERROR causes FAIL. A few rules are marked
 
 [For each file/check, show result with icon:]
 ✓ proposal.md — all checks passed
-✗ design.md — 2 errors
+✗ design.md — 1 error, 1 warning
   ✗ Missing `## Risks / Trade-offs` section
-  ✗ Decision "API Design" has no alternatives mentioned
+  ⚠ High-stakes decision "API Design" names no rejected alternative
 ✓ specs/user-search-api/spec.md — all checks passed
-✗ specs/user-search-ui/spec.md — 1 error
-  ✗ Requirement "Search input field" has only 1 scenario (minimum 2)
+⚠ specs/user-search-ui/spec.md — 1 warning
+  ⚠ Requirement "Search input field" has only 1 scenario (happy path + edge case expected)
 ✓ tasks.md — all checks passed
 ✓ Referential integrity — all checks passed
 
@@ -157,11 +157,5 @@ OR
 
 ## Guardrails
 
-- Read ALL artifact files before generating the report (don't fail fast on first error)
-- Report ALL issues found, not just the first one per file
-- Group issues by file for readability
-- Always show the summary and verdict
-- On PASS, suggest running `/apply <name>`
-- On FAIL, list specific fixes needed
-- Never modify artifact files — this is read-only validation
-- If `feature-spec/changes/<name>/` doesn't exist, show helpful error with available changes
+- Read every artifact and report every issue, grouped by file — never fail fast on the first error.
+- Never modify artifact files — this is read-only validation.

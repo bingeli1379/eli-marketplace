@@ -12,7 +12,7 @@ Rate each finding as:
 - **SAFE**: No quality risk
 - **RISKY**: Could cause the agent to produce lower quality output
 - **BROKEN**: Will definitely cause issues — must fix before using
-- **NOTE**: An observation for the user to judge, never auto-applied. Reserved for findings that depend on something the file cannot settle — a model default you cannot observe (criterion w), or a length trade-off only the author can weigh (criterion x), whose frontmatter `description` case is carved back out as **RISKY** because its budget is stated, or a restructure the author must approve (criterion y). A NOTE never affects a file's rating and never triggers the auto-fix loop.
+- **NOTE**: An observation for the user to judge, never auto-applied. Reserved for findings that depend on something the file cannot settle — a model default the file gives you no way to judge (criterion w's residual), or a length trade-off only the author can weigh (criterion x), whose frontmatter `description` case is carved back out as **RISKY** because its budget is stated, or a restructure the author must approve (criterion y). A NOTE never affects a file's rating and never triggers the auto-fix loop.
 
 ## For Agent files (`**/agents/*.md`)
 
@@ -20,7 +20,7 @@ Rate each finding as:
 - Was any rule, constraint, or instruction removed (not just reformatted)?
 - Were conditional behaviors lost (e.g., "if X then Y" compressed into just "Y")?
 - Were mandatory steps removed or made to look optional?
-- **BROKEN** when a mandatory step became optional or a constraint vanished; **RISKY** when a conditional lost its condition. The catalogue's *never delete a rule to tidy up* is the write-time side; this is the detection.
+- **BROKEN** when a mandatory step became optional or a constraint vanished; **RISKY** when a conditional lost its condition. The catalogue's *Delete a rule only for a named reason* is the write-time side; this is the detection.
 
 **b. Code examples** — audit-only.
 - Are examples still syntactically valid and complete?
@@ -32,7 +32,7 @@ Rate each finding as:
 - Audit adds: severity levels, sub-fields, and section distinctions must survive a reformat. **BROKEN** if the template can no longer produce a complete report; **RISKY** if a distinction that matters (e.g. Critical vs High vs Medium) was merged into one line.
 
 **d. Cross-agent consistency** — audit-only: these are conventions of the surrounding fleet, invisible from one file.
-- ZERO MISSES directive: still present? Still clear for this agent's role?
+- Coverage directive (ZERO MISSES, or the fleet's current wording of what was scanned and what was not): consistent with the other agents, and clear for this agent's role?
 - Language line: still unambiguous?
 - Mandatory Skills references: still pointing to correct files?
 
@@ -48,10 +48,10 @@ Rate each finding as:
 **g. Templates and examples** — rule: catalogue *Where content lives* (template files) and *Rules first, examples second*.
 - Audit adds: **RISKY** when an output template no longer guides the agent to a complete artifact, or a format example was compressed beyond recognition.
 
-**h. Guardrails and constraints** — rule: catalogue *Never delete a rule to tidy up*.
-- Audit adds the softening check, which is not deletion and so reads clean in a diff: a "MUST" or "do NOT" downgraded to a suggestion is **BROKEN**, not a wording preference. **This criterion outranks (v)** — never soften a prohibition to satisfy phrasing.
+**h. Guardrails and constraints** — rule: catalogue *Delete a rule only for a named reason*.
+- Audit adds the softening check, which is not deletion and so reads clean in a diff: a "MUST" or "do NOT" downgraded to a suggestion is **BROKEN**, not a wording preference. **This criterion outranks (v)** — never soften a prohibition to satisfy phrasing. **Removing emphasis is not softening**: caps dropped, a repeated "this is NOT optional" or a third restatement gone, while the imperative stays imperative, is (k)'s trim; `must` becoming `should` or `consider` is what this criterion catches.
 
-**i. Item preservation** (any bullet list, checklist, or enumerated section) — rule: catalogue *Never delete a rule to tidy up* (count items before and after).
+**i. Item preservation** (any bullet list, checklist, or enumerated section) — rule: catalogue *Delete a rule only for a named reason* (count items before and after; every missing item carries one of its three reasons).
 - Audit adds: count the entries on both sides of the diff and reconcile. Were items merged in a way that loses specificity? Are section boundaries still clean (no two unrelated topics under one heading)? **BROKEN** on a silent loss, **RISKY** on a lossy merge.
 
 ## Context bloat detection (applies to ALL file types)
@@ -59,11 +59,11 @@ Rate each finding as:
 **j. Well-known information** — rule: catalogue *Cost*, step 4 (cut the lecture, never the rule).
 - Audit adds the two-part test, and both halves must hold before flagging: **"Is this a verbose explanation that adds no actionable constraint, AND would the agent reliably do the right thing without any mention of this topic?"** A one-liner is a rule, not bloat, however obvious the concept. Flag **RISKY** and condense to a one-line rule; never remove the rule itself.
 
-**k. Checklist rules must be grounded in real failures** — this is a **policy about the burden of proof**, and it governs the whole pass.
-- Assume every existing checklist item was added because the agent failed without it. Do NOT remove items just because the model "should know" this.
-- Only flag as RISKY (unnecessary) when you can demonstrate with high confidence that the model **never** makes this mistake in the specific context of this agent's role — not in general, but for this agent's actual tasks.
-- The question is: "Is there any plausible scenario where this agent could get this wrong?" If yes, keep it.
-- **When k and j conflict** (a verbose rationale that also references a past failure or documents a non-obvious constraint): **k wins.** Battle-tested content with rationale stays; only the WRITING STYLE may be tightened. Never remove the rule or its justification.
+**k. Deletion needs a named reason** — this is the **policy about the burden of proof**, and it governs the whole pass. Rule: catalogue *A rule earns its line* (what a rule is for) and *Delete a rule only for a named reason* (the three reasons).
+- Audit adds the ratings. A rule with a **recorded failure** behind it — a `Measured:` / `Observed:` note, an incident or project convention the file names, a harness fact — is kept whatever the model "should" know; removing one is **BROKEN** under (a). A rule with **none**, that restates a model default, scripts the model's reasoning or route, or is emphasis around a rule that stays, is **RISKY**: condense it to the fact it carries, or remove it and name it in `### 已修` with which of the three reasons applied, so the deletion is reviewable after the fact.
+- "Is there any plausible scenario where this agent could get this wrong?" is **not** the bar — every rule passes it, which is why it never let anything go. The bar is the record.
+- **When k meets j**: the failure record decides, not the length. Evidence stays and only its style may be tightened; lecture goes.
+- **Not a licence to soften**: (h) still holds — a surviving ban stays a ban.
 
 **l. No assumptions about project tooling** — rule: catalogue *Depending on anything outside the file* (absence plan).
 - Audit adds: a rule that depends on optional tooling must read as conditional. **RISKY** when it assumes a linter, formatter, test runner, or CI that may not exist.
@@ -131,13 +131,13 @@ Criteria a–t ask whether the prompt still *says* the right thing. These four a
 **v. Positive steering over prohibition** — rule: catalogue *Give a positive target alongside a prohibition*.
 - Audit adds: **RISKY** when a rule is phrased purely as a ban and a positive target exists that implies the same constraint. **Reconciliation with (h): h wins on force, v wins on phrasing.** The fix is to **add** the positive target, keeping the prohibition intact — never to delete a guardrail or downgrade it. Where a behavior genuinely cannot be phrased positively, the bare prohibition stays and is correct.
 
-**w. No-ops — does this line change behavior versus the model's default?** — audit-only, and **NOTE only**.
+**w. No-ops — does this line change behavior versus the model's default?** — audit-only; rated under (k).
 - A line can be relevant, true, and still buy nothing because the model already does it by default. This differs from (j): j asks whether prose is a *verbose explanation*; this asks whether an instruction — however concise — moves the agent at all.
-- When a weak instruction is the problem, the fix is usually a **stronger word rather than a different technique**. Sharpening is additive; prefer it to removal every time.
-- **Report as a NOTE only — never RISKY, never BROKEN, never auto-removed.** Criterion k governs: the burden of proof is on removal, and "the model should know this" is exactly the reasoning k refuses. Whether a line is a no-op depends on a model default you cannot observe from the file, so this criterion may suggest and must not act. Deletion is the user's call.
+- When the concern behind a weak instruction is real — a recorded failure, a convention — the fix is a **stronger or more exact word**, never removal; sharpening is additive.
+- **Rating follows (k)**: a no-op with no recorded failure behind it is **RISKY** and handled there. The residual is a line where the file gives you no way to tell whether the model does this by default *and* nothing records a failure either way — report that as a **NOTE** and leave it; it is the one case only the user can judge.
 
 **x. Information hierarchy — is each piece at the right depth?** — rule: catalogue *Where content lives* (the extract/don't-extract tests and pointer wording).
-- Audit adds three ratings. A must-have behind a vague pointer is a **variance bug**: **RISKY**, and fix the wording first (name what is behind it and the condition for reaching it); only pull material back inline if sharpened wording still cannot be trusted. And **length itself is a finding, but disclosure is the cure — not deletion**: a file can be too long even when every line is live, unique, and battle-tested. **Report length as a NOTE**; never resolve it by removing rules, and never at the cost of (k). **The frontmatter `description` is carved out of that NOTE**: a body's length is a trade-off only the author can weigh, while a description's budget and the way to meet it are both stated — the catalogue's *Compress every description by default* — so an over-budget description is **RISKY** and fixed in the pass, under that entry's before/after list, which is what stops the trim narrowing what reaches the skill. The situations it checked go in that fix's `### 已修` entry; an unreported list is an unrun one.
+- Audit adds three ratings. A must-have behind a vague pointer is a **variance bug**: **RISKY**, and fix the wording first (name what is behind it and the condition for reaching it); only pull material back inline if sharpened wording still cannot be trusted. And **length itself is a finding, but disclosure is the cure — not deletion**: a file can be too long even when every line is live, unique, and battle-tested. **Report length as a NOTE**; the cure is disclosure, not a removal this criterion picks — a rule only ever comes out under (k), by its named reason. **The frontmatter `description` is carved out of that NOTE**: a body's length is a trade-off only the author can weigh, while a description's budget and the way to meet it are both stated — the catalogue's *Compress every description by default* — so an over-budget description is **RISKY** and fixed in the pass, under that entry's before/after list, which is what stops the trim narrowing what reaches the skill. The situations it checked go in that fix's `### 已修` entry; an unreported list is an unrun one.
 
 
 ## Structure (applies to ALL file types)
