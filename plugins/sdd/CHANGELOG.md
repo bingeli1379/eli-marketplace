@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.20.0] - 2026-09-23
+
+### Added
+- Frontend engineers and reviewers now follow one indentation style for multi-line template comments when a repo's existing comments disagree. A repo whose comments already agree keeps its own style, and a reviewer no longer flags it.
+
+### Fixed
+- When `/quick` implements a small task itself, it now loads every skill the matching specialist would have loaded. Before, it could skip the shared agent guidelines, and inline work lost the project-convention and code-comment rules that dispatched work follows.
+
 ## [3.19.1] - 2026-09-14
 
 ### Changed
