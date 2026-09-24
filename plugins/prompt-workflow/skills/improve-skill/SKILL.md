@@ -1,6 +1,6 @@
 ---
 name: improve-skill
-description: Use when ANY asset shipped by a plugin you maintain in a LOCAL marketplace/plugin repo — a skill, an output style or persona, an agent, a hook, a template — misbehaved, missed a case, or felt clunky while you used it during real work in ANOTHER project, and you want to feed that back into its source instead of working around it again. Triggers on improve, refine, patch, or fix a skill you just used, feed a problem back into a skill, or /improve-skill.
+description: Use when ANY asset shipped by a plugin you maintain in a LOCAL marketplace/plugin repo — a skill, an output style or persona, an agent, a hook, a template — misbehaved, missed a case, or felt clunky while you used it during real work in ANOTHER project, and you want to feed that back into its source instead of working around it again. Triggers on improve, refine, patch, or fix a skill you just used, feed a problem back into a skill, look back over what this session used and find what to improve, 檢討剛剛用的 skill, 找看看有什麼要改進的, or /improve-skill with or without a target.
 ---
 
 # Improve Skills from Real Usage
@@ -24,7 +24,7 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 
 ---
 
-**Input**: Name the target(s) via `$ARGUMENTS` (a `plugin:skill` reference, a bare skill name, a `<plugin>:<style>` output-style id, a persona / voice name, or a plugin name) and/or describe the problem. There is no confirm gate: the run decides, edits, and reports what it decided (step 4, rank the changeset).
+**Input**: Name the target(s) via `$ARGUMENTS` (a `plugin:skill` reference, a bare skill name, a `<plugin>:<style>` output-style id, a persona / voice name, or a plugin name) and/or describe the problem. **Neither given selects the session sweep** — a bare `/improve-skill`, or an open ask to find what could be improved with no target or problem named: the targets are every maintained asset this session used (step 0a, which target), and every one of them is reviewed. There is no confirm gate: the run decides, edits, and reports what it decided (step 4, rank the changeset).
 
 **Steps**
 
@@ -34,10 +34,11 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 
    **0a. Which target → which plugin/marketplace.**
    - Take the target from `$ARGUMENTS`. If only a problem is described, infer the target from this session's usage.
+   - **In the session sweep, the targets are an inventory of every plugin-shipped asset this session used** — each skill invoked, each agent dispatched, the active output style, each hook whose output appeared — across the whole conversation, not only the last turn, and excluding this run of `/improve-skill` itself; a compacted stretch counts through what its summary records. Step 1, capture the usage problems, walks that inventory and step 7, hand off, reports against it.
    - Determine the owning plugin + marketplace. A skill lives at `plugins/<plugin>/skills/<name>/`. Find it in the installed layout — grep the install paths in `~/.claude/plugins/installed_plugins.json` (whose keys are `<plugin>@<marketplace>`), or the cache under `~/.claude/plugins/cache/<marketplace>/<plugin>/…`, for `skills/<name>/SKILL.md`. A `plugin:skill` reference already tells you the plugin. Agents (`agents/*.md`) and references (`references/*.md`) belong to the same plugin.
    - **The target need not be a skill.** Anything a plugin ships is fair game when that is what misbehaved: an **output style** (`output-styles/*.md` — named by its `<plugin>:<style>` id, and the thing to grep for when the user names a persona or voice rather than a skill), a hook (`hooks/`), an agent, a template, or `config/`. Resolve the owning plugin the same way — grep the installed cache for the file — then treat that file as the target everywhere below.
 
-   **0b. Resolve the marketplace's LOCAL source working copy** — the git repo you version-control and push, **never** the installed cache under `~/.claude/plugins/cache/…` or the Claude-managed clone under `~/.claude/plugins/marketplaces/…` (both auto-overwritten on update). Candidates, most direct first: an absolute repo path in `$ARGUMENTS`; a pointer in the user's `~/.claude/CLAUDE.md` — match by which repo owns the skill, since the pointer may describe the repo by the skills it hosts and the marketplace's *registered* name can differ from the directory name; a working copy whose `origin` matches the remote URL in `~/.claude/plugins/known_marketplaces.json`, searched under the user's known project roots — **name in one line which root(s) you will check; never blind-scan the disk**. **A candidate is the source when** `git -C <candidate> rev-parse --is-inside-work-tree` succeeds AND the target file exists under it (`<candidate>/plugins/<plugin>/skills/<name>/SKILL.md`, or the `output-styles/` / `agents/` / `hooks/` / `templates/` path for a non-skill target); the file check is authoritative — remote URLs drift, the on-disk file does not. **None found → STOP and ask (AskUserQuestion)**: supply the absolute path, or skip that target; suggest recording the path in `~/.claude/CLAUDE.md`.
+   **0b. Resolve the marketplace's LOCAL source working copy** — the git repo you version-control and push, **never** the installed cache under `~/.claude/plugins/cache/…` or the Claude-managed clone under `~/.claude/plugins/marketplaces/…` (both auto-overwritten on update). Candidates, most direct first: an absolute repo path in `$ARGUMENTS`; a pointer in the user's `~/.claude/CLAUDE.md` — match by which repo owns the skill, since the pointer may describe the repo by the skills it hosts and the marketplace's *registered* name can differ from the directory name; a working copy whose `origin` matches the remote URL in `~/.claude/plugins/known_marketplaces.json`, searched under the user's known project roots — **name in one line which root(s) you will check; never blind-scan the disk**. **A candidate is the source when** `git -C <candidate> rev-parse --is-inside-work-tree` succeeds AND the target file exists under it (`<candidate>/plugins/<plugin>/skills/<name>/SKILL.md`, or the `output-styles/` / `agents/` / `hooks/` / `templates/` path for a non-skill target); the file check is authoritative — remote URLs drift, the on-disk file does not. **None found → STOP and ask (AskUserQuestion)**: supply the absolute path, or skip that target; suggest recording the path in `~/.claude/CLAUDE.md`. **In the session sweep, an inventoried asset with no local source is dropped without asking** — a built-in or third-party asset is not the user's to patch — and step 7, hand off, lists it as skipped.
 
    Everything below targets the confirmed repo (call it `<repo>`) via absolute paths or `git -C <repo>`.
 
@@ -51,7 +52,9 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 
 1. **Capture the usage problem(s)**
 
-   Gather concrete evidence of what went wrong in use — from THIS session (the output you had to correct, a case it didn't handle, a workaround, a retry) plus anything the user describes from an earlier one. Per problem: which target (per 0a), the exact symptom, and the correct behavior. No concrete evidence → nothing to refine; say so and stop.
+   Gather concrete evidence of what went wrong in use — from THIS session (the output you had to correct, a case it didn't handle, a workaround, a retry) plus anything the user describes from an earlier one. Per problem: which target (per 0a), the exact symptom, and the correct behavior.
+
+   **The bound is every use of every target, not the first finding.** Walk each target through each time it fired this session: what it instructed, what the run actually did, and every point where the user corrected the output, a step was retried, redone by hand or worked around, or an instruction was not followed. Record a verdict per target — its problems, or clean with what that rests on; step 7, hand off, reports it. No concrete evidence for any target → nothing to refine; report the verdicts and the skipped assets, and stop.
 
 2. **Classify each problem**
 
@@ -99,7 +102,7 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 
 7. **Hand off (do NOT commit, push, or reinstall)**
 
-   Report **the ranked changeset from step 4** (each item with its usage evidence), **the calls you made** (what you picked, what you rejected), and the `<repo>` path(s). **Group the handoff by repo — one block per touched repo, its own files and its own three steps**, since each repo has its own git history and plugin install:
+   Report **the per-target verdict from step 1, capture the usage problems** (every target reviewed, problems or clean; in the session sweep, also each asset dropped at step 0b, resolve the local source), **the ranked changeset from step 4** (each item with its usage evidence), **the calls you made** (what you picked, what you rejected), and the `<repo>` path(s). **Group the handoff by repo — one block per touched repo, its own files and its own three steps**, since each repo has its own git history and plugin install:
    - commit from that repo (or `git -C <repo> …`), plus a version bump and changelog entry if the target's behavior changed;
    - `git push` in that repo;
    - reinstall / update that repo's plugin so the fix goes live.
@@ -110,7 +113,7 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 - **Evidence over speculation** — every edit must trace to something that actually happened when the target was used this session (or a problem the user concretely describes). Generic "this could read better" improvements are `/review-skill`'s job, not this.
 - **One run can span several repos** — resolve, edit, validate, and hand off per repo (step 0b, "`<repo>` is per target, not per run").
 - **Working copy, never the cache or the marketplace clone** — edits under `~/.claude/plugins/cache/…` or `~/.claude/plugins/marketplaces/…` are auto-overwritten on update and never version-controlled. Always target the resolved git working copy `<repo>`.
-- **Confirm the source by the file, not the URL** — a local repo is the right source only when the target's file actually exists in it; remote URLs can drift. When no local source is found, ask — do not guess or fall back to a cache path.
+- **Confirm the source by the file, not the URL** — a local repo is the right source only when the target's file actually exists in it; remote URLs can drift. When no local source is found, ask — do not guess or fall back to a cache path; the session sweep's drop-and-list in step 0b, resolve the local source, is the one exception.
 - **Never commit, push, or reinstall** — this skill stops at editing the working copy; the user does the rest (they asked for it that way).
 - **Respect ownership** — do not rewrite upstream-synced skill bodies; do not add a **hard** cross-plugin / cross-marketplace dependency (a lazy named load with an absence plan is fine); mirror the owning repo's own conventions.
 - **The owning repo's maintenance skills outrank your instinct** (step `0c`, load the maintenance conventions). A target file carrying no authoring meta is a deliberate choice: do not "restore" a pointer, a sync note, or a rule reminder into it.

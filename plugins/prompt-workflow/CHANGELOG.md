@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.14] - 2026-09-24
+
+### Added
+- Run `/improve-skill` with nothing after it, or just ask it to look for what could be improved, and it now reviews every skill, agent, output style and hook from your own plugins that the session used, instead of needing you to name one. Built-in and third-party ones are skipped and listed rather than stopping to ask where their source lives.
+
+### Changed
+- `/improve-skill` no longer stops at the first problem it finds. It walks through every time each target was used, and the report ends with a verdict for each one, including the ones that came out clean.
+
 ## [0.2.13] - 2026-09-14
 
 ### Changed
