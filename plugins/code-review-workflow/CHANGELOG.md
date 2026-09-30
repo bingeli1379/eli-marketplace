@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.5] - 2026-09-30
+
+### Added
+- A guarantee a change states about itself now gets read in full. When a comment, a commit or PR description, or a test name claims a bound, an isolation, an ordering, a count, or any other invariant, the reviewer treats it as the claim to test and follows the code that has to enforce it, down to how the framework or runtime does it. Before, such a claim read like an explanation and was taken on trust, so a timeout that never reaches the work, or a retry that restarts inside another, could get through.
+
 ## [0.1.4] - 2026-09-14
 
 ### Changed
