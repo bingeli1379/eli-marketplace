@@ -92,7 +92,7 @@ count, feature flag, cache TTL, permission constant — read what consumes it); 
 personal data, or anything destructive; shared state or lifetime (concurrency, async ordering,
 transaction scope, handle disposal, caching).
 
-Two that do not look like it:
+Three that do not look like it:
 
 - **A declared dependency version moved** — a pin in a manifest, an image tag. Read what this diff
   now uses from that package: a bump plus new symbols out of it is one change, not two, and the new
@@ -100,6 +100,12 @@ Two that do not look like it:
   manifest is the half that states intent, and escalating the resolved tree buys nothing.
 - **A hunk that looks like the surrounding code but is not** — same shape as its neighbours with a
   different operator, boundary, or argument order.
+- **A guarantee the change states about itself** — a comment, a commit or PR description, or a test
+  name claiming an invariant holds: a bound, an isolation, an ordering, a count, or any other. It
+  reads as explanation, and it is the one property the rest of the reading then takes as settled.
+  Treat it as the claim under test: trace the mechanism that has to enforce it, down to how the
+  framework, library, or runtime implements that primitive — e.g. a cooperative timeout bounds nothing unless its token reaches the work, and
+  a retry nested inside another restarts its budget on every outer attempt.
 
 Nothing here is a finding. Escalation buys the reading that decides whether there is one.
 
