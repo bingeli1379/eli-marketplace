@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.15] - 2026-10-04
+
+### Added
+- Writing a plugin hook or a mod now loads the authoring rules too, and they cover which to build: a permission rule, a settings hook, or a mod. They also flag the mod pitfalls that cost the most: a guard that a mod can quietly override, per-turn text that breaks the prompt cache, a mod duplicating a hook another harness still needs, and a drawing with no fallback where nothing draws.
+- `/review-skill` now reads a plugin's hook scripts and mod code against those rules, and `/improve-skill` validates a changed mod with `claude plugin validate` and `claude plugin test`.
+
 ## [0.2.14] - 2026-09-24
 
 ### Added
