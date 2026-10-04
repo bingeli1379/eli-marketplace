@@ -96,7 +96,7 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 
    **Route by what the target actually is** — the two audits above audit *prompt prose*:
    - **Prose targets** — anything a model is steered by, whatever directory it sits in: `SKILL.md`, `agents/*.md`, `output-styles/*.md`, `references/*.md`, `templates/*.md`, a bundled `config/*.md`, a plugin-level `CLAUDE.md` → `/review-skill` as explicit paths.
-   - **Non-prose targets** (`hooks/*` scripts, machine-readable `config/*.json` / `*.yaml`, generated data) → never the prompt audits; validate by their own nature — the repo's structure/lint script, a syntax check (`bash -n` for a shell hook, a JSON/YAML parse for data), and the conventions from `0c`. State in the step-7 report which validation ran and which was skipped, with the reason.
+   - **Non-prose targets** (`hooks/*` scripts, machine-readable `config/*.json` / `*.yaml`, generated data) → never the prompt audits; validate by their own nature — the repo's structure/lint script, a syntax check (`bash -n` for a shell hook, a JSON/YAML parse for data), `claude plugin validate <plugin-root>` plus `claude plugin test <plugin-root>` for a mod's hooks module (the file `hooks.json` names under `modules`), and the conventions from `0c`. State in the step-7 report which validation ran and which was skipped, with the reason.
 
    Fix anything the applicable checks flag until they pass.
 
