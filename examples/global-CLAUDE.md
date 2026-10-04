@@ -1,5 +1,5 @@
 # Communication
-If an output style / persona is active, it wins on tone and wording; every other rule in this file still holds.
+An active output style / persona overrides the tone wording here; everything else below still holds.
 - Respond in Traditional Chinese, casual and direct tone
 - Treat me as a senior full-stack engineer; skip basics
 - Be concise by default; explain the "why" only when I ask
@@ -19,7 +19,7 @@ If an output style / persona is active, it wins on tone and wording; every other
 
 # Dev Workflow
 - Before coding or non-trivial planning, use relevant available skills/tools if they match the task
-- Asked to REVIEW a code change — any phrasing of a review request, any path (`/code-review`, 「review 這包」, 「幫我 code review」, 「這段有問題嗎」) → if you keep a review-criteria skill of your own, load it BY NAME first. Only when a review was actually asked for: reading a diff to understand or explain it (「看一下我最近的 commit」, 「這包在做什麼」) is not a review and loads nothing. A lazily-loaded criteria skill loses the trigger race to the built-in `/code-review` and will not fire on its own
+- Asked to REVIEW a code change — any phrasing of a review request, any path (`/code-review`, 「review 這包」, 「幫我 code review」, 「這段有問題嗎」) → if you keep a review-criteria skill (this repo ships one: `code-review-workflow`'s `review-criteria`), load it BY NAME first. Only when a review was actually asked for: reading a diff to understand or explain it (「看一下我最近的 commit」, 「這包在做什麼」) is not a review and loads nothing. A lazily-loaded criteria skill loses the trigger race to the built-in `/code-review` and will not fire on its own. Not for prompt/skill/agent files — those go to a prompt-file audit (`prompt-workflow`'s `/review-skill`, if installed)
 - Minimum code, surgical edits; no speculative abstractions, no drive-by refactors/reformatting. Don't extract single-use code — a one-line helper with no second caller reads worse than the line itself; no new dependency for what a few lines or an already-installed package can do
 - Define success criteria upfront for non-trivial work, then iterate until verified; for a design or plan write them out as acceptance criteria, not for every code change
 - Cheap to verify (grep, a file, a tool call) → verify, don't speculate or defer; reserve "unverified" for the truly unreachable
@@ -30,11 +30,11 @@ If an output style / persona is active, it wins on tone and wording; every other
 - Report "done" only with evidence (commands/output/verification); "should work" / "in theory OK" is not done; state skipped or partial work explicitly
 
 # Cross-project lookup
-- Default to the current project; cross into `~/Project` / `~/SideProject` only on a concrete cross-project signal (import to an external repo, cross-service API contract, shared lib, or a named repo/service) — never on a hunch
+- Default to the current project; cross into `~/Project` / `~/SideProject` only on a concrete cross-project signal (import to an external repo, cross-service API contract, shared lib, a named repo/service, or a stored procedure / table / column the current repo only references by name) — never on a hunch
 - Before crossing, name in one line which project(s) you'll search — no silent scan of either tree
 
 # Planning
-- When asked for a plan, keep it extremely concise — fragments over full sentences, concision beats grammar
+- When asked for a plan, keep it extremely concise — fragments over full sentences, concision beats grammar; the voice still stays whatever is active
 - End plans with unresolved questions, if any
 
 <!--
@@ -63,6 +63,9 @@ If an output style / persona is active, it wins on tone and wording; every other
   - A config value, or a `UserId <-> Login <-> Email` mapping → `acme-tools` MCP (via ToolSearch).
     Never guess the value or hand-search the DB. Same for decoding payloads and resolving ids —
     `acme-tools` has a tool for it, don't decode by hand.
+  - Stored procedure body / table DDL / column semantics → resolve the owning DB repo from
+    `acme-knowledge`'s DB→repo map, then grep it at `~/Project/<db-repo>`. A routine in-flow
+    step, not a hunch: go without waiting for approval — still name the repo in one line first.
   - Any `/sdd:*` command → load `acme-knowledge` first; the command itself is the trigger, so
     don't wait to recognize the target as an Acme project (if it isn't, skip and proceed).
     Front-load its facts + `acme-tools` values into the spec — sub-agents don't consult tools
@@ -81,18 +84,3 @@ If an output style / persona is active, it wins on tone and wording; every other
     there (the change won't reach the source). Reading the cache for any other purpose — what's
     installed, testing installed behavior, using a skill from another project — is fine.
 -->
-
-# End-of-turn skills & decisions
-- Append after the main reply, exactly as shown:
-  ```
-  ---
-  > 🛠️ **技能**
-  > - `skill-name` — one-line why
-  >
-  > 🧭 **決策**
-  > - one line each
-  ```
-- 🛠️ 技能: every skill invoked this turn (via the Skill tool) — name + terse one-line why
-- 🧭 決策: autonomous calls made this turn (chose without asking, skipped, changed direction, worked around)
-- Keep every line short and to the point — compress by cutting a clause, not by dropping the point. Skip trivial mechanical choices (paths, names) and things you were told to do
-- Empty section → omit it; both empty → write nothing extra
