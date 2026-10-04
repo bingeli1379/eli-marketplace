@@ -1,6 +1,6 @@
 # Authoring rules — the shared catalogue
 
-**One home for every rule about what a good skill or agent file looks like.** Two skills read this file: `skill-authoring` follows it while writing, `review-skill` audits against it. A rule added here is enforced on both sides without touching either skill.
+**One home for every rule about what a good skill or agent file looks like, and which mechanism a plugin's hooks and mods should use.** Two skills read this file: `skill-authoring` follows it while writing, `review-skill` audits against it. A rule added here is enforced on both sides without touching either skill.
 
 Each entry carries three things:
 
@@ -76,6 +76,18 @@ Only applies when it writes files, runs git, dispatches work, or produces artifa
 
 - **Say what a second run does.** Re-running after a crash, a retry, or the user simply running it twice must not double-apply work, skip work, or mistake its own earlier output for fresh input. "It depends" means nobody checked. → check: the file answers the question explicitly.
 - **Guard anything destructive.** For delete, overwrite, purge, reset: state the guard — a dry run, a confirmation, a scoped path — *before* the action, not after it. And never let "half done" or "never started" be classified as "done" and then discarded; that is how work disappears silently. → check: a guard precedes each destructive action.
+
+## If the plugin ships a hook or a mod
+
+Only applies when a plugin ships, or is about to ship, a `hooks/hooks.json` naming settings hooks (commands, HTTP requests, prompts run on an event) or a mod (a `modules` entry: TypeScript or JavaScript functions Claude Code calls in its own process). The harness facts below were verified on Claude Code 2.1.289 against [Mods overview](https://code.claude.com/docs/en/plugins/mods/overview) and [Configure permissions](https://code.claude.com/docs/en/permissions) — that is where to re-check them, since they move with the harness.
+
+- **Build the least powerful mechanism that does the job.** A fixed allow or deny is a permission rule. Running a script at an event — block, allow, log, rewrite a tool call's arguments or result, add context — is a settings hook. A mod is for what only in-process code can do: draw in the interface, rewrite a prompt or an event, answer an event itself, keep state shared across hooks, run a command with no Claude turn. A mod where a hook would do costs a TypeScript rewrite, its own tests, and an API whose type declarations are marked early access, and it runs unsandboxed with the user's permissions. → check: no mod whose hooks only deny or allow by a fixed pattern, or only run an existing script at an event.
+- **A guard that must hold lives in a permission rule or a settings hook, never only in a mod.** A mod answering `tool.check` decides after the permission rules and `PreToolUse` hooks and can replace their answer: it can approve a call an ask rule would prompt for, one a `PreToolUse` hook outside managed settings blocked, one the auto-mode classifier would have checked, and — on a machine with no managed settings and no Team or Enterprise sign-in — one a deny rule refuses. → check: no safety guard exists only as a mod; a mod that approves tool calls names in its README which of those it can override.
+- **A mod runs only in Claude Code.** A plugin that also ships for another harness (a `.codex-plugin/` beside `.claude-plugin/`) keeps what that harness needs in its settings-hook scripts, and a mod re-implementing the same behaviour is a second copy that drifts (*One canonical home per rule*). This is the duplication rule, not a portability one: a mod for behaviour the other harness does not need is Claude-first authoring and stays. → check: in a plugin shipping for another harness, no behaviour exists both in a mod and in a hook script.
+- **Text that changes every turn never enters the system prompt.** Prompt caching matches on the prefix, so a `prompt.compose` section that varies per turn — a clock, a counter, a lint finding — changes the system prompt and every later request misses the cache for the whole conversation. Per-turn text goes in an appended row: `$.session.append` from a mod, `additionalContext` from a settings hook. → check: every section a mod adds in `prompt.compose` reads the same on every turn of a session.
+- **A mod that draws carries a text fallback.** Its hooks run wherever the plugin loads, but only the terminal and the Desktop app's Code tab show what it draws; the VS Code chat panel, `claude -p`, the Agent SDK and cloud sessions show nothing. → check: a mod that draws reads the surface and has a text path where nothing draws.
+- **A value a drawing reads, or that must survive a reload, lives in `$.state` or `$.store`.** Reading `$.state` while drawing subscribes the drawing, so a later set redraws it; a reload runs `register` again and resets the module's own variables; `$.state` holds for the session, `$.store` across sessions. → check: no value a drawing reads, or that must outlast a reload, is kept only in a module variable.
+- **A mod ships at least one `*.test.ts`.** `claude plugin test` runs it against the engine without a session; with no test, a change to the mod has nothing to validate it but a live session. → check: the mod's plugin has a `*.test.ts`.
 
 ## Depending on anything outside the file
 
