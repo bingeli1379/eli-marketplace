@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.16] - 2026-10-04
+
+### Added
+- Writing or porting a plugin's hooks to a mod now brings in the rules a real port tripped over: data several sessions share belongs in the plugin store, a user-installed mod cannot rely on `classic.*` events where the built-in guard loads, parallel tool calls all finish together, and a mod's tests prove only what they can capture, with the rest checked in a headless run.
+
+### Changed
+- `/improve-skill` also type-checks a changed mod with `tsc`, which catches a wrong result shape that `claude plugin validate` and `claude plugin test` both pass.
+
 ## [0.2.15] - 2026-10-04
 
 ### Added
