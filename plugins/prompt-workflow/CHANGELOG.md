@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.17] - 2026-10-06
+
+### Fixed
+- `/review-skill --report-only` now lists the findings it left unfixed under 待修 and states its judgement calls as recommendations, instead of a report shaped as if everything had been fixed. `/improve-skill` takes that list as its work items.
+
 ## [0.2.16] - 2026-10-04
 
 ### Added
