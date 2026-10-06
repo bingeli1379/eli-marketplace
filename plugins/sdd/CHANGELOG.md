@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.20.1] - 2026-10-06
+
+### Fixed
+- When an agent needs something installed or changed on your machine to continue (a test browser, an SDK, a desktop app), the workflow now asks you first, and without your yes it reports the check as not run. Before, it could install it on its own, and test browsers opened windows on your desktop mid-run.
+- Reviewers now write their full report to the change's `reviews/` folder even when dispatched read-only. Before, a reviewer could read "read-only" as forbidding the file, reply inline instead, and have the reply cut off.
+- `/complete` removes a finished change with `git rm` when a repo holds it, so the deletion is staged in one step and every file stays recoverable from history. It no longer stalls when a permission policy refuses `rm -rf`.
+
 ## [3.20.0] - 2026-09-23
 
 ### Added
