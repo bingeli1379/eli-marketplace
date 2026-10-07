@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.18] - 2026-10-07
+
+### Fixed
+- `/improve-skill` no longer stops at its own review's report: it fixes the items the review left under 待修 and ends on its usual handoff, instead of showing the review as its final answer.
+
 ## [0.2.17] - 2026-10-06
 
 ### Fixed
