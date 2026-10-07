@@ -84,7 +84,7 @@ Audits prompt files (`.md`) — a skill, an agent, an output style, or the refer
 
 ### `/improve-skill` — Improve Skills from Real Usage
 
-Usage-driven and cross-repo. When anything a plugin ships — a skill, an output style or persona, an agent, a hook — misbehaves, misses a case, or feels clunky while you use it as a tool in *another* project, `/improve-skill` reads what went wrong in the session and patches that target's source in the local marketplace repo that owns it — the git working copy, **not** the installed cache — then validates the edits via `/review-skill` and the structure check.
+Usage-driven and cross-repo. When anything a plugin ships — a skill, an output style or persona, an agent, a hook — misbehaves, misses a case, or feels clunky while you use it as a tool in *another* project, `/improve-skill` reads what went wrong in the session and patches that target's source in the local marketplace repo that owns it — the git working copy, **not** the installed cache — then validates the edits via `/review-skill` and the structure check, and fixes whatever they flag before handing off.
 
 - Resolves each target's owning marketplace repo path from your global `~/.claude/CLAUDE.md` (asks once and offers to record it if missing; a bare sweep skips assets with no local source instead of asking); one run may span several repos, and each is edited, validated, and handed off separately
 - Run it bare (or just ask it to find what to improve) and it sweeps every maintained skill, agent, output style, and hook the session used, reporting a verdict for each — not only the first problem it spots
