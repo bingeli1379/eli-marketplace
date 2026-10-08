@@ -62,7 +62,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
 5. **Codebase scan — identify every affected file**
 
-   **Read `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` → *Enumerating what is in the repo* now, and sweep by it.** It holds the rules that decide whether this inventory is actually complete — hand on the grep instead of a count, take every hit one hop outward before calling it the last, and sweep declaratively wired code (attributes, filters, middleware, model binding) separately because a call-chain walk cannot reach it. They apply to every stack; the stack-specific procedures further down this step apply only when their own trigger fires.
+   **Read `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` → *Enumerating what is in the repo* now, and sweep by it.** It holds the rules that decide whether this inventory is actually complete — hand on the grep instead of a count, take every hit one hop outward before calling it the last, sweep declaratively wired code (attributes, filters, middleware, model binding) separately because a call-chain walk cannot reach it, and check git history for files that change together without referencing each other. They apply to every stack; the stack-specific procedures further down this step apply only when their own trigger fires.
 
    Scan the actual project codebase before clarifying requirements:
    - User specified scope → scan every file within it. No scope → scope it yourself from what the change reaches (the files it names, plus what they pull in through imports, references, and shared mechanisms) and say in the proposal what was scanned and what was left out, per `agent-guidelines` → *Scanning Coverage*.
