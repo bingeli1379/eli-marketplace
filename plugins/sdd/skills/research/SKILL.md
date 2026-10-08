@@ -56,7 +56,7 @@ Read-only understanding pass over an area of the codebase, producing a **researc
 
 3. **Scan the area**
 
-   `Glob` to enumerate, then open every file that could matter — do not conclude from filenames — and sweep by `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` → *Enumerating what is in the repo* (one hop outward from every hit; declaratively wired code swept separately). Reads may fan out to sub-agents that return compressed findings; nothing writes.
+   `Glob` to enumerate, then open every file that could matter — do not conclude from filenames — and sweep by `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` → *Enumerating what is in the repo* (one hop outward from every hit; declaratively wired code swept separately; co-changed files checked in git history). Reads may fan out to sub-agents that return compressed findings; nothing writes.
 
    Collect, with a `file:line` anchor for every claim:
    - **Entry points** — how execution reaches this area (route, command, event, signal, scheduled job, UI action)
