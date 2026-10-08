@@ -80,6 +80,10 @@ Local precedent (above) is step one, but it does not settle a framework API you 
 
 Coverage is **yours to scope and yours to show**. Decide what the task requires reading — the files named in scope, plus whatever the change reaches through imports, references, and shared mechanisms — and open those files rather than judging them by filename. Then make the coverage visible: your report states what was scanned (paths or globs) and what was deliberately left out, so a gap is a line the reader can see rather than a silence. An exhaustiveness claim ("the only caller", "N files") carries the command that produced it.
 
+**A claim of absence — "no callers", "unused", "dead" — needs more than an empty search.** Code addressed by a string is reached by no literal search and no call-chain walk: reflection, a component or route resolved by name at runtime, a stored procedure called by its name, a key read from configuration. Where the stack can address the symbol that way, the claim also carries the search for its name as a string; without it the claim is unconfirmed, and nothing is removed on its strength.
+
+**Reads fanned out to a sub-agent come back under the same rule.** This covers a sub-agent you spawn to explore code on your behalf; a dispatched reviewer or a design-it-twice designer returns the report its own contract sets, and nothing here is added to its prompt. Write the sub-agent's prompt to ask for what it scanned and left out, the command behind any exhaustiveness or absence claim, `file:line` for each finding, and, for anything it could not settle, the exact search that would settle it instead of a guess. Findings missing these are a partial scan, and the report built on them says so.
+
 ## Language
 
 - **Output**: Traditional Chinese
