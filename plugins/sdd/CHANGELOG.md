@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.21.0] - 2026-10-08
+
+### Added
+- Planning and research now check git history for files that usually change together but never reference each other, such as a backend DTO and its frontend type, or a stored procedure and its migration. Files the code scan alone misses now get looked at before a plan or findings document is written.
+- An agent can no longer call code "unused" or "dead" from an empty search alone. When the code could be reached by its name as a string (reflection, a component or route looked up by name, a stored procedure called by name, a config key), the claim needs that string search too, otherwise it stays unconfirmed and nothing is removed because of it.
+- Agents that send a helper out to read code now get back what it scanned and skipped, where each finding is, and the exact search for anything it could not settle, instead of a summary with the gaps hidden.
+
 ## [3.20.1] - 2026-10-06
 
 ### Fixed
