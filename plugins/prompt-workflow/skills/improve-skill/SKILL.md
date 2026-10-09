@@ -7,20 +7,7 @@ description: Use when ANY asset shipped by a plugin you maintain in a LOCAL mark
 
 Feed real-usage problems back into your own skills: you used a skill you maintain in **another project**, it did something wrong, you handled it and finished — this skill turns that into a fix to the skill's **source** in whichever local repo owns it.
 
-**How it differs from `/review-skill`:** that one statically audits skill *files*; this one is **usage-driven and cross-repo** — the signal is what happened in use, and the source lives in a *different* repo than the cwd. It composes that audit to validate its own edits.
-
 **Scope — this skill does exactly ONE thing: patch the target's source in the local working copy of whichever repo owns it.** It does NOT commit, push, or reinstall the plugin. Those are your follow-up steps.
-
-## The loop this fits into
-
-1. In another project, you use a skill and hit a problem.
-2. You handle it manually and finish your task — do NOT block on the skill defect.
-3. **← You run `/improve-skill <skill>` here.** It patches the skill's source in the owning repo's local working copy.
-4. You commit yourself.
-5. You `git push` yourself.
-6. You reinstall / update the plugin yourself so the fix takes effect.
-
-Steps 4–6 are deliberately yours; this skill stops after step 3.
 
 ---
 
@@ -110,12 +97,6 @@ Steps 4–6 are deliberately yours; this skill stops after step 3.
 
 ## Guardrails
 
-- **Evidence over speculation** — every edit must trace to something that actually happened when the target was used this session (or a problem the user concretely describes). Generic "this could read better" improvements are `/review-skill`'s job, not this.
-- **One run can span several repos** — resolve, edit, validate, and hand off per repo (step 0b, "`<repo>` is per target, not per run").
-- **Working copy, never the cache or the marketplace clone** — edits under `~/.claude/plugins/cache/…` or `~/.claude/plugins/marketplaces/…` are auto-overwritten on update and never version-controlled. Always target the resolved git working copy `<repo>`.
-- **Confirm the source by the file, not the URL** — a local repo is the right source only when the target's file actually exists in it; remote URLs can drift. When no local source is found, ask — do not guess or fall back to a cache path; the session sweep's drop-and-list in step 0b, resolve the local source, is the one exception.
-- **Never commit, push, or reinstall** — this skill stops at editing the working copy; the user does the rest (they asked for it that way).
-- **Respect ownership** — do not rewrite upstream-synced skill bodies; do not add a **hard** cross-plugin / cross-marketplace dependency (a lazy named load with an absence plan is fine); mirror the owning repo's own conventions.
-- **The owning repo's maintenance skills outrank your instinct** (step `0c`, load the maintenance conventions). A target file carrying no authoring meta is a deliberate choice: do not "restore" a pointer, a sync note, or a rule reminder into it.
-- **Preferences are not skill fixes** — durable preferences go to memory / `CLAUDE.md`. **But how the user wants a skill of theirs to behave IS a skill fix** ("I want the review to just fix things" changes that skill's contract for every future run) and belongs in the skill body.
+- **Generic "this could read better" improvements are `/review-skill`'s job, not this** — every edit traces to step 1's usage evidence.
+- **A target file carrying no authoring meta is a deliberate choice** — do not "restore" a pointer, a sync note, or a rule reminder into it; the owning repo keeps those in its maintenance conventions (step 0c).
 - **Report language: Traditional Chinese** (technical terms, file names, and labels stay English).
