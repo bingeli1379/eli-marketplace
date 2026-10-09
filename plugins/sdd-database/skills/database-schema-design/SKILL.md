@@ -36,72 +36,24 @@ Schema design and review rules for PostgreSQL and MySQL. Design to 3NF; denormal
 | Circular FK dependencies | Cannot be populated in order; breaks CASCADE |
 | Denormalization with no measurement behind it | Update anomalies bought for a speed-up nobody observed |
 
-**MySQL differences that change the DDL:** no `TIMESTAMPTZ` (use `TIMESTAMP`, stored as UTC), no `gen_random_uuid()` (`UUID()` / `CHAR(36)` or `BINARY(16)`), `JSON` instead of `JSONB`. `${CLAUDE_SKILL_DIR}/references/data-types-guide.md` holds the full mapping.
+**MySQL differences that change the DDL:** no `TIMESTAMPTZ` (use `TIMESTAMP`, stored as UTC), no `gen_random_uuid()` (`UUID()` / `CHAR(36)` or `BINARY(16)`), `JSON` instead of `JSONB`.
 
 ## Ship the Schema as Reviewable Artifacts
 
 A schema handed over as prose gets misread. Alongside the DDL, produce whichever of these the change warrants — they are what a reviewer actually checks against.
 
-### ERD (Mermaid — renders in most review tools)
+### ERD
 
-Emit the diagram from the schema you just designed, not from memory:
-
-```
-erDiagram
-    Organization ||--o{ Project : owns
-    Project      ||--o{ Task    : contains
-    User         ||--o{ Task    : "created by"
-
-    Task {
-        string    id         PK
-        string    project_id FK
-        string    status
-        timestamp deleted_at
-        int       version
-    }
-```
-
-Cardinality notation: `||--o{` one-to-many, `||--||` one-to-one, `}o--o{` many-to-many (name the junction table explicitly — an implicit M:N hides the join row's own columns).
-
-When the schema already exists in an ORM, generate rather than hand-write it (e.g. `prisma-erd-generator`, `@dbml/cli` → `dbml-to-mermaid`, `SchemaSpy` for a live DB). Hand-drawn diagrams drift from the DDL; generated ones cannot.
+A Mermaid `erDiagram` emitted from the schema just designed, never from memory; a many-to-many names its junction table, since an implicit M:N hides the join row's own columns. When the schema already exists in an ORM, generate the diagram rather than hand-write it — a hand-drawn one drifts from the DDL.
 
 ### Row-Level Security policies (PostgreSQL)
 
 When the design is multi-tenant or role-scoped, the tenant boundary belongs in the database, not only in application code — an ORM query that forgets a `WHERE org_id = …` leaks across tenants, RLS does not.
-
-```sql
-ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
-
--- tenant isolation
-CREATE POLICY tasks_org_isolation ON tasks FOR ALL TO app_user
-  USING (project_id IN (
-    SELECT p.id FROM projects p
-    JOIN organization_members om ON om.organization_id = p.organization_id
-    WHERE om.user_id = current_setting('app.current_user_id')::text
-  ));
-
--- soft delete must not be visible
-CREATE POLICY tasks_hide_deleted ON tasks FOR SELECT TO app_user
-  USING (deleted_at IS NULL);
-```
 
 Rules: enable RLS on **every** tenant-scoped table (one table missed is the leak); the policy predicate must be index-backed or every query pays a scan; the app must connect as a non-owner role — a table owner and `BYPASSRLS` roles ignore policies entirely, which is how RLS silently does nothing in staging.
 
 ### Seed data
 
 Ship a seed script that exercises the constraints, not just the happy path: one row per enum value, a soft-deleted row, a row at each FK boundary, and a case that *should* violate a CHECK (kept commented, as the documented negative test). Seeds must be idempotent — `ON CONFLICT DO NOTHING` / `MERGE` — so re-running them on a shared dev DB is safe.
-
-## When to load references
-
-Each at `${CLAUDE_SKILL_DIR}/references/`:
-
-| Read | When |
-|---|---|
-| `schema-design-patterns.md` | Audit columns, soft delete, versioning, multi-tenancy, UUID vs BIGSERIAL, naming — worked DDL |
-| `relationship-patterns.md` | 1:1, 1:M, M:M junction tables, hierarchies, cascade rules |
-| `normalization-guide.md` | Deciding which normal form a schema is in, normalizing an existing one, before/after examples |
-| `data-types-guide.md` | Column type selection, PostgreSQL ↔ MySQL mapping, JSON columns |
-| `constraints-catalog.md` | CHECK, UNIQUE, FK cascade options |
-| `error-catalog.md` | Schema review: the full catalogue of the failure shapes above with worked fixes |
 
 Official references: [PostgreSQL data types](https://www.postgresql.org/docs/current/datatype.html), [PostgreSQL constraints](https://www.postgresql.org/docs/current/ddl-constraints.html), [MySQL data types](https://dev.mysql.com/doc/refman/8.0/en/data-types.html).

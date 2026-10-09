@@ -138,14 +138,5 @@ After responding to the user, **resume batch execution automatically** — do NO
 
 ## Guardrails
 
-- **You ARE the orchestrator** for the entire batch — do NOT spawn a separate orchestrator agent
-- **All worker agents run in background** (`run_in_background: true`)
-- **Only ask execution order when ambiguous** (independent changes at same level) — if order is deterministic, execute directly
-- **Do NOT ask implementation questions** — make reasonable decisions and flag ambiguities in the report
-- **Do NOT stop the batch if one change fails** — skip it and continue to next; the one exception is Step 3f's unsquashed per-task commits, which would poison the next change's reconcile
-- **After responding to user messages, resume automatically** — never wait for follow-up input unless the user explicitly says "stop"
 - **A skipped phase is printed with its reason, never silent** — see the Step 3c checkpoint
-- Each change runs sequentially (single-writer) on the current branch — do NOT create or switch branches
 - If a change has no pending tasks (all `- [x]`), skip it and note in the report
-- Track and report duration for each change and total batch time
-- **Retrospective is dev-mode only**: the `**事後檢討：**` block in Step 4 is suppressed unless `DEV_MODE = true` (parsed from a `dev-mode` token in the arguments). The flag is also forwarded to each per-change `/apply` so per-change retrospectives surface consistently. Default behavior is silent — end users see only progress, results, and pause reasons.

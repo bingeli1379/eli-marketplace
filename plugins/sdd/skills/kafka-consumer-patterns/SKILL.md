@@ -27,19 +27,9 @@ Each names the mechanism that makes it fail, so the finding can say why.
 - **Assuming ordering across partitions.** Ordering is per-partition only; key by the entity whose order matters, and do not parallelize within a partition in a way that reorders. Effective parallelism is capped by partition count.
 - **Claiming exactly-once for a pipeline with a non-Kafka sink.** Kafka transactions (`transactional.id`, `enable.idempotence`, `sendOffsetsToTransaction`, downstream `isolation.level=read_committed`) cover Kafka-to-Kafka consume-transform-produce only; a DB write or HTTP call inside the consumer is still at-least-once and falls back to idempotency.
 - **`auto.offset.reset` left to default without a decision.** It decides where a new group or an expired offset starts: `latest` silently skips backlog, `earliest` reprocesses history, `none` forces the decision by erroring.
-
-## Review checklist
-
-- [ ] Delivery semantic is explicit and matches the commit timing
-- [ ] Auto-commit disabled (or justified); offsets committed after processing
-- [ ] `commitSync` on shutdown and in the revocation callback
-- [ ] Processing is idempotent / dedups on a stable key; dedup + side effect are atomic
-- [ ] Poison messages are bounded-retried then DLQ'd, never silently skipped
-- [ ] Per-batch processing fits within `max.poll.interval.ms` (or uses pause/resume)
-- [ ] Ordering assumptions hold given keying and partition count
-- [ ] Assignment strategy matches the rest of the group (all members must agree; cooperative-sticky avoids stop-the-world revocation)
-- [ ] `auto.offset.reset` chosen deliberately; consumer lag is monitored
-- [ ] Schema-registry compatibility mode respected; an unexpected schema is handled as a poison message
+- **Consumer lag left unmonitored.** A stalled or slow consumer looks healthy from inside; lag is the only signal that it is falling behind.
+- **An assignment strategy that differs from the rest of the group.** All members must agree on it; cooperative-sticky avoids stop-the-world revocation.
+- **An unexpected schema crashing the consumer.** Respect the schema-registry compatibility mode, and handle a schema that does not match it as a poison message.
 
 ---
 

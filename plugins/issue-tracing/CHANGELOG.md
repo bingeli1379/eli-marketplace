@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.12.5] - 2026-10-09
+
+### Fixed
+- Finding which metric label carries a service now uses Grafana's label-value lookup. The previous instruction sent a Grafana variable expression as a Prometheus query, which cannot return results.
+- A credential seen in a log line is now kept out of anything quoted in chat from the first sample on, not only out of the final report.
+
+### Changed
+- Rules that were written out in several places now live in one, with the other places pointing to it. Every recorded pitfall is kept.
+
 ## [1.12.4] - 2026-09-14
 
 ### Changed

@@ -92,9 +92,6 @@ Findings first, in this order: what breaks in production, then traps, then proje
 Within a tier, the one that is cheapest to fix goes first. Suggestions come next in file order,
 then the unconfirmed lines — both are checklists, not rankings.
 
-The reader works top-down and stops when they run out of time — a report whose first item is its
-least consequential has failed this gate even when every item in it is real.
-
 ## The report
 
 Two counting lines, then one section per shape. Fill this in; do not invent a layout per run.

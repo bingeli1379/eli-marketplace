@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.3] - 2026-10-09
+
+### Removed
+- The engineer's generic security checklist. Its repo-specific items (non-root images, pinned tags, secrets by reference, ingress TLS) remain in its conventions.
+
 ## [1.1.2] - 2026-09-14
 
 ### Changed

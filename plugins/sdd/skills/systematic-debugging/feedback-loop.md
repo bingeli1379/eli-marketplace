@@ -2,8 +2,6 @@
 
 **This is the skill.** Everything else in systematic debugging is mechanical. If you have a *tight* pass/fail signal that goes red on *this* bug, you will find the cause; bisection, hypothesis-testing, and instrumentation all just consume it. If you don't have one, no amount of staring at code will save you.
 
-Spend disproportionate effort here. **Be aggressive. Be creative. Refuse to give up.**
-
 ## Ways to construct one — try them in roughly this order
 
 1. **Failing test** at whatever seam reaches the bug — unit, integration, e2e.
@@ -17,8 +15,6 @@ Spend disproportionate effort here. **Be aggressive. Be creative. Refuse to give
 9. **Differential loop.** Run the same input through old-version vs new-version (or two configs) and diff outputs.
 10. **HITL (human-in-the-loop).** Last resort. If a human must click, drive *them* with a structured bash loop so the loop is still repeatable. Captured output feeds back to you.
 
-Build the right loop, and the bug is 90% fixed.
-
 ## Tighten the loop
 
 Treat the loop as a product. Once you have *a* loop, **tighten** it:
@@ -26,8 +22,6 @@ Treat the loop as a product. Once you have *a* loop, **tighten** it:
 - **Faster?** Cache setup, skip unrelated init, narrow the test scope.
 - **Sharper signal?** Assert on the specific symptom, not "didn't crash".
 - **More deterministic?** Pin time, seed RNG, isolate filesystem, freeze network.
-
-A 30-second flaky loop is barely better than no loop; a 2-second deterministic one is a debugging superpower.
 
 ## Non-deterministic bugs
 
@@ -49,5 +43,3 @@ The loop is good enough to leave Phase 1 only when you can name **one command** 
 - [ ] **Deterministic** — same verdict every run (flaky bugs: a pinned, high reproduction rate per above).
 - [ ] **Fast** — seconds, not minutes.
 - [ ] **Agent-runnable** — you can run it unattended.
-
-If you catch yourself reading code to build a theory before this command exists, **stop** — jumping straight to a hypothesis is the exact failure this discipline prevents.

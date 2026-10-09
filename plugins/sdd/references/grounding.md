@@ -2,7 +2,7 @@
 
 Grounding — feeding the right facts into context before any code is written — is the single biggest driver of correct output in this workflow, more than any spec ceremony. `/propose`, `/apply`, and `/quick` run this as an explicit early step; a native coding session should do the same. sdd names no specific tool — use whatever the environment exposes, and reach for it deliberately: lookup tools rarely auto-trigger.
 
-The principle is **environment-agnostic by design**: sdd defines *what* to ground and *when*, never *which* tool. Skip any source that doesn't exist in the current environment.
+Skip any source that doesn't exist in the current environment.
 
 ## The three grounding sources (check in this order)
 
@@ -23,8 +23,4 @@ The three sources above answer "what is the fact"; this answers "have I found al
 
 ## What you cannot ground → signal, never guess
 
-Anything you genuinely cannot resolve with the tools at hand is an **external unknown**. Do NOT pick a plausible default. Use the `NEEDS` / `CONFLICT` / `BLOCKED` vocabulary defined in `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*:
-
-- `NEEDS` — an external fact you can't obtain from repo + context (including an in-repo name/path you could not verify). Stop that decision; the orchestrator resolves it (with the same tools above, or the user) and resumes you.
-- `CONFLICT` — a spec/design disagreement.
-- `BLOCKED` — a non-external blocker (insufficient context, task too large, unsound plan).
+Anything you genuinely cannot resolve with the tools at hand is an **external unknown**. Do NOT pick a plausible default — signal it per `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns* (`NEEDS` / `CONFLICT` / `BLOCKED`).

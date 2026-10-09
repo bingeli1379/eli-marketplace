@@ -13,7 +13,7 @@ Become one sdd specialist agent as an **interactive persona**. The main conversa
 
 This is distinct from the other entry points:
 - **Agent-tool dispatch / `/quick` / `/apply`** spawn the agent as a background subagent on ITS configured `model`/`effort` (tuned per agent for autonomous dispatch — ranges sonnet→opus), fire-and-return.
-- **`/sdd:role`** makes the **main loop** *become* the agent — fully interactive, and on the **current session's model and effort** (not the agent's frontmatter). You get the specialist persona at full session quality.
+- **`/sdd:role`** makes the **main loop** *become* the agent — fully interactive, on the current session's model and effort (step 2, Become the role).
 
 ## Roles
 
@@ -65,6 +65,3 @@ This is distinct from the other entry points:
 ## Guardrails
 
 - **Become in the main loop — do NOT spawn a subagent.** Spawning would drop you onto the agent's own configured `model`/`effort` and lose interactivity, defeating the purpose.
-- **Persona only, not the model/effort frontmatter** — the whole point is full session quality with a specialist's mindset.
-- **Honor the role's own scope** — a reviewer role does not start editing code; an engineer role does not silently expand scope. The role definition's constraints still bind.
-- **Language**: Traditional Chinese communication; English code and comments (per the role's own rules).

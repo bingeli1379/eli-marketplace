@@ -32,21 +32,6 @@ Tune a PostgreSQL or MySQL query from evidence: the plan (`EXPLAIN (ANALYZE, BUF
 | Wrong composite index column order | Index exists but is not used, or used with a filter | Leading columns must match the equality predicates; range column last |
 | String-built SQL | Concatenated literals | Parameterize — correctness and plan reuse, not only injection |
 
-Never "fix" a query by adding an index without reading the plan first: an index that the planner cannot use costs every write and buys nothing.
-
-## When to load references
-
-Each at `${CLAUDE_SKILL_DIR}/references/`:
-
-| Read | When |
-|---|---|
-| `explain-analysis.md` | Reading plan output, buffer statistics, PostgreSQL vs MySQL EXPLAIN differences |
-| `index-strategies.md` | Choosing an index type (B-Tree, GIN, GiST, Hash), composite column order, covering and partial indexes, index-usage monitoring |
-| `query-rewrites.md` | Subquery → JOIN, N+1 elimination, pagination, LIKE, batching — before/after shapes |
-| `performance-monitoring.md` | `pg_stat_statements` / slow-query log setup, cache-hit ratio, bloat |
-| `optimization-workflow.md` | The measure → hypothesis → change → re-measure loop, and long-term tracking |
-| `error-catalog.md` | The full catalogue of the failure shapes above with worked fixes |
-
 ## Reporting
 
 For each query: the plan node that hurts, the change, and the before/after measurement on the same data set — with the engine version and the doc you checked for any number you name.

@@ -116,7 +116,7 @@ Read-only understanding pass over an area of the codebase, producing a **researc
    - <question> — <what would answer it (a command, a person, a system)>
    ```
 
-   Keep it scannable: tables and chains over prose, one line per item unless a step genuinely needs tracing. A findings doc nobody can skim does not get read.
+   Keep it scannable: tables and chains over prose, one line per item unless a step genuinely needs tracing.
 
 6. **Report and stop**
 
@@ -130,8 +130,5 @@ Read-only understanding pass over an area of the codebase, producing a **researc
 
 - **Read-only, no exceptions**: no code edits, no config edits, no `feature-spec/` artifacts, no `feature-spec/changes/<name>/` directory, no git writes of any kind (no commit, no stash, no branch, no `git restore`). The only file this skill writes is the findings document at the output path. Never run `propose`'s config-flip dry-run — it mutates the working tree.
 - **No judgement, no proposal**: describe what is, not what should be. A verdict is `/sdd:review`'s job; a plan is `/propose`'s. Recording a risk is fine — prescribing the fix is not.
-- **Every claim carries a `file:line` anchor.** An unanchored claim in a handoff doc is worse than an omission, because the reader cannot check it.
-- **Unresolved facts go to Open questions** — never guessed into the narrative.
 - **The code outranks the docs.** When they disagree, report the code's behaviour and record the discrepancy.
-- **Say when the doc is not worth writing.** If the area is small or the understanding is disposable, tell the user that conversational exploration is cheaper and stop — a findings file with nothing durable in it is ceremony.
 - Findings content in Traditional Chinese; code, paths, symbols, and technical terms in English.

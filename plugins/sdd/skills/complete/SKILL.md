@@ -65,7 +65,7 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
    **Attribute each hit to a change before blocking on it.** The working tree is shared, so a raw hit may belong to a *different* in-flight change — blocking `<name>` for someone else's placeholder is wrong. Ownership is decided from two sources: the files in this change's `design.md` `## Affected Files` (always available), plus the files touched by its own commits — which requires a commit range, derived as follows:
 
    ```bash
-   # single-repo: /propose Step 11 committed exactly "docs: propose <name>" — that is the change's start
+   # single-repo: /propose Step 10 (Commit spec artifacts) committed exactly "docs: propose <name>" — that is the change's start
    CHANGE_BASE=$(git log --format=%H --grep="^docs: propose <name>$" -1)
    # contamination check: any OTHER change proposed after this one shares the range
    OTHERS=$(git log --format=%s "$CHANGE_BASE"..HEAD --grep="^docs: propose ")
@@ -151,11 +151,3 @@ This skill does **not** extract knowledge or maintain docs. Capturing what was l
    Skipped M change(s) with incomplete tasks:
    - refactor-auth: 2/4 tasks complete
    ```
-
----
-
-## Guardrails
-
-- **No knowledge extraction, no doc maintenance**: `/complete` does not write `knowledge.md`, sync `context.md`, or edit CLAUDE.md / README — the project owns its own docs.
-- Always keep `feature-spec/config.yaml` — never delete it.
-- Never push to remote — only commit locally.

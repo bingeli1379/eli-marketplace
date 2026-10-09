@@ -6,7 +6,6 @@ allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git l
 
 # Commit Message Generation
 
-**Type**: Automated dev workflow
 **Goal**: Group uncommitted changes into logical commits and create them, each following Conventional Commits.
 
 ## Context (gather first)
@@ -38,7 +37,7 @@ User instruction (optional): `$ARGUMENTS` (the text passed after the command; em
 
 ### Format
 
-Conventional Commits: `<type>(<scope>)!: <title>`, blank line, body, footer. Types are the standard set (`feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `chore`, `ci`, `build`); a breaking change carries `!` after type/scope and a `BREAKING CHANGE: <description>` footer naming what breaks and the migration path.
+Conventional Commits: `<type>(<scope>)!: <title>`, blank line, body, footer. A breaking change carries `!` after type/scope and a `BREAKING CHANGE: <description>` footer naming what breaks and the migration path.
 
 - **Scope**: in a monorepo / multi-package repo, scope to the affected package or plugin (e.g. `feat(dev-workflow):`, `fix(sdd):`); omit when the change is repo-wide or spans many packages
 - **Title**: imperative mood ("add" not "added"), lowercase first letter, no trailing period, under 50 characters
