@@ -1,6 +1,6 @@
 {
   "name": "prompt-workflow",
-  "description": "Look after the AI setup itself: write and audit the prompt files that steer it, feed real-usage problems back into their source, and audit which installed MCP servers and skills actually get used",
+  "description": "Look after the AI setup itself: write and audit the prompt files that steer it, trim what a stronger model no longer needs, feed real-usage problems back into their source, and audit which installed MCP servers and skills actually get used",
   "version": "0.2.19",
   "author": {
     "name": "Eli",
