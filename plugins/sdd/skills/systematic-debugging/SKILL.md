@@ -11,7 +11,7 @@ user-invocable: false
 
 Find the root cause before changing code. A fix that lands before the cause is known is a guess with a commit message; when it happens to work, nobody can say why, and the next symptom starts from zero.
 
-Applies to any technical issue — test failures, production bugs, performance problems, build and integration failures — and most to the cases where skipping it is tempting: under time pressure, when the fix looks obvious, and after a previous fix did not hold.
+Applies to any technical issue — test failures, production bugs, performance problems, build and integration failures.
 
 ## Phase 1: Root cause investigation
 
@@ -19,7 +19,7 @@ Applies to any technical issue — test failures, production bugs, performance p
 2. **Reproduce it in a tight, red-capable loop.** Before theorising, build one command that goes red on *this* bug and green once fixed — a failing test, a curl, a CLI snapshot, a replay. Bisection, hypothesis testing and instrumentation all consume that loop; without it there is nothing to test against. Construction taxonomy, how to tighten it, the perf-regression variant and the completion gate: `${CLAUDE_SKILL_DIR}/feedback-loop.md`. Not reproducible → gather more data; do not guess.
 3. **Check what changed** — recent commits, new dependencies, config, environment differences.
 4. **In a multi-component system, locate the failing layer before touching any of them.** Log what enters and leaves each component boundary (data, env, config propagation), run once, and read where the chain breaks; investigate that component only.
-5. **Trace a bad value to its origin** when the error is deep in the call stack — fix where it is produced, not where it is caught. Full technique: `${CLAUDE_SKILL_DIR}/root-cause-tracing.md`.
+5. **Trace a bad value to its origin** when the error is deep in the call stack — fix where it is produced, not where it is caught.
 
 ## Phase 2: Pattern analysis
 
@@ -48,8 +48,6 @@ An issue that is genuinely environmental, timing-dependent, or external gets app
 Each at `${CLAUDE_SKILL_DIR}/<file>`:
 
 - **`feedback-loop.md`** — construct, tighten, and gate the red-capable reproduction loop (Phase 1's core move)
-- **`root-cause-tracing.md`** — trace bugs backward through the call stack to the original trigger
-- **`defense-in-depth.md`** — add validation at multiple layers after the root cause is found
-- **`condition-based-waiting.md`** — replace arbitrary timeouts with condition polling
+- **`find-polluter.sh`** — a test leaves unwanted files or state behind and you don't know which one: `find-polluter.sh <path_to_check> './<test_glob>'` runs each test file through `npm test` one by one and stops at the first that creates it. The glob is matched by `find -path` against `./`-prefixed paths, so it must start with `./` — without it nothing matches and the script reports every test clean
 
 Related skills: `sdd:test-driven-development` (the failing test in Phase 4), `sdd:verification-before-completion` (evidence before claiming the fix worked).

@@ -26,7 +26,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    Load `${CLAUDE_PLUGIN_ROOT}/references/repo-topology.md` and run its Step 0 detection. Announce the mode.
    - **single-repo** — scan and plan against the one repo (the steps below, unchanged).
    - **multi-repo** — the change may span several child repos. The Step 5 codebase scan covers every repo the change plausibly touches; per-repo grounding is read per touched repo (Step 4); tasks are grouped so each group lands in exactly one repo (Step 7/design), ordered contract-first across repos. `feature-spec/` (the change artifacts) lives at the umbrella cwd.
-   - **no-git** — cwd is not a repo and has no child repos. Everything below runs unchanged except Step 11: there is nothing to commit to, so the artifacts stay un-committed on disk.
+   - **no-git** — cwd is not a repo and has no child repos. Everything below runs unchanged except Step 10, Commit spec artifacts: there is nothing to commit to, so the artifacts stay un-committed on disk.
 
 1. **If no clear input provided, ask what they want to build**
 
@@ -128,11 +128,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - **Too large** — if 3+ independent capabilities, or an edit surface no one could review in one sitting, suggest splitting. Each split should be self-contained and focused on one concern. Example: "Add user management" → `add-user-registration`, `add-user-profile`, `add-user-roles`.
    - **Too small for full spec (downgrade suggestion)** — if the change is a single capability, single layer, with no cross-cutting integration and an edit surface of a few files whose content is largely **declared values** (version pins, image tags, config keys, feature flags) rather than logic, the full `/propose` → `/apply` spec ceremony (4 artifacts, architect dispatch, validation) is likely overkill. Measured: a runtime-version bump that landed as 13 lines across 8 files ran the full pipeline at 10 agent dispatches over 46 minutes, and its whole implementation was one commit. Say so in one line and offer the lighter path: **`/quick <description>`** (inline analysis + review, no spec files), or just a direct edit if the user is at the keyboard. Spec artifacts earn their cost mainly when the work is large, spans sessions/people, or must be handed off — so still proceed with full `/propose` if the user wants that durable record; this is a suggestion, not a gate. Ask once via the Step 6e message (or proceed with full spec if they already signalled they want it).
 
-   **d. Propose approaches** — Based on the codebase scan and requirement analysis, propose 2-3 implementation approaches with trade-offs and a clear recommendation. This step prevents the architect agent from committing to a direction the user didn't intend.
-
-   - Each approach: one sentence describing the strategy + key trade-off (e.g., "simpler but less extensible")
-   - Lead with the recommended approach and state why
-   - If only one viable approach exists, state it and explain why alternatives were ruled out
+   **d. Settle the approach** — from the codebase scan and requirement analysis, pick the implementation approach and say why; it becomes the Step 6e message's `做法` line, so the architect never commits to a direction the user didn't intend. Alternatives (#2/#3, one sentence + key trade-off each) appear only when there is a real trade-off the user must arbitrate; with one viable approach, say why the others were ruled out.
 
    **e. Ask the user** via **AskUserQuestion** — use a **chain-form** message that the user can scan in one screen. Goal: surface only what the user needs to decide on; hide what's already obvious.
 
@@ -163,7 +159,6 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - The chain is the centerpiece — express the change as a flow of named symbols/modules so the user reads it like a diff (`A → B → C`), not a tree of bullets.
    - **Hide noise**: in-scope/out-of-scope only when split is suggested or scope is non-obvious. Otherwise the chain itself implies scope.
    - **Three defaults max**, one line each. Defaults are interpretations the user might disagree with; do NOT list trivially-true facts ("使用 TypeScript") — those are not assumptions, they're context.
-   - **Approaches collapse to one line** when only one is viable. Multi-option list only when there's a real trade-off the user must arbitrate.
    - **`規模與執行環境` is required whenever the change iterates an unbounded population or performs bulk external mutation** (batch API writes, mass updates, migrations, backfills); omit it for genuinely bounded work. It asks for three environment facts only the user has, and asks them now: **expected volume**, **hard runtime limits** (gateway/proxy timeout, request size, rate limit — and whether each is adjustable), and **which existing process this replaces**. Volume decides whether a synchronous request can complete at all, a fixed timeout decides whether the HTTP response is a usable output channel, and the legacy process is the de-facto spec; learning them after `design.md` exists means re-running the architect and re-deciding the execution model. Distinct from `NFR/Data/Reversibility`, which states **your** conclusion.
    - **Volume is the number the machine actually holds, with a ceiling.** When each unit of input fans out into a queried population (one file row → a query returning N members), ask for the **derived count per unit of input**, not the submitted count. 「十萬以上」 is a floor, and a design whose peak memory is O(population) cannot be judged against a floor — press for the number the design must survive, count the real population with a lookup tool where one exists, and if it stays unknown put it in `未定` with the consequence spelled out and pass it to the architect labelled as an estimate.
    - **Ask with the consequence attached, never a bare menu of numbers.** 「同步請求 + 一次撈進記憶體，十萬還撐得住，百萬會 OOM／逾時；超過那條線我就改成分頁串流或非同步 job」 turns a number the user does not have into a decision they can make. Where you offer bands, each band carries its consequence; the consequence rides on the question and buys the chain message no extra lines.
@@ -231,10 +226,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
    For each artifact:
    - Read the corresponding template from `${CLAUDE_SKILL_DIR}/templates/` for structure guidance
-   - Read completed dependency artifacts for context
    - Apply project context from `config.yaml` as constraints (do NOT copy into the file)
-   - Write the artifact file
-   - Show brief progress: "Created `<artifact>`"
 
    **a. proposal.md**
    - Fill in Why (motivation, min 50 chars), What Changes, Capabilities (new/modified), Impact
@@ -257,11 +249,11 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
    **c. design.md** (AFTER specs — architect receives specs as constraints)
 
-   **Front-load external facts first (orchestrator).** Before dispatching, identify every fact the design will hinge on that is NOT obtainable from the repo or specs — a runtime/production config value (feature flags, rollout rates, limits), a cross-repo/service contract, live infrastructure state. For each one, **before you assume a value or let a plausible default stand, check whether your available tools can look it up** — a connected MCP server, a query/lookup tool, a project-knowledge skill — and use it rather than guess (lookup tools rarely auto-trigger — reach for them deliberately). Resolve what you can NOW, feed the values into the architect's context below, and record them in `design.md` with how/when they were obtained. sdd names no specific tool — use whatever the environment exposes. Anything you genuinely cannot resolve, leave for the architect to raise as a `NEEDS:` (handled in step d).
+   **Front-load external facts first (orchestrator)** — `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` → *The three grounding sources*, item 3, before dispatching: resolved values go into the architect's context below and into `design.md` with how/when each was obtained; what stays unresolved the architect raises as a `NEEDS:` (handled in step d).
 
    **Design it twice (conditional — run BEFORE dispatching the architect).** Your first idea for an interface is rarely your best one, and an architect working alone in one context tends to elaborate its first shape rather than genuinely compete alternatives against it. When this change **defines a new interface others will depend on** — a new API contract, a new shared type or module boundary, a new seam between layers or repos — spend one parallel round generating rival shapes first, then let the architect judge them.
 
-   **Skip it** when the shape is already determined: the change mirrors a Reference implementation found in Step 5, it is precedented CRUD, it is a refactor whose target shape is fixed, or it only touches interfaces that already exist. Running it there is ceremony — the same gold-plating the trade-off-depth rule below warns about.
+   **Skip it** when the shape is already determined: the change mirrors a Reference implementation found in Step 5, it is precedented CRUD, it is a refactor whose target shape is fixed, or it only touches interfaces that already exist. Running it there is ceremony — the same gold-plating `agents/architect.md` → *Decision Records* warns about for routine decisions.
 
    **When it applies, read `${CLAUDE_PLUGIN_ROOT}/skills/codebase-design/design-it-twice.md` in full before dispatching anything.** That file is the single source for the method — how to frame the problem space, the exact set of opposed constraints to hand each designer (and the fourth one that applies only across a network or third-party boundary), the dispatch rules including **why these agents must NOT be given `mode: "bypassPermissions"`**, and the output contract each designer returns. Do NOT reconstruct any of it from memory or from this step: a constraint set half-remembered produces three designers that quietly agree with each other, which is the exact failure the fan-out exists to prevent.
 
@@ -271,31 +263,13 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
    Dispatch the **architect agent** — use the **Agent** tool with `run_in_background: true` and `mode: "bypassPermissions"`:
    - `subagent_type`: `"sdd:architect"`
-   - **Trade-off analysis scaled to stakes (progressive depth)**: The architect's dispatched prompt includes an "Analytical depth requirement" section. The depth of analysis is **conditional on each decision's stakes — the full multi-candidate treatment on every decision is design-level gold-plating**. Instruct the agent, BEFORE writing design.md, to first classify each major decision (domain model shape, storage / aggregate boundaries, API style, integration pattern) as **high-stakes** or **routine**:
-     - **High-stakes** = irreversible or hard-to-reverse, high blast-radius, or the constraints genuinely admit materially different approaches with real trade-offs. For these, do the full treatment:
-       1. Enumerate **2-3 candidate designs**.
-       2. For each, list **concrete trade-offs** (complexity, performance, reversibility, blast radius, coupling).
-       3. **Explicitly justify rejections** — name each rejected alternative and why (cost, mismatch with constraints, unnecessary flexibility, etc.).
-     - **Routine** = reversible, low blast-radius, or effectively determined by an existing project convention / the named Reference implementation. For these, **one line stating the choice and why is enough** — do NOT manufacture 2-3 candidates to compare. Naming the convention/Reference it follows IS the justification.
-
-     The bar: a high-stakes decision presented as a single option with no alternatives considered is incomplete; a routine decision padded into a 3-candidate comparison is over-engineered. Match the analysis to the decision. (Reversibility was already assessed per area on the Step 6b Reversibility axis — reuse that classification here.)
+   - **Trade-off depth scales with stakes** — `agents/architect.md` → *Decision Records* holds the high-stakes / routine split, and the dispatch auto-loads it. Tell the architect to reuse the Step 6b Reversibility classification there.
    - **Feed pre-collected context**: The prompt includes the **complete affected-files inventory from Step 5** (including the **Reference implementation pointers** found there), the proposal.md content, **all completed spec files from Step 7b**, the **full contents of the `config.yaml`(s) read in Step 4** — single-repo `feature-spec/config.yaml`, multi-repo one per touched child repo, each labelled with its repo (there is no umbrella config) — (the `architecture` block and `hard_rules` are constraints the design MUST honor — surface `hard_rules` to the architect as non-negotiable), existing specs from `feature-spec/specs/`, and the design.md template from `${CLAUDE_SKILL_DIR}/templates/design.md`. Include any file contents you already read during the codebase scan (store definitions, key interfaces, usage patterns, etc.). Do not forward the project's own docs — config.yaml is the only project context. If `config.yaml` does not exist, omit that section entirely — do not fabricate placeholder content.
    - **Record patterns to mirror, per operation**: do not restate the rule here — it is `agents/architect.md` → *Design Principles*, which the dispatch auto-loads. Instruct only the two things that file cannot know: the **Reference implementations** come from the Step 5 affected-files inventory forwarded below, and each operation's anchor must be named in `design.md`.
    - **Implementation strategy**: the prompt instructs the architect to decide and record the implementation strategy — **Contract-First (the default)** or **Walking Skeleton** — in `design.md` `## Decisions`, with its reason. Do NOT restate the selection criteria here: they live in its own `agents/architect.md` → *Implementation Strategy Selection*, which the dispatch auto-loads. Instruct only the two things it cannot get from there: **Contract-First is the default, so a departure needs an explicit reason**, and if it picks Walking Skeleton the decision record MUST carry the three required specifics that section lists.
-   - **Specs are constraints**: Explicitly instruct the architect: "The spec THEN clauses are acceptance criteria that your design MUST satisfy. If you believe a spec THEN clause should be different, do NOT silently override it. Instead, mark it as `CONFLICT:` in your design.md with your reasoning, so the orchestrator can resolve it with the user."
-   - **External facts → NEEDS, never guess**: Per `skills/agent-guidelines/SKILL.md` (*Signaling Unknowns*), instruct the architect: "If a design decision depends on a fact not present in the context provided to you — a runtime/production value, a contract owned by another repo/service, live infrastructure state — do NOT guess or quietly pick a default. Emit a `NEEDS:` line and stop that decision; the orchestrator will resolve it and resume you." (`NEEDS` = external fact or unverifiable in-repo name; `CONFLICT` = spec disagreement; `BLOCKED` = non-external blocker — the three signals defined in agent-guidelines.)
+   - **Spec THEN clauses bind the design, and a missing external fact is a `NEEDS:`** — both are `agents/architect.md` rules (`CONFLICT:` for a clause it disagrees with); forward the specs and do not restate them.
    - **The Step 5 inventory is the architect's starting point, not its boundary.** Say so: "The affected-files inventory and file contents below come from a full scan — start from them rather than redoing that scan; verify or extend them where a design decision depends on it." A full re-scan wastes the context already paid for; a ban on reading anything leaves the architect designing on an inventory it cannot check.
    - Instruct the architect to write `design.md` directly to `feature-spec/changes/<name>/design.md`
-
-   The architect agent will produce:
-   - Context, Goals/Non-Goals, Decisions (alternatives considered for high-stakes decisions; one-line choice for routine ones), Risks/Trade-offs
-   - **Domain Model (DDD)**: Bounded contexts, aggregates (root + children + invariants), value objects, domain events
-   - **API Contract**: Every endpoint (METHOD, path, request/response schema, status codes, auth)
-   - **Shared Types**: TypeScript interfaces and C# DTOs as integration contract
-   - Each high-stakes decision with justification and rejected alternatives; routine decisions with a one-line rationale (naming the convention/Reference followed)
-   - Risks with mitigation strategies
-   - **CONFLICT markers** (if any) — where the architect disagrees with a spec THEN clause
-   - **NEEDS markers** (if any) — where the architect is blocked on an external fact it could not obtain from the provided context
 
    **Why `mode: "bypassPermissions"`**: The architect agent writes ONLY to `feature-spec/changes/<name>/design.md`. Without this mode, the agent blocks on Write permission approval — the user cannot see or approve the permission prompt from a background subprocess, causing the agent to hang for minutes (often 5-10 min per Write). This is the #1 cause of slow `/propose` execution.
 
@@ -357,7 +331,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - **Group size, both directions.** Every task has a finite scope fixed by the Step 5 inventory / dry-run — never an unbounded group. A group with analytical tasks (judgment calls, cascading errors) and > 6 tasks splits by concern; mechanical groups (find-and-replace, annotations, imports) can be larger. And a group is not free: each one costs `/apply` a full dispatch that re-reads `design.md` and its specs before writing a line, so adjacent groups sharing an agent type, with no dependency between them and individually small, merge when one honest commit message still covers the result. Genuinely separate concerns stay separate — that dispatch is the price of a clean commit.
    - Backend/Frontend tasks follow the `test-driven-development` cycle (test first, then implementation, then refactor); the group lists the work, not each phase as its own task.
    - **E2E tasks**: each spec WHEN/THEN scenario becomes a Playwright E2E test case.
-   - Each task starts with a verb, is actionable, and is scoped to one logical unit, numbered under its group: `## 1. Search API and service layer` → `- [ ] 1.1 (Backend) Write unit test for ...`.
+   - Each task starts with a verb, is actionable, and is scoped to one logical unit, numbered under its group: `## 1. Search API and service layer` → `- [ ] 1.1 (Backend) Add SearchService with keyword filtering, test first`.
    - Every spec scenario is traceable to at least one task.
    - **No `Test` groups** — unit tests belong inside Backend/Frontend tasks; E2E tests are tagged `(E2E)` in their own group.
 
@@ -375,11 +349,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
    **What survives that is written as an assertion on the artifact that produces the value, and only what cannot be asserted stays a look.** Most "open it in an environment and confirm" tasks are asking about a value some artifact already determines — baked or templated markup, a generated string, a config the renderer reads, a computed style — and an assertion where that value is produced is local, permanent, and stronger than one person's one-time look. Measured: one change asked for twelve separate uat domain visits to confirm a label that six `GetHtml()` classes emit; one parameterized assertion covers all twelve, in the repo, on every future run. What genuinely emerges only from rendering is then the appearance judgement the who-acts split above hands to the user, so it becomes a handoff bullet rather than a numbered task.
 
-8. **If an artifact requires user input** (unclear context, ambiguous requirements):
-   - Use **AskUserQuestion tool** to clarify
-   - Then continue with creation
-
-9. **Auto-validate and fix**
+8. **Auto-validate and fix**
 
    After all artifacts are created, run two layers of validation:
 
@@ -397,10 +367,10 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    **b. Structural validation** — run the validation logic from `validate` skill:
    - Read all artifacts and check against all validation rules
    - If any errors found: **fix them immediately** (edit the artifact files to resolve issues)
-   - Re-validate until **no ERROR remains** (max 3 rounds to avoid infinite loops). A WARN does not block: fix it when the fix is obvious, otherwise carry it into the Step 10 report so the user sees what was left.
+   - Re-validate until **no ERROR remains** (max 3 rounds to avoid infinite loops). A WARN does not block: fix it when the fix is obvious, otherwise carry it into the Step 9 final summary so the user sees what was left.
    - If ERRORs persist after 3 rounds, report remaining issues and ask user for input
 
-10. **Show final summary**
+9. **Show final summary**
 
    ```
    ## Spec Created: <change-name>
@@ -420,7 +390,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    Ready for implementation. Run `/apply <name>` to start.
    ```
 
-11. **Commit spec artifacts**
+10. **Commit spec artifacts**
 
    In **no-git** mode (Step 0 detected no repo), skip this commit entirely — leave the artifacts on disk under `feature-spec/changes/<name>/` and tell the user they are un-committed. Otherwise, stage and commit all generated artifacts following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`):
 
@@ -436,6 +406,5 @@ After all artifacts are created, **automatically runs validation** (`validate` s
 
 - **Role separation.** The orchestrator owns the scan, the specs, and `tasks.md`; the architect owns `design.md` (Step 7c/7d). Its design is the baseline for `tasks.md` even where it found more affected files or decided differently than expected — but a design that contradicts a spec THEN clause without a `CONFLICT:` marker is a bug: escalate via AskUserQuestion.
 - **`mode: "bypassPermissions"` for background agents that WRITE.** A background agent writing to `feature-spec/` cannot prompt for Write permission — it hangs silently. **Withhold it from a read-only agent dispatched as one of several in parallel** (the Step 7c design fan-out): those return text and write nothing, and withholding the mode keeps a stray write from landing while its siblings write the same file.
-- Verify each artifact file exists after writing before proceeding to the next.
 - `config.yaml` context and rules are constraints for YOU, not content for artifact files; every one read in Step 4 is forwarded verbatim to the architect (Step 7c). The project's own docs are never read or forwarded.
 - Artifact content in Traditional Chinese; code examples and technical terms in English.

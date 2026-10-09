@@ -8,15 +8,13 @@
 
 ## 1. Search API and service layer
 
-- [ ] 1.1 (Backend) Write unit test for SearchService (RED)
-- [ ] 1.2 (Backend) Implement SearchService to pass test (GREEN)
-- [ ] 1.3 (Backend) Add SearchController endpoint with filtering and pagination
+- [ ] 1.1 (Backend) Add SearchService with keyword filtering, test first
+- [ ] 1.2 (Backend) Add SearchController endpoint with filtering and pagination
 
 ## 2. Search page and composables  <!-- depends: 1 -->
 
-- [ ] 2.1 (Frontend) Write unit test for useSearch composable (RED)
-- [ ] 2.2 (Frontend) Implement useSearch composable to pass test (GREEN)
-- [ ] 2.3 (Frontend) Create SearchPage component with search input and result list
+- [ ] 2.1 (Frontend) Add useSearch composable, test first
+- [ ] 2.2 (Frontend) Create SearchPage component with search input and result list
 
 ## 3. Search E2E acceptance tests  <!-- depends: 1, 2 -->
 

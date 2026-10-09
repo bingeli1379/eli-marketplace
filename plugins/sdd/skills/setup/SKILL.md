@@ -126,14 +126,6 @@ If Phase 0 chose `保留現有`, write nothing: say `config.yaml 保留現有，
 
 ## Guardrails
 
-- **One artifact only**: `/setup` writes `feature-spec/config.yaml` and nothing else. It never generates `context.md`, `knowledge.md`, or any prose doc — those are the project's own responsibility.
 - **Language**: all conversation output (SCAN report, AskUserQuestion text, BUILD summary, errors) in **Traditional Chinese**. File content (`config.yaml` values, comments) stays in **English** so downstream AI agents read it consistently.
 - **Two-phase is mandatory**: never skip SCAN — architecture inference (pattern / layers / entry points) is not 100% accurate, so the user confirms before write.
-- **Default 0 gap-filling questions; cap 3**: only ask for ❌ Low-confidence fields (AI could not infer at all). ⚠️ Medium trusts the draft — the user edits config.yaml by hand if it is off. More than 3 Low fields means the project has too little signal; stop asking and let the user fill in.
-- **Never overwrite without asking**: Phase 0 asks before BUILD writes over an existing `config.yaml`.
-- **Always create missing subdirectories** (`specs/`, `changes/`) even if `feature-spec/` partially exists.
-- **Architecture block is pointer-form and stable**: `layers` / `entry_points` use `name → path` pointers, never file lists. `hard_rules` are structural invariants only (true a year from now) — drop lint-enforceable rules and historical/version-pinned ones. The block is a snapshot, not a living map; it is never auto-synced.
-- **Versions live in `tech_stack` only**: do not embed version numbers in `architecture` or `rules`.
-- **Do not read or reference the project's own docs**: `hard_rules` detection may read `CLAUDE.md` / `AGENTS.md` / `.cursor/rules/` **once** to extract structural invariants into config (vetted through SCAN), but `config.yaml` never points at those docs and the workflow never reads them again. config.yaml is the sole grounding source.
 - **Entry-point scan is exhaustive**: walk the full checklist (HTTP, pages, middleware, plugins, modules, jobs, event handlers, CLI). For non-standard repos (plugin marketplace, VS Code extension, GitHub Action) list the repo's own entry convention instead — see `detection-rules.md`.
-- **Downstream contract**: `/propose`, `/apply`, and `/quick` read `config.yaml` as their ONLY grounding source — the `architecture` block is all the project context an agent gets. Keep it accurate enough to orient an agent that has nothing else.

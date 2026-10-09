@@ -93,6 +93,6 @@ A walking skeleton is the *tracer bullet* above widened to the whole system: ins
 
 A bug gets a failing test that reproduces it before the fix — the test proves the fix and prevents the regression (`systematic-debugging` Phase 4).
 
-## Testing anti-patterns
+## Mocks and test utilities
 
-When adding mocks or test utilities, read `${CLAUDE_SKILL_DIR}/testing-anti-patterns.md`: testing mock behaviour instead of real behaviour, test-only methods on production classes, mocking without understanding the dependency.
+No test-only methods on production classes — test helpers live in test code. Mock a dependency only after knowing what the real one does, and mirror its full shape; a partial mock passes against fields the real call never returns.

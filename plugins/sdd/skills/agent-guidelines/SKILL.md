@@ -9,8 +9,6 @@ user-invocable: false
 
 # Agent Guidelines
 
-**Universal rules for every agent in the team.**
-
 ## Coding Discipline
 
 ### 1. Think Before Coding
@@ -19,16 +17,9 @@ Assumptions and ambiguities are named in your report, never resolved silently. W
 
 ### 2. Simplicity First
 
-Minimum code that solves the stated problem: no features beyond the request, no abstraction for single-use code, no unrequested flexibility, no error handling for cases that cannot happen, and no new dependency for what a few lines or an already-installed package can do.
+Minimum code that solves the stated problem: no features beyond the request, no refactoring or "improving" of passing code the task did not cover, no abstraction for single-use code, no unrequested flexibility, no error handling for cases that cannot happen, and no new dependency for what a few lines or an already-installed package can do.
 
-Before writing custom code, stop at the first rung that holds:
-
-1. **Does this need to exist?** Speculative need → skip it, say so in one line (YAGNI).
-2. **Standard library does it?** Use it.
-3. **Native platform feature covers it?** Use it (a DB constraint over app code, CSS over JS, `<input type="date">` over a picker lib).
-4. **Already-installed dependency solves it?** Use it.
-5. **Can it be one line?** One line.
-6. **Only then:** the minimum code that works.
+Before writing custom code, take the first rung that holds: not writing it at all (say so in one line), the standard library, a native platform feature (a DB constraint over app code, CSS over JS), an installed dependency, then the minimum code that works.
 
 **The ladder runs *inside* the project's conventions, never above them** — it chooses only among options that already match how this codebase does the same thing (see *Match Existing Code Before Writing* below). When the local precedent is more verbose than a stdlib/native shortcut, the precedent wins: flag the divergence in your report if you think it matters, but do NOT silently introduce a leaner-but-foreign pattern. Correctness, trust-boundary validation, security, and accessibility are never traded for brevity.
 
@@ -68,13 +59,7 @@ Self-check before reporting done: *"For every technical operation my code perfor
 
 ### Decision order when modifying existing code
 
-Local precedent (above) is step one, but it does not settle a framework API you are unsure of. Before committing to an approach:
-
-1. **Read** the surrounding code — same file plus sibling files in the same directory — for naming, patterns, and error-handling style.
-2. **Look up** when the change involves framework API usage or a pattern choice: consult an available up-to-date documentation tool (e.g. a `context7`-style docs MCP — `resolve-library-id` → `query-docs`) for the current recommended approach. If no such tool is wired in this environment, skip this step and rely on the repo's own precedent; do NOT treat a missing docs tool as a blocker.
-3. **Decide** by priority: **project convention > official recommendation > your own judgment.** Check convention first, *then* take the simplest option that matches it (the Simplicity First ladder above).
-4. **Implement.**
-5. **Verify** — does the new code match surrounding style? Did you introduce a pattern the file did not already use?
+Local precedent (above) comes first, but it does not settle a framework API or pattern choice you are unsure of: look that up in an available up-to-date docs tool (e.g. a `context7`-style docs MCP — `resolve-library-id` → `query-docs`) before deciding. Priority: **project convention > official recommendation > your own judgment**. No docs tool wired in this environment → rely on the repo's own precedent; a missing docs tool is not a blocker.
 
 ## Scanning Coverage (Zero Misses)
 
@@ -94,7 +79,7 @@ Coverage is **yours to scope and yours to show**. Decide what the task requires 
 When you cannot complete something correctly, emit the matching signal and stop that item instead of inventing an answer. The orchestrator that dispatched you handles each signal; you do not need to know how. These apply in every mode (`/apply`, `/quick`, `/propose`, `/review`).
 
 - **`NEEDS: <precise question + why it blocks you + the options you can see>`** — a fact you need is genuinely *not obtainable from this repo or the context you were given*: a runtime/production value (e.g. the current value of a config flag / feature toggle in an environment), a contract owned by another repo or service, or live infrastructure state. Finish and commit whatever you safely can, then emit NEEDS for the blocked part and stop it. The orchestrator resolves it and resumes you **with your context intact** — continue from there; do not start over.
-  **Boundary (strict):** NEEDS is ONLY for facts unobtainable from the repo + provided context. Anything discoverable by reading code, grepping the repo, or following the design/specs you were given is NOT a NEEDS — find it yourself. NEEDS is not an escape hatch for investigation you should do.
+  **Boundary:** anything discoverable by reading code, grepping the repo, or following the design/specs you were given is not a NEEDS — find it yourself.
 - **`CONFLICT: <what the spec/design says> vs <what you'd do> because <reason>`** — the spec or design directs you to do something you believe is wrong or self-contradictory. Do NOT silently override it; emit CONFLICT so the orchestrator can resolve it with the user.
 - **`BLOCKED: <reason>`** — you cannot proceed and it is NOT an external fact: the context you were given is wrong/insufficient, the task is too large to do as one unit, or the plan itself is unsound. The orchestrator will re-scope, re-dispatch with corrected context, or escalate. (Difference from NEEDS: BLOCKED gets a fresh re-dispatch; NEEDS gets resolved-and-resumed with your work preserved.)
 
