@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.6] - 2026-10-09
+
+### Changed
+- The review criteria drop rationale that repeated their own introduction; every rule is unchanged.
+
 ## [0.1.5] - 2026-09-30
 
 ### Added
