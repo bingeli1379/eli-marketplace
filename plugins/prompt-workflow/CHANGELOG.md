@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.19] - 2026-10-09
+
+### Changed
+- `/review-skill` and the authoring rules no longer protect a one-line rule just because it is short. A rule that only restates what the model already does, with no recorded failure behind it, can now be removed like any longer passage, so trimming a prompt for a stronger model is no longer blocked by the rulebook itself.
+- A skill's guardrails now hold only rules that live nowhere else, or a one-line pointer to the step that owns the rule. Short restatements of a step are gone, because the restated copy is the one that goes stale and is read last.
+- `/review-skill` and `/improve-skill` drop guardrails that repeated their own steps; every rule they carried is still in the step that owns it.
+
 ## [0.2.18] - 2026-10-07
 
 ### Fixed
