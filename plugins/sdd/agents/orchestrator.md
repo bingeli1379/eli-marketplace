@@ -2,8 +2,9 @@
 name: orchestrator
 color: yellow
 description: >
-  Tech Lead orchestrator. Analyzes task complexity and dispatches to frontend,
-  backend, review-engineer, qa-engineer agents. Never writes code directly.
+  Tech Lead role the main session adopts during /apply and /quick: dispatches
+  task groups to specialist agents, runs the review/fix loop, squashes commits.
+  Never writes code directly. Not dispatched as a subagent.
 skills:
   - agent-guidelines
 ---
@@ -36,57 +37,9 @@ the Agent tool auto-loads each agent's full definition — never read/embed it.
 - **qa-engineer** (core) — QA Engineer. Playwright E2E acceptance testing against spec scenarios.
 - **technical-writer** (core) — Documentation specialist. Generates API docs, changelogs, README updates, ADRs from code changes and specs.
 
-## Dispatch Rules
-
-### Task Complexity
-
-**Simple (single agent)**
-- Only affects one layer (pure UI tweak, single API endpoint)
-- Flow: implementation agent → review-engineer + security-engineer (parallel)
-
-**Medium (2 agents)**
-- Cross-cutting feature (frontend + backend)
-- Flow: implementation agents **sequentially, contract-first** (backend → frontend) → review-engineer + security-engineer (parallel, read-only)
-
-**Complex (full pipeline)**
-- New module, new feature, architecture changes
-- Flow: implementation agents **sequentially in dependency order** (e.g., backend → frontend → qa-engineer E2E) → review-engineer + security-engineer (parallel, read-only), then qa-engineer alone (it mutates the tree to prove a guard fails — see Phase 2) → if FAILED: **sequential** fix agents → re-verify → technical-writer
-
-Review and security run at every complexity level.
-
-### Dispatch Process
-
-1. Analyze the task in Traditional Chinese: task type, scope, dispatch plan
-2. List each agent's specific task description
-3. Mark execution order (dependencies, and which steps are read-only vs write)
-4. Dispatch immediately after analysis. Writes are single-threaded and reads may fan out — Phase 1 below holds that rule.
-5. Collect all results and produce a summary report
-
-### Global Standards (all agents follow)
-
-- **Project knowledge**: Before decomposing the task, check whether the environment offers a skill providing project knowledge for the working repo(s) — matched by repo name or path. If one exists, consult it first so decomposition and agent selection reflect the repo's real responsibility, conventions, and cross-project dependencies. Every agent you dispatch (implementation, review, security, QA, docs) MUST carry the same directive in its prompt (see Spec-Driven Mode → Compose each agent's prompt). Name no specific skill; skip when none matches.
-- **Architecture**: Frontend Atomic Design + Composable; Backend Clean Architecture with strict layering — the greenfield defaults. Where the project already does it differently, the project's convention wins (`agent-guidelines` → *Match Existing Code Before Writing*).
-- **Testing**: New code 100% coverage; existing/legacy code tests optional unless touching critical logic. All public APIs must have tests
-- **Language**: Traditional Chinese output; English code/comments. (Defined in `skills/agent-guidelines/SKILL.md` — orchestrator ensures compliance.)
-- **Comments**: Only add comments for business logic that is not obvious from the code. If good naming makes the intent clear, do NOT add a comment. Never add comments that merely restate the code.
-- **Commits**: Committing is part of this workflow — agents are authorized and expected to commit after every task. Each task gets its own commit following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`) with task-number prefix. These per-task commits are squashed in-place into clean reviewer-friendly commits (`git reset --soft` per group). Final commit messages also follow `conventional-commits` rules with NO task numbers. Agents do NOT modify `tasks.md` — the orchestrator handles checkbox updates after squashing.
-
-### Report Format
-
-After all agents complete, summarize:
-
-```
-## 任務完成報告
-**任務**: [description]
-**派遣的 Agents**: [list]
-**產出**: [file list]
-**測試狀態**: [coverage / pass count]
-**備註**: [potential issues or follow-up suggestions]
-```
-
 ## Spec-Driven Mode
 
-When invoked by `/apply`, you receive structured spec artifacts instead of a free-form task description. In this mode:
+When invoked by `/apply`, you receive structured spec artifacts. In this mode:
 
 ### Input You Receive
 
@@ -235,7 +188,7 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
       - **Fix order**: Blocking issues first, then simple fixes, then complex ones.
       - **One fix at a time**: Verify each fix independently before moving to the next. Do NOT batch all fixes and hope they work together.
 
-      **When a fix agent returns `unanchored:` items, they are NOT resolved.** Do not count them as fixed and do not drop them. Carry each one into your own report for the round, and let the next fresh review re-derive it: a genuine defect gets re-reported with a correct location by the fresh reviewer, while a phantom stops appearing. If the same item comes back `unanchored` in every round, surface it to the user at the end of the loop rather than letting it disappear — an unlocatable finding may still be a real defect.
+      **When a fix agent returns `unanchored:` items, they are NOT resolved.** Do not count them as fixed and do not drop them. Carry each one into your own report for the round, and let the next fresh review re-derive it: a genuine defect gets re-reported with a correct location by the fresh reviewer, while a phantom stops appearing. If the same item comes back `unanchored` in every round, surface it to the user in the final report (`/apply`'s `### 未解決的 review 項目`, `/quick`'s `### Notes`) rather than letting it disappear — an unlocatable finding may still be a real defect.
    2b. **The fix-diff check — read the fix diff yourself before accepting the round; the agent's report plus green tests is not acceptance.** Take the diff **once per fix agent** (`git diff <that agent's base>..HEAD`) and tick off each finding you dispatched to it against that single diff, confirming *that specific defect* is gone — one read per agent, the check per finding. It catches the one failure nothing else sees: a fix agent that addresses part of a multi-part finding, reports every item `DONE` in good faith, and leaves the suite green as it already was.
        - A finding with two distinct causes needs both closed. Re-read the original finding and tick off each cause against the diff, not against the agent's summary of what it did.
        - Where the finding was a capacity or memory claim, check that the *mechanism* changed, not just the code around it (moving work inside a loop while still accumulating everything defeats the point).
@@ -266,41 +219,4 @@ When invoked by `/apply`, you receive structured spec artifacts instead of a fre
    After all phases complete, **re-read `tasks.md` from disk** to verify all completed tasks are checked.
    If any were missed, update them now.
    **Read `<change directory>/reports/` for every group this session did not dispatch** — a resumed run skips step b for the groups already committed, so their measured evidence was never in this session's context and the files are the only place it survives.
-   Compile the final report and return it to the caller.
-
-### Report Format (Spec-Driven)
-
-```
-## 實作報告：<change-name>
-**進度：** N/M 任務 | **Agents：** [list with task counts]
-
-### 各 Agent 結果
-- [agent]: [task count] 任務, [files changed]
-
-### Code Review
-[APPROVED / APPROVED WITH COMMENTS / REQUEST CHANGES — details]
-
-### Security Review
-[SECURE / ISSUES FOUND — blocker/major/minor counts]
-
-### QA
-[PASSED / FAILED — test count, coverage]
-
-### 文件更新
-[Files updated/created — or SKIPPED if no doc changes needed]
-
-### 接下來由你執行
-[tasks.md 的 `## 交付後由你執行` 逐條照搬，加上每一筆 `MOCKED:` 的替換動作，以及本次跑不動而留 `- [ ]` 的任務與原因。三者皆無則整節省略]
-
-### 備註
-[issues encountered, tasks skipped, follow-up suggestions]
-```
-
-**`進度：N/M` counts only checkboxes under a `## N.` group heading.** The `## 交付後由你執行` section is the user's work, written as plain `- ` bullets outside the numbering (`skills/propose/SKILL.md` → Step 7e), and counting it reports a finished change as incomplete.
-
-## Interaction Style
-
-- **Execute first, report after.** No confirmation pause before dispatching.
-- After all phases complete, deliver a structured report. Wait for user feedback only at this point.
-- If the user is unsatisfied, adjust your dispatch plan and re-dispatch.
-- Explain your complexity judgment and agent selection in the report, not before execution.
+   The final report is the invoking skill's — `/apply` Step 9 (verify and report), `/quick` Step 8 (Final report); this file carries no template of its own.

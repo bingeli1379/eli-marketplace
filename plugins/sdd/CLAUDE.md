@@ -93,7 +93,7 @@ dispatches by `subagent_type` and the harness auto-loads the definition. See
 
 | Agent | Home | Role |
 |---|---|---|
-| `orchestrator` | core | Tech Lead — task analysis, agent dispatch, progress tracking |
+| `orchestrator` | core | Tech Lead role the main session adopts in `/apply` and `/quick` — agent dispatch, review/fix loop, progress tracking; never dispatched as a subagent |
 | `architect` | core | Software Architect — system design, API contracts, integration specs |
 | `review-engineer` | core | Code quality — architecture compliance, patterns, performance |
 | `security-engineer` | core | Security — OWASP, injection, auth, dependency risks |

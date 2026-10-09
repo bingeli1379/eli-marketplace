@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.21.1] - 2026-10-09
+
+### Fixed
+- `find-polluter.sh` no longer reports "all tests clean" when its test pattern matches no file. It stops with an error, and its usage shows the `./`-prefixed pattern it needs.
+
+### Changed
+- `/apply` has one final report instead of two competing templates, and it now lists review findings that stayed unlocatable through every fix round instead of dropping them.
+- Agents that do not load the TDD skill are again told not to refactor or "improve" passing code outside their task.
+- Planning, apply and quick point at the file that owns each rule instead of restating it, and guardrails that repeated their own steps are gone. Generated task lists write a test-first task as one task instead of separate RED and GREEN tasks.
+
+### Removed
+- The orchestrator's free-form mode, which nothing ran: the orchestrator is only the role the main session takes on during `/apply` and `/quick`.
+- The debugging guide's defense-in-depth page, which told agents to validate at every layer and contradicted the rule to guard only at the trust boundary, along with three general tutorials on tracing, waiting and test anti-patterns.
+
 ## [3.21.0] - 2026-10-08
 
 ### Added

@@ -17,23 +17,11 @@ license: MIT
 
 Find *where* a SQL Server instance is hurting, before deciding what to change.
 
-> **Provenance & how to read this skill.** The DMV queries here come from
-> [vince-winkintel/sql-server-skills](https://github.com/vince-winkintel/sql-server-skills) (MIT —
-> see the bundled `LICENSE`). They were adopted because DMV shapes are stable across versions.
-> The upstream skill's *prescriptive* maintenance guidance was deliberately **not** adopted: it
-> repeated the 2010s-era `10%→REORGANIZE / 30%→REBUILD` rule of thumb, which current Microsoft
-> guidance contradicts (reorganize is the preferred method unless there is a specific reason to
-> rebuild, and page density matters at least as much as logical fragmentation).
->
-> **So: trust the queries, verify every threshold and every "typical fix".** When you are about to
-> recommend a number, a knob, or a maintenance action, look it up in the official docs first — use
-> the environment's Microsoft documentation tool if one is available (a `microsoft-docs`-style MCP
-> server or skill), and cite what you found. Do not ship a rule of thumb from memory.
+**Trust the queries, verify every threshold and every "typical fix".** The DMV queries are adopted from an MIT upstream (bundled `LICENSE`); its prescriptive maintenance advice was not, because it repeated the outdated `10%→REORGANIZE / 30%→REBUILD` rule that current Microsoft guidance contradicts. Before recommending a number, a knob, or a maintenance action, look it up in the official docs — the environment's Microsoft documentation tool if one is available (a `microsoft-docs`-style MCP server or skill) — and cite what you found. Do not ship a rule of thumb from memory.
 
 ## Order of investigation
 
-Diagnose top-down; each step narrows the next. Jumping straight to indexes is how people
-"optimize" a server that was actually blocked or starved of memory.
+Diagnose top-down; each step narrows the next.
 
 ```
 1. Wait stats        — what is the instance waiting ON?      scripts/wait-stats.sql

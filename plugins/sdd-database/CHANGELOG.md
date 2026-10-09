@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.5] - 2026-10-09
+
+### Removed
+- The query-optimization and schema-design reference pages. They were general PostgreSQL primers, and several contradicted the skills that pointed to them: a global `work_mem` increase the skill calls a last resort, speedup figures with no source, and UUID offered as a default regardless of what your repo uses. The rules in each skill are unchanged.
+- Sample diagrams and policy SQL from the schema skill; the rules they illustrated stay.
+
 ## [1.1.4] - 2026-09-14
 
 ### Changed

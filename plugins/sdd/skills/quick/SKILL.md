@@ -69,7 +69,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    **Codebase scan:** scope specified → every file within it; no scope → scope it from what the task reaches and state that scope in the Step 8 report (`agent-guidelines` → *Scanning Coverage*). Glob to enumerate, open every file that could be affected, and build the affected-files inventory (file + WHY) — the same sweep rules as `propose` Step 5 (`${CLAUDE_PLUGIN_ROOT}/references/grounding.md` → *Enumerating what is in the repo*).
 
    **a. Scope analysis** — produce what the Step 6 prompt template consumes: the affected layers, the key design decisions (API shape, data model changes, UI approach), and the acceptance criteria as WHEN/THEN.
-   - **External facts → look up, don't guess:** if a decision hinges on a runtime/production value (feature flag, rollout rate, limit), a cross-repo/service contract, or live infra state not in the repo, check whether your available tools can resolve it (a connected MCP server, a query/lookup tool, a project-knowledge skill) and **use it before assuming a value** — lookup tools have no auto-trigger, so reach for them deliberately. What you genuinely can't resolve becomes a `NEEDS` a dispatched agent raises later.
+   - **External facts → look up, don't guess** — `${CLAUDE_PLUGIN_ROOT}/references/grounding.md` → *The three grounding sources*, item 3. What you genuinely can't resolve becomes a `NEEDS` a dispatched agent raises later.
 
    **b. Task breakdown:**
    - Break the task into discrete subtasks
@@ -160,18 +160,15 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    ## Instructions
    - Implement each task in order
    - Follow the design decisions — do NOT deviate
-   - **Implementation Protocol** — follow *Match Existing Code Before Writing* → *Decision order when modifying existing code* from `agent-guidelines` (Read → Look up → Decide → Implement → Verify). **It is already in your context — apply it; do NOT load it again.**
+   - **Implementation Protocol** — follow *Match Existing Code Before Writing* → *Decision order when modifying existing code* from `agent-guidelines`. **It is already in your context — apply it; do NOT load it again.**
    - **Commit after every task — the user has authorized committing as part of this workflow.** (**No-git mode** — only when Step 0 detected no git repo: there is nothing to commit to, so implement directly and skip every per-task commit; the user commits later. **Still print the `DONE:` line per task** — with no git history to verify against, it is the orchestrator's only completion signal. The rest of this clause assumes a git repo is present.) After completing each task, you MUST:
      1. Stage all changed files with `git add` (specify files by name)
      2. Run all lint commands listed above (if any) — stage any changes they produce
      3. Commit following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`). Format: `<type>[optional scope]: <task-number> <description>` (e.g., `fix: 1.1 resolve login redirect loop`)
-   - Do NOT batch multiple tasks into one commit — one commit per task
    - After the commit, report back: "DONE: <task-number> <task-description>"
    - **Order the report evidence first, narration last.** This run writes no artifacts, so there is nowhere to put a report file and the whole thing comes back in the reply — where the size limit cuts from the bottom. Put the command output, the numbers and the failures the orchestrator triages on above anything describing how you got there, so a truncation costs the half it can re-derive.
    - **Completion contract** — binding, per *Completion Contract — do NOT end your turn early* in `agent-guidelines` (already in your context): not finished until every assigned task is committed with a `DONE:` line each; the only valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:`.
-   - Only add code comments for business logic that is not obvious from the code
-   - **Signaling a genuine stop (`NEEDS` / `CONFLICT` / `BLOCKED`)** — follow the **Signaling Unknowns** rules in `agent-guidelines`. In short: do NOT guess an external fact you can't obtain from the repo + this context — commit what is safely done, emit `NEEDS: <question + why blocked + options>`, stop that task; the orchestrator resolves it and resumes you with your context intact. Aside from those signals, do NOT ask questions — if merely ambiguous, make a reasonable decision and flag it.
-   - **Language**: All output and reports MUST be in Traditional Chinese. Code and code comments MUST be in English.
+   - **Signaling a genuine stop (`NEEDS` / `CONFLICT` / `BLOCKED`)** — per *Signaling Unknowns* in `agent-guidelines`. Aside from those signals, do NOT ask questions — if merely ambiguous, make a reasonable decision and flag it.
    ```
 
    **Dispatch rules (same as apply):**
@@ -179,10 +176,9 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
    - Use the **Agent** tool with `run_in_background: true` and `mode: "bypassPermissions"` for ALL worker agents (without `bypassPermissions`, background agents hang on invisible Write permission prompts)
    - Give each agent a descriptive `name`
    - **Writes single-threaded**: dispatch implementation/fix agents **one at a time** in dependency order, each committing before the next starts. Only the strictly read-only reviewers (Phase 2's review-engineer and security-engineer, plus performance-engineer when dispatched) are dispatched simultaneously; qa-engineer runs alone after them. (Multi-repo exception: agents in *different* child repos may run concurrently.)
-   - You will be **automatically notified** when each background agent completes — do NOT poll
    - **Stamp each of step 8's `Time` rows at its boundary with `date`, and each dispatched agent's spawn and return.** Step 8's final report prints the breakdown. The numbers are only cheap at the boundary: a returning agent's report carries no elapsed time, and `ListAgents` gives an age relative to now, so once a later round starts an earlier one's cost is no longer recoverable.
    - **Handling a MOCKED return**: a `MOCKED:` line is **not a stop** — that task is done and committed with one external dependency stubbed (`skills/agent-guidelines/SKILL.md` → *Signaling Unknowns*). Proceed as with DONE, and carry every such line into your final report as work the user still has to do: the swap they perform and how they check it. `/quick` writes no artifacts, so this report is the only place it can survive — dropping it ships a stub nobody knows about.
-   - **Handling a NEEDS return**: if an agent's report contains a `NEEDS:` line, treat it as *paused awaiting an external fact*, not done. Resolve it with whatever tools/knowledge you (the orchestrator) have — except a resolution that changes the user's machine outside the working tree (installing software, launching a desktop app), which is the user's call — then **resume the SAME agent with `SendMessage`** (context intact — do NOT re-dispatch). Because agents run in the background you can service several concurrently. `CONFLICT:` → resolve with the user; `BLOCKED:` → re-scope or re-dispatch with corrected context. See `skills/agent-guidelines/SKILL.md` → *Signaling Unknowns* for the vocabulary.
+   - **Handling a NEEDS / CONFLICT / BLOCKED return**: per `agents/orchestrator.md` → Phase 1 step b.
    - **Enforce analytical depth for reviewer agents only**: read `${CLAUDE_PLUGIN_ROOT}/references/reviewer-depth.md` and include its block verbatim in every `review-engineer` / `security-engineer` / `qa-engineer` dispatch. That file also states the two things you must settle **before** dispatching — cross-repo questions, and asserting only what you verified — which are the dispatcher's, not the reviewer's. Quick mode usually has no specs, so the `qa-engineer` line resolves to "every affected user-facing flow" — that conditional is in the file. It also names who must NOT receive it (implementation and fix agents, `performance-engineer`, technical-writer) and why; honor that exclusion.
 
    **Phase execution based on complexity:**
@@ -206,7 +202,7 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
    **Conditional Phase 2 reviewer — performance-engineer (all complexity levels):** if the diff touches a **performance-sensitive surface** (new/changed API endpoint, stored-procedure / SQL / Dapper / EF query, data-access/repository path, batch or data-pipeline job, list/report endpoint), add **performance-engineer** to the Phase 2 parallel dispatch. It does **static data-scale capacity analysis only** (no load tests/profilers; no code edits) and reports a per-path verdict (SAFE / RISKY / WILL NOT SCALE, or `未評估` where a project `never-read` path blocked assessment); findings are advisory recommendations routed to the owning agent. Skip for purely frontend-presentational, config, docs, or test-only diffs.
 
-   If review, security, or QA fails, run the **Fix → Re-verify Loop exactly as `agents/orchestrator.md` defines it** (that section is the single home for the loop: sequential fix agents, your own per-agent `git diff` check that each finding is gone, severity triage, fresh reviewers scoped to the fix range, the test-only carve-out, the terminal `minor` branch, max 3 rounds). Two quick-mode facts it does not carry: a `WILL NOT SCALE` verdict from the conditional performance-engineer counts like a `blocker` / `major` for the re-round decision, and a backgrounded reviewer is reused via `SendMessage` only where the code did not change — a follow-up question, or confirming one local fix closed the single finding it raised.
+   If review, security, or QA fails, run the **Fix → Re-verify Loop exactly as `agents/orchestrator.md` defines it** (that section is the single home for the loop: sequential fix agents, your own per-agent `git diff` check that each finding is gone, severity triage, fresh reviewers scoped to the fix range, the test-only carve-out, the terminal `minor` branch, max 3 rounds). One quick-mode fact it does not carry: a backgrounded reviewer is reused via `SendMessage` only where the code did not change — a follow-up question, or confirming one local fix closed the single finding it raised.
 
    **Commit consolidation (per group, single-writer):**
 
@@ -280,9 +276,6 @@ Best for: bug fixes, small features, refactors, chores — tasks where full spec
 
 ## Guardrails
 
-- **No spec files are written** — analysis stays in-memory and is passed to agents via prompts
-- **Execute first, report after** — show the plan and dispatch immediately; wait only when the plan carries genuine questions (Step 5d)
-- **Code review + security review run at every complexity level** — never skipped
 - **Language**: All output in Traditional Chinese. Code and comments in English.
 
 ## When to Suggest Full Spec Instead

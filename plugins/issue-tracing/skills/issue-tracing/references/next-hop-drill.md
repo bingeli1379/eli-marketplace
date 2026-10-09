@@ -9,7 +9,7 @@ Triggers, in priority order — use the highest-priority signal available, do no
 
 **HTTP error pattern** (`status=502/503/504`, `connection refused`, `timeout`) implies an upstream — apply the trigger ladder above to identify it. Do not stop at "got 503" without identifying the upstream.
 
-**Boundary-driven, not hop-capped.** Keep drilling through your team's own services (per the environment knowledge's ownership info) until you reach the service where the fault actually originates, OR the next hop is a service owned by another team (stop there — state what it returned, leave its internals to the owner). There is no fixed hop limit. Every hop must be backed by real call data (a host in an error, a log naming the service, an outbound call in code, or a documented dependency) — never invent a hop. Runaway guard: if the chain exceeds ~5 hops, stop, lay out the full chain, and hand the decision to the user. List the chain in Unknowns whenever you stop before a confirmed root cause.
+**Boundary-driven, not hop-capped** — SKILL.md step 5f's loop discipline (real call data behind every hop, the ~5-hop runaway guard) governs this drill. List the chain in Unknowns whenever you stop before a confirmed root cause.
 
 ## Slowed-but-not-broken hop is itself an upstream pointer
 

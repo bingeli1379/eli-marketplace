@@ -6,8 +6,6 @@ The text pass's criteria, loaded by `/review-skill` step 2 alongside `${CLAUDE_P
 
 **Letters are permanent.** Other files cite `criterion t`, `criteria p and q`, `criteria a–z`. Never renumber or drop a letter; retire one by marking it, not by deleting it.
 
-**Every criterion is applied to every target; state N/A explicitly rather than silently skipping one** — a pass that quietly covers half its rungs reads exactly like a clean one.
-
 Rate each finding as:
 - **SAFE**: No quality risk
 - **RISKY**: Could cause the agent to produce lower quality output
@@ -56,8 +54,8 @@ Rate each finding as:
 
 ## Context bloat detection (applies to ALL file types)
 
-**j. Well-known information** — rule: catalogue *Cost*, step 4 (cut the lecture, never the rule).
-- Audit adds the two-part test, and both halves must hold before flagging: **"Is this a verbose explanation that adds no actionable constraint, AND would the agent reliably do the right thing without any mention of this topic?"** A one-liner is a rule, not bloat, however obvious the concept. Flag **RISKY** and condense to a one-line rule; never remove the rule itself.
+**j. Well-known information** — rule: catalogue *Cost*, step 4 (cut the lecture and the script, never the record).
+- Audit adds the two-part test, and both halves must hold before flagging: **"Is this a verbose explanation that adds no actionable constraint, AND would the agent reliably do the right thing without any mention of this topic?"** Flag **RISKY** and condense it to the fact or constraint it carries. Whether what survives stays is (k)'s call — the record decides, never the length.
 
 **k. Deletion needs a named reason** — this is the **policy about the burden of proof**, and it governs the whole pass. Rule: catalogue *A rule earns its line* (what a rule is for) and *Delete a rule only for a named reason* (the three reasons).
 - Audit adds the ratings. A rule with a **recorded failure** behind it — a `Measured:` / `Observed:` note, an incident or project convention the file names, a harness fact — is kept whatever the model "should" know; removing one is **BROKEN** under (a). A rule with **none**, that restates a model default, scripts the model's reasoning or route, or is emphasis around a rule that stays, is **RISKY**: condense it to the fact it carries, or remove it and name it in `### 已修` with which of the three reasons applied, so the deletion is reviewable after the fact.
@@ -86,11 +84,7 @@ Rate each finding as:
 - **BROKEN** if a referenced file does not exist; **RISKY** if a referenced heading cannot be found.
 
 **q. Factual accuracy of named references** — audit-only: verification, not authoring.
-- For every step number, file path, function / method / variable name, or CLI output string **added in the diff**, verify it exists:
-  - Step N references → check the step count and headings in the current file
-  - File paths → use `Glob` to confirm existence
-  - Function / method / variable names → grep the codebase
-  - CLI output strings → note as "requires manual verification" if not confirmable programmatically
+- For every step number, file path, function / method / variable name, or CLI output string **added in the diff**, verify it exists; a CLI output string that cannot be confirmed programmatically is noted as "requires manual verification".
 - **A target whose content rots without being edited is verified whole, not diff-scoped** — e.g. a `CLAUDE.md`, or any prose naming build/test commands, codebase paths, or a tech-stack version. Those lines go stale because the *codebase* moved, with nobody touching the file, so the "added in the diff" filter above passes a command that no longer runs. Verify every command and path such a file names, changed or not.
 - **BROKEN** if a referenced item does not exist. **RISKY** if the reference is fragile — a step number without its name (the catalogue's rule), or a hardcoded CLI string that drifts across tool versions.
 
@@ -99,7 +93,7 @@ Rate each finding as:
 
 **s. Claude-first authoring (open standard as the free baseline)** — audit-only **policy**: what NOT to flag.
 
-These prompts target **Claude Code as the authoritative, primary harness** — audit for Claude effectiveness first. The [Agent Skills open standard](https://agentskills.io) (`name` + `description` + plain markdown) is the portable baseline you get for free, but **use Claude-specific features freely wherever they make the prompt work better on Claude — do NOT genericize, water down, or remove them for cross-harness portability.** Other harnesses (Codex, etc.) are handled by a downstream build/compile step that transforms this authoritative source; portability is NOT bought by degrading the source. (Why: Codex doesn't expand `${CLAUDE_*}`, has no `Task`/subagent dispatch, and doesn't bundle agents via plugins — but the answer is to compile for it later, not to cripple the Claude source now.)
+These prompts target **Claude Code as the authoritative, primary harness** — audit for Claude effectiveness first. The [Agent Skills open standard](https://agentskills.io) (`name` + `description` + plain markdown) is the portable baseline you get for free, but **use Claude-specific features freely wherever they make the prompt work better on Claude — do NOT genericize, water down, or remove them for cross-harness portability.** Other harnesses (Codex, etc.) are handled by a downstream build/compile step that transforms this authoritative source; portability is NOT bought by degrading the source.
 
 **Do NOT flag — this is correct Claude authoring, using these is the whole point:**
 - Harness context injection — bang-backtick (a `!` immediately followed by a backtick-wrapped command) in the body.
@@ -126,15 +120,14 @@ These prompts target **Claude Code as the authoritative, primary harness** — a
 Criteria a–t ask whether the prompt still *says* the right thing. These four ask whether saying it that way actually *changes what the agent does*. All four judge wording against the model's default behavior, not against a style guide.
 
 **u. Completion criteria — can the agent tell done from not-done?** — rule: catalogue *Done-conditions must be checkable*.
-- Audit adds the two properties to test per step: **checkable** (could the agent objectively tell whether it is met?) and, where it matters, **exhaustive**. The same demand binds a flat criteria list, not just numbered steps — "every criterion applied, N/A stated explicitly" is what stops a pass covering half its rungs. **RISKY** when a bound is unfalsifiable; fix by sharpening the criterion, which is additive and safe. Do NOT restructure or split the skill to hide later steps — that is a design change, so surface it as a suggestion instead.
+- Audit adds the two properties to test per step: **checkable** (could the agent objectively tell whether it is met?) and, where it matters, **exhaustive**. **RISKY** when a bound is unfalsifiable; fix by sharpening the criterion, which is additive and safe. Do NOT restructure or split the skill to hide later steps — that is a design change, so surface it as a suggestion instead.
 
 **v. Positive steering over prohibition** — rule: catalogue *Give a positive target alongside a prohibition*.
 - Audit adds: **RISKY** when a rule is phrased purely as a ban and a positive target exists that implies the same constraint. **Reconciliation with (h): h wins on force, v wins on phrasing.** The fix is to **add** the positive target, keeping the prohibition intact — never to delete a guardrail or downgrade it. Where a behavior genuinely cannot be phrased positively, the bare prohibition stays and is correct.
 
 **w. No-ops — does this line change behavior versus the model's default?** — audit-only; rated under (k).
-- A line can be relevant, true, and still buy nothing because the model already does it by default. This differs from (j): j asks whether prose is a *verbose explanation*; this asks whether an instruction — however concise — moves the agent at all.
-- When the concern behind a weak instruction is real — a recorded failure, a convention — the fix is a **stronger or more exact word**, never removal; sharpening is additive.
-- **Rating follows (k)**: a no-op with no recorded failure behind it is **RISKY** and handled there. The residual is a line where the file gives you no way to tell whether the model does this by default *and* nothing records a failure either way — report that as a **NOTE** and leave it; it is the one case only the user can judge.
+- A concise instruction the model already follows by default buys nothing; (k) rates it. When the concern behind a weak instruction is real — a recorded failure, a convention — the fix is a **stronger or more exact word**, never removal.
+- What (k) cannot settle is reported here: a line where the file gives you no way to tell whether the model does this by default *and* nothing records a failure either way — a **NOTE**, left for the user to judge.
 
 **x. Information hierarchy — is each piece at the right depth?** — rule: catalogue *Where content lives* (the extract/don't-extract tests and pointer wording).
 - Audit adds three ratings. A must-have behind a vague pointer is a **variance bug**: **RISKY**, and fix the wording first (name what is behind it and the condition for reaching it); only pull material back inline if sharpened wording still cannot be trusted. And **length itself is a finding, but disclosure is the cure — not deletion**: a file can be too long even when every line is live, unique, and battle-tested. **Report length as a NOTE**; the cure is disclosure, not a removal this criterion picks — a rule only ever comes out under (k), by its named reason. **The frontmatter `description` is carved out of that NOTE**: a body's length is a trade-off only the author can weigh, while a description's budget and the way to meet it are both stated — the catalogue's *Compress every description by default* — so an over-budget description is **RISKY** and fixed in the pass, under that entry's before/after list, which is what stops the trim narrowing what reaches the skill. The situations it checked go in that fix's `### 已修` entry; an unreported list is an unrun one.
