@@ -123,9 +123,6 @@ files.** Count the changed files first and check the sum before writing the line
 in none of them vanishes from the accounting, and the line still reads as a complete one whatever it
 adds up to.
 
-The counts are what let the reader disagree with a skip, which is the only way a wrong skip ever
-gets found.
-
 Records: the four counts and the project-list state. Step 5's gate B holds the report layout they
 are printed in, and adds its own counts beside them.
 
@@ -145,5 +142,3 @@ editing a list gate B would not have produced.
   escalated on the spot and reviewed; the depth was a budget, not a permission. **The counts then
   record what you did, not what you planned**: a file you assigned `skip` and then read lands in the
   depth you actually read it at, and its skip class comes off with it.
-- **Not a reason to report less.** Depth governs reading only; what is worth reporting is step 5's
-  gate B, and a file read at `diff` depth reports whatever it showed.
