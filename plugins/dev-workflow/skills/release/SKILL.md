@@ -5,7 +5,6 @@ description: "Use when cutting a release, bumping a version, or generating a cha
 
 # Release Changelog & Version Bump
 
-**Type**: Automated release workflow
 **Goal**: Detect current version, compare changes since that version, generate changelog, and bump version number
 
 **Ask only when the answer is not in the repo** — which package to release, where the version lives when no manifest or tag says, which baseline when none can be found. Everything the repo already settles — the bump, mirror manifests, the commit — is applied without confirmation.
@@ -20,7 +19,6 @@ description: "Use when cutting a release, bumping a version, or generating a cha
 - find its last release commit: `git log --oneline -1 --grep='release v' -- <package>/` — filter by the package **directory**, not its version file: a first release keeps the version as it stands, so its release commit touches only the CHANGELOG and a version-file filter misses it entirely
 - list non-release commits touching it since: `git log <rel>..HEAD --oneline --no-merges -- <package>/`
 - a package with commits there has unreleased work; a package with none is up to date, skip it.
-Note a single change can land under a package via a commit whose scope tag names a *different* package (see step 3) — path-filtering by `-- <package>/` is what catches it, not the commit message.
 
 **Version source.** Within the target package's directory, find the file that carries its version — a plugin manifest (`.*-plugin/plugin.json`), a language manifest (`package.json`, `*.csproj` / `Directory.Build.props`, `pyproject.toml`, `Cargo.toml`, a `version.go` constant), or a plain `VERSION` / `version.txt`. When a plugin manifest and a language manifest sit side by side, the plugin manifest is the version that ships. No version file → fall back to git tags (`git tag --sort=-v:refname`); nothing there either → ask the user where the version lives.
 
@@ -40,9 +38,7 @@ Once the baseline commit is identified, scope every range query **to the target 
 
 ### 3. Categorize changes
 
-- Categorize commits by Conventional Commits type (feat, fix, refactor, etc.)
-- If commits don't follow Conventional Commits, infer category from the diff content
-- Ignore merge commits and chore/ci/style commits unless they are user-facing
+- A commit not written in Conventional Commits form is categorized from its diff — step 4's bump reads the category, so an unprefixed feature commit would otherwise land as a patch.
 - **A commit's scope tag is not its only package.** One commit may touch several packages (e.g. a `fix(sdd)` commit that also edits an `sdd-electron` agent). Attribute each change to the package whose files it modifies — when releasing package A, the changelog covers only hunks under `A/`; hunks under `B/` belong to B's release. Determine the bump for A from A's path-scoped commits only, not from the commit's scope tag.
 
 ### 4. Determine version bump
@@ -54,7 +50,6 @@ Once the baseline commit is identified, scope every range query **to the target 
 ### 5. Generate changelog entry
 
 - Format: [Keep a Changelog](https://keepachangelog.com/) style — `## [x.y.z] - YYYY-MM-DD` (today's date), sections Added / Fixed / Changed / Removed, only non-empty ones
-- Each entry: one line describing what changed + why it matters to the user
 - Merge related changes into a single entry (e.g. 5 commits fixing the same form → 1 entry); batch trivial fixes into "Minor bug fixes and stability improvements" if individually uninteresting. Aim for **3–7 entries total** per release; exceed only for genuinely large releases
 - No commit hashes — they add noise for end users
 - Prepend the new entry to the **target package's** `CHANGELOG.md` — the one alongside its version manifest (e.g. `plugins/<name>/CHANGELOG.md`), NOT the repo root. Create if not exists, keep existing entries
@@ -62,7 +57,6 @@ Once the baseline commit is identified, scope every range query **to the target 
 ### 6. Bump version number
 
 - Update the version field in the detected version file(s)
-- **Parallel manifests of the same package** (e.g. `.claude-plugin/plugin.json` + `.codex-plugin/plugin.json`) are all bumped to the same new version in lockstep, every one of them
 - Preserve each file's existing formatting
 - After editing, verify each JSON manifest still parses (e.g. `python3 -m json.tool <file> >/dev/null`) before committing — a version edit that breaks the manifest ships a broken plugin, worse than a stale version
 - **Refresh any lock file that records the package's own version.** Some lock files pin the package being released, not just its dependencies (`package-lock.json` does) — grep the **old** version string in each lock file inside the package, **and in the workspace root's lock file** when the package is a workspace member: an npm/pnpm workspace keeps one lock at the root recording every member's version, so a package-scoped look finds nothing and the stale entry ships. A hit means the lock may carry the package's own version, so refresh it with the ecosystem's metadata-only command (`npm install --package-lock-only` and its equivalents) and confirm the lock now names the **new** version. Do NOT verify by the old string disappearing — an unrelated dependency pinned at that same version keeps it present forever. No such command available → say so and release without it rather than hand-editing the lock
@@ -78,4 +72,3 @@ Once the baseline commit is identified, scope every range query **to the target 
 - Write for **end users who don't read code** — describe behavior, not implementation; plain language, no jargon like "refactor", "migrate", "normalize"; English, imperative mood
 - Each entry answers: "What changed, and why should I care?" — only changes the user will **notice or need to act on**
 - Omit silently: internal refactors and renames, dependency bumps (unless they fix a user-visible bug or add a feature), CI/CD, build, lint, style, test-only changes, documentation-only changes (unless it's a new user-facing guide)
-- **Be as concise as possible WITHOUT distorting meaning** — trim filler, but never at the cost of accuracy. A shorter entry that misstates or over-generalizes what changed is worse than a longer, correct one. When concision and fidelity conflict, fidelity wins
