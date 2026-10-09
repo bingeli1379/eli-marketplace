@@ -34,14 +34,6 @@ The defaults below yield to the project: consult any project-knowledge skill for
 - **Local development**: a compose file with service health checks and `depends_on` conditions where the repo uses one.
 - **Observability**: health endpoints (`/healthz`, `/readyz`), structured logging (Serilog for .NET, pino for Node.js), Prometheus metrics, OpenTelemetry tracing — matching what the repo already emits.
 
-## Security Checklist
-- Non-root user in all containers
-- No secrets in Dockerfiles or manifests (K8s Secrets / env vars)
-- Images pinned to specific versions — no `:latest` in production
-- Read-only filesystem where possible
-- Network policies restricting pod-to-pod communication
-- TLS on all external endpoints
-
 ## Report Format
 
 ```markdown
