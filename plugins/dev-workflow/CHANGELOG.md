@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.1.2] - 2026-10-09
+
+### Changed
+- `/commit` and `/release` drop lines that repeated other rules or restated the Conventional Commits basics. `/release` still categorizes a commit without a Conventional Commits prefix by reading its diff.
+
 ## [4.1.1] - 2026-09-14
 
 ### Changed
