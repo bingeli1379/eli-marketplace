@@ -18,7 +18,7 @@ A Claude Code plugin marketplace. It hosts custom plugins (skills) distributed v
 Contains:
 
 - **dev-workflow** — daily workflow skills: commit, release
-- **prompt-workflow** — the same for the prompt files that steer the AI: skill-authoring, review-skill, improve-skill (what they say and whether they hold), plus usage-audit (what is installed and whether it ever fires)
+- **prompt-workflow** — the same for the prompt files that steer the AI: skill-authoring, review-skill, improve-skill (what they say and whether they hold), trim-skills (what a stronger model no longer needs), plus usage-audit (what is installed and whether it ever fires)
 - **issue-tracing** — on-call triage assistant that turns a Grafana or Kibana/ELK URL into a structured incident report
 - **code-review-workflow** — criteria a running reviewer loads before it reviews: which changed files are worth reading how deeply (gate A, in `review-criteria`'s `SKILL.md`) and which findings are worth reporting (gate B, in its `gate-b.md`, read at the point the findings get written). Not a review tool of its own
 - **sdd** — spec-driven AI development workflow core (proposal, design, tasks → implement, validate, archive): workflow commands, orchestrator, architect, cross-cutting reviewers, universal skills

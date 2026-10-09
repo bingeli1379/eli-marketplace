@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.20] - 2026-10-09
+
+### Added
+- `/trim-skills` finds what a stronger model no longer needs in prompt files you author — one skill, one plugin, or the whole repo. It audits in parallel and stops at a report you approve before anything changes, then reviews every edited file with fresh eyes, because trimming is what tends to break things. Run it after a model upgrade, or whenever your skills feel heavy.
+
 ## [0.2.19] - 2026-10-09
 
 ### Changed
