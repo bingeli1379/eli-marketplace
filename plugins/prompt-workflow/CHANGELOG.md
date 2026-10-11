@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.21] - 2026-10-11
+
+### Added
+- `/trim-skills` now also finds files nothing uses any more — scripts, references, templates and config left behind by earlier edits. Before calling a file unused it checks the ways a plain search misses: loaded by module name, picked up through a folder scan or a built-up path, or only ever run by hand. Files it cannot rule out come back as your call, with the evidence, instead of as deletion candidates.
+- `/trim-skills` also flags where a skill's text and its script disagree, such as a cache the text promises and the script never reads. Bugs and code quality inside a script are left to a code review.
+
 ## [0.2.20] - 2026-10-09
 
 ### Added
