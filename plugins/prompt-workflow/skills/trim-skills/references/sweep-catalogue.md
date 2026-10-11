@@ -11,6 +11,8 @@ Two open sets: where drag hides, which the slice audit hunts, and what a trim br
 - **Dead modes** — a mode, branch, or template no caller reaches. Observed: an orchestrator's free-form mode with zero direct spawns in transcripts, still carrying a report template that competed with the adopting skill's.
 - **Workarounds for behaviour now native** — an instruction the harness or a tool now enforces itself (a "do not poll or sleep" the harness now blocks; a parameter the tool schema now marks required). A recipe calling a tool in a way it never supported belongs here too: observed, a Grafana templating function sent as a PromQL query.
 - **Emphasis volume** — caps, "NOT optional", a third restatement, around a rule nobody recorded being skipped.
+- **Leftovers of one-point edits** — a reference section, template field, config key or script flag no step names any more; a sentence that only contrasts something already removed. Whole files left unreached are the file scan's to find; this entry is the part inside a file that is still reached.
+- **Prose and its script disagreeing** — the prose promises behaviour the script does not have (a cache it never reads, a flag it does not accept, an output field it does not emit), or the script carries a mode, flag or output no prose drives. Read both sides: either one alone reads correct.
 
 ## What a trim breaks
 
