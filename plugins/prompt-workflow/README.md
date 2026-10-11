@@ -4,8 +4,9 @@ Everything else here helps the AI work on your code. This plugin works on the AI
 what it has loaded, what it never uses, and whether the parts you added are any good.
 
 **Two halves, split by what they read.** `/usage-audit` never opens a prompt file; it asks only
-whether the thing ever fires. `skill-authoring` / `/review-skill` / `/improve-skill` / `/trim-skills` never count
-calls; they judge what a prompt file says and whether its procedure holds.
+whether the thing ever fires. `skill-authoring` / `/review-skill` / `/improve-skill` / `/trim-skills` never rank
+by calls; they judge what a prompt file says and whether its procedure holds — `/trim-skills` reads
+transcripts only to check that a deletion candidate is really unreached.
 
 ## Skills
 
@@ -93,11 +94,12 @@ Usage-driven and cross-repo. When anything a plugin ships — a skill, an output
 - Does **not** commit, push, or reinstall the plugin — you do those afterward so the fix goes live
 - Report language: Traditional Chinese (technical terms in English)
 
-### `/trim-skills` — Trim After a Model Upgrade
+### `/trim-skills` — Trim What Your Skills No Longer Need
 
-When the model under your skills gets stronger, rules written against a weaker one become drag. `/trim-skills` finds them in one skill, one plugin, or every skill a local repo authors, and removes them once you approve.
+When the model under your skills gets stronger, rules written against a weaker one become drag; and one-point edits leave text, scripts, templates and config behind that nothing reaches any more. `/trim-skills` finds both in one skill, one plugin, or every skill a local repo authors, and removes them once you approve.
 
 - Slices the scope and audits each slice in parallel, report-only; every candidate carries a named deletion reason from the shared authoring catalogue, and a rule with a recorded failure behind it is never one
+- Classifies every bundled file by how it is reached — by name, by module import, through a glob or an assembled path, or only in your transcripts — so a file is a deletion candidate only when none of the four reach it; the dynamic and transcript-only ones come back as your call, with the evidence
 - Checks the high-impact claims itself before reporting — a contradiction is read, a "dead" mode is counted in your transcripts
 - Stops at a report: what goes, what a deletion also fixes, the clauses in your own authoring rules that would block the trim, and what it will not take. Pass `--report-only` to end there
 - On approval, edits per slice, then runs a fresh-eyes `/review-skill` pass over every changed file, because the trim itself is what introduces defects
