@@ -166,6 +166,22 @@ actual pack automatically:
 **When adding a new skill, add its entry to core `skills/SOURCES.yaml`** (even if the
 skill file lives in a pack) so `update-skills.sh` can sync it.
 
+## Run Timing
+
+A maintainer tool, not part of any workflow: no skill or agent calls it. After a run, it reads
+the session's transcripts (every message is timestamped, so nothing is logged live) and reports
+total / architect / Phase 1 / per-round review, triage, fix and handoff minutes, plus how long
+test-like and slow Bash commands took:
+
+```bash
+./scripts/run-timing.py                  # latest session with subagents in the cwd's project
+./scripts/run-timing.py <session.jsonl>  # a specific session
+./scripts/run-timing.py ... --slow 60    # list Bash calls >= 60s (default 30)
+```
+
+Claude Code prunes old transcripts, so run it soon after the run. Rounds are inferred from the
+order agents ran in, and test-like commands are matched by regex, so treat both as approximate.
+
 ## Maintenance — adding a new stack pack
 
 1. Create `plugins/sdd-<stack>/` with `.claude-plugin/plugin.json` (`dependencies: ["sdd"]`),
