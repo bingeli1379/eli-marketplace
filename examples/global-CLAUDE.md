@@ -20,18 +20,19 @@ An active output style / persona overrides the tone wording here; everything els
 # Dev Workflow
 - Before coding or non-trivial planning, use relevant available skills/tools if they match the task
 - Asked to REVIEW a code change — any phrasing of a review request, any path (`/code-review`, 「review 這包」, 「幫我 code review」, 「這段有問題嗎」) → if you keep a review-criteria skill (this repo ships one: `code-review-workflow`'s `review-criteria`), load it BY NAME first. Only when a review was actually asked for: reading a diff to understand or explain it (「看一下我最近的 commit」, 「這包在做什麼」) is not a review and loads nothing. A lazily-loaded criteria skill loses the trigger race to the built-in `/code-review` and will not fire on its own. Not for prompt/skill/agent files — those go to a prompt-file audit (`prompt-workflow`'s `/review-skill`, if installed)
-- Minimum code, surgical edits; no speculative abstractions, no drive-by refactors/reformatting. Don't extract single-use code — a one-line helper with no second caller reads worse than the line itself; no new dependency for what a few lines or an already-installed package can do
+- Minimum code, surgical edits; no speculative abstractions, no drive-by refactors/reformatting. Don't extract single-use code, even a one-line helper with no second caller; no new dependency for what a few lines or an already-installed package can do, except a swap that replaces an installed tool with a better one
 - Define success criteria upfront for non-trivial work, then iterate until verified; for a design or plan write them out as acceptance criteria, not for every code change
 - Cheap to verify (grep, a file, a tool call) → verify, don't speculate or defer; reserve "unverified" for the truly unreachable
+- Pure upside (a real benefit, no real cost) → just do it now. Don't defer it ("later", "not worth it yet") or recommend skipping it because the gain looks small. Recommend against only when it is over-engineering, meaning complexity added for a need that doesn't exist yet, stating why (the one explanation owed unprompted). Swapping to a better tool or turning on an option that already exists is not over-engineering
 - Do not silently blend conflicting patterns
 - Fixing a bug → grep for the same pattern elsewhere; same root cause → fix them all in this pass, otherwise list what you found and let me scope it
-- Code comments in English. Don't comment the lines you just wrote — write one only for what the code cannot carry itself: a domain rule the reader can't infer, or a constraint an innocent-looking edit would undo; never a restatement of what the line does
+- Code comments in English. Don't comment the lines you just wrote — write one only for what the code cannot carry itself: a domain rule the reader can't infer, or a constraint an innocent-looking edit would undo
 - Never ask or prompt me to commit/push — I'll say so when I want it. Commit messages technical-only, no AI/tool mentions
 - Report "done" only with evidence (commands/output/verification); "should work" / "in theory OK" is not done; state skipped or partial work explicitly
 
 # Cross-project lookup
-- Default to the current project; cross into `~/Project` / `~/SideProject` only on a concrete cross-project signal (import to an external repo, cross-service API contract, shared lib, a named repo/service, or a stored procedure / table / column the current repo only references by name) — never on a hunch
-- Before crossing, name in one line which project(s) you'll search — no silent scan of either tree
+- The current project is the default scope only for self-contained questions. If the answer sits across a boundary (e.g. a value arriving via claims/HTTP/queue/shared lib, an import to an external repo, a cross-service API contract, a named repo/service, a stored procedure / table / column the current repo only references by name, "where does X come from / who sends X / how does the other side render X", or I say "my local project") → read the other side in the same turn, before answering. Never answer from the near side's evidence alone. Don't scan `~/Project` / `~/SideProject` on a hunch when no boundary is in play
+- Before crossing, name in one line which project(s) you'll search, then go. The naming is not a gate and not "finish this side first" — no silent scan of either tree
 
 # Planning
 - When asked for a plan, keep it extremely concise — fragments over full sentences, concision beats grammar; the voice still stays whatever is active
