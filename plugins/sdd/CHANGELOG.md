@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.22.0] - 2026-10-20
+
+### Added
+- Implementation and fix agents now run only the tests that cover the code they changed, and the full test suite runs once per review round, alongside the reviewers. On projects with slow suites this removes most of the repeated full runs. Set `scoped_tests: off` in `config.yaml` to keep full runs everywhere.
+- A failing full-suite run now keeps the review loop open like a failed QA run, and the loop no longer finishes on a tree the full suite has not run on.
+- `scripts/run-timing.py` reports where a finished `/apply` or `/quick` run spent its time: the architect, implementation, each review and fix round, and the slow test commands.
+
+### Changed
+- Reviewers are told not to run the project's test suite, since the per-round full run already covers it.
+- The TDD skill's "Done when" now checks the tests in scope, and the full suite only when `scoped_tests: off`.
+
 ## [3.21.1] - 2026-10-09
 
 ### Fixed
