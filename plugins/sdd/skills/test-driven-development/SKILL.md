@@ -29,7 +29,7 @@ One behaviour, a name that states it, against real code (mocks only when unavoid
 
 ### Verify RED — watch it fail
 
-Run the project's own test command (the `verification_commands` entry when one is configured). Confirm it **fails** rather than errors, and fails because the behaviour is missing, not from a typo. A test that passes here is testing existing behaviour — fix the test. A test that errors is fixed and re-run until it fails correctly.
+Run the project's own test command (the `verification_commands` entry when one is configured), scoped per *Scoped runs* below. Confirm it **fails** rather than errors, and fails because the behaviour is missing, not from a typo. A test that passes here is testing existing behaviour — fix the test. A test that errors is fixed and re-run until it fails correctly.
 
 ### GREEN — the simplest code that passes
 
@@ -46,6 +46,10 @@ Same command. The new test passes, the other tests still pass, the output is cle
 - Delete every comment written in RED/GREEN that fails the `agent-guidelines` self-check (*what would a reader get wrong without it?*) — the pull to explain a design decision in code is strongest right after implementing it, so this pass is where those paragraphs go.
 
 Then the next failing test.
+
+## Scoped runs
+
+Unless `config.yaml` sets `scoped_tests: off`, every test run inside your tasks (RED, GREEN, and each fix verification) covers only the tests for the code you changed or added: the configured `unit_test` with the test runner's own selection argument added (a class, file, path or namespace), which is the one addition allowed to a configured command, and nothing else of yours. A scoped run counts only when its output reports at least one test executed, since a selector matching nothing exits 0 on common runners. Do not run the full suite: the orchestrator runs it as the test gate once per review round.
 
 ## Anti-pattern: horizontal slicing
 
@@ -86,7 +90,7 @@ A walking skeleton is the *tracer bullet* above widened to the whole system: ins
 ## Done when
 
 - Every new behaviour has a test that was seen red, then green, for the expected reason.
-- The full suite passes with clean output; tests exercise real code, edge cases and error paths included.
+- The tests in scope pass with clean output (the full suite when `scoped_tests: off`); tests exercise real code, edge cases and error paths included.
 - A walking-skeleton group is checked against rule 2 of *Walking Skeleton* instead — "the end-to-end path actually runs"; every harden group and all other work is checked against this list.
 
 ## Bugs

@@ -36,7 +36,7 @@ Find working code in the same codebase that does what the broken code should, re
 
 1. **Write the failing test first** (per `test-driven-development`): the simplest reproduction, automated where a framework exists, a one-off script otherwise.
 2. **One fix, addressing the identified cause.** No bundled refactoring, no "while I'm here".
-3. **Verify** — the new test passes, the existing suite still passes, the original symptom is gone.
+3. **Verify** — the new test passes, the tests around it still pass (scope per `test-driven-development` → *Scoped runs*), the original symptom is gone.
 4. **A fix that does not work sends you back to Phase 1 with the new information.** After **three** failed fixes, stop fixing: each fix revealing new coupling elsewhere, or needing a large refactor to land, is a wrong architecture rather than a wrong hypothesis. Name the pattern and discuss it with the user before a fourth attempt.
 
 ## When the process finds no root cause
