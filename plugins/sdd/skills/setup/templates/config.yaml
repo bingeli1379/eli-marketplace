@@ -33,6 +33,13 @@ architecture:
 #     type_check: npm run type-check
 #     unit_test: npm run test:unit
 #     build: npm run build
+#
+# scoped_tests (optional): on by default. Implementation and fix agents run only
+# the tests covering the code they changed (unit_test plus the test runner's own
+# selection argument), and the orchestrator runs the full unit_test once per
+# review round, beside the reviewers. Set `off` to make every run the full
+# unit_test, e.g. when tests share state a partial run cannot see.
+#   scoped_tests: off
 
 # --- Per-artifact rules (optional) -------------------------------------------
 # Custom rules for specific artifacts.

@@ -25,7 +25,7 @@ Read the template at `${CLAUDE_SKILL_DIR}/templates/config.yaml` and fill it in:
 - **Versions live only in `tech_stack`**: strip version numbers from `architecture`, `hard_rules`, and `rules` before writing.
 - **`hard_rules` are invariants linters cannot express** (layer boundaries, allowed call directions, cross-component contracts). Anything an existing lint config enforces is dropped.
 - **Empty is valid**: leave a field as `""` / `[]` when SCAN marked it ○ or found nothing confidently. Do not invent placeholder content.
-- **Comments stay**: keep the template's explanatory comments for the optional sections (`lint_commands` / `verification_commands` / `rules`) so a human editing the file later has guidance.
+- **Comments stay**: keep the template's explanatory comments for the optional sections (`lint_commands` / `verification_commands` / `scoped_tests` / `rules`) so a human editing the file later has guidance.
 
 ---
 
