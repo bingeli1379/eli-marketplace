@@ -232,6 +232,7 @@ After all artifacts are created, **automatically runs validation** (`validate` s
    - Fill in Why (motivation, min 50 chars), What Changes, Capabilities (new/modified), Impact
    - Capabilities must use kebab-case names (these become `specs/<name>/` directories)
    - Impact should clearly indicate which layers are affected (Backend, Frontend, API, Database, etc.)
+   - A capability the change cannot wire yet (the upstream has no endpoint) is recorded under What Changes as left untouched or removed, never as kept commented out — `skills/agent-guidelines/SKILL.md` → *Comments: default to none*
 
    **b. specs/<capability>/spec.md** (FIRST — defines acceptance criteria before design)
    - Read proposal.md

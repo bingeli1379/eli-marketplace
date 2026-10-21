@@ -39,6 +39,8 @@ DO write, in one or two lines:
 - a domain rule the reader cannot infer (e.g. why a status is excluded);
 - a deliberate deviation from the obvious approach, when the reader would otherwise "fix" it.
 
+**Code is never kept as a comment, and no artifact asks for it.** What the change cannot wire yet (an upstream endpoint that does not exist) is left untouched or deleted — version control keeps what was removed. A proposal, design, or task that says to keep it commented out is a `CONFLICT:` for the implementer to raise, and no spec step writes that instruction. Observed: a design kept an unwired capability as commented-out code across several files, and the user deleted all of it by hand afterwards.
+
 Self-check: *"If I deleted every comment I just wrote, what would a reader actually get wrong?"* Keep only those.
 
 ## Match Existing Code Before Writing
