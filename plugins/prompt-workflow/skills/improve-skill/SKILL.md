@@ -7,7 +7,7 @@ description: Use when ANY asset shipped by a plugin you maintain in a LOCAL mark
 
 Feed real-usage problems back into your own skills: you used a skill you maintain in **another project**, it did something wrong, you handled it and finished — this skill turns that into a fix to the skill's **source** in whichever local repo owns it.
 
-**Scope — this skill does exactly ONE thing: patch the target's source in the local working copy of whichever repo owns it.** It does NOT commit, push, or reinstall the plugin. Those are your follow-up steps.
+**Scope — this skill does exactly ONE thing: patch the target's source in the local working copy of whichever repo owns it, and that repo's structure script when the defect is one a script can detect (step 3, locate the source).** It does NOT commit, push, or reinstall the plugin. Those are your follow-up steps.
 
 ---
 
@@ -56,6 +56,7 @@ Feed real-usage problems back into your own skills: you used a skill you maintai
    Map each target to its file in `<repo>`: `<repo>/plugins/<plugin>/skills/<name>/SKILL.md` (or `agents/*.md`, `references/*.md`, `output-styles/*.md`, `hooks/*`, `templates/*`, `config/*`). Then:
    - Edit the **working copy** at `<repo>`, never the installed cache or the marketplace clone.
    - **Apply whatever `0c`, load the maintenance conventions, turned up.** A maintenance skill's authoring rules govern this edit — where a new rule belongs, whether to merge into an existing one instead of appending, what must not change, which mirror files have to move together. Do not fall back to your own instinct because the target file itself says nothing.
+   - **A deficiency a script can detect is fixed in the repo's structure or lint script, not in prose.** When the defect is a deterministic property of files (a name that does not match its directory, a path that resolves to nothing, a value over a harness limit, a registration missing from a manifest), extend that repo's structure or lint script (the one step 6, validate the edits, runs) so the next occurrence fails, and run it against a copy that reproduces the defect to see it fail. A repo with no such script gets the prose fix. A sentence nobody is obliged to re-read does not stop a repeat; prose is for what no check can see. Observed: a second marketplace manifest drifted from the first with nothing complaining, until the structure script began failing on the mismatch.
    - **Only edit skills the repo authors itself.** If the owning repo tracks upstream-synced skills (e.g. a `SOURCES.yaml` that marks a skill `repo: <url>`), do NOT rewrite its body — a sync would clobber it. Its frontmatter `description` IS safe to edit (sync preserves local frontmatter) if the fix is a trigger-wording tweak. Prefer changing what the repo owns (an agent, a workflow-core skill, an original skill).
    - **Never add a hard cross-plugin / cross-marketplace dependency** — a path into another plugin, or a step that cannot finish when it is absent. A named Skill-tool load guarded by an absence plan is not that, and is allowed; the owning repo's own convention file settles which it wants.
 

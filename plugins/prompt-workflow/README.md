@@ -91,6 +91,7 @@ Usage-driven and cross-repo. When anything a plugin ships — a skill, an output
 - Run it bare (or just ask it to find what to improve) and it sweeps every maintained skill, agent, output style, and hook the session used, reporting a verdict for each — not only the first problem it spots
 - Ranks the changeset and applies it — no confirm gate; the report says what it decided. Routes durable preferences to memory / `CLAUDE.md` instead of editing a skill
 - Evidence-driven — only fixes things that actually went wrong when the skill was used, not speculative polish
+- A defect a script can detect (a name that does not match its directory, a path that resolves to nothing, a value over a harness cap) extends the repo's structure script instead of adding a prose rule, and the new check is run against a copy that reproduces the defect to see it fail
 - Does **not** commit, push, or reinstall the plugin — you do those afterward so the fix goes live
 - Report language: Traditional Chinese (technical terms in English)
 
