@@ -25,7 +25,7 @@ Every feature, bug fix, refactor, and behaviour change.
 
 ### RED — write one failing test
 
-One behaviour, a name that states it, against real code (mocks only when unavoidable — a test that asserts on a mock's call count tests the mock).
+One behaviour, a name that states it, against real code (mocks only when unavoidable — a test that asserts on a mock's call count tests the mock). Derive the expected value from the requirement, never from a run of the code under test, and assert only what a caller can observe: a return value, the error type callers branch on, state read back, an effect on a system outside the code. A private helper or an internal call order fails on a refactor and catches no bug.
 
 ### Verify RED — watch it fail
 
