@@ -90,7 +90,7 @@ Usage-driven and cross-repo. When anything a plugin ships — a skill, an output
 - Resolves each target's owning marketplace repo path from your global `~/.claude/CLAUDE.md` (asks once and offers to record it if missing; a bare sweep skips assets with no local source instead of asking); one run may span several repos, and each is edited, validated, and handed off separately
 - Run it bare (or just ask it to find what to improve) and it sweeps every maintained skill, agent, output style, and hook the session used, reporting a verdict for each — not only the first problem it spots
 - Ranks the changeset and applies it — no confirm gate; the report says what it decided. Routes durable preferences to memory / `CLAUDE.md` instead of editing a skill
-- Evidence-driven — only fixes things that actually went wrong when the skill was used, not speculative polish
+- Evidence-driven — only fixes things that actually went wrong when the skill was used, not speculative polish. That includes a skill that never loaded when your request matched its purpose (the fix is its description's trigger wording, in the phrasing you typed) and a fact you had to hand over that a tool in the session could have fetched
 - A defect a script can detect (a name that does not match its directory, a path that resolves to nothing, a value over a harness cap) extends the repo's structure script instead of adding a prose rule, and the new check is run against a copy that reproduces the defect to see it fail
 - Does **not** commit, push, or reinstall the plugin — you do those afterward so the fix goes live
 - Report language: Traditional Chinese (technical terms in English)
