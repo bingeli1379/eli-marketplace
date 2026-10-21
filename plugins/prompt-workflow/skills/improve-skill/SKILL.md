@@ -1,6 +1,6 @@
 ---
 name: improve-skill
-description: Use when ANY asset shipped by a plugin you maintain in a LOCAL marketplace/plugin repo — a skill, an output style or persona, an agent, a hook, a template — misbehaved, missed a case, or felt clunky while you used it during real work in ANOTHER project, and you want to feed that back into its source instead of working around it again. Triggers on improve, refine, patch, or fix a skill you just used, feed a problem back into a skill, look back over what this session used and find what to improve, 檢討剛剛用的 skill, 找看看有什麼要改進的, or /improve-skill with or without a target.
+description: Use when ANY asset shipped by a plugin you maintain in a LOCAL marketplace/plugin repo — a skill, an output style or persona, an agent, a hook, a template — misbehaved, missed a case, never triggered when it should have, or felt clunky while you used it during real work in ANOTHER project, and you want to feed that back into its source instead of working around it again. Triggers on improve, refine, patch, or fix a skill you just used, feed a problem back into a skill, look back over what this session used and find what to improve, 檢討剛剛用的 skill, 找看看有什麼要改進的, skill 該觸發卻沒觸發, or /improve-skill with or without a target.
 ---
 
 # Improve Skills from Real Usage
@@ -11,7 +11,7 @@ Feed real-usage problems back into your own skills: you used a skill you maintai
 
 ---
 
-**Input**: Name the target(s) via `$ARGUMENTS` (a `plugin:skill` reference, a bare skill name, a `<plugin>:<style>` output-style id, a persona / voice name, or a plugin name) and/or describe the problem. **Neither given selects the session sweep** — a bare `/improve-skill`, or an open ask to find what could be improved with no target or problem named: the targets are every maintained asset this session used (step 0a, which target), and every one of them is reviewed. There is no confirm gate: the run decides, edits, and reports what it decided (step 4, rank the changeset).
+**Input**: Name the target(s) via `$ARGUMENTS` (a `plugin:skill` reference, a bare skill name, a `<plugin>:<style>` output-style id, a persona / voice name, or a plugin name) and/or describe the problem. **Neither given selects the session sweep** — a bare `/improve-skill`, or an open ask to find what could be improved with no target or problem named: the targets are every maintained asset this session used, plus each missed trigger (step 0a, which target), and every one of them is reviewed. There is no confirm gate: the run decides, edits, and reports what it decided (step 4, rank the changeset).
 
 **Steps**
 
@@ -21,7 +21,7 @@ Feed real-usage problems back into your own skills: you used a skill you maintai
 
    **0a. Which target → which plugin/marketplace.**
    - Take the target from `$ARGUMENTS`. If only a problem is described, infer the target from this session's usage.
-   - **In the session sweep, the targets are an inventory of every plugin-shipped asset this session used** — each skill invoked, each agent dispatched, the active output style, each hook whose output appeared — across the whole conversation, not only the last turn, and excluding this run of `/improve-skill` itself; a compacted stretch counts through what its summary records. Step 1, capture the usage problems, walks that inventory and step 7, hand off, reports against it.
+   - **In the session sweep, the targets are an inventory of every plugin-shipped asset this session used** — each skill invoked, each agent dispatched, the active output style, each hook whose output appeared — plus each maintained skill the work called for that never loaded (a missed trigger, defined in step 1, capture the usage problems), across the whole conversation, not only the last turn, and excluding this run of `/improve-skill` itself; a compacted stretch counts through what its summary records. Step 1, capture the usage problems, walks that inventory and step 7, hand off, reports against it.
    - Determine the owning plugin + marketplace. A skill lives at `plugins/<plugin>/skills/<name>/`. Find it in the installed layout — grep the install paths in `~/.claude/plugins/installed_plugins.json` (whose keys are `<plugin>@<marketplace>`), or the cache under `~/.claude/plugins/cache/<marketplace>/<plugin>/…`, for `skills/<name>/SKILL.md`. A `plugin:skill` reference already tells you the plugin. Agents (`agents/*.md`) and references (`references/*.md`) belong to the same plugin.
    - **The target need not be a skill.** Anything a plugin ships is fair game when that is what misbehaved: an **output style** (`output-styles/*.md` — named by its `<plugin>:<style>` id, and the thing to grep for when the user names a persona or voice rather than a skill), a hook (`hooks/`), an agent, a template, or `config/`. Resolve the owning plugin the same way — grep the installed cache for the file — then treat that file as the target everywhere below.
 
@@ -39,9 +39,11 @@ Feed real-usage problems back into your own skills: you used a skill you maintai
 
 1. **Capture the usage problem(s)**
 
-   Gather concrete evidence of what went wrong in use — from THIS session (the output you had to correct, a case it didn't handle, a workaround, a retry) plus anything the user describes from an earlier one. Per problem: which target (per 0a), the exact symptom, and the correct behavior.
+   Gather concrete evidence of what went wrong in use — from THIS session (the output you had to correct, a case it didn't handle, a workaround, a retry, a fact the user supplied by hand that an available tool could have fetched) plus anything the user describes from an earlier one. Per problem: which target (per 0a), the exact symptom, and the correct behavior.
 
-   **The bound is every use of every target, not the first finding.** Walk each target through each time it fired this session: what it instructed, what the run actually did, and every point where the user corrected the output, a step was retried, redone by hand or worked around, or an instruction was not followed. Record a verdict per target — its problems, or clean with what that rests on; step 7, hand off, reports it. No concrete evidence for any target → nothing to refine; report the verdicts and the skipped assets, and stop.
+   **The bound is every use of every target, not the first finding.** Walk each target through each time it fired this session: what it instructed, what the run actually did, and every point where the user corrected the output, a step was retried, redone by hand or worked around, an instruction was not followed, or a fact the user supplied by hand that an available tool could have fetched. Record a verdict per target — its problems, or clean with what that rests on; step 7, hand off, reports it. No concrete evidence for any target → nothing to refine; report the verdicts and the skipped assets, and stop.
+
+   **A maintained skill the work called for that never loaded is a target too (a missed trigger).** Its evidence is one concrete moment: the user did by hand, or asked in their own words, what a skill in the session's available catalog is for, and that skill stayed unloaded. Record the phrasing the user typed, in the language they typed it. The fix is the `description`'s trigger surface only, held to the catalogue read in step 5, apply to the working copy; a skill that loaded and misbehaved is an ordinary target above.
 
 2. **Classify each problem**
 
