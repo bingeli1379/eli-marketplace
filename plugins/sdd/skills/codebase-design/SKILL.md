@@ -42,6 +42,7 @@ Use these terms exactly — don't substitute "component," "service," "API," or "
 - **The deletion test.** Imagine deleting the module. If complexity vanishes, it was a pass-through. If complexity reappears across N callers, it was earning its keep.
 - **The interface is the test surface.** Callers and tests cross the same seam. If you want to test *past* the interface, the module is probably the wrong shape — collaborators created inside instead of accepted, side effects where a returned result would do. (This is why deep modules and `test-driven-development` reinforce each other — a deep interface is a natural test seam.)
 - **One adapter means a hypothetical seam. Two adapters means a real one.** Don't introduce a seam unless something actually varies across it. This is the depth-side statement of the architect's lazy-by-default rule: a second implementation is the evidence that promotes a YAGNI abstraction into a justified one.
+- **Screen a new or reshaped design for what an agent maintainer will copy.** An agent that sees only the files it opened takes the nearest example and the shortest path that compiles. So a piece of state has one owner, with other modules reading it or asking the owner. A task has one supported way, with callers migrated and the others deleted in the same change. A module's internals are unreachable from outside, so an outside import fails the build. Two hand-edited lists of the same items become one list the other is derived from, or the build fails when they disagree.
 
 ## How sdd roles use this
 
