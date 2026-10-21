@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.23.0] - 2026-10-21
+
+### Added
+- When a design reads a response from a service it does not own, the architect now has the screen work out values it can compute from what it already receives, such as a page count or a "1-100 of N" caption, instead of reading them from the response. Totals that need the whole dataset are still read from the service.
+
+### Fixed
+- An unattended `/apply-all` batch no longer waits for an answer when a worker reports a conflict between the spec and what it would do. It parks that change as paused, like an unresolved question, and moves on to the next one.
+
 ## [3.22.1] - 2026-10-21
 
 ### Fixed
