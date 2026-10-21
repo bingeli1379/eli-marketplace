@@ -15,7 +15,7 @@ user-invocable: false
 ## Principles — follow these while writing code
 
 1. **Match existing patterns over "best practice"** — per `agent-guidelines` → *Match Existing Code Before Writing*; deviations are stated up front, never silently introduced.
-2. **Run the linter** — if the project has a linter configured, run it after every change and fix errors before committing; no lint rules disabled without justification
+2. **Run the linter** — if the project has a linter configured, run it after every change and fix errors before committing. **A red gate is fixed in the code, never by loosening the gate to turn it green** (a lint rule or type check disabled, a threshold or budget raised, an allowlist or ignore entry added, a test skipped or deleted while the behaviour it covers still ships, a snapshot or baseline regenerated to absorb an output change nobody confirmed as intended, a timeout stretched). Where the gate itself is wrong, say so in your report with the justification; a lint rule is disabled only with one
 3. **Every rename must be total** — grep the entire codebase for the old name; string literals, dynamic refs, and config keys are easy to miss
 4. **Delete, don't comment out** — removed features = delete ALL related code (components, routes, tests, styles, configs)
 5. **Imports are a contract** — after deleting/moving an export, update all importers yourself

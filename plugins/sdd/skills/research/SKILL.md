@@ -3,7 +3,7 @@ name: research
 description: >
   Use when you need to understand an area of a codebase and produce a durable findings
   document to hand to someone else — how a flow works, what a subsystem touches, what
-  depends on it, where the risks are — without proposing or making any change.
+  depends on it, where the risks are, why it was built that way — without proposing or making any change.
   Read-only: no spec artifacts, no code edits, no commits.
 user-invocable: true
 argument-hint: "<area — path, module, endpoint, or a flow like 'from X to Y'> [where to write it] [constraints]"
@@ -64,6 +64,7 @@ Read-only understanding pass over an area of the codebase, producing a **researc
    - **Existing patterns** — how this area already does its recurring operations (data access, DI/wiring, error handling, logging, state, validation), naming the code that establishes each
    - **Dependencies** — inbound (who calls in) and outbound (what it calls: other modules, services, third parties, data stores)
    - **Boundary contracts** — every place a value crosses a boundary this area does not own (outbound request bodies/params, cookies, persisted shapes, URL/asset paths), and what the other side expects
+   - **Rationale on record** — why the area is shaped as it is, only where someone wrote it down: a commit message, PR or ticket text, a code comment, found through the area's git history and whatever trackers the environment exposes. Anchor it to its source in place of a `file:line`: a commit hash, a PR or ticket id, or the comment's own `file:line`. Intent is never inferred from what the code does, and a rationale you looked for and did not find goes under **Open questions** with the sources searched
    - **Test coverage reality** — which behaviours have tests and which do not, by reading the tests, not by assuming
    - **Risks / sharp edges** — what would break easily, what is duplicated, what is load-bearing but untested, what a newcomer would get wrong
 
@@ -95,6 +96,9 @@ Read-only understanding pass over an area of the codebase, producing a **researc
    ## How it works
    <The flow as named-symbol chains (A → B → C), with the branches. Anchor each
    step to `file:line`. Expand only the steps that are non-obvious.>
+
+   ## Why it is shaped this way
+   | Decision | Rationale as written | Source |
 
    ## Existing patterns
    | Operation | How this area does it | Established by |

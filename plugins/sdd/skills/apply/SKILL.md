@@ -187,7 +187,7 @@ Specs are the single source of truth. If specs are incomplete, suggest running `
      3. Commit code + lint fixes following the `conventional-commits` skill (`skills/conventional-commits/SKILL.md`). **Read the skill for type list, description rules, and format.** The only sdd-specific addition: prefix the description with the task number — `<type>[optional scope]: <task-number> <description>` (e.g., `feat: 1.1 add UserSearch entity`, `test: 2.3 add unit tests for search service`).
    - Do NOT modify `tasks.md` — the orchestrator handles checkbox updates after squashing your work.
    - After the commit, report back: "DONE: <task-number> <task-description>"
-   - **A report carrying measured evidence goes in a file, not the reply.** Write the full report to `<the ## Change Directory path>/reports/<your dispatched name>.md`, creating `reports/` if absent, and reply with the `DONE:` lines, any `NEEDS:` / `CONFLICT:` / `BLOCKED:` signal, any `MOCKED:` line (a completed task whose external dependency you stubbed — see *Signaling Unknowns* in `agent-guidelines`), and that path. The reply size limit cuts mid-table, and what it takes is the command output and the numbers the orchestrator triages on — four implementation-agent reports on one measured run were truncated, each costing a round-trip to ask for the missing half. This changes where the report is delivered, never what it contains.
+   - **A report carrying measured evidence, or naming a reading you took on an ambiguous requirement, goes in a file, not the reply.** Write the full report to `<the ## Change Directory path>/reports/<your dispatched name>.md`, creating `reports/` if absent, and reply with the `DONE:` lines, any `NEEDS:` / `CONFLICT:` / `BLOCKED:` signal, any `MOCKED:` line (a completed task whose external dependency you stubbed — see *Signaling Unknowns* in `agent-guidelines`), and that path. The reply size limit cuts mid-table, and what it takes is the command output and the numbers the orchestrator triages on — four implementation-agent reports on one measured run were truncated, each costing a round-trip to ask for the missing half. This changes where the report is delivered, never what it contains.
    - **Completion contract** — binding, per *Completion Contract — do NOT end your turn early* in `agent-guidelines` (already in your context): not finished until every assigned task is committed with a `DONE:` line each; the only valid early stops are `NEEDS:` / `CONFLICT:` / `BLOCKED:` (below).
    - Do NOT narrate your actions ("Now I will...", "Let me..."). Report only structured output: task status, files changed, test results.
    - **Signaling a genuine stop (`NEEDS` / `CONFLICT` / `BLOCKED`)** — per *Signaling Unknowns* in `agent-guidelines`. Aside from those signals, do NOT ask questions — if merely ambiguous, make a reasonable decision and flag it.
@@ -246,6 +246,7 @@ Specs are the single source of truth. If specs are incomplete, suggest running `
      fix: address review, security, and QA findings        ← phase 2 (if any)
      docs: update API documentation for user search       ← phase 3 (if any)
      ```
+   - **Collect the readings the agents took without asking.** Read every report under `<change dir>/reports/` for where an agent chose one reading of an ambiguous requirement and said which (`agent-guidelines` → *Think Before Coding* requires the report to name it). The final status lists them, because the user was not asked and `reports/` is deleted at `/complete`.
    - Show final status:
 
    **On completion:**
@@ -259,6 +260,8 @@ Specs are the single source of truth. If specs are incomplete, suggest running `
    [task list with checkmarks]
    ### 接下來由你執行       ← print whenever tasks.md carries a `## 交付後由你執行` section, an agent returned a `MOCKED:` line, or this run left a task un-executed; omit when there is none of the three
    [每一條：動作、在哪個環境或系統、怎麼判斷成功。tasks.md 那一節的內容逐條照搬，接著是每一筆 `MOCKED:` 的替換動作，最後列本次跑不動而留 `- [ ]` 的任務及其原因]
+   ### 代你做的選擇         ← print only when a report names a reading an agent took on an ambiguous requirement; omit otherwise
+   [每一條：模糊處在哪、選了哪一種讀法、為什麼、寫在哪份 `reports/<agent>.md`]
    ### 未解決的 review 項目  ← print only when a finding stayed `unanchored` through every fix round (orchestrator.md › Fix → Re-verify Loop); omit otherwise
    [每一條：原 finding、哪個 reviewer、為什麼定位不到 — 可能仍是真的缺陷]
    ### 略過的階段           ← print only when a phase or reviewer was skipped (Step 7); omit otherwise

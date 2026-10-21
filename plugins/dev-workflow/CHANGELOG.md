@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.2.0] - 2026-10-21
+
+### Added
+- `/sharpen` rewrites a shallow or vague task so it asks for deeper work instead of wider scope. It works out what a top practitioner would do that you did not ask for, what raw material they would start from, which methods and tools they would use, and what other than you or the model would show the result is right. It then hands back your task rewritten, and you run the rewrite yourself.
+- `/write-pr` writes the title and description for a pull request or merge request from your branch's commits and diff, as a one-minute briefing for the reviewer: why, what changed, what it leaves out, tradeoffs, who or what it touches, and how it was checked. The checking section lists only checks that were actually run, and marks the rest `not run`. It shows the text and stops. It opens the request only when you ask, with the tool that matches your remote (`gh`, `glab`, or an MCP for that forge), and it never pushes.
+
 ## [4.1.2] - 2026-10-09
 
 ### Changed
