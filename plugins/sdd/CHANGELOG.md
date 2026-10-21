@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.24.0] - 2026-10-21
+
+### Added
+- `/research` now records why an area is shaped the way it is, but only where someone wrote the reason down: a commit message, a PR or ticket, or a code comment. Each reason names its source. A reason it searched for and could not find goes under open questions, with the places it looked.
+- `/apply` and `/apply-all` now list the choices agents made on their own when a requirement was ambiguous, so you can see what was decided for you. Before, those choices lived only in per-agent reports that `/complete` deletes.
+- Changing how code is structured without changing what it does now starts from a safety check: a test, snapshot or output comparison that passes before the work starts, stays green after every step, and has been shown able to fail. Type-checking and lint no longer count as proof that behaviour is unchanged.
+- Tests are now written against what a caller can observe, with the expected value taken from the requirement instead of from running the code. A test tied to a private helper or an internal call order is avoided, because it breaks when the code is restructured and catches no bug.
+
+### Changed
+- An agent no longer turns a failing check green by loosening it: a raised threshold, an added allowlist entry, a skipped test, a baseline regenerated without confirming the new output, or a longer timeout. It fixes the code instead. Deleting the tests of a feature that was removed is still expected.
+- After two failed fixes that rest on the same belief, debugging now tests that belief directly before trying a third fix.
+- Design review now flags designs an agent is likely to copy into a mess: state with several owners, one task with two supported ways, internals that other modules can import, and two hand-edited lists of the same items.
+- The technical writer now cuts sentences that could appear unchanged in another project's docs, and prefers measured values to words like "quickly".
+
 ## [3.23.0] - 2026-10-21
 
 ### Added

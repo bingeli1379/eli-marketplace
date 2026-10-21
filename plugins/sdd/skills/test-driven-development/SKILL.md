@@ -25,7 +25,7 @@ Every feature, bug fix, refactor, and behaviour change.
 
 ### RED — write one failing test
 
-One behaviour, a name that states it, against real code (mocks only when unavoidable — a test that asserts on a mock's call count tests the mock).
+One behaviour, a name that states it, against real code (mocks only when unavoidable — a test that asserts on a mock's call count tests the mock). Derive the expected value from the requirement, never from a run of the code under test, and assert only what a caller can observe: a return value, the error type callers branch on, state read back, an effect on a system outside the code. A private helper or an internal call order fails on a refactor and catches no bug.
 
 ### Verify RED — watch it fail
 
@@ -91,11 +91,16 @@ A walking skeleton is the *tracer bullet* above widened to the whole system: ins
 
 - Every new behaviour has a test that was seen red, then green, for the expected reason.
 - The tests in scope pass with clean output (the full suite when `scoped_tests: off`); tests exercise real code, edge cases and error paths included.
+- A refactor's pin was green before the first step and after the last, and was shown able to fail (*Refactors*).
 - A walking-skeleton group is checked against rule 2 of *Walking Skeleton* instead — "the end-to-end path actually runs"; every harden group and all other work is checked against this list.
 
 ## Bugs
 
 A bug gets a failing test that reproduces it before the fix — the test proves the fix and prevents the regression (`systematic-debugging` Phase 4).
+
+## Refactors
+
+A behaviour-preserving change has no red phase, so pin the behaviour first: a characterization test, a snapshot, or an old-versus-new output diff that passes before the structure moves and stays green after every step. Type-checking and lint are not a pin. Show the pin can fail once, per the core principle (break the behaviour it covers, watch it go red, restore it). A larger reshape is proven on the real artifact, not on "it compiles".
 
 ## Mocks and test utilities
 
