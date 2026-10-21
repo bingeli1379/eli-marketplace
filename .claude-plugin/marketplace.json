@@ -9,7 +9,7 @@
     {
       "name": "dev-workflow",
       "source": "./plugins/dev-workflow",
-      "description": "Daily dev workflow commands: commit and release"
+      "description": "Daily dev workflow commands: commit, release, and sharpen"
     },
     {
       "name": "prompt-workflow",
