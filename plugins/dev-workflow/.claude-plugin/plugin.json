@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "dev-workflow",
   "displayName": "Dev Workflow",
-  "description": "Daily dev workflow commands: commit and release",
+  "description": "Daily dev workflow commands: commit, release, and sharpen",
   "version": "4.1.2",
   "author": {
     "name": "Eli",

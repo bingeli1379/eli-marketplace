@@ -1,6 +1,6 @@
 {
   "name": "dev-workflow",
-  "description": "Daily dev workflow commands: commit and release",
+  "description": "Daily dev workflow commands: commit, release, and sharpen",
   "version": "4.1.2",
   "author": {
     "name": "Eli",
@@ -13,7 +13,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Dev Workflow",
-    "shortDescription": "Daily dev workflow commands: commit and release",
+    "shortDescription": "Daily dev workflow commands: commit, release, and sharpen",
     "developerName": "Eli",
     "category": "Developer Tools",
     "capabilities": ["Skills", "Files"]

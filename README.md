@@ -6,7 +6,7 @@ A personal [Claude Code](https://claude.ai/code) plugin marketplace hosting cust
 
 | Plugin | Description | Compatibility |
 |--------|-------------|---------------|
-| [dev-workflow](./plugins/dev-workflow) | Daily workflow commands — commit, release | Claude Code · Codex |
+| [dev-workflow](./plugins/dev-workflow) | Daily workflow commands — commit, release, sharpen a task | Claude Code · Codex |
 | [prompt-workflow](./plugins/prompt-workflow) | The same for your prompt files — author, audit, improve from real usage, trim what a model upgrade or old edits left behind, prune what never fires | Claude Code · Codex |
 | [issue-tracing](./plugins/issue-tracing) | On-call triage — turn a Grafana or Kibana/ELK URL into a structured incident report | Claude Code · Codex |
 | [sdd](./plugins/sdd) | Spec-driven multi-agent development workflow core — propose, validate, apply, complete | Claude Code (Codex: degraded) |

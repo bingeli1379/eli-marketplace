@@ -19,3 +19,12 @@ Detects the current version from project files (package.json, csproj, pyproject.
 - Auto-determines bump level: major (breaking), minor (feat), patch (fix/refactor)
 - Changelog written from end-user perspective
 - Internal refactors, CI tweaks, dependency bumps are omitted unless user-facing
+
+### `/sharpen` — Sharpen a Task
+
+Rewrites a shallow or vague task prompt so it asks for deeper work, not wider scope. It answers four questions about the task (what a top professional would do that you did not ask, the rawest material to start from, the specific methods and tools, and what other than you or the model would show the result is right), then rewrites the prompt to ask for exactly that.
+
+- Command-only: you invoke it, the model never selects it
+- Takes the task as an argument, or your last request when empty
+- Rewrites the prompt and stops; it does not do the task
+- Choices that are yours stay open in the rewrite instead of being decided
