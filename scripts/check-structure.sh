@@ -11,6 +11,8 @@ set -uo pipefail
 #   - dangling references: a reference path or a `name.md` cross-reference that resolves to
 #     nothing, and a glued `stepN` citation past the skill's real step count (what a rename
 #     or a renumber leaves behind wherever the mention did not look like a path)
+#   - a skill description over the harness's 1024-character cap, or a skill with both
+#     invocation flags set (neither warns at load time)
 #
 # Usage: ./scripts/check-structure.sh
 # Exits non-zero if any ERROR is found (WARN does not fail the build). Wire into CI / pre-commit.
@@ -223,6 +225,34 @@ for p in plugins/*/; do
       || warn "orphan reference file, nothing points at it: $r"
   done
 done
+
+# ---- 8. frontmatter hard limits ----
+# The harness caps a description at 1024 characters, and a skill with both invocation flags set
+# has nothing left that can reach it. Neither warns at load time, so an edit that tips a
+# description over the cap fails silently; skill-authoring's own description sat 6 characters
+# under it. Measured in python, not awk: awk's length() counts bytes on macOS and the Chinese
+# trigger phrasings would read as over the cap.
+read -r -d '' FM_CHECK <<'PY'
+import glob, re
+for p in sorted(glob.glob("plugins/*/skills/*/SKILL.md")):
+    m = re.match(r"---\n(.*?)\n---\n", open(p, encoding="utf-8").read(), re.S)
+    if not m:
+        continue
+    fm = m.group(1)
+    d = re.search(r"^description:[ \t]*(.*(?:\n[ \t]+.*)*)", fm, re.M)
+    v = " ".join(s.strip() for s in d.group(1).split("\n")).strip() if d else ""
+    v = re.sub(r"^[>|][-+]?\s*", "", v)
+    if v[:1] in "\"'" and v[-1:] == v[:1]:
+        v = v[1:-1].replace('\\"', '"')
+    if len(v) > 1024:
+        print("description is %d characters, over the 1024 harness cap (%s)" % (len(v), p))
+    if re.search(r"^disable-model-invocation:[ \t]*true", fm, re.M) and re.search(r"^user-invocable:[ \t]*false", fm, re.M):
+        print("disable-model-invocation and user-invocable: false together leave nothing able to reach the skill (%s)" % p)
+PY
+while IFS= read -r line; do
+  [[ -z "$line" ]] && continue
+  err "$line"
+done < <(python3 -c "$FM_CHECK")
 
 echo ""
 echo "Structure check: $errors error(s), $warns warning(s)"
