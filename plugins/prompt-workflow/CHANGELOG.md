@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.22] - 2026-10-21
+
+### Added
+- `/improve-skill` now also reviews a skill that should have loaded and did not. When you did a skill's job by hand, or asked for it in your own words, and the skill stayed unloaded, it fixes the skill's description so that phrasing reaches it next time, in the language you typed.
+- `/improve-skill` counts a fact you had to supply by hand, when a tool in the session could have fetched it, as a problem with the skill that owns that workflow.
+
+### Changed
+- When a problem is something a script can detect, such as a name that does not match its folder, a path that points at nothing, or a value over a limit, `/improve-skill` now extends the repo's structure script instead of adding a rule to the text. It checks that the new check fails on a copy that has the problem.
+
 ## [0.2.21] - 2026-10-11
 
 ### Added
