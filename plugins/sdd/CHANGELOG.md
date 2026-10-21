@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.22.1] - 2026-10-21
+
+### Fixed
+- Proposals, designs and task lists no longer ask engineers to keep a feature that cannot be connected yet as commented-out code. Such a feature is left as it is or removed, and an agent that is told to keep code commented out raises a conflict instead of following the instruction.
+
 ## [3.22.0] - 2026-10-20
 
 ### Added
