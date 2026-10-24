@@ -9,7 +9,8 @@ One-by-one confirmation for a domain doc, distilled from `../{{ names.authoring_
 
 ## B. Trace & verify (don't guess)
 
-- [ ] **Probed clone inventory** (`ls {{ paths.repos_root }}`) and routed each fact as in SKILL step 0, probe the clone inventory. **Listed every project the flow touches even if uncloned** (an unlisted project is an omission no marker catches — only verify's sweep does).
+- [ ] **Probed clone inventory** (`ls {{ paths.repos_root }}`) and routed each fact as in SKILL step 0, probe the clone inventory. **Listed every project the flow touches even if uncloned** (an unlisted project is an omission no marker catches — the identifier sweep does).
+- [ ] **Identifier sweep run** (SKILL step 2, trace the flow): every live step it found is in `Projects involved`.
 - [ ] Each flow step names a **concrete mechanism** (job / service / endpoint / toggle / setting) with `file:line` from Explore.
 - [ ] **No claim written on plausibility or inheritance** (`../{{ names.authoring_core }}.md §6`): a claim naming a specific literal (column / enum / status / topic / created-by value) is grepped against the owning repo; "makes sense", "matches" a cross-linked doc, or a cited kb doc is not verification.
 {{#if has.global_settings}}
