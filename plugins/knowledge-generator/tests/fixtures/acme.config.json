@@ -70,7 +70,7 @@
         "deployed": false
       }
     ],
-    "retirement_date_source": "team chat announcement"
+    "retirement_date_source": "the team chat announcement"
   },
   "environments": {
     "names": [
@@ -89,23 +89,10 @@
       ],
       "other": ""
     },
-    "backend": {
-      "presets": [
-        "dotnet",
-        "python"
-      ],
-      "other": ""
-    },
     "runtime": {
       "presets": [
         "kubernetes",
         "vm"
-      ],
-      "other": ""
-    },
-    "ci": {
-      "presets": [
-        "gitlab-ci"
       ],
       "other": ""
     },
@@ -115,21 +102,9 @@
       ],
       "other": ""
     },
-    "cache": {
-      "presets": [
-        "redis"
-      ],
-      "other": ""
-    },
     "messaging": {
       "presets": [
         "kafka"
-      ],
-      "other": ""
-    },
-    "scheduler": {
-      "presets": [
-        "quartz"
       ],
       "other": ""
     },

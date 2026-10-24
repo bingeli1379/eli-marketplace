@@ -124,6 +124,7 @@ do have it, so you can confirm what they couldn't.
 ## Guardrails
 
 - **A `(human:)` fact is never silently confirmed or deleted** — surface it (step 3, human-sourced).
+- **Cross-link checks are orchestrator-side** — grep both ends across all docs; a single-doc agent mis-calls link state.
 - **An `(unverified)` from a contributor is a lead, not a verdict** — you have the repo they
   lacked; resolve it to a fact (or confirm it really is unreachable).
 - **Absence isn't a marker — sweep for it (step 3b).** "No `(unverified)` left" does NOT mean complete: a

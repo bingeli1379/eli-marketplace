@@ -38,7 +38,7 @@
         "deployed": false
       }
     ],
-    "retirement_date_source": "release notes"
+    "retirement_date_source": "the release notes"
   },
   "environments": {
     "names": [
@@ -51,15 +51,7 @@
       "presets": [],
       "other": ""
     },
-    "backend": {
-      "presets": [],
-      "other": ""
-    },
     "runtime": {
-      "presets": [],
-      "other": ""
-    },
-    "ci": {
       "presets": [],
       "other": ""
     },
@@ -67,15 +59,7 @@
       "presets": [],
       "other": ""
     },
-    "cache": {
-      "presets": [],
-      "other": ""
-    },
     "messaging": {
-      "presets": [],
-      "other": ""
-    },
-    "scheduler": {
       "presets": [],
       "other": ""
     },

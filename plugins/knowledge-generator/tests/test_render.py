@@ -667,6 +667,24 @@ class EveryFixture(unittest.TestCase):
                 self.assertNotIn("{{", text, f"{name}: {rel}")
                 self.assertNotIn("__prefix__", rel)
 
+    def test_no_rendered_file_doubles_the_article(self):
+        for name in FIXTURE_NAMES:
+            for rel, text in render_all(name).items():
+                self.assertIsNone(re.search(r"\bthe the\b", text, re.I), f"{name}: {rel}")
+
+    def test_an_owner_whose_label_equals_its_code_renders_once(self):
+        import copy
+        cfg = copy.deepcopy(load("minimal.config.json"))
+        cfg["scope"]["owners"] = [{"code": "TEAM", "label": "TEAM", "reachable": True}]
+        self.assertEqual(r.derive(cfg)["lists"]["owners"], "TEAM")
+
+    def test_capabilities_a_config_lacks_leave_no_wording_behind(self):
+        files = render_all("minimal.config.json")
+        core = files["local-tools/skills/min-knowledge-authoring-core.md"]
+        self.assertNotIn("(log identity", core)
+        self.assertNotIn("none for this setup)  13", core)
+        self.assertNotIn("shared-catalog", files["local-tools/skills/min-knowledge-add-project/CHECKLIST.md"])
+
     def test_every_kit_skill_is_command_only_and_the_reader_is_not(self):
         for name in FIXTURE_NAMES:
             prefix = load(name)["identity"]["prefix"]

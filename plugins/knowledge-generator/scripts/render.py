@@ -63,7 +63,7 @@ PLATFORM_BASICS = {
     "db-schema-location": ("Database schema", "which repository holds the schema for each database"),
 }
 CAPABILITIES = ("logs", "metrics", "global_settings", "db_schema", "external_reference")
-STACK_AREAS = ("frontend", "backend", "runtime", "ci", "database", "cache", "messaging", "scheduler")
+STACK_AREAS = ("frontend", "runtime", "database", "messaging")
 SKELETONS = ("service", "legacy-vm", "artifact")
 
 
@@ -307,10 +307,12 @@ def reader_description(cfg, has, observability_tools):
     return text
 
 
-def platform_basics(slugs):
+def platform_basics(slugs, has_catalogs):
     out = []
     for slug in slugs:
         label, hint = PLATFORM_BASICS.get(slug, (slug.replace("-", " ").capitalize(), "<fact>"))
+        if slug == "cache" and not has_catalogs:
+            hint = "which cache clusters exist"
         out.append({"slug": slug, "label": label, "hint": hint})
     return out
 
@@ -358,7 +360,7 @@ def derive(cfg):
     audience = cfg["scope"]["audience"]
     names = cfg["environments"]["names"]
     ctx["lists"] = {
-        "owners": " | ".join(f"{o['code']} ({o['label']})" for o in cfg["scope"]["owners"]),
+        "owners": " | ".join(o["code"] if o["code"] == o["label"] else f"{o['code']} ({o['label']})" for o in cfg["scope"]["owners"]),
         "audiences_deployed": " | ".join(a["slug"] for a in audience if a["deployed"]),
         "audiences_artifact": " | ".join(a["slug"] for a in audience if not a["deployed"]),
         "audience_meanings_deployed": "; ".join(f"{a['slug']} = {a['meaning']}" for a in audience if a["deployed"]),
@@ -373,13 +375,10 @@ def derive(cfg):
     ctx["has"]["owners_external"] = any(not o["reachable"] for o in owners)
     ctx["lists"]["owners_reachable"] = ", ".join(o["code"] for o in owners if o["reachable"])
     ctx["lists"]["owners_external"] = ", ".join(o["code"] for o in owners if not o["reachable"])
-    areas = []
-    for area in STACK_AREAS:
-        entry = cfg["stack"][area]
-        picked = [x for x in entry["presets"] if x != "none"] + ([entry["other"]] if entry["other"] else [])
-        if picked:
-            areas.append(f"{area}: {', '.join(picked)}")
-    ctx["lists"]["stack_summary"] = "; ".join(areas)
+    ctx["lists"]["live_checks"] = " / ".join(
+        label for name, label in (("logs", "log identity"), ("global_settings", "settings"),
+                                  ("external_reference", "external-reference pages")) if ctx["has"][name]
+    )
     dir_map = cfg["paths"]["repo_dir_map"]
     ctx["lists"]["repo_rules"] = "; ".join(f"`{r['from']}` → `{r['to']}`" for r in dir_map["rules"])
     ctx["lists"]["repo_aliases"] = "; ".join(f"`{k}` → `{v}`" for k, v in dir_map["aliases"].items())
@@ -397,7 +396,7 @@ def derive(cfg):
     ctx["lists"]["live_access"] = join_and(access)
     ctx["derived"] = {
         "reader_description": reader_description(cfg, ctx["has"], f"{tools} data" if obs else ""),
-        "platform_basics": platform_basics(cfg["known_context"]["platform_basics"]),
+        "platform_basics": platform_basics(cfg["known_context"]["platform_basics"], ctx["has"]["shared_catalogs"]),
         "observability_tools": tools,
         "labels": labels,
         "catalog_headings": ", ".join(c["heading"] for c in caps["shared_catalogs"]),
