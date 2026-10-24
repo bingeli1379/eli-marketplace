@@ -1,0 +1,204 @@
+{
+  "config_version": 1,
+  "identity": {
+    "prefix": "acme",
+    "display_name": "Acme"
+  },
+  "paths": {
+    "repo": "~/work/acme-docs",
+    "out": "knowledge",
+    "repos_root": "~/work/src",
+    "repo_dir_map": {
+      "rules": [
+        {
+          "from": "-",
+          "to": "."
+        }
+      ],
+      "aliases": {
+        "web-app": "storefront"
+      }
+    }
+  },
+  "git": {
+    "host": "gitlab",
+    "user_label": "gitlab-username"
+  },
+  "scope": {
+    "rule": "Repos the web platform team develops, including ones it works on but does not own.",
+    "owner_source": "the `owner` field of `catalog-info.yaml`",
+    "owners": [
+      {
+        "code": "WEB",
+        "label": "Web Platform",
+        "reachable": true
+      },
+      {
+        "code": "PAY",
+        "label": "Payments",
+        "reachable": true
+      },
+      {
+        "code": "SEC",
+        "label": "Security",
+        "reachable": false
+      }
+    ],
+    "audience": [
+      {
+        "slug": "customer-facing",
+        "meaning": "public traffic, reached directly by customers",
+        "deployed": true
+      },
+      {
+        "slug": "back-office",
+        "meaning": "staff or ops surface",
+        "deployed": true
+      },
+      {
+        "slug": "internal-service",
+        "meaning": "server-to-server, no human interface",
+        "deployed": true
+      },
+      {
+        "slug": "library",
+        "meaning": "shared package, not deployed",
+        "deployed": false
+      },
+      {
+        "slug": "db-project",
+        "meaning": "database project or DBA scripts",
+        "deployed": false
+      }
+    ],
+    "retirement_date_source": "the team chat announcement"
+  },
+  "environments": {
+    "names": [
+      "dev",
+      "stg",
+      "prod"
+    ],
+    "exclude": [
+      "dr"
+    ]
+  },
+  "stack": {
+    "frontend": {
+      "presets": [
+        "vue"
+      ],
+      "other": ""
+    },
+    "runtime": {
+      "presets": [
+        "kubernetes",
+        "vm"
+      ],
+      "other": ""
+    },
+    "database": {
+      "presets": [
+        "sqlserver"
+      ],
+      "other": ""
+    },
+    "messaging": {
+      "presets": [
+        "kafka"
+      ],
+      "other": ""
+    },
+    "skeletons": [
+      "service",
+      "legacy-vm",
+      "artifact"
+    ]
+  },
+  "capabilities": {
+    "logs": {
+      "kind": "elk",
+      "access": "elasticsearch",
+      "streams": [
+        {
+          "name": "app-logs",
+          "scope": "server log",
+          "syntax": "lucene"
+        }
+      ]
+    },
+    "metrics": {
+      "kind": "grafana",
+      "access": "grafana"
+    },
+    "global_settings": {
+      "kind": "central-store",
+      "lookup": "the settings CLI, by namespace"
+    },
+    "db_schema": {
+      "kind": "repo-per-db",
+      "repos_hint": "one schema repo per database family"
+    },
+    "external_reference": {
+      "kind": "confluence",
+      "sources": [
+        {
+          "purpose": "per-env host list",
+          "ref": "SPACE/123"
+        }
+      ]
+    },
+    "shared_catalogs": [
+      {
+        "name": "redis",
+        "source_field": "Redis",
+        "heading": "Redis cluster catalog"
+      }
+    ]
+  },
+  "reader": {
+    "example_projects": [
+      "storefront",
+      "checkout-api",
+      "billing-worker"
+    ],
+    "example_flows": [
+      "checkout",
+      "refund",
+      "sign-in"
+    ],
+    "example_questions": [
+      "what does this project do",
+      "how does the checkout flow work",
+      "who calls the billing worker"
+    ]
+  },
+  "known_context": {
+    "platform_basics": [
+      "time",
+      "environments",
+      "domains",
+      "deployment"
+    ]
+  },
+  "audit": {
+    "full_sweep_max_age_days": 30,
+    "domain_swept_max_age_days": 30,
+    "by_age_days": {
+      "noncode_refs": 180,
+      "global_setting_values": 90,
+      "liveness_probes": 90
+    },
+    "fan_out": {
+      "max_concurrent_agents": 4,
+      "wave_size": [
+        10,
+        15
+      ],
+      "agent_report_char_cap": 10000
+    }
+  },
+  "kit": {
+    "contributing_note": ""
+  }
+}

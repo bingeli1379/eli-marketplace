@@ -17,6 +17,7 @@ A personal [Claude Code](https://claude.ai/code) plugin marketplace hosting cust
 | [sdd-electron](./plugins/sdd-electron) | SDD stack pack — Electron desktop/game engineer and skills | Claude Code (Codex: degraded) |
 | [sdd-database](./plugins/sdd-database) | SDD stack pack — database engineer and datastore skills | Claude Code (Codex: degraded) |
 | [sdd-devops](./plugins/sdd-devops) | SDD stack pack — DevOps engineer and infrastructure skills | Claude Code (Codex: degraded) |
+| [knowledge-generator](./plugins/knowledge-generator) | Generate a project-knowledge skill and its maintainer toolkit for your own company — answer a few setup questions, an AI fills in the templates | Claude Code · Codex |
 
 The `sdd-*` stack packs each declare `dependencies: ["sdd"]`, so installing a pack pulls in the `sdd` core automatically.
 

@@ -1,0 +1,141 @@
+{{#if has.observability_file}}
+{{#if has.observability_doc}}# Observability — logging & monitoring{{else}}# Database schema map{{/if}}
+
+- Last updated: YYYY-MM-DD
+
+{{#if has.observability_doc}}
+Cross-project conventions for investigating {{ derived.observability_tools }}. Per-project values (which identity a service logs under, which identifier a frontend uses) live in each project doc under `project/`.
+
+Live queries need the access tools named below. When one is not available in the session, say the live check did not run and do not infer its result.
+{{/if}}
+{{#if has.logs}}
+
+## Logging ({{ derived.labels.logs }})
+
+{{#if capabilities.logs.access}}
+Query via the `{{ capabilities.logs.access }}` MCP, loading its tools on demand first. Host / entry point: <where the log UI lives>.
+{{else}}
+No log access tool is configured for this setup, so facts here are `(human: <{{ git.user_label }}>, <date>)` until one is wired. Host / entry point: <where the log UI lives>.
+{{/if}}
+
+> Reaching the system: <how the MCP connects (endpoint, credential type), and anything that goes stale when infrastructure is renumbered>.
+
+> Concurrency and rate limits: <how many queries may run at once, what happens past the limit, and the fallback>. A `401` is an authentication failure, not a rate limit; retrying does not clear it.
+
+Logs are split into streams:
+
+| Data stream / index | Source | Query syntax | Notes |
+|---|---|---|---|
+{{#if capabilities.logs.streams}}
+{{#each capabilities.logs.streams}}
+| `{{ this.name }}` | {{ this.scope }} | {{ this.syntax }} | <what it holds, how it is selected, retention> |
+{{/each}}
+{{else}}
+| `<stream>` | <source> | <query syntax> | <what it holds, how it is selected, retention> |
+{{/if}}
+
+### Field conventions
+
+{{#if capabilities.logs.streams}}
+Field names per stream live in the cross-reference table below; record here only each stream's casing rules and any field that silently returns zero when queried the obvious way.
+
+- **<stream>**: <casing rules, query traps>
+{{else}}
+Each stream may name the same concept differently. Per stream: the identity field and its casing, the environment field and its values, the time field, the free-text field, any field that silently returns zero when queried the obvious way.
+
+- **<stream>**: <identity field (casing)> · <environment field (values)> · <time field> · <free-text field> · <silent-zero fields>
+{{/if}}
+
+{{#if capabilities.logs.streams}}
+### Field cross-reference
+
+The same concept can sit under a different field per stream, and a wrong field reads as a false zero. Resolve the field by stream before querying.
+
+| Concept | {{#each capabilities.logs.streams}}`{{ this.name }}` | {{/each}}
+|---|{{#each capabilities.logs.streams}}---|{{/each}}
+| service identity |{{#each capabilities.logs.streams}} <field> |{{/each}}
+| environment |{{#each capabilities.logs.streams}} <field and values> |{{/each}}
+| log text |{{#each capabilities.logs.streams}} <field> |{{/each}}
+| timestamp |{{#each capabilities.logs.streams}} <field and format> |{{/each}}
+| severity |{{#each capabilities.logs.streams}} <field and values> |{{/each}}
+| trace correlation |{{#each capabilities.logs.streams}} <field, or none> |{{/each}}
+
+{{else}}
+### Field cross-reference
+
+The same concept can sit under a different field per stream, and a wrong field reads as a false zero. Resolve the field by stream before querying.
+
+| Concept | `<stream A>` | `<stream B>` |
+|---|---|---|
+| service identity | <field> | <field> |
+| environment | <field and values> | <field and values> |
+| log text | <field> | <field> |
+| timestamp | <field and format> | <field and format> |
+| severity | <field and values> | <field and values> |
+| trace correlation | <field, or none> | <field, or none> |
+
+{{/if}}
+### Wrong-field traps
+
+Before reading a zero as absence, run a control query that must return something: a scan with no control cannot tell "really none" from "my query is broken".
+
+- A presence check covers every stream a service can log to; one service may log to several, so a zero in one stream is not absence.
+- <symptom> — <cause>; <fix>.
+
+### Recipes
+
+- **<goal>**: <query>; a zero means <…>; cost or limit <…>.
+{{/if}}
+{{#if has.metrics}}
+
+## Monitoring ({{ derived.labels.metrics }})
+
+{{#if capabilities.metrics.access}}
+Query via the `{{ capabilities.metrics.access }}` MCP, loading its tools on demand first. Host: <where the UI lives>.
+{{else}}
+No monitoring access tool is configured for this setup, so facts here are `(human: <{{ git.user_label }}>, <date>)` until one is wired. Host: <where the UI lives>.
+{{/if}}
+
+- **Mental model**: <are dashboards per project, or shared boards filtered by template variables? which variables exist and what do they take>.
+- Record a dashboard by its UID (stable), never by its full URL (the query parameters expire). The list below is not exhaustive.
+
+| Dashboard | UID |
+|---|---|
+| <name> | <uid> |
+
+- **Datasources**: to read a metric value, query the datasource directly. Resolve the datasource through this table rather than by matching a label from another system, because the same cluster may carry a different label value in each.
+
+  | Datasource | UID | Label values it serves |
+  |---|---|---|
+  | <name> | <uid> | <values> |
+
+- **Alerts**: <who configures them, and how to change one>.
+{{/if}}
+
+{{#if has.observability_doc}}
+## Systems the access tools cannot reach
+
+Logs and dashboards that live on a separate instance (another team's, or a network layer in front of the services) never appear in the queries above, and absence there is not evidence a request was never made. Mark facts you cannot verify here with `(external: <team>)` or `(human: <{{ git.user_label }}>, <date>)`.
+
+- <system>: <what it is> — <entry point>; <who knows>.
+{{/if}}
+{{#if has.db_schema}}
+
+## Database schema
+
+Schema is code-checkable: table definitions, column meaning and stored-procedure bodies live in {{ capabilities.db_schema.repos_hint }}. To confirm a table, column or procedure, find which repo holds that database (map below), then grep it. Do not stop at "the procedure is not in the caller's repo": configurable values such as thresholds and toggles live in the caller, but the time window and row filter are often written inside the procedure body, so read it.
+
+| Database | Schema repo | Examples seen |
+|---|---|---|
+{{#if derived.db_map}}
+{{#each derived.db_map}}
+| {{ this.db }} | `{{ this.repo }}` | <tables or procedures worth knowing> |
+{{/each}}
+{{else}}
+| <database> | <repo> | <tables or procedures worth knowing> |
+{{/if}}
+
+- When several versions of a procedure coexist, read the highest.
+- Record location pointers (which meaning lives in which table and column), never data values: values change, pointers do not.
+{{/if}}
+{{/if}}

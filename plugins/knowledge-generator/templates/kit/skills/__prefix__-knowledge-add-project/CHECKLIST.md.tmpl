@@ -1,0 +1,91 @@
+# {{ names.add_project }} checklist
+
+One-by-one confirmation distilled from `../{{ names.authoring_core }}.md`. Tick each before moving on. Full rationale + real-mistake cases: `../{{ names.authoring_core }}.md §6`. Also run the project-doc additions in `../{{ names.local_rules }}.md`.
+
+{{#if has.skeleton_artifact}}
+Runtime sections (Environments, Data & settings, Caching & retry, Background jobs, Observability) and Dependencies are for deployed projects only: a non-deployed artifact omits them entirely, never `none`, and its consumers sit under Publishing & usage (`../{{ names.authoring_core }}.md §3`). Every item below that names one of them is for deployed projects.
+
+{{/if}}## A. Before writing (scope & ownership)
+
+- [ ] Repo is under `{{ paths.repos_root }}`; confirmed which repo (named it before cross-project search).
+- [ ] **Per-fact routing done as in SKILL step 1, scope + ownership**: `ls {{ paths.repos_root }}` probed for the cross-referenced repos; the project's own repo is local (else cloned, or a domain doc written instead).
+- [ ] In scope? {{ scope.rule }} Pure upstream-only deps get **no doc** — just list them under Dependencies.
+- [ ] **Owner** set per §6{{#if has.owner_source}} from {{ scope.owner_source }}{{/if}}; `unknown` when no source gives one, never the repo path or family. Owner goes in the header meta list (`- Owner:`), not a separate section.
+
+## B. Research & verify (don't guess — see §5b for context you already have)
+
+- [ ] Facts gathered via Explore with `file:line`; "not found" instead of guessing. Captured only what you can't see by reading the repo in 10 min.
+- [ ] **Purpose** states what the code does, from entry points or the manifest description, never from the repo name; the business why is `(human:)` or left out.
+- [ ] **No claim written on plausibility or inheritance** (`../{{ names.authoring_core }}.md §6`): a claim naming a specific literal (column / enum / status / topic / created-by value) is grepped against the owning repo; "makes sense", "matches" a cross-linked doc, or a cited kb doc is not verification.
+- [ ] **Full ops field set checked for every service** — health/probes, scaling, background jobs, metrics endpoint, security. Don't assume legacy/simple services lack them.
+- [ ] **Verified the NATURE, not just a string match** — a `HealthCheck*` symbol may be internal scheduler monitoring, not an inbound probe; a metrics-looking name may be a substring coincidence; inbound vs outbound auth.
+{{#if has.database}}
+- [ ] **DB engine verified** from the data-access setup and the dependency manifest — a referenced package ≠ the engine used.
+{{/if}}
+- [ ] **Verified against ACTIVE usage** (`../{{ names.authoring_core }}.md §6` + the pitfall table): traced the **active caller** (who really reads/writes it), not a comment, schema note, seed row, history table, stale list or dead code.
+{{#if has.logs}}
+- [ ] **Log identity** verified with a live query on the log system ({{ derived.labels.logs }}), not read from config; recorded the actual value, every log identity in scope listed, or one `(unverified — <tool> unreachable)` when it is unreachable. For a frontend, the identifier its browser-side logs use is verified too.
+- [ ] **Per-env log stream** derived from where each environment actually runs; note any environment whose logs go to a system the assistant cannot reach, marked `(external: <team>)` when another team runs it and `(human: <{{ git.user_label }}>, <date>)` otherwise.
+{{/if}}
+- [ ] **Environments** = what the CI config / deploy manifests actually have ({{ lists.env_names }}) — every env confirmed (don't drop `{{ derived.first_env }}`).
+{{#if has.external_reference}}
+- [ ] **Per-env public hosts** from the external reference ({{ derived.labels.external_reference }}{{#each capabilities.external_reference.sources}}; {{ this.purpose }}: {{ this.ref }}{{/each}}) plus the repo; naming conventions are a fallback — watch alias exceptions.
+{{/if}}
+{{#if has.global_settings}}
+- [ ] **Settings namespace** resolved via {{ capabilities.global_settings.lookup }} (the value the code actually loads, not the repo name).
+{{/if}}
+
+## B2. From notes (when the input is a note / wiki page)
+
+- [ ] Treated the note as a **lead**, verified against the repo; corrected NOTE-ERRORs; did **not** transcribe.
+- [ ] Dropped re-derivable / unimportant content (big detail → source).{{#if has.external_reference}} External-reference ({{ derived.labels.external_reference }}) refs marked "reference (may be stale)"; code = source of truth.{{/if}}
+- [ ] If the note is a cross-project flow/rule → routed to `{{ names.add_domain }}`.
+
+## C. Content & structure rules (while drafting)
+
+- [ ] **Header = meta list**: `- repo:` / `- Owner:` / (`- Status: retired (YYYY-MM)` only when retired) / `- Audience:` / `- Last updated:` / `- Verified at:` (+ `- Tracks branch: <branch>` when the doc describes a non-default branch, `../{{ names.authoring_core }}.md §3`) (no blockquote header). Banner blockquote only if it adds info Purpose doesn't (clone / library-omission / a critical caveat) — never restates Purpose.
+- [ ] **`Audience` set** (fixed vocabulary, `../{{ names.authoring_core }}.md §3`): {{ lists.audiences_deployed }} for deployed apps{{#if has.skeleton_artifact}}; {{ lists.audiences_artifact }} for non-deployed artifacts{{/if}} (` + `-join for two deployments of different audiences, §3). Derived from `Domains/ingress` + Purpose. Internal-only nature lives HERE — don't repeat "internal-only" in prose.
+- [ ] **`Verified at` set** (project doc only): `<short-sha> (<commit-date>)` of the repo commit the doc was verified against; `n/a (<reason>)` for repos without a usable git history, family/group overview docs and not-cloned repos. Distinct from `Last updated` (doc edit date).
+- [ ] **Section order** (big→small, see §3): What it does → Flows → Architecture → Dependencies → Environments → Data & settings → Caching & retry → Background jobs → Security → Development & testing{{#if has.observability_doc}} → Observability{{/if}}.
+- [ ] **Bold labels** on every `- **Label**:` bullet. **Any multi-fact bullet split into sub-bullets** (no run-ons).
+- [ ] **What it does**: Capabilities in their own bullet, NOT crammed into Purpose. **Architecture**: runtime version here only (not repeated in Dev & testing).
+- [ ] **Dependencies** upstream grouped by domain, not a comma-run.
+- [ ] **Environments**: key:value bullets (Domains/ingress · Namespace and Container/image (or Deployment) · Health/probes · Scaling · Deployments · Traffic split · Cluster list · CI/CD). A VM-based app = Deployment (not containerized) + per-env Hosts.
+- [ ] **Data & settings**: each item a peer bullet {{#if has.shared_catalogs}}(Data stores · Cache store · shared-catalog fields{{#if has.global_settings}} · Settings{{/if}} · i18n/CDN{{#if has.frontend}} · Libraries{{/if}}) — a catalog field is NOT nested under Data stores.{{else}}(Data stores · Cache store{{#if has.global_settings}} · Settings{{/if}} · i18n/CDN{{#if has.frontend}} · Libraries{{/if}}).{{/if}}{{#if has.frontend}} A frontend's shared packages are **Libraries**, never SDKs.{{/if}}
+{{#each capabilities.shared_catalogs}}
+- [ ] **{{ this.source_field }}** structured: `none`, or the {{ this.name }} it uses with its mechanism, then per-env sub-bullets, each a host or `in secret (<name>)`. **runtime-only** — a non-deployed artifact omits it (+ Environments/Caching/Background jobs/Observability) entirely; don't write `none`.
+{{/each}}
+- [ ] **Background jobs** always present in a deployed doc (`none` if no scheduler). **Development & testing**: one bullet per layer (Unit / Integration / E2E).
+{{#if has.observability_doc}}
+- [ ] **Observability**: endpoints · logging · server log (per-env query). Frontend variant: browser-side log identifier.
+{{/if}}
+- [ ] **Structured-field `none`** for empty per-env{{#if has.shared_catalogs}} / catalog{{/if}} / jobs fields and caching (uniformity); an optional bullet or layer (endpoints, Health/probes, Scaling, Deployments, Traffic split, Security, Settings, i18n/CDN, a test layer, client log) is omitted, not `none`. But **no free-text "not X / not found here" reminders** — write positive facts only.
+- [ ] **Sources disagree → converged to the verified value** (`../{{ names.authoring_core }}.md §0`): the current truth only; no stale variants listed as equal, at most a one-clause guard.
+{{#if has.db_schema}}
+- [ ] **DB = location pointer, not values** (§5): record "which business semantic lives in which table and column" (code-invisible, stable mapping; anchored with the repo that holds the schema — {{ capabilities.db_schema.repos_hint }}); **never record changing data values** (row contents, blocked-id lists, enum-value maps, setting values) — fetched live at use-time. Whole-table dumps point to source.{{#if has.global_settings}} **Exception** (§5 business-rule value carve-out): a setting value that *is* a business-rule threshold/trigger may be written with **prod + source anchor (`website`+`key`, §9) + snapshot date** — but that's usually a domain-doc concern; a project doc records plain config as "where to look", not the value.{{/if}}
+{{/if}}
+- [ ] **Anchor coverage** (`../{{ names.authoring_core }}.md §9`; applies to a project doc that carries an `<!-- anchors -->` block — SKILL step 5, draft; every other project doc cites its symbols inline): every code-checkable claim is reachable by a grep anchor (class / method / procedure / toggle / topic / route). AUDIT's fine-filter uses anchors as the relevance probe (`git log -G`), so an un-anchored claim only gets re-checked by the costly full-reread backstop — coverage is the audit-cost lever.
+- [ ] **Every anchor pattern was actually RUN, per `|`-alternative** (when the doc carries an anchors block; `../{{ names.authoring_core }}.md §9` pilot mode): legal ERE **and** ≥1 real hit in its named repo. Coverage above is worthless if the pattern can never fire — an unescaped `(` parses fine and still matches nothing. A MISS that is correct (inverted / already-deleted claim) carries the `INVERTED` token on its line or sits in the `INVERTED anchors —` sub-block (§9 — no other wording counts); otherwise fix the pattern, not the claim.
+- [ ] **All secrets redacted** (even if pasted). Env tables list only {{ lists.env_names }}{{#if has.excluded_envs}}; never {{ lists.env_excluded }}{{/if}}. **Internal-only nature → `- Audience:` header, not prose**.
+- [ ] **Markers = exceptions only** (`../{{ names.authoring_core }}.md §0`, marker decision order §6): unmarked = code-verified; no bare `(verified)`, no emoji; only `(unverified — <missing repo or unreachable tool>)` / `(human: <{{ git.user_label }}>, <YYYY-MM-DD>)` / `(external: <team>)`; provenance parens only for non-guessable sources. Declarative, no person, no emphasis glyphs.
+- [ ] **Retired project/entity** (if documenting one): the §6 retired standard applied — `## Retired` row in `index.md` (not the main table; `Retired` = the month it was actually switched off, from {{ scope.retirement_date_source }} — **not** a {{ git.host }} timestamp), `- Status: retired (…)` in the header if the doc is kept, a residue map (**REMOVE** / **KEEP**) in the most-relevant surviving doc, a back-link from each KEEP residue. retired ≠ delete-all — don't kill a live redirect.
+
+## D. Variant
+
+- [ ] Template matches the deployment skeleton ({{ lists.skeletons }}{{#if has.skeleton_service}}; a message consumer/worker is a deployed runtime → `service`, NOT `artifact`{{/if}}); same type → same shape as siblings. No template fits → the user was asked.
+- [ ] SKILL "Pick a template" sub-cases applied (sister/clone, family / group, multi-deployment): a member points to the **family doc**, not to a peer member.
+
+## E. Language
+
+- [ ] Prose is **English**; technical terms and identifiers verbatim (`../{{ names.authoring_core }}.md §7`). `description`/frontmatter English.
+
+## F. After writing (finalize)
+
+- [ ] `references/project/index.md` row added or updated in place (no duplicate) — main table (in operation): **Owner + Audience columns filled**, matching the doc's header `- Owner:` / `- Audience:`; the index's `Last updated` bumped to today. Retired → the `## Retired` section instead (columns `Owner` + `Retired`, no Audience).
+- [ ] `Last updated` is today; `Verified at` moved only if the whole doc was re-verified against that commit (SKILL step 5, draft).
+- [ ] **Domain flows linked both ways** (§6): the project doc's **`## Flows` section** lists each flow `- **<Flow>** — [\`slug\`](../domain/slug.md)`, AND each `domain/<slug>.md` lists this project under `Projects involved`.
+{{#if has.frontend}}
+- [ ] **Frontend claims its render chains** (§6): a frontend claims every flow it **calls APIs for + renders**, not only backend-owned flows — so a chain editor finds the app from either end. The domain doc lists the app as its own `Projects involved` entry (not folded into the backend's "their apps").
+{{/if}}
+- [ ] Any fact that now repeats in a 2nd project → moved to the shared layer ({{#if has.observability_file}}`observability.md` / {{/if}}the reader `SKILL.md`); project doc keeps its own value + pointer.
+- [ ] Diff shown to the user; **commit only after the user confirms** (SKILL step 9, show the diff).

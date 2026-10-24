@@ -1,0 +1,79 @@
+{
+  "stack": {
+    "frontend": [
+      "vue",
+      "nuxt",
+      "react",
+      "next",
+      "angular",
+      "svelte",
+      "none"
+    ],
+    "runtime": [
+      "kubernetes",
+      "vm",
+      "serverless",
+      "paas"
+    ],
+    "database": [
+      "postgres",
+      "mysql",
+      "sqlserver",
+      "mongodb",
+      "sqlite",
+      "none"
+    ],
+    "messaging": [
+      "kafka",
+      "rabbitmq",
+      "sqs",
+      "nats",
+      "none"
+    ]
+  },
+  "capabilities": {
+    "logs": [
+      "elk",
+      "loki",
+      "cloudwatch",
+      "datadog",
+      "none"
+    ],
+    "metrics": [
+      "grafana",
+      "datadog",
+      "none"
+    ],
+    "global_settings": [
+      "central-store",
+      "env-files",
+      "none"
+    ],
+    "db_schema": [
+      "repo-per-db",
+      "migrations-in-repo",
+      "none"
+    ],
+    "external_reference": [
+      "confluence",
+      "notion",
+      "wiki",
+      "none"
+    ]
+  },
+  "platform_basics": [
+    "time",
+    "environments",
+    "domains",
+    "deployment",
+    "clusters",
+    "config-store",
+    "cache",
+    "cdn",
+    "shared-libraries",
+    "organization",
+    "cross-team",
+    "db-conventions",
+    "db-schema-location"
+  ]
+}

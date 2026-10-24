@@ -1,0 +1,21 @@
+# Project — {{ identity.display_name }} projects
+
+- Last updated: YYYY-MM-DD
+
+Per-project basics. Scope: {{ scope.rule }} One file per project; this page is the nav. The table below lists **projects in operation**; retired ones are kept in [`## Retired`](#retired) at the bottom of this page, never deleted.
+
+**Owner = owning team.** Allowed values: {{ lists.owners }}. `unknown` means no source names the owner yet.
+
+**Audience = exposure / who consumes it** (derived from each doc's `Domains/ingress` + purpose): {{ lists.audience_meanings_deployed }}; {{ lists.audience_meanings_artifact }}. A repository split across two deployments joins the two with ` + `.
+
+**Project** is the plain name and **File** links to its doc.
+
+| Project | Owner | Audience | One-line purpose | File |
+|---|---|---|---|---|
+
+## Retired
+
+A retired project is never deleted from this page. `Retired` is the month it was actually switched off (`YYYY-MM`), taken from {{ scope.retirement_date_source }}.
+
+| Project | Owner | Retired | What it was / residue | File |
+|---|---|---|---|---|
