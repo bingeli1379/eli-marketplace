@@ -6,7 +6,7 @@ The generator supplies structure and rules. The knowledge itself comes from you 
 
 ## Status
 
-Early version. The renderer, the config schema and every template are tested. The two skills, `setup` (an interview that writes the config) and `generate` (renders it), are written and checked statically but have not been run in a live session yet.
+Early version. The renderer, the config schema and every template are tested. The two skills, `setup` (an interview that writes the config) and `generate` (renders it), are written and checked statically, and both have run once in a live session against a real set of repositories.
 
 ## Install
 

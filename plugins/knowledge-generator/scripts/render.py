@@ -222,6 +222,9 @@ def validate(cfg):
     for path in ("identity.display_name", "paths.repo", "paths.out", "paths.repos_root", "git.host",
                  "git.user_label", "scope.rule", "scope.owner_source", "scope.audience", "environments.names"):
         need(path)
+    rule = cfg["scope"].get("rule")
+    if isinstance(rule, str) and rule.strip() and not re.search(r"[.!?\u3002\uff01\uff1f][\"')\uff09]*$", rule.strip()):
+        errs.append("scope.rule must be a sentence ending in a full stop; the templates continue after it")
     for entry in (cfg["scope"].get("audience") or []):
         if not isinstance(entry.get("deployed"), bool):
             errs.append(f"scope.audience[{entry.get('slug')}].deployed must be true or false")

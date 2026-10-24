@@ -94,6 +94,12 @@ class Config(unittest.TestCase):
         with self.assertRaises(r.ConfigError):
             r.validate(cfg)
 
+    def test_scope_rule_is_a_finished_sentence(self):
+        cfg = load("fakeco.config.json")
+        cfg["scope"]["rule"] = "any repository cloned locally"
+        with self.assertRaises(r.ConfigError):
+            r.validate(cfg)
+
     def test_scope_needs_an_owner(self):
         cfg = load("fakeco.config.json")
         cfg["scope"]["owners"] = []
@@ -205,6 +211,15 @@ class Templates(unittest.TestCase):
         fake = render_all("fakeco.config.json")[PROJECT_TPL.format(p="nw", n="service")]
         self.assertIn("- **Redis**:", acme)
         self.assertNotIn("Redis", fake)
+
+    def test_preflight_follows_the_live_tools(self):
+        acme = render_all("acme.config.json")
+        minimal = render_all("minimal.config.json")
+        for skill in ("add-project", "add-domain"):
+            self.assertIn("Preflight the live tools", acme[f".claude/skills/acme-knowledge-{skill}/SKILL.md"])
+            self.assertNotIn("Preflight", minimal[f".claude/skills/min-knowledge-{skill}/SKILL.md"])
+        self.assertIn("### Preflight", acme[".claude/skills/acme-knowledge-authoring-core.md"])
+        self.assertNotIn("Preflight", minimal[".claude/skills/min-knowledge-authoring-core.md"])
 
     def test_env_lists_follow_the_config(self):
         fake = render_all("fakeco.config.json")[PROJECT_TPL.format(p="nw", n="service")]

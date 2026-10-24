@@ -63,11 +63,11 @@ git:
 
 # ---------------------------------------------------------------- scope and ownership
 scope:
-  rule: ""                   # required, free text. Which repos get a project doc.
+  rule: ""                   # required. Which repos get a project doc, as a sentence ending in a full stop, because templates continue with the next sentence.
                              # e.g. "Repos our team develops, including ones we work on but do not own."
-  # (not asked: the default rule is "any repository cloned locally with a git remote it can be updated from")
+  # (not asked: the default rule is "Any repository cloned locally with a git remote it can be updated from.")
   owner_source: "the `owner` field of `catalog-info.yaml`"   # required. Where a project says who owns it, or "none"; a noun phrase, because templates read "from <value>"
-  # ask: Where does a project say who owns it? (the choices are the places step 3 found, with how many sampled repositories each covers, plus a choice to be asked per project)
+  # ask: Where does a project say who owns it? (the choices are the places step 3 found, with how many repositories each covers, plus a choice to be asked per project)
   # effect: Each project doc's owner is read from that place automatically, so nobody is asked per project. A project the place does not cover shows `unknown`. Teams found there become the owner list.
   # (not asked: `owners` is every team value step 3 found in any ownership source, its `code` the value in capitals; the user names the team once when none was found. Every team is `reachable: true` unless the user says some repository cannot be cloned; only then does a team become a candidate for "check with that team" instead of verified)
   # ask: Which team owns these projects? (asked only when step 3 found no place that names an owner; free text)
@@ -93,7 +93,7 @@ scope:
 # ---------------------------------------------------------------- environments
 environments:
   names: [stg, uat, prod]    # ordered; env tables list only these
-  # ask: Which environments do your projects deploy to, in order from earliest to production? (an environment named in more than half the sampled deploy files is kept without asking; the others are offered as a multi-select; listed earliest first, a recovery copy of production after it)
+  # ask: Which environments do your projects deploy to, in order from earliest to production? (an environment named in more than half the deploy files is kept without asking; the others are offered as a multi-select; listed earliest first, a recovery copy of production after it)
   # effect: Every project doc's environment section lists exactly these, and the check that compares docs with code uses them to read deploy settings.
   exclude: []                # e.g. [dr]; filtered out of any manifest diff
   # (not asked: every environment the deploy files name that the answer above leaves out, for example a disaster-recovery copy; docs never list it and the docs-versus-code check ignores its deploy settings)
@@ -122,7 +122,8 @@ stack:
 # probes entirely; pointers to a removed section are removed with it.
 # logs, metrics, global_settings and external_reference are proposed from the tools the session can see and
 # confirmed together in one question, never one question per capability. A tool the session cannot see is
-# not asked about; a user who has one adds it by editing the config. db_schema and shared_catalogs are never asked.
+# not asked about; a user who has one adds it by editing the config. A tool the session sees but that does not answer
+# is asked about too, stated as unreachable. db_schema and shared_catalogs are never asked.
 capabilities:
   logs:
     # ask: Which tool do you read service logs in, if any, and which tool connected to Claude (an MCP server) lets it search them?
@@ -147,7 +148,7 @@ capabilities:
   db_schema:
     # (not asked: `repo-per-db` when the source repositories include database projects, `migrations-in-repo` when they carry migration files, else `none`)
     kind: none               # repo-per-db | migrations-in-repo | none
-    repos_hint: ""           # where schema and stored procedures live
+    repos_hint: ""           # where schema and stored procedures live, as a noun phrase, because templates read "live in <value>" (e.g. "the database repositories, one folder per database")
     map: []                  # optional. [{ db: <database>, repo: <schema repo> }]: which repository holds each database's schema
     # (not asked: filled from the database projects the probe finds, one entry per database folder; it seeds the Database schema table of observability.md)
     # drives: §5 DB location pointers, anchors of the form `repo: <x> | grep: <Table>`
