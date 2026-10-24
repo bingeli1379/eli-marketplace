@@ -1,11 +1,13 @@
-{{#if has.observability_doc}}
-# Observability — logging & monitoring
+{{#if has.observability_file}}
+{{#if has.observability_doc}}# Observability — logging & monitoring{{else}}# Database schema map{{/if}}
 
 - Last updated: YYYY-MM-DD
 
+{{#if has.observability_doc}}
 Cross-project conventions for investigating {{ derived.observability_tools }}. Per-project values (which identity a service logs under, which identifier a frontend uses) live in each project doc under `project/`.
 
 Live queries need the access tools named below. When one is not available in the session, say the live check did not run and do not infer its result.
+{{/if}}
 {{#if has.logs}}
 
 ## Logging ({{ derived.labels.logs }})
@@ -24,9 +26,13 @@ Logs are split into streams:
 
 | Data stream / index | Source | Query syntax | Notes |
 |---|---|---|---|
+{{#if capabilities.logs.streams}}
 {{#each capabilities.logs.streams}}
 | `{{ this.name }}` | {{ this.scope }} | {{ this.syntax }} | <what it holds, how it is selected, retention> |
 {{/each}}
+{{else}}
+| `<stream>` | <source> | <query syntax> | <what it holds, how it is selected, retention> |
+{{/if}}
 
 ### Field conventions
 
@@ -106,11 +112,13 @@ No monitoring access tool is configured for this setup, so facts here are `(huma
 - **Alerts**: <who configures them, and how to change one>.
 {{/if}}
 
+{{#if has.observability_doc}}
 ## Systems the access tools cannot reach
 
 Logs and dashboards that live on a separate instance (another team's, or a network layer in front of the services) never appear in the queries above, and absence there is not evidence a request was never made. Mark facts you cannot verify here with `(external: <team>)` or `(human: <{{ git.user_label }}>, <date>)`.
 
 - <system>: <what it is> — <entry point>; <who knows>.
+{{/if}}
 {{#if has.db_schema}}
 
 ## Database schema
@@ -119,7 +127,13 @@ Schema is code-checkable: table definitions, column meaning and stored-procedure
 
 | Database | Schema repo | Examples seen |
 |---|---|---|
+{{#if derived.db_map}}
+{{#each derived.db_map}}
+| {{ this.db }} | `{{ this.repo }}` | <tables or procedures worth knowing> |
+{{/each}}
+{{else}}
 | <database> | <repo> | <tables or procedures worth knowing> |
+{{/if}}
 
 - When several versions of a procedure coexist, read the highest.
 - Record location pointers (which meaning lives in which table and column), never data values: values change, pointers do not.

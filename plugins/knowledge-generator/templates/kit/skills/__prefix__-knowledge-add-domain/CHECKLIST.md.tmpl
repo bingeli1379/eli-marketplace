@@ -19,7 +19,7 @@ One-by-one confirmation for a domain doc, distilled from `../{{ names.authoring_
 - [ ] Any **log / metric** claim verified with a live query on the log system ({{ derived.labels.logs }}), not read from config.
 {{/if}}
 - [ ] **Verified against ACTIVE usage** (`../{{ names.authoring_core }}.md §6` + the pitfall table): traced the **active caller** (who really reads/writes it), not a comment, schema note, seed row, history table, stale list or dead code.
-- [ ] **Verify-or-drop**: a step whose repo is local is Explored and stated as fact. A `## TODO` / `(unverified)` is kept ONLY for (a) a repo not local or a tool unreachable, or (b) an important flow gap worth flagging (`../{{ names.authoring_core }}.md §6`) — minor untraceable detail is dropped, not parked as "not traced".
+- [ ] **Verify-or-drop**: a step whose repo is local is Explored and stated as fact. A `## TODO` is kept ONLY for (a) a repo not local or a tool unreachable, each item marked `(unverified — <missing repo or unreachable tool>)`, or (b) an important flow gap that was looked at and not traced, stated without a marker (`../{{ names.authoring_core }}.md §6`) — minor untraceable detail is dropped, not parked as "not traced".
 
 ## B2. From notes (when the input is a note / wiki page)
 
@@ -34,7 +34,7 @@ One-by-one confirmation for a domain doc, distilled from `../{{ names.authoring_
 
 - [ ] **Declarative, no person** (no I / we / you); no conversational notes; no emphasis glyphs.
 - [ ] **All secrets redacted** — credentials, tokens, account passwords. Reference where they live, don't reproduce.
-- [ ] **Markers = exceptions only** (`../{{ names.authoring_core }}.md §0`, marker decision order §6): unmarked = code-verified; no bare `(verified)`, no emoji; only `(unverified)` / `(human: <{{ git.user_label }}>, <YYYY-MM-DD>)` / `(external: <team>)`. Non-code sources (incl. an `(external:)` fact's `src:`) → `noncode refs:` anchor. Provenance parens only for non-guessable sources.
+- [ ] **Markers = exceptions only** (`../{{ names.authoring_core }}.md §0`, marker decision order §6): unmarked = code-verified; no bare `(verified)`, no emoji; only `(unverified — <missing repo or unreachable tool>)` / `(human: <{{ git.user_label }}>, <YYYY-MM-DD>)` / `(external: <team>)`. Non-code sources (incl. an `(external:)` fact's `src:`) → `noncode refs:` anchor. Provenance parens only for non-guessable sources.
 - [ ] **Large detail points to the project doc / source**, not pasted inline.
 - [ ] **Sources disagree → converged to the verified value** (`../{{ names.authoring_core }}.md §0`): the current truth only; no stale variants listed as equal, at most a one-clause guard.
 {{#if has.db_schema}}
@@ -49,13 +49,13 @@ One-by-one confirmation for a domain doc, distilled from `../{{ names.authoring_
 
 ## D. Structure & language
 
-- [ ] **Header = meta list** — `- Last updated:` (today) + `- Swept at:` (domain audit cursor, date-only, project `Verified at` analogue; moved only if the whole doc was re-verified this run){{#if has.external_reference}} + optional `- External reference:`{{/if}}; no blockquote header, no `- Owner:`, no env/cluster table.
+- [ ] **Header = meta list** — `- Last updated:` (today) + `- Swept at:` (domain audit cursor, date-only, project `Verified at` analogue; moved only if the whole doc was re-verified this run; left out on a first write until every involved repo was read){{#if has.external_reference}} + optional `- External reference:`{{/if}}; no blockquote header, no `- Owner:`, no env/cluster table.
 - [ ] **`## Flows` mother section** — each flow a `### Flow A — <name>` under it (single flow → one `### Flow`); no top-level `## Flow A`.
 - [ ] **Structural skeleton (if drawn)** — flow/pipeline/state-machine doc only; ONE mermaid, structure-only (no method/toggle/status-value identifiers, no emoji/`style`), co-located with the `### Flow` it summarizes; skeleton nodes map 1:1 to prose stages (`../{{ names.authoring_core }}.md §0`).
 - [ ] **Do not split by default** — length is not a reason to split; decision-type forks are never split; to split, pass the three-condition gate in `../{{ names.authoring_core }}.md §2` (the thresholds live there, don't invent your own here).
 - [ ] Section set is standard-vocab-in-order, applied-only (Background → `## Flows` → sub-mechanics → Projects involved → Key rules → Glossary → TODO → anchors); omit empty sections, don't leave a shell.
-- [ ] **Anchor coverage incl. cross-project seams** (`../{{ names.authoring_core }}.md §9`): every code-checkable claim is reachable by an anchor, and the anchor set spans **every repo in `Projects involved`** — not just the primary. The seams a flow rides (message topics/schemas, RPC definitions, shared libs, setting triggers, routing) MUST be anchored to their upstream repo, so AUDIT catches an upstream change that doesn't move this doc's own symbols. Un-anchored claims only get caught by the costly full-reread backstop.
-- [ ] **Every anchor pattern was actually RUN, per `|`-alternative and per repo** (`../{{ names.authoring_core }}.md §9` pilot mode): legal ERE **and** ≥1 real hit in each repo it names — a multi-repo anchor whose other half never fires is a dead half, not coverage. A correct MISS (inverted / deleted claim) carries the `INVERTED` token on its line or sits in the `INVERTED anchors —` sub-block (§9 — no other wording counts); otherwise the pattern is what changes.
+- [ ] **Anchor coverage incl. cross-project seams** (`../{{ names.authoring_core }}.md §9`): the doc ends with an anchors block (a domain doc always carries one), every code-checkable claim is reachable by an anchor, and the anchor set spans **every repo in `Projects involved`** — not just the primary. The seams a flow rides (message topics/schemas, RPC definitions, shared libs, setting triggers, routing) MUST be anchored to their upstream repo, so AUDIT catches an upstream change that doesn't move this doc's own symbols. Un-anchored claims only get caught by the costly full-reread backstop.
+- [ ] **Every anchor pattern was actually RUN, per `|`-alternative and per repo** (`../{{ names.authoring_core }}.md §9` pilot mode): legal ERE (`grep -E`) **and** ≥1 real hit in each repo it names — a multi-repo anchor whose other half never fires is a dead half, not coverage. A correct MISS (inverted / deleted claim) carries the `INVERTED` token on its line or sits in the `INVERTED anchors —` sub-block (§9 — no other wording counts); otherwise the pattern is what changes.
 - [ ] **Prose is English**; technical terms and identifiers verbatim.
 - [ ] **Glossary keeps the terms the team actually uses** as canonical vocabulary (no invented terms).
 
@@ -64,7 +64,7 @@ One-by-one confirmation for a domain doc, distilled from `../{{ names.authoring_
 - [ ] `domain/index.md` row added or updated in place (no duplicate) — `| Topic | Covers | File |` (one-line Covers; no Owner column).
 - [ ] **Cross-linked both ways for every involved project** (`../{{ names.authoring_core }}.md §6`): domain doc lists it under `Projects involved` (`../project/<name>.md`), AND that project doc carries a back-link bullet in its **`## Flows` section** (`- **<Flow>** — [\`slug\`](../domain/slug.md)`) — neither direction optional.
 {{#if has.frontend}}
-- [ ] **Frontend app listed separately** (§6): if a frontend calls the flow's APIs + renders it, list that app as its own `Projects involved` entry — don't fold it into the backend's "their apps"; link if its doc is new-format, plain text if still old-format.
+- [ ] **Frontend app listed separately** (§6): if a frontend calls the flow's APIs + renders it, list that app as its own `Projects involved` entry — don't fold it into the backend's "their apps"; link its doc, or write the name alone when it has none.
 {{/if}}
 {{#if has.observability_doc}}
 - [ ] Platform-wide fact → the reader `SKILL.md`; a logs/metrics convention → `observability.md` (don't leave it duplicated in the topic).

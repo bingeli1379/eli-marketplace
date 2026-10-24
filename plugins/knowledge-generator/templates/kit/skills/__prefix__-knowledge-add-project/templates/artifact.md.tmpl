@@ -9,12 +9,12 @@
 - Verified at: <short-sha> (<commit-date>)   <!-- repo commit this doc was verified against. A family/group overview doc → n/a (family doc; per-repo anchors in member docs). -->
 
 <!-- banner OPTIONAL: only a clone note / critical caveat. Type/identity goes in Purpose, NOT a heading-less banner. Don't list which sections are omitted. -->
-<!-- A NON-DEPLOYED artifact: a package library{{#if has.db_projects}} OR a DB-project{{/if}}. Not a deployed service → NO runtime sections (Environments / caches / Background jobs / Observability) — OMIT them, don't write `none` (no runtime = no field; a `none` there is an orphan). A deployed message consumer/worker is NOT an artifact — it has a runtime → use the service template. -->
+<!-- A NON-DEPLOYED artifact: a package or template library{{#if has.db_projects}} OR a DB-project{{/if}}. Not a deployed service → NO runtime sections (Environments / caches / Background jobs / Observability) — OMIT them, don't write `none` (no runtime = no field; a `none` there is an orphan). A deployed message consumer/worker is NOT an artifact — it has a runtime → {{#if has.skeleton_service}}use the service template{{else}}use the deployed layout this kit ships{{/if}}. -->
 <!-- Parallel / growing lists (packages, modules, consumers, DBs) → sub-bullets, never a run-on. Keep ONLY the type-specific blocks that fit; delete the rest. -->
 
 ## What it does
 
-- **Purpose**: <what it is + **type** ({{#if has.db_projects}}package library · DB-project{{else}}package library{{/if}}) + "not a deployed service" + what it provides>
+- **Purpose**: <what it is + **type** ({{#if has.db_projects}}package or template library · DB-project{{else}}package or template library{{/if}}) + "not a deployed service" + what it provides>
 {{#if has.db_projects}}
 - **Tech** <!-- DB-project, OPTIONAL: schema tooling / target engine version / deploy tool --> : <…>
 {{/if}}
@@ -58,7 +58,8 @@
 {{/if}}
 
 ## Development & testing
+<!-- list only the layers that exist; no tests at all → omit this section -->
 
-- **Unit**: <test projects, if any>.
+- **Unit**: <test projects>.
 - <Integration / E2E only if they exist>
 {{/if}}

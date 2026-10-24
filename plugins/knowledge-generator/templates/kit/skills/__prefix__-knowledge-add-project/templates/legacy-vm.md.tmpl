@@ -4,7 +4,7 @@
 - repo: <https url>
 - Owner: <{{ lists.owners }}>
 - Status: retired (YYYY-MM)   <!-- retired standard ({{ names.authoring_core }}.md §6): OMIT unless the service is retired — no middle state, some parts switched off is not retired. Month = when it was actually switched off, from {{ scope.retirement_date_source }}; never a {{ git.host }} timestamp. -->
-- Audience: <{{ lists.audiences_deployed }}>   <!-- exposure/audience ({{ names.authoring_core }}.md §3/§6): {{ lists.audience_meanings_deployed }}. Single repo split across two → join with ` + `. -->
+- Audience: <{{ lists.audiences_deployed }}>   <!-- exposure/audience ({{ names.authoring_core }}.md §3/§6): {{ lists.audience_meanings_deployed }}. Two deployments of different audiences: join with ` + ` as §3 says. -->
 - Last updated: YYYY-MM-DD
 - Verified at: <short-sha> (<commit-date>)   <!-- repo commit this doc was verified against. A repo without a usable git history (e.g. a mirror of another source-control system) → n/a (<reason>; no git anchor). -->
 
@@ -44,9 +44,15 @@
   <!-- confirm each host against the external reference ({{ derived.labels.external_reference }}); note any alias that breaks the naming pattern -->
 {{/if}}
 
+- **Health/probes**: <liveness / readiness path, or the monitor that checks it> <!-- OPTIONAL but VERIFY — don't assume a VM app has none -->
+- **Scaling**: <load balancer / instance count> <!-- OPTIONAL, VERIFY -->
+
 ## Data & settings
 
+{{#if has.database}}
 - **Data stores**: <DBs + data-access lib; verify DB engine; secret source REDACTED>
+{{/if}}
+- **Cache store** <!-- OPTIONAL, a peer bullet and never nested under Data stores: a shared cache or key-value store; omit when the project uses none, and use the catalog bullet below instead when one covers the same store -->: <kind + what it holds; host or `in secret (<name>)` per env only when the repo shows it>
 {{#each capabilities.shared_catalogs}}
 - **{{ this.source_field }}**: <`none`, or the {{ this.name }} it uses (mechanism) + per-env sub-bullets; VM apps usually have no deploy manifest, so the host comes from a secret or config>
 {{/each}}
@@ -56,7 +62,7 @@
 
 ## Caching & retry
 
-- <cache layers / retry library; if none "no explicit retry">
+- **<Layer or concern>**: <cache layers / retry library; if the project has none, the section holds the single line `none`>
 
 ## Background jobs
 
@@ -65,22 +71,25 @@
 ## Security
 <!-- OPTIONAL: only if a notable surface. Older APIs often have inbound token auth — check (request filters / token validation). -->
 
-- <inbound auth (token validation / API key) / rate limit / etc>
+- **<Surface>**: <inbound auth (token validation / API key) / rate limit / etc>
 
 ## Development & testing
+<!-- list only the layers that exist; no tests at all → omit this section -->
 
 - **Unit**: <test projects>.
-- <Integration / E2E only if they exist>
+- **Integration**: <framework + test projects>.
+- **E2E**: <only if it exists>.
 {{#if has.observability_doc}}
 
 ## Observability
 
 For log and dashboard conventions see `observability.md`.
 
+- **endpoints** <!-- OPTIONAL: omit if none --> : <metrics / scheduler dashboard paths>.
 - **logging**: <logging library → sink; a library that writes local files may NOT reach the log system — verify with a live query before claiming "not in the log system">.
 - **APM**: <service identity if an APM agent is configured>.
 {{#if has.logs}}
-- **Server log** ({{ derived.labels.logs }}): <identity of this service — VERIFY with a live query, or `(unverified)` naming the unreachable tool; some environments may ship to a system the assistant cannot reach. A sibling repo or second component may own another identity: list every one>. Query that identity in:
+- **Server log** ({{ derived.labels.logs }}): <identity of this service — VERIFY with a live query; when the tool is unreachable write one `(unverified — <tool> unreachable)` after the identity and leave out the per-environment lines; some environments may ship to a system the assistant cannot reach. A sibling repo or second component may own another identity, and the repo may hold two candidates for one: list every one>. Query that identity in:
 {{#each derived.envs_reversed}}
   - {{ this }} → <stream or none>
 {{/each}}
