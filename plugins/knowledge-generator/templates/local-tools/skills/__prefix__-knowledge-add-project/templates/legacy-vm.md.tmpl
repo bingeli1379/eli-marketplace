@@ -80,7 +80,7 @@ For log and dashboard conventions see `observability.md`.
 - **logging**: <logging library → sink; a library that writes local files may NOT reach the log system — verify with a live query before claiming "not in the log system">.
 - **APM**: <service identity if an APM agent is configured>.
 {{#if has.logs}}
-- **Server log** ({{ derived.labels.logs }}): <identity of this service — VERIFY with a live query; some environments may ship to a system the assistant cannot reach>. Query that identity in:
+- **Server log** ({{ derived.labels.logs }}): <identity of this service — VERIFY with a live query, or `(unverified)` naming the unreachable tool; some environments may ship to a system the assistant cannot reach. A sibling repo or second component may own another identity: list every one>. Query that identity in:
 {{#each derived.envs_reversed}}
   - {{ this }} → <stream or none>
 {{/each}}
