@@ -6,7 +6,8 @@
 
 Without --write nothing is written: the config is validated and the run prints a one-line
 summary, the user-owned files it would keep, and a diff for every generated file that
-differs from what a render would write. The output goes to <paths.repo>/<paths.out>.
+differs from what a render would write. The output goes to <paths.repo>/<paths.out>, except the maintainer kit,
+which always lands in <paths.repo>/.claude/ because Claude Code loads project skills from there.
 
 Template syntax. It is strict: an unknown name is an error, never an empty string.
     {{ a.b.c }}                          value from the config or the derived context
@@ -16,6 +17,7 @@ Template syntax. It is strict: an unknown name is an error, never an empty strin
     \\{{ ... }}                           literal braces
 A block tag alone on its line removes the whole line.
 In file paths __prefix__ is replaced by identity.prefix, and a .tmpl suffix is dropped.
+A template under kit/ is written under <paths.repo>/.claude/ instead of <paths.out>.
 A .seed.tmpl is a file the user owns: it is written when missing and never overwritten.
 A template that renders to nothing but whitespace is not written;
 that is how a whole file is switched off (wrap the whole file in {{#if has.skeleton_x}}).
@@ -218,7 +220,7 @@ def validate(cfg):
     if isinstance(prefix, str) and not re.fullmatch(r"[a-z][a-z0-9-]*", prefix):
         errs.append("identity.prefix must match [a-z][a-z0-9-]*")
     for path in ("identity.display_name", "paths.repo", "paths.out", "paths.repos_root", "git.host",
-                 "git.user_label", "scope.rule", "scope.audience", "environments.names"):
+                 "git.user_label", "scope.rule", "scope.owner_source", "scope.audience", "environments.names"):
         need(path)
     for entry in (cfg["scope"].get("audience") or []):
         if not isinstance(entry.get("deployed"), bool):
@@ -249,6 +251,9 @@ def validate(cfg):
     settings = caps.get("global_settings")
     if isinstance(settings, dict) and settings.get("kind") not in ("none", "", None) and not settings.get("lookup"):
         errs.append("capabilities.global_settings.lookup must say how to read a live value when kind is not \"none\"")
+    db_map = (caps.get("db_schema") or {}).get("map", [])
+    if not isinstance(db_map, list) or any(not isinstance(e, dict) or not e.get("db") or not e.get("repo") for e in db_map):
+        errs.append("capabilities.db_schema.map must be a list of { db, repo } entries (it may be empty)")
     if not isinstance(caps.get("shared_catalogs"), list):
         errs.append("capabilities.shared_catalogs must be a list")
     if errs:
@@ -324,9 +329,6 @@ def derive(cfg):
     base = f"{prefix}-knowledge"
     repo = cfg["paths"]["repo"].rstrip("/")
     out_rel = posixpath.normpath(cfg["paths"]["out"])
-    kit_src = posixpath.normpath(posixpath.join(out_rel, "local-tools/skills"))
-    link_dir = posixpath.normpath(cfg["kit"]["link_dir"])
-    up = "../" * len(link_dir.split("/"))
     ctx = dict(cfg)
     ctx["names"] = {
         "knowledge": base,
@@ -337,7 +339,6 @@ def derive(cfg):
         "sync_local": f"{base}-sync-local",
         "verify": f"{base}-verify",
         "list_markers": f"{base}-list-markers",
-        "update_skills": f"{base}-update-skills",
     }
     ctx["has"] = {
         name: caps[name]["kind"] not in ("none", "") for name in CAPABILITIES
@@ -352,15 +353,18 @@ def derive(cfg):
         ctx["has"]["skeleton_" + name.replace("-", "_")] = name in skeletons
     ctx["has"]["db_projects"] = caps["db_schema"]["kind"] == "repo-per-db"
     ctx["has"]["observability_doc"] = ctx["has"]["logs"] or ctx["has"]["metrics"]
+    ctx["has"]["deployed_skeleton"] = ctx["has"]["skeleton_service"] or ctx["has"]["skeleton_legacy_vm"]
+    ctx["has"]["observability_file"] = ctx["has"]["observability_doc"] or ctx["has"]["db_projects"]
     # the live tools a verification step can name; dashboards (metrics) are not one of them
     ctx["has"]["live_tools"] = any(
         ctx["has"][name] for name in ("logs", "global_settings", "external_reference")
     )
     ctx["has"]["excluded_envs"] = bool(cfg["environments"]["exclude"])
+    ctx["has"]["owner_source"] = cfg["scope"]["owner_source"] != "none"
     audience = cfg["scope"]["audience"]
     names = cfg["environments"]["names"]
     ctx["lists"] = {
-        "owners": " | ".join(o["code"] if o["code"] == o["label"] else f"{o['code']} ({o['label']})" for o in cfg["scope"]["owners"]),
+        "owners": " | ".join([o["code"] if o["code"] == o["label"] else f"{o['code']} ({o['label']})" for o in cfg["scope"]["owners"]] + ["unknown"]),
         "audiences_deployed": " | ".join(a["slug"] for a in audience if a["deployed"]),
         "audiences_artifact": " | ".join(a["slug"] for a in audience if not a["deployed"]),
         "audience_meanings_deployed": "; ".join(f"{a['slug']} = {a['meaning']}" for a in audience if a["deployed"]),
@@ -373,6 +377,7 @@ def derive(cfg):
     tools = " and ".join(obs)
     owners = cfg["scope"]["owners"]
     ctx["has"]["owners_external"] = any(not o["reachable"] for o in owners)
+    ctx["lists"]["skeletons"] = " / ".join(f"`{n}`" for n in skeletons)
     ctx["lists"]["owners_reachable"] = ", ".join(o["code"] for o in owners if o["reachable"])
     ctx["lists"]["owners_external"] = ", ".join(o["code"] for o in owners if not o["reachable"])
     ctx["lists"]["live_checks"] = " / ".join(
@@ -399,22 +404,25 @@ def derive(cfg):
         "platform_basics": platform_basics(cfg["known_context"]["platform_basics"], ctx["has"]["shared_catalogs"]),
         "observability_tools": tools,
         "labels": labels,
+        "db_map": caps["db_schema"].get("map", []),
         "catalog_headings": ", ".join(c["heading"] for c in caps["shared_catalogs"]),
         "knowledge_root": posixpath.join(repo, out_rel, "skills", base) if out_rel != "." else posixpath.join(repo, "skills", base),
-        "kit_root": posixpath.join(repo, out_rel, "local-tools/skills") if out_rel != "." else posixpath.join(repo, "local-tools/skills"),
-        "kit_src": kit_src,
+        "kit_root": posixpath.join(repo, ".claude/skills"),
         "skills_root": posixpath.normpath(posixpath.join(out_rel, "skills")),
         "ledger_dir": f".claude/{base}-sync",
+        "kit_rel": ("" if posixpath.relpath(".claude/skills", out_rel).startswith("..") else "./") + posixpath.relpath(".claude/skills", out_rel),
         "first_env": names[0],
         "envs_reversed": list(reversed(names)),
-        "bootstrap_script": "\n".join([
-            f'DST={link_dir}; mkdir -p "$DST"',
-            f'for item in {kit_src}/*; do',
-            f'  ln -sfn "{up}$item" "$DST/$(basename "$item")"',
-            "done",
-        ]),
     }
     return ctx
+
+
+KIT_DIR = "kit/"
+
+
+def output_rel(rel):
+    """Where a template is written: relative to <paths.repo> for the kit, to <paths.out> for the rest."""
+    return ".claude/" + rel[len(KIT_DIR):] if rel.startswith(KIT_DIR) else rel
 
 
 def strip_suffixes(rel):
@@ -426,7 +434,7 @@ def seed_paths(templates, cfg):
     """Output paths of the files a user owns after the first render: written once, never overwritten."""
     prefix = cfg["identity"]["prefix"]
     return {
-        strip_suffixes(src.relative_to(templates).as_posix().replace("__prefix__", prefix))
+        output_rel(strip_suffixes(src.relative_to(templates).as_posix().replace("__prefix__", prefix)))
         for src in Path(templates).rglob("*.seed.tmpl")
     }
 
@@ -443,9 +451,9 @@ def render_tree(templates, cfg):
         if rel.endswith(".tmpl"):
             text = render(src.read_text(encoding="utf-8"), ctx, str(src))
             if text.strip():
-                files.append((strip_suffixes(rel), text))
+                files.append((output_rel(strip_suffixes(rel)), text))
         else:
-            files.append((rel, src.read_text(encoding="utf-8")))
+            files.append((output_rel(rel), src.read_text(encoding="utf-8")))
     return files
 
 
@@ -456,6 +464,13 @@ TEMPLATES = PLUGIN_ROOT / "templates"
 def default_out(cfg):
     repo = os.path.expanduser(cfg["paths"]["repo"])
     return Path(posixpath.normpath(posixpath.join(repo, cfg["paths"]["out"])))
+
+
+def destination(cfg):
+    """Maps an output path to the file it is written at: the kit under the repo root, the rest under paths.out."""
+    repo = Path(os.path.expanduser(cfg["paths"]["repo"]))
+    out = default_out(cfg)
+    return lambda rel: (repo if rel.startswith(".claude/") else out) / rel
 
 
 def keep_regions(text, dest):
@@ -471,8 +486,8 @@ def keep_regions(text, dest):
     return KEEP.sub(put, text)
 
 
-def plan_status(rel, text, out, seeds):
-    dest = out / rel
+def plan_status(rel, text, dest_of, seeds):
+    dest = dest_of(rel)
     if not dest.exists():
         return "new"
     if rel in seeds:
@@ -480,7 +495,7 @@ def plan_status(rel, text, out, seeds):
     return "unchanged" if dest.read_text(encoding="utf-8") == text else "changed"
 
 
-def show_plan(rows, out):
+def show_plan(rows, dest_of):
     counts = collections.Counter(status for status, _, _ in rows)
     print("plan: " + ", ".join(f"{counts[k]} {k}" for k in ("new", "changed", "unchanged", "kept")))
     diffs = []
@@ -488,7 +503,7 @@ def show_plan(rows, out):
         if status == "kept":
             print(f"kept     {rel}")
         elif status == "changed":
-            old = (out / rel).read_text(encoding="utf-8")
+            old = dest_of(rel).read_text(encoding="utf-8")
             diff = list(difflib.unified_diff(old.splitlines(True), text.splitlines(True),
                                              f"existing/{rel}", f"rendered/{rel}"))
             added = sum(1 for line in diff if line.startswith("+") and not line.startswith("+++"))
@@ -500,14 +515,14 @@ def show_plan(rows, out):
         sys.stdout.writelines(line if line.endswith("\n") else line + "\n" for line in diff)
 
 
-def apply(rows, out):
+def apply(rows, dest_of):
     wrote = kept = 0
     for status, rel, text in rows:
         if status == "kept":
             print(f"kept   {rel}")
             kept += 1
             continue
-        dest = out / rel
+        dest = dest_of(rel)
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(text, encoding="utf-8")
         print(f"wrote  {rel}")
@@ -532,14 +547,14 @@ def main(argv=None):
         print(f"error: the config lacks the key {exc.args[0]!r}; schema/config.reference.yaml lists every field",
               file=sys.stderr)
         return 1
-    out = default_out(cfg)
+    dest_of = destination(cfg)
     seeds = seed_paths(TEMPLATES, cfg)
-    files = [(rel, keep_regions(text, out / rel)) for rel, text in files]
-    rows = [(plan_status(rel, text, out, seeds), rel, text) for rel, text in files]
+    files = [(rel, keep_regions(text, dest_of(rel))) for rel, text in files]
+    rows = [(plan_status(rel, text, dest_of, seeds), rel, text) for rel, text in files]
     if args.write:
-        apply(rows, out)
+        apply(rows, dest_of)
     else:
-        show_plan(rows, out)
+        show_plan(rows, dest_of)
     return 0
 
 

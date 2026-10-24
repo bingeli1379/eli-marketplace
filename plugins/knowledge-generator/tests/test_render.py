@@ -5,6 +5,7 @@
 import contextlib
 import io
 import json
+import os
 import re
 import shutil
 import sys
@@ -18,8 +19,8 @@ import render as r  # noqa: E402
 
 TEMPLATES = ROOT / "templates"
 FIXTURES = ROOT / "tests" / "fixtures"
-PROJECT_TPL = "local-tools/skills/{p}-knowledge-add-project/templates/{n}.md"
-LIST_MARKERS = "local-tools/skills/{p}-knowledge-list-markers/SKILL.md"
+PROJECT_TPL = ".claude/skills/{p}-knowledge-add-project/templates/{n}.md"
+LIST_MARKERS = ".claude/skills/{p}-knowledge-list-markers/SKILL.md"
 
 
 def load(name):
@@ -163,16 +164,6 @@ class Config(unittest.TestCase):
         self.assertFalse(ctx["has"]["db_projects"])
         self.assertEqual(ctx["derived"]["knowledge_root"], "~/code/northwind-knowledge/skills/nw-knowledge")
 
-    def test_bootstrap_script_follows_paths_and_link_dir(self):
-        script = r.derive(load("acme.config.json"))["derived"]["bootstrap_script"]
-        self.assertIn("for item in knowledge/local-tools/skills/*", script)
-        self.assertIn('"../../$item"', script)
-        script = r.derive(load("fakeco.config.json"))["derived"]["bootstrap_script"]
-        self.assertIn("for item in local-tools/skills/*", script)
-        cfg = load("fakeco.config.json")
-        cfg["kit"]["link_dir"] = ".agents/skills/links"
-        self.assertIn('"../../../$item"', r.derive(cfg)["derived"]["bootstrap_script"])
-
 
 class Templates(unittest.TestCase):
     def test_path_is_prefixed_and_suffix_dropped(self):
@@ -245,7 +236,7 @@ class SkillFrontmatter(unittest.TestCase):
     def skills(self):
         for name in ("acme.config.json", "fakeco.config.json"):
             for rel, text in render_all(name).items():
-                if rel.startswith("local-tools/") and rel.endswith("/SKILL.md"):
+                if rel.startswith(".claude/skills/") and rel.endswith("/SKILL.md"):
                     yield name, rel, text
 
     def test_every_kit_skill_is_command_only(self):
@@ -255,7 +246,7 @@ class SkillFrontmatter(unittest.TestCase):
             self.assertIn("disable-model-invocation: true", fm, rel)
             self.assertNotIn("user-invocable: false", fm, rel)
             seen += 1
-        self.assertGreaterEqual(seen, 8)
+        self.assertGreaterEqual(seen, 10)
 
     def test_descriptions_disambiguate_instead_of_listing_triggers(self):
         for _, rel, text in self.skills():
@@ -276,13 +267,13 @@ class SkillFrontmatter(unittest.TestCase):
 class SeedFiles(unittest.TestCase):
     def test_seed_file_is_rendered_without_its_suffixes(self):
         files = render_all("acme.config.json")
-        self.assertIn("local-tools/skills/acme-knowledge-local-rules.md", files)
-        self.assertIn("# Acme local rules", files["local-tools/skills/acme-knowledge-local-rules.md"])
+        self.assertIn(".claude/skills/acme-knowledge-local-rules.md", files)
+        self.assertIn("# Acme local rules", files[".claude/skills/acme-knowledge-local-rules.md"])
 
     def test_seed_paths(self):
         paths = r.seed_paths(TEMPLATES, load("acme.config.json"))
         self.assertEqual(paths, {
-            "local-tools/skills/acme-knowledge-local-rules.md",
+            ".claude/skills/acme-knowledge-local-rules.md",
             "skills/acme-knowledge/references/project/index.md",
             "skills/acme-knowledge/references/domain/index.md",
             "skills/acme-knowledge/references/observability.md",
@@ -295,7 +286,7 @@ class SeedFiles(unittest.TestCase):
         for rel in ("add-project/SKILL.md", "add-project/CHECKLIST.md", "add-domain/SKILL.md",
                     "add-domain/CHECKLIST.md", "verify/SKILL.md"):
             skill = rel.split("/")[0]
-            path = f"local-tools/skills/acme-knowledge-{skill}/{rel.split('/')[1]}"
+            path = f".claude/skills/acme-knowledge-{skill}/{rel.split('/')[1]}"
             self.assertIn("../acme-knowledge-local-rules.md", files[path], path)
 
 
@@ -380,7 +371,7 @@ class RoutingSnippet(unittest.TestCase):
 class Readmes(unittest.TestCase):
     def test_root_readme_is_a_seed_the_user_owns(self):
         self.assertIn("README.md", r.seed_paths(TEMPLATES, load("acme.config.json")))
-        self.assertNotIn("local-tools/README.md", r.seed_paths(TEMPLATES, load("acme.config.json")))
+        self.assertNotIn(".claude/skills/README.md", r.seed_paths(TEMPLATES, load("acme.config.json")))
 
     def test_tier_table_lists_only_the_tools_that_are_configured(self):
         acme = render_all("acme.config.json")["README.md"]
@@ -389,19 +380,17 @@ class Readmes(unittest.TestCase):
         self.assertNotIn("plus live tools", fake)
         self.assertIn("plus local repos under `~/code`", fake)
 
-    def test_the_bootstrap_script_has_one_home_in_the_kit_readme(self):
+    def test_the_readmes_send_contributors_to_the_kit_without_an_activation_step(self):
         files = render_all("acme.config.json")
-        script = r.derive(load("acme.config.json"))["derived"]["bootstrap_script"]
-        self.assertNotIn(script, files["README.md"])
         self.assertIn('"Contributing a change" covers', files["README.md"])
-        self.assertIn(script, files["local-tools/README.md"])
-        update = files["local-tools/skills/acme-knowledge-update-skills/SKILL.md"]
-        self.assertNotIn(script, update)
-        self.assertIn('"Activate" in `knowledge/local-tools/README.md`', update)
+        for text in (files["README.md"], files[".claude/skills/README.md"]):
+            self.assertNotIn("Activate", text)
+            self.assertNotIn("symlink", text.lower())
+            self.assertNotIn("local-tools", text)
 
     def test_kit_readme_names_every_kit_skill(self):
-        text = render_all("acme.config.json")["local-tools/README.md"]
-        for skill in ("add-project", "add-domain", "sync-local", "verify", "list-markers", "update-skills"):
+        text = render_all("acme.config.json")[".claude/skills/README.md"]
+        for skill in ("add-project", "add-domain", "sync-local", "verify", "list-markers"):
             self.assertIn(f"acme-knowledge-{skill}/", text)
         self.assertIn("acme-knowledge-local-rules.md", text)
 
@@ -431,6 +420,17 @@ class SharedReferences(unittest.TestCase):
         self.assertIn(self.PB.format(p="acme"), acme)
         self.assertNotIn(self.OBS.format(p="nw"), fake)
         self.assertNotIn(self.PB.format(p="nw"), fake)
+
+    def test_a_schema_repo_per_database_alone_still_gets_its_map_and_the_reader_names_it(self):
+        import copy
+        cfg = copy.deepcopy(load("fakeco.config.json"))
+        cfg["capabilities"]["db_schema"] = {"kind": "repo-per-db", "repos_hint": "~/code/db-*", "map": [{"db": "OrdersDB", "repo": "db-orders"}]}
+        files = dict(r.render_tree(TEMPLATES, cfg))
+        obs = files["skills/nw-knowledge/references/observability.md"]
+        self.assertIn("| OrdersDB | `db-orders` |", obs)
+        self.assertNotIn("Cross-project conventions for investigating", obs)
+        self.assertNotIn("Systems the access tools cannot reach", obs)
+        self.assertIn("references/observability.md", files["skills/nw-knowledge/SKILL.md"])
 
     def test_every_reference_the_reader_skill_names_is_generated(self):
         for name, prefix in (("acme.config.json", "acme"), ("fakeco.config.json", "nw")):
@@ -613,8 +613,9 @@ class Cli(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path, out = staged(tmp)
             run(["--config", str(path), "--write"])
-            mine = out / "local-tools/skills/acme-knowledge-local-rules.md"
-            generated = out / "local-tools/skills/acme-knowledge-list-markers/SKILL.md"
+            repo = out.parent
+            mine = repo / ".claude/skills/acme-knowledge-local-rules.md"
+            generated = repo / ".claude/skills/acme-knowledge-list-markers/SKILL.md"
             mine.write_text("my rules\n", encoding="utf-8")
             generated.write_text("stale\n", encoding="utf-8")
             self.assertEqual(run(["--config", str(path), "--write"])[0], 0)
@@ -676,14 +677,45 @@ class EveryFixture(unittest.TestCase):
         import copy
         cfg = copy.deepcopy(load("minimal.config.json"))
         cfg["scope"]["owners"] = [{"code": "TEAM", "label": "TEAM", "reachable": True}]
-        self.assertEqual(r.derive(cfg)["lists"]["owners"], "TEAM")
+        self.assertEqual(r.derive(cfg)["lists"]["owners"], "TEAM | unknown")
 
     def test_capabilities_a_config_lacks_leave_no_wording_behind(self):
         files = render_all("minimal.config.json")
-        core = files["local-tools/skills/min-knowledge-authoring-core.md"]
+        core = files[".claude/skills/min-knowledge-authoring-core.md"]
         self.assertNotIn("(log identity", core)
         self.assertNotIn("none for this setup)  13", core)
-        self.assertNotIn("shared-catalog", files["local-tools/skills/min-knowledge-add-project/CHECKLIST.md"])
+        self.assertNotIn("shared-catalog", files[".claude/skills/min-knowledge-add-project/CHECKLIST.md"])
+
+    def test_the_owner_source_decides_how_ownership_is_resolved(self):
+        core = ".claude/skills/{}-knowledge-authoring-core.md"
+        with_source = render_all("acme.config.json")[core.format("acme")]
+        self.assertIn("the `owner` field of `catalog-info.yaml`", with_source)
+        without = render_all("minimal.config.json")[core.format("min")]
+        self.assertIn("asked in the one question that closes the run", without)
+        self.assertNotIn("At setup the user named where", without)
+
+    def test_the_schema_map_seeds_the_database_table_and_an_empty_one_leaves_a_placeholder(self):
+        import copy
+        obs = ".claude/../skills/{p}-knowledge/references/observability.md".replace(".claude/../", "")
+        cfg = copy.deepcopy(load("acme.config.json"))
+        cfg["capabilities"]["db_schema"]["map"] = [{"db": "AccountDB", "repo": "consus.account"}]
+        text = dict(r.render_tree(TEMPLATES, cfg))[obs.format(p="acme")]
+        self.assertIn("| AccountDB | `consus.account` |", text)
+        self.assertNotIn("| <database> | <repo> |", text)
+        cfg["capabilities"]["db_schema"]["map"] = []
+        text = dict(r.render_tree(TEMPLATES, cfg))[obs.format(p="acme")]
+        self.assertIn("| <database> | <repo> |", text)
+        cfg["capabilities"]["db_schema"]["map"] = [{"db": "AccountDB"}]
+        with self.assertRaises(r.ConfigError):
+            r.validate(cfg)
+
+    def test_a_logs_setup_without_streams_still_shows_a_stream_row(self):
+        import copy
+        cfg = copy.deepcopy(load("acme.config.json"))
+        cfg["capabilities"]["logs"]["streams"] = []
+        text = dict(r.render_tree(TEMPLATES, cfg))["skills/acme-knowledge/references/observability.md"]
+        self.assertIn("| `<stream>` | <source> |", text)
+        self.assertIn("| Concept | `<stream A>` | `<stream B>` |", text)
 
     def test_every_kit_skill_is_command_only_and_the_reader_is_not(self):
         for name in FIXTURE_NAMES:
@@ -692,7 +724,7 @@ class EveryFixture(unittest.TestCase):
             for rel, text in files.items():
                 if rel.endswith("/SKILL.md"):
                     fm = re.match(r"---\n(.*?)\n---\n", text, re.S).group(1)
-                    kit = rel.startswith("local-tools/")
+                    kit = rel.startswith(".claude/skills/")
                     self.assertEqual("disable-model-invocation: true" in fm, kit, f"{name}: {rel}")
             self.assertIn(f"skills/{prefix}-knowledge/SKILL.md", files)
 
@@ -703,10 +735,10 @@ class EveryFixture(unittest.TestCase):
         self.assertIn("4. **Markers**", reader)
         self.assertIn("5. **This doc gives you where to look", reader)
         self.assertNotIn("references/observability.md", reader)
-        self.assertIn("none for this setup", files["local-tools/skills/min-knowledge-authoring-core.md"])
+        self.assertIn("none for this setup", files[".claude/skills/min-knowledge-authoring-core.md"])
         self.assertIn(f"skills/min-knowledge/references/project/index.md", files)
         self.assertNotIn("skills/min-knowledge/references/observability.md", files)
-        tpl = "local-tools/skills/min-knowledge-add-project/templates/{}.md"
+        tpl = ".claude/skills/min-knowledge-add-project/templates/{}.md"
         self.assertIn(tpl.format("artifact"), files)
         self.assertNotIn(tpl.format("service"), files)
         self.assertNotIn(tpl.format("legacy-vm"), files)
@@ -731,26 +763,26 @@ class RenderedKit(unittest.TestCase):
                 self.assertEqual(declared, skill.parent.name, f"{name}: {skill}")
                 self.assertRegex(fm, r"(?m)^description:")
 
-    def test_the_bootstrap_script_links_every_kit_skill_and_the_links_resolve(self):
-        import subprocess
+    def test_the_kit_is_written_in_place_under_the_repo_claude_dir_even_when_out_is_a_subfolder(self):
         for name in FIXTURE_NAMES:
-            repo, out = self.rendered(name)
-            script = r.derive(load(name))["derived"]["bootstrap_script"]
-            subprocess.run(["bash", "-c", script], cwd=repo, check=True)
-            link_dir = repo / ".claude" / "skills"
-            links = sorted(p.name for p in link_dir.iterdir())
-            self.assertTrue(links, name)
-            for link in link_dir.iterdir():
-                self.assertTrue(link.is_symlink(), f"{name}: {link}")
-                self.assertTrue(link.exists(), f"{name}: dangling {link}")
-            prefix = load(name)["identity"]["prefix"]
-            for skill in ("add-project", "add-domain", "sync-local", "verify", "list-markers", "update-skills"):
-                self.assertIn(f"{prefix}-knowledge-{skill}", links, name)
-                self.assertTrue((link_dir / f"{prefix}-knowledge-{skill}" / "SKILL.md").exists())
+            tmp = tempfile.TemporaryDirectory()
+            self.addCleanup(tmp.cleanup)
+            path, out = staged(tmp.name, name)
+            cfg = json.loads(path.read_text())
+            cfg["paths"]["out"] = "kb"
+            path.write_text(json.dumps(cfg))
+            self.assertEqual(run(["--config", str(path), "--write"])[0], 0)
+            repo = Path(os.path.expanduser(cfg["paths"]["repo"]))
+            prefix = cfg["identity"]["prefix"]
+            for skill in ("add-project", "add-domain", "sync-local", "verify", "list-markers"):
+                self.assertTrue((repo / ".claude" / "skills" / f"{prefix}-knowledge-{skill}" / "SKILL.md").is_file(), (name, skill))
+            self.assertTrue((repo / "kb" / "skills" / f"{prefix}-knowledge" / "SKILL.md").is_file(), name)
+            self.assertFalse((repo / "kb" / ".claude").exists(), name)
+            self.assertFalse((repo / ".gitignore").exists(), name)
 
     def test_the_kit_skills_find_the_shared_rules_through_their_relative_pointer(self):
         _, out = self.rendered("acme.config.json")
-        skills = out / "local-tools" / "skills"
+        skills = out / ".claude" / "skills"
         for skill in skills.glob("acme-knowledge-*/SKILL.md"):
             text = skill.read_text()
             for target in re.findall(r"\.\./(acme-knowledge-[a-z-]+\.md)", text):

@@ -1,0 +1,34 @@
+# {{ identity.display_name }} knowledge maintainer kit (not reader skills)
+
+Authoring skills for maintaining the knowledge base. They are for maintainers, not for the people who read it.
+
+They live in this directory, `.claude/skills/`, so Claude Code loads them for anyone who opens this repository and there is nothing to install or link. They are committed with the repository, so `.claude/skills/` must not be git-ignored. Every one of them is command-only: it runs only when you type its command, never because a conversation seems to match.
+
+## Contents
+
+```
+.claude/skills/
+  {{ names.authoring_core }}.md      # shared authoring rules, the single source every skill points to
+  {{ names.local_rules }}.md         # rules specific to {{ identity.display_name }}; written once, never overwritten
+  {{ names.add_project }}/           # add or update a per-project doc (references/project/*.md)
+  {{ names.add_domain }}/            # add or update a domain doc (references/domain/*.md)
+  {{ names.sync_local }}/            # audit and refresh docs against local repos under {{ paths.repos_root }}
+  {{ names.verify }}/                # review a contributor's changeset (verify claims, judge (human:) facts)
+  {{ names.list_markers }}/          # list every open marker as a worklist
+```
+
+The sibling `{{ names.authoring_core }}.md` keeps the `../{{ names.authoring_core }}.md` references in each skill working.
+
+## Contributing a change
+
+1. Clone this repository, plus whichever source repos you will document, under `{{ paths.repos_root }}`.
+2. Open Claude Code in this repository; the commands above are available.
+3. Author with `/{{ names.add_project }}` or `/{{ names.add_domain }}`. They probe your clone inventory and route each fact: repo local means verified (unmarked); repo absent or live tool unreachable means `(unverified — <missing repo or unreachable tool>)`; code-invisible means `(human: <{{ git.user_label }}>, <date>)`. Mark what you cannot check; do not guess.
+4. Push a branch and open a merge request.
+5. A maintainer with all repos cloned runs `/{{ names.verify }}` before merging. It resolves the `(unverified)`, judges the `(human:)`, and sweeps the full clone for whole projects nobody mentioned: an omission leaves no marker, so only this step catches it.
+
+## Conventions
+
+The knowledge base is loaded as authoritative context, so trust matters more than coverage: one stale fact read as gospel hurts more than a missing one. Unmarked text means code-verified; the exceptions carry `(unverified — <missing repo or unreachable tool>)`, `(human: <{{ git.user_label }}>, <YYYY-MM-DD>)` or `(external: <team>)`. The definitions, the marker decision order, the retirement standard and every other rule are in `{{ names.authoring_core }}.md` (§0 and §6 first).
+
+Rules that belong to {{ identity.display_name }} only go in `{{ names.local_rules }}.md`, not in the shared file. Every other file here is generator-owned: a later generator run lists a hand edit as `changed` and replaces it once you confirm. Edit another kit file only for a change that should also land in the generator's templates, and keep a shared rule in `{{ names.authoring_core }}.md`, with the other files pointing to it rather than copying it.

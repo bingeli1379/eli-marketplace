@@ -1,7 +1,7 @@
 # <Topic Title>
 
 - Last updated: YYYY-MM-DD
-- Swept at: YYYY-MM-DD                                 <!-- domain audit cursor: date the doc was last fully re-verified against its involved repos (project `Verified at` analogue; date-only, no sha) -->
+- Swept at: YYYY-MM-DD                                 <!-- domain audit cursor: date the doc was last fully re-verified against its involved repos (project `Verified at` analogue; date-only, no sha). Leave this whole line out on a first write that did not read every repo under Projects involved; the audit then does the full read and adds it -->
 {{#if has.external_reference}}
 - External reference ({{ derived.labels.external_reference }}): <id or url> — reference, may be stale          <!-- OPTIONAL: only when an external page backs the doc -->
 {{/if}}
@@ -12,7 +12,7 @@
 
 ## Background / why
 
-<why this flow / domain exists, in a few clauses. Parallel variants → a comparison table:>
+<why this flow / domain exists, in a few clauses. Parallel variants → a comparison table whose columns fit them (the ones below are only an example):>
 
 | Type | Trigger | Symptom | Response |
 |---|---|---|---|
@@ -56,14 +56,14 @@
 - **<rule category>**: <fact>. {{#if has.global_settings}}<!-- e.g. A domain is **blocked** after **10** consecutive failed detections (prod, snapshot — see anchor). -->{{/if}}
 
 ## Glossary
-<!-- Last visible section. Keep the terms the team actually uses as canonical vocabulary (no invented terms). -->
+<!-- After Key rules. Keep the terms the team actually uses as canonical vocabulary (no invented terms). -->
 
 - **<term>**: <definition>.
 
-## TODO (unverified)
-<!-- OPTIONAL and rare. Keep an unverified item ONLY when (a) its repo is NOT local or its tool is unreachable (can't verify), or (b) it's an important gap in the flow worth flagging. Everything else: verify it against the local repo and state it as fact, OR — if it's a minor untraceable detail — drop the hedge and just state what IS known. Do NOT leave routine "not traced" notes. -->
+## TODO
+<!-- OPTIONAL and rare. Keep an item ONLY when (a) its repo is NOT local or its tool is unreachable, marked `(unverified — <missing repo or unreachable tool>)`, or (b) it is an important gap in the flow that was looked at and not traced, stated with no marker. Everything else: verify it against the local repo and state it as fact, OR — if it's a minor untraceable detail — drop the hedge and just state what IS known. Do NOT leave routine "not traced" notes. -->
 
-- <gap> — <why it can't be verified now: repo not local / tool unreachable / non-code source>.
+- <gap> — <(a) `(unverified — <missing repo or unreachable tool>)`, or (b) what was looked at and why it could not be traced>.
 
 <!-- anchors (machine-readable for {{ names.sync_local }} AUDIT; not rendered to readers — see {{ names.authoring_core }}.md §9)
 code claims — grep pattern in repo under {{ paths.repos_root }}; present = ok, missing/renamed = drift to re-verify:

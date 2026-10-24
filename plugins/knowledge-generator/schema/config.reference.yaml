@@ -15,11 +15,13 @@
 # A field is asked only when the repositories and the session's tools cannot settle it. Everything else
 # carries a `(not asked: …)` line saying where its value comes from.
 #
-# Output layout contract (fixed, not configurable below `paths.out`):
+# Output layout contract (fixed; only the reader tree moves with `paths.out`):
 #   <out>/skills/<prefix>-knowledge/SKILL.md
 #   <out>/skills/<prefix>-knowledge/references/{project,domain}/index.md
 #   <out>/skills/<prefix>-knowledge/references/{observability,platform-basics}.md  (capability-gated)
-#   <out>/local-tools/skills/<prefix>-knowledge-*/        (the maintainer kit; never under skills/)
+#   <repo>/.claude/skills/<prefix>-knowledge-*/           (the maintainer kit; committed, loaded by Claude Code from the repo root)
+#   <repo>/.claude/skills/<prefix>-knowledge-{authoring-core,local-rules}.md
+#   <repo>/.claude/skills/README.md
 #   <out>/README.md
 #   <out>/CLAUDE.snippet.md                               (routing block for the user's own CLAUDE.md)
 
@@ -47,7 +49,7 @@ paths:
   repo_dir_map:              # optional. Only needed when a doc name differs from its local directory.
     rules: []                # ordered regex rewrites, e.g. [{ from: "-", to: "." }]
     aliases: {}              # exact doc name -> local directory
-  # (not asked: only when the probe finds a documented name that differs from its folder name)
+  # (not asked: left empty; a user whose doc names differ from folder names adds rules by editing the config)
   # drives: sync-local step 1 (repo resolution), verify, add-project, add-domain
 
 # ---------------------------------------------------------------- git
@@ -64,22 +66,24 @@ scope:
   rule: ""                   # required, free text. Which repos get a project doc.
                              # e.g. "Repos our team develops, including ones we work on but do not own."
   # (not asked: the default rule is "any repository cloned locally with a git remote it can be updated from")
-  # ask: Which team are you on?
-  # effect: Each project doc records its owning team from this list, and the project index gets a team column. The list starts with this team, its `code` in capitals unless a repository names one; teams the probe finds in repositories are added to the proposal and confirmed in the same question.
-  #         Every team is `reachable: true` unless the user says some repository cannot be cloned; only then does a team become a candidate for "check with that team" instead of verified.
-  owners:                    # controlled vocabulary for `- Owner:` and the index Owner column
+  owner_source: "the `owner` field of `catalog-info.yaml`"   # required. Where a project says who owns it, or "none"; a noun phrase, because templates read "from <value>"
+  # ask: Where does a project say who owns it? (the choices are the places step 3 found, with how many sampled repositories each covers, plus a choice to be asked per project)
+  # effect: Each project doc's owner is read from that place automatically, so nobody is asked per project. A project the place does not cover shows `unknown`. Teams found there become the owner list.
+  # (not asked: `owners` is every team value step 3 found in any ownership source, its `code` the value in capitals; the user names the team once when none was found. Every team is `reachable: true` unless the user says some repository cannot be cloned; only then does a team become a candidate for "check with that team" instead of verified)
+  # ask: Which team owns these projects? (asked only when step 3 found no place that names an owner; free text)
+  # effect: It is the one entry of the owner list, which every project doc's `- Owner:` is picked from.
+  owners:                    # controlled vocabulary for `- Owner:` and the index Owner column; `label` is the value as found, or the name the user typed
     - { code: TEAM-A, label: Platform, reachable: true }
     # reachable: true  = we can read their repos and data, so (external:) is never used for it
     # reachable: false = candidate for (external: <code>)
-  # ask: How do you tell apart the kinds of project (for example customer-facing, back-office, internal service, library)? Edit or trim this list, and for each kind say whether it runs as a service or is not deployed.
-  # effect: Each project doc is labelled with one of these kinds. A kind that runs as a service gets the full doc layout; a kind that is not deployed (a library, a database project) gets a shorter one.
+  # (not asked: the five kinds below are a vocabulary, not a claim about the projects; a kind nothing uses costs nothing, and a user who wants another edits the config. A kind that runs as a service gets the full doc layout; a kind that is not deployed gets a shorter one)
   audience:                  # fixed vocabulary for `- Audience:`; edit the list, keep the slugs unique
     # deployed: true  = a running service, offered in the service and legacy-vm templates
     # deployed: false = a non-deployed artifact, offered in the artifact template
     - { slug: customer-facing, meaning: "public traffic, reached directly by end users", deployed: true }
     - { slug: back-office, meaning: "staff or ops surface", deployed: true }
     - { slug: internal-service, meaning: "server-to-server, no human interface", deployed: true }
-    - { slug: library, meaning: "shared package, not deployed", deployed: false }
+    - { slug: library, meaning: "shared package or template library, not deployed", deployed: false }
     - { slug: db-project, meaning: "database project or DBA scripts", deployed: false }
   retirement_date_source: "the date the user gives for the switch-off"   # where the real switch-off month comes from
   # (not asked: the default above; a noun phrase with its own article, because the templates read "taken from <value>")
@@ -89,15 +93,14 @@ scope:
 # ---------------------------------------------------------------- environments
 environments:
   names: [stg, uat, prod]    # ordered; env tables list only these
-  # ask: Which environments do your projects deploy to, in order from earliest to production? (proposed from the CI files; asked as a confirmation)
+  # ask: Which environments do your projects deploy to, in order from earliest to production? (an environment named in more than half the sampled deploy files is kept without asking; the others are offered as a multi-select; listed earliest first, a recovery copy of production after it)
   # effect: Every project doc's environment section lists exactly these, and the check that compares docs with code uses them to read deploy settings.
   exclude: []                # e.g. [dr]; filtered out of any manifest diff
-  # ask: Is there an environment that exists but should be ignored in the docs (for example a disaster-recovery copy)? (asked only when the CI files name an environment outside `names`)
-  # effect: Docs never list it, and the check that compares docs with code ignores its deploy settings.
+  # (not asked: every environment the deploy files name that the answer above leaves out, for example a disaster-recovery copy; docs never list it and the docs-versus-code check ignores its deploy settings)
   # drives: §3 Environments, §6 env rules, project templates
 
 # ---------------------------------------------------------------- stack
-# (not asked: probed from the source repositories; the user sees the result in the proposal table. An area with no evidence stays `presets: []`, and `runtime` is asked when it ends up empty)
+# (not asked, except `runtime` below: probed from the source repositories; the user sees the result in the proposal table. An area with no evidence stays `presets: []`)
 # Only these four areas change the generated files, and each only by whether it is present, never by which
 # preset: frontend adds the "frontend claims the flows it renders" paragraph, database adds the data-store
 # section and its checks, messaging adds the send/process chain block, runtime picks the project-doc layout.
@@ -105,6 +108,8 @@ environments:
 stack:
   frontend:   { presets: [], other: "" }   # vue | nuxt | react | next | angular | svelte | none
   runtime:    { presets: [], other: "" }   # kubernetes | vm | serverless | paas
+  # ask: Where do your services run? Pick every one that applies. (asked only when the probe finds none)
+  # effect: Services on Kubernetes get the full project-doc layout and services on a VM get the host-based layout; with none picked no service layout is generated, only the short one for what is not deployed.
   database:   { presets: [], other: "" }   # postgres | mysql | sqlserver | mongodb | sqlite | none
   messaging:  { presets: [], other: "" }   # kafka | rabbitmq | sqs | nats | none
   skeletons: []              # project doc templates to emit: service | legacy-vm | artifact
@@ -117,12 +122,12 @@ stack:
 # probes entirely; pointers to a removed section are removed with it.
 # logs, metrics, global_settings and external_reference are proposed from the tools the session can see and
 # confirmed together in one question, never one question per capability. A tool the session cannot see is
-# asked about only when the user names it. db_schema and shared_catalogs are never asked.
+# not asked about; a user who has one adds it by editing the config. db_schema and shared_catalogs are never asked.
 capabilities:
   logs:
     # ask: Which tool do you read service logs in, if any, and which tool connected to Claude (an MCP server) lets it search them?
     # effect: Turns on log checks: how to confirm a service's real log name, a reference page for investigating, and live log checks when the docs are re-verified. Answering none leaves all of that out.
-    kind: none               # elk | loki | cloudwatch | none | other
+    kind: none               # elk | loki | cloudwatch | datadog | none | other
     access: none             # mcp name the assistant can call, or none
     streams: []              # free-form: { name, scope, syntax }
     # drives: §4 Observability row, §5 log verification, project template Observability section,
@@ -143,6 +148,8 @@ capabilities:
     # (not asked: `repo-per-db` when the source repositories include database projects, `migrations-in-repo` when they carry migration files, else `none`)
     kind: none               # repo-per-db | migrations-in-repo | none
     repos_hint: ""           # where schema and stored procedures live
+    map: []                  # optional. [{ db: AccountDB, repo: consus.account }]: which repository holds each database's schema
+    # (not asked: filled from the database projects the probe finds, one entry per database folder; it seeds the Database schema table of observability.md)
     # drives: §5 DB location pointers, anchors of the form `repo: <x> | grep: <Table>`
   external_reference:
     # ask: Do you keep reference pages in a wiki (Confluence, Notion and so on) that docs may cite? Which pages hold things like host lists?
@@ -161,15 +168,14 @@ capabilities:
 # examples below; every list may be empty. The result must stay within 1024 characters.
 reader:
   example_projects: []       # a few project names a user would say out loud
-  # ask: Name a few projects and business flows people say out loud, and a few questions they ask.
-  # effect: They go into the description Claude uses to decide when to load the knowledge skill, so the right questions reach it. Keep them few; the description has a size limit.
+  # (not asked: `example_projects` is up to three recently active repositories; flows and questions stay empty until domain docs exist. They go into the description Claude uses to decide when to load the knowledge skill)
   example_flows: []          # a few business flows
   example_questions: []      # phrasings worth matching, e.g. "how does the login flow work"
   # drives: reader SKILL.md description
 
 # ---------------------------------------------------------------- reader skill content
 known_context:
-  platform_basics:           # categories the setup interview offers; each can be skipped
+  platform_basics:           # categories listed in the reader skill's Platform basics
   # (not asked: every category below is listed as an empty bullet in the knowledge skill's Platform basics for you to fill in; drop one by editing the config. The list is kept across later regenerations.)
     - time
     - environments
@@ -200,8 +206,8 @@ audit:
     agent_report_char_cap: 10000
   # drives: §9 by-age and backstop, sync-local scale control and prompt contract
 
-# ---------------------------------------------------------------- kit activation
+# ---------------------------------------------------------------- kit
 kit:
-  link_dir: .claude/skills   # where symlinks to local-tools/skills/* are created
   contributing_note: ""      # optional free text appended to the README contributing section
-  # drives: update-skills, local-tools README, README
+  # (not asked)
+  # drives: README

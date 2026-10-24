@@ -1,16 +1,16 @@
 {{#if has.skeleton_service}}
 # <repo.name>
 
-- repo: <https url>
+- repo: <https url>   <!-- the https clone URL, not the ssh form -->
 - Owner: <{{ lists.owners }}>
 - Status: retired (YYYY-MM)   <!-- retired standard ({{ names.authoring_core }}.md §6): OMIT unless the service is retired — no middle state, some parts switched off is not retired. Month = when it was actually switched off, from {{ scope.retirement_date_source }}; never a {{ git.host }} timestamp. -->
-- Audience: <{{ lists.audiences_deployed }}>   <!-- exposure/audience ({{ names.authoring_core }}.md §3/§6): {{ lists.audience_meanings_deployed }}. A single repo split by deployment across two → join with ` + `. -->
+- Audience: <{{ lists.audiences_deployed }}>   <!-- exposure/audience ({{ names.authoring_core }}.md §3/§6): {{ lists.audience_meanings_deployed }}. Two deployments of different audiences: join with ` + ` as §3 says. -->
 - Last updated: YYYY-MM-DD
 - Verified at: <short-sha> (<commit-date>)   <!-- repo commit this doc was verified against. n/a (<reason>) for a repo without a usable git history, a family overview doc or a not-cloned repo. -->
 
 <!-- Sister/clone? open with: "Clone of `X.md`; most conventions identical — this doc covers differences only." then point shared parts back to X. -->
 <!-- Covers every deployed runtime: backend API · frontend · message consumer/worker · scheduler. Same section skeleton — per-type differences are marked inline (BACKEND / FRONTEND / CONSUMER / SCHEDULER). -->
-<!-- Section order is fixed (big-picture → detail → ops trivia). OPTIONAL: include only when applicable. ALWAYS: keep, writing `none` when empty. Parallel / growing lists (modules, jobs, consumers, DBs) → sub-bullets, never a run-on. -->
+<!-- Section order is fixed (big-picture → detail → ops trivia). OPTIONAL: include only when applicable. ALWAYS: keep a structured per-env or jobs field, writing `none` when empty; an optional bullet or layer (endpoints, a test layer, client log) is omitted instead. Parallel / growing lists (modules, jobs, consumers, DBs) → sub-bullets, never a run-on. -->
 
 ## What it does
 
@@ -57,7 +57,7 @@
 
 <!-- List only the envs that actually exist (CI config / deploy manifests): {{ lists.env_names }}.{{#if has.excluded_envs}} Never a row for {{ lists.env_excluded }}.{{/if}} VERIFY health/scaling — don't assume a frontend/consumer lacks them. -->
 
-- **Domains/ingress**: <BACKEND: public domain + aliases; internal hosts; whether prod ingress is maintained by another team. FRONTEND: the subdomain-prefix pattern only, not every env×brand host; note device gating if any (client-side ≠ server-side redirects). CONSUMER: no external API; ingress only a health probe.>
+- **Domains/ingress**: <BACKEND: public domain + aliases; internal hosts; whether prod ingress is maintained by another team; where the ingress lives when it is not in this repo. FRONTEND: the subdomain-prefix pattern only, not every env×brand host; note device gating if any (client-side ≠ server-side redirects). CONSUMER: no external API; ingress only a health probe.>
 {{#if has.kubernetes}}
 - **Namespace**: `<ns>`.
 - **Container/image**: port <container> → service <svc> (+ dedicated health port if any); image `<registry>/...`.
@@ -66,9 +66,9 @@
 {{/if}}
 - **Health/probes**: <BACKEND / server-rendered frontend: liveness `<path>`, readiness `<path>`. Static app: liveness+readiness usually `/` on the web server, no dedicated endpoint.> <!-- OPTIONAL but VERIFY — don't assume a frontend has none -->
 - **Scaling**: <autoscaling min–max @ threshold; resources req→limit. A static app may use a disruption budget + fixed replicas instead.> <!-- OPTIONAL, VERIFY -->
-- **Deployments**: <count + names — responsibilities under What it does>, same image, each scaled independently. <!-- OPTIONAL: only if >1 -->
+- **Deployments**: <count + names (responsibilities under What it does); one image or several; what splits them and why>. <!-- OPTIONAL: only if >1 -->
 - **Traffic split**: <env var / reverse-proxy routing rule>. <!-- OPTIONAL: only if multi-deployment -->
-- **{{#if has.kubernetes}}Cluster{{else}}Platform{{/if}}** <!-- sub-bullet list (default — few/simple envs); a table is fine if it earns extra columns -->:
+- **{{#if has.kubernetes}}Cluster{{else}}Platform{{/if}}** <!-- sub-bullet list (default — few/simple envs); a table is fine if it earns extra columns; two CI jobs for one env, such as two clusters, get one sub-bullet each -->:
 {{#each environments.names}}
   - {{ this }}: <cluster / platform>
 {{/each}}
@@ -81,6 +81,7 @@
 {{#if has.database}}
 - **Data stores** <!-- BACKEND / CONSUMER; OMIT for a pure frontend -->: <DB engine — VERIFY from the data-access setup, not from a referenced package — + access lib + which DBs; secret source REDACTED>.
 {{/if}}
+- **Cache store** <!-- OPTIONAL, a peer bullet and never nested under Data stores: a shared cache or key-value store; omit when the project uses none, and use the catalog bullet below instead when one covers the same store -->: <kind + what it holds; host or `in secret (<name>)` per env only when the repo shows it>.
 {{#each capabilities.shared_catalogs}}
 - **{{ this.source_field }}**: <`none`, or the {{ this.name }} it uses (<mechanism>), then per-env sub-bullets, each a host or `in secret (<name>)`:>
 {{#each derived.envs_reversed}}
@@ -99,7 +100,7 @@
 
 <!-- Server-rendered FRONTEND: split into **Render server** and **Frontend app** — they differ. Static app: web-server cache headers + client-side cache. BACKEND: one group. -->
 
-- <cache layers + TTL; retry / backoff / circuit-breaker; client cache decorators + per-endpoint TTL (sub-bullets). If none: "no explicit retry".>
+- **<Layer or concern>**: <cache layers + TTL; retry / backoff / circuit-breaker; client cache decorators + per-endpoint TTL (sub-bullets). If the project has none, the section holds the single line `none`.>
 
 ## Background jobs
 
@@ -110,11 +111,11 @@
 ## Security
 <!-- OPTIONAL: only if a notable surface (auth service, token signing, rate limit, CSRF, CORS, redirect validation). Omit for ordinary services + ordinary frontends. -->
 
-- <token signing / cookie / CSRF / rate limit / CORS / redirect URI / security headers>
+- **<Surface>**: <token signing / cookie / CSRF / rate limit / CORS / redirect URI / security headers>
 
 ## Development & testing
 
-<!-- one bullet per layer; runtime version is in Architecture, NOT here. FRONTEND: runtime version + run/mock here. -->
+<!-- one bullet per layer that exists, no bullet for a layer it lacks; no tests at all → omit this section. Runtime version is in Architecture, NOT here. FRONTEND: runtime version + run/mock here. -->
 
 - **Unit**: <framework + test projects>.
 - **Integration**: <framework + test projects>.
@@ -128,13 +129,13 @@ For log and dashboard conventions see `observability.md`.
 - **endpoints** <!-- OPTIONAL: omit if none. Frontends usually have no metrics endpoint --> : <metrics / scheduler dashboard paths>.
 - **logging**: <lib → sink; APM meters / service identity if any>.
 {{#if has.logs}}
-- **Server log** <!-- BACKEND / CONSUMER / server-rendered frontend (has a server log) --> ({{ derived.labels.logs }}): identity = `<value>` (verified with a live query, or `(unverified)` naming the unreachable tool when it could not run; if config differs from what reaches the log system: "config says `X`, the log system shows `Y`"). Query that identity in the stream chosen from where each env runs:
+- **Server log** <!-- BACKEND / CONSUMER / server-rendered frontend (has a server log) --> ({{ derived.labels.logs }}): identity = `<value>` (verified with a live query; when the tool is unreachable write one `(unverified — <tool> unreachable)` after the identity and leave out the per-environment lines; if config differs from what reaches the log system: "config says `X`, the log system shows `Y`"). Query that identity in the stream chosen from where each env runs:
 {{#each derived.envs_reversed}}
   - {{ this }} → <stream(s)>
 {{/each}}
-<!-- MULTI-IDENTITY: this doc's scope can cover more than one log identity, from a sibling repo or a second component in this repo that each own one. List every one and state that a covering query needs them all; listing one is a hand-made false zero. Never derive an identity from another system's value; probe to confirm. A sibling repo with its own doc gets a cross-link instead of a copy. -->
+<!-- MULTI-IDENTITY: this doc's scope can cover more than one log identity, from a sibling repo or a second component in this repo that each own one, or the repo holds two candidates for one (a config value and a code constant that differ). List every one and state that a covering query needs them all; listing one is a hand-made false zero. Never derive an identity from another system's value; probe to confirm. A sibling repo with its own doc gets a cross-link instead of a copy. -->
 {{#if has.frontend}}
-- **Client log** <!-- FRONTEND ONLY --> : <where browser-side logs go and the identifier they carry, e.g. `page` = `<value>`; or "none — errors are POSTed to <backend>'s server log">. <!-- Don't spell out the verification steps. -->
+- **Client log** <!-- FRONTEND ONLY --> : <where browser-side logs go and the identifier they carry, e.g. `page` = `<value>`; or, when errors are only POSTed to the backend, say so in the **logging** bullet and omit this one>. <!-- Don't spell out the verification steps. -->
 {{/if}}
 {{/if}}
 {{/if}}

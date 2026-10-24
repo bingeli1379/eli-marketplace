@@ -19,6 +19,7 @@
   },
   "scope": {
     "rule": "Repos the platform team develops. Upstream-only dependencies get no doc.",
+    "owner_source": "none",
     "owners": [
       {
         "code": "PLATFORM",
@@ -146,7 +147,6 @@
     }
   },
   "kit": {
-    "link_dir": ".claude/skills",
     "contributing_note": ""
   }
 }

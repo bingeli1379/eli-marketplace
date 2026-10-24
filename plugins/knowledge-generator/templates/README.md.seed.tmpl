@@ -16,14 +16,14 @@ The value of this knowledge base is that it is trustworthy, not that it covers e
 
 ## What's inside
 
-Two knowledge blocks{{#if has.observability_doc}}, a shared observability reference{{/if}}{{#if has.shared_catalogs}} and a cross-cutting catalog{{/if}}, all under `skills/{{ names.knowledge }}/references/`:
+Two knowledge blocks{{#if has.observability_file}}, a shared observability reference{{/if}}{{#if has.shared_catalogs}} and a cross-cutting catalog{{/if}}, all under `skills/{{ names.knowledge }}/references/`:
 
 | Entry | Contents |
 |---|---|
 | `project/index.md` | Per-project basics: purpose, architecture, dependencies, deployment, environments, investigation entry points. One doc per project in scope. |
 | `domain/index.md` | Cross-project end-to-end business flows, business rules and the domain glossary. |
-{{#if has.observability_doc}}
-| `observability.md` | Investigation: conventions for {{ derived.observability_tools }} shared across projects. |
+{{#if has.observability_file}}
+| `observability.md` | {{#if has.observability_doc}}Investigation: conventions for {{ derived.observability_tools }} shared across projects.{{else}}Database schema: which repository holds each database's schema.{{/if}} |
 {{/if}}
 {{#if has.shared_catalogs}}
 | `platform-basics.md` | Cross-cutting lookups: {{ derived.catalog_headings }}. |
@@ -33,7 +33,7 @@ Project and domain docs cross-link: a project doc links to the flows it takes pa
 
 ## How it is used
 
-The reader skill `{{ names.knowledge }}` loads itself as context when you develop, debug, review or plan work on a project or flow, or when you name one. You can also load it on demand by naming it. `SKILL.md` carries the always-on platform basics; for anything project- or flow-specific, follow the relevant `index.md` and load only the part you need. To make the reader skill available to Claude Code, link or copy the folder `skills/{{ names.knowledge }}/` into a `.claude/skills/` directory, the same way the maintainer kit is linked (see "Contributing a doc"). You can also read the files under `skills/{{ names.knowledge }}/references/` directly.
+The reader skill `{{ names.knowledge }}` loads itself as context when you develop, debug, review or plan work on a project or flow, or when you name one. You can also load it on demand by naming it. `SKILL.md` carries the always-on platform basics; for anything project- or flow-specific, follow the relevant `index.md` and load only the part you need. To make the reader skill available to Claude Code, link or copy the folder `skills/{{ names.knowledge }}/` into a `.claude/skills/` directory; this repository's own `.claude/skills/` holds only the maintainer kit. You can also read the files under `skills/{{ names.knowledge }}/references/` directly.
 
 ## What you unlock at each tier
 
@@ -57,22 +57,21 @@ The knowledge base works on its own and gets more capable as you add tooling aro
 
 ## Maintaining the knowledge
 
-The authoring kit is a set of Claude Code skills under [`local-tools/`](./local-tools/). It is not a reader skill: nothing loads it from there, and every skill in it is command-only. It holds the maintainer skills and the shared authoring rules:
+The authoring kit is a set of Claude Code skills under [`.claude/skills/`]({{ derived.kit_rel }}/), committed with this repository so Claude Code loads them for anyone who opens it. It is not a reader skill, and every skill in it is command-only. It holds the maintainer skills and the shared authoring rules:
 
 - `{{ names.add_project }}`: add or update a per-project doc
 - `{{ names.add_domain }}`: add or update a domain flow doc
 - `{{ names.sync_local }}`: audit and refresh the docs against local repos under `{{ paths.repos_root }}`
 - `{{ names.verify }}`: review a contributor's changeset before accepting it
 - `{{ names.list_markers }}`: list every open marker as a hand-off worklist
-- `{{ names.update_skills }}`: edit the kit itself and relink it
 
-See [`local-tools/README.md`](./local-tools/README.md) for the maintainer workflow.
+See [`.claude/skills/README.md`]({{ derived.kit_rel }}/README.md) for the maintainer workflow.
 
 ### Contributing a doc
 
 You do not need every repo cloned, or to be an engineer: the skills route each fact by what you have, not by who you are.
 
-The steps live in [`local-tools/README.md`](./local-tools/README.md): "Activate" links the maintainer skills into `{{ kit.link_dir }}` (a fresh clone has none), and "Contributing a change" covers authoring with `/{{ names.add_project }}` or `/{{ names.add_domain }}`, the merge request, and the maintainer's `/{{ names.verify }}` before merging. A contribution is a lead, not a merge-ready fact.
+The steps live in [`.claude/skills/README.md`]({{ derived.kit_rel }}/README.md): "Contributing a change" covers authoring with `/{{ names.add_project }}` or `/{{ names.add_domain }}`, the merge request, and the maintainer's `/{{ names.verify }}` before merging. A contribution is a lead, not a merge-ready fact.
 {{#if kit.contributing_note}}
 
 {{ kit.contributing_note }}

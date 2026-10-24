@@ -19,6 +19,7 @@
   },
   "scope": {
     "rule": "Every repo in the organization.",
+    "owner_source": "none",
     "owners": [
       {
         "code": "TEAM",
@@ -115,7 +116,6 @@
     }
   },
   "kit": {
-    "link_dir": ".claude/skills",
     "contributing_note": ""
   }
 }

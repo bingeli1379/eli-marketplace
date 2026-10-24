@@ -26,6 +26,7 @@
   },
   "scope": {
     "rule": "Repos the web platform team develops, including ones it works on but does not own.",
+    "owner_source": "the `owner` field of `catalog-info.yaml`",
     "owners": [
       {
         "code": "WEB",
@@ -198,7 +199,6 @@
     }
   },
   "kit": {
-    "link_dir": ".claude/skills",
     "contributing_note": ""
   }
 }
