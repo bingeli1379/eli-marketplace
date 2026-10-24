@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.23] - 2026-10-24
+
+### Added
+- The writing and audit rules now cover a file that several runs or skills share. It must say who writes it, where the next run resumes, what a missing file means, and ask before overwriting anything you confirmed. Parallel writers take a lock.
+- A cache is now checked again each time it is read, and its key must name everything that can change the answer, so an entry saved early in the day is not served stale in the evening.
+- The rules now say where a plugin keeps its data: caches in the plugin's data folder that survives updates, anything you own in a folder outside the plugin, and nothing under the plugin's install folder.
+- A subagent's long result now goes into a file the dispatch names, with only the verdict and the path in the reply. A missing file counts as a missing result and is never filled in by guessing.
+
+### Changed
+- A skill that another skill, an agent or an output style loads can no longer be command-only, because that flag blocks the load.
+- A rule added to an existing reference file now has to be named by a step that loads the file, and a pointer to a file too large to read whole says how to open it.
+
 ## [0.2.22] - 2026-10-21
 
 ### Added
