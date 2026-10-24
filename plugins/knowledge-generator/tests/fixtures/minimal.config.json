@@ -26,7 +26,6 @@
         "reachable": true
       }
     ],
-    "own_team": "TEAM",
     "audience": [
       {
         "slug": "service",
