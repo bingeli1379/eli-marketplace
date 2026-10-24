@@ -1,0 +1,121 @@
+{
+  "config_version": 1,
+  "identity": {
+    "prefix": "min",
+    "display_name": "Minimal"
+  },
+  "paths": {
+    "repo": "~/min-docs",
+    "out": ".",
+    "repos_root": "~/src",
+    "repo_dir_map": {
+      "rules": [],
+      "aliases": {}
+    }
+  },
+  "git": {
+    "host": "github",
+    "user_label": "github-username"
+  },
+  "scope": {
+    "rule": "Every repo in the organization.",
+    "owner_source": "none",
+    "owners": [
+      {
+        "code": "TEAM",
+        "label": "Core",
+        "reachable": true
+      }
+    ],
+    "audience": [
+      {
+        "slug": "service",
+        "meaning": "a running service",
+        "deployed": true
+      },
+      {
+        "slug": "library",
+        "meaning": "shared package, not deployed",
+        "deployed": false
+      }
+    ],
+    "retirement_date_source": "the release notes"
+  },
+  "environments": {
+    "names": [
+      "prod"
+    ],
+    "exclude": []
+  },
+  "stack": {
+    "frontend": {
+      "presets": [],
+      "other": ""
+    },
+    "runtime": {
+      "presets": [],
+      "other": ""
+    },
+    "database": {
+      "presets": [],
+      "other": ""
+    },
+    "messaging": {
+      "presets": [],
+      "other": ""
+    },
+    "skeletons": []
+  },
+  "capabilities": {
+    "logs": {
+      "kind": "none",
+      "access": "none",
+      "streams": []
+    },
+    "metrics": {
+      "kind": "none",
+      "access": "none"
+    },
+    "global_settings": {
+      "kind": "none",
+      "lookup": ""
+    },
+    "db_schema": {
+      "kind": "none",
+      "repos_hint": ""
+    },
+    "external_reference": {
+      "kind": "none",
+      "sources": []
+    },
+    "shared_catalogs": []
+  },
+  "reader": {
+    "example_projects": [],
+    "example_flows": [],
+    "example_questions": []
+  },
+  "known_context": {
+    "platform_basics": []
+  },
+  "audit": {
+    "full_sweep_max_age_days": 30,
+    "domain_swept_max_age_days": 30,
+    "by_age_days": {
+      "noncode_refs": 180,
+      "global_setting_values": 90,
+      "liveness_probes": 90
+    },
+    "fan_out": {
+      "max_concurrent_agents": 4,
+      "wave_size": [
+        10,
+        15
+      ],
+      "agent_report_char_cap": 10000
+    }
+  },
+  "kit": {
+    "contributing_note": ""
+  }
+}

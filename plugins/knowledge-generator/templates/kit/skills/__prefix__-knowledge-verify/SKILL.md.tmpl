@@ -1,0 +1,190 @@
+---
+name: {{ names.verify }}
+description: >-
+  Review someone else's changeset to references/ before accepting it: confirm the code-checkable
+  claims against local repos, judge the `(human:)` facts, and sweep for projects the change
+  omits. Not the whole-knowledge-base audit (`{{ names.sync_local }}`), and not for authoring.
+argument-hint: "[branch | commit range | merge request | files]"
+disable-model-invocation: true
+---
+
+# {{ names.verify }} (review a contribution before accepting)
+
+Verify a **specific changeset** to `references/` that someone else wrote — confirm the
+code-checkable claims, judge the `(human:)` ones, and check convention compliance. This is
+a **review gate**, distinct from `{{ names.sync_local }}` (which audits the *whole* kb on a
+cadence). Authority for facts/markers: `../{{ names.authoring_core }}.md`, plus the rules specific to {{ identity.display_name }} in `../{{ names.local_rules }}.md`. Assumes a complete
+local environment — every repo under `{{ paths.repos_root }}` cloned{{#if has.live_tools}} and the live tools reachable{{/if}} — the
+maintainer's machine, NOT the contributor's. Probe `ls {{ paths.repos_root }}` first: a row that depends on a repo
+that is not cloned keeps its `(unverified)`, with that repo (or the unreachable tool) named in the report — never a guessed verdict.
+
+Why a separate skill: the contributor may **not** have had a complete environment (missing
+repos, no live tools) — that is exactly what a `(human:)` fact or an `(unverified)` tag signals. You
+do have it, so you can confirm what they couldn't.
+
+## Flow
+
+1. **Scope the changeset.** Default: the diff of the current branch vs the default branch
+   (`git -C {{ paths.repo }} diff --stat origin/HEAD...HEAD -- '*/references/*'`; when `origin/HEAD` is not set, derive the default branch as `{{ names.sync_local }}` step 3 does).
+   Other inputs the user may name: a commit/commit-range (`git show <sha>` / `<a>..<b>`),
+   a merge request, or specific files. List the changed docs + the added/modified hunks.
+
+2. **Build the claim inventory — this is the completeness contract.** Extract **every** added or
+   changed claim from those hunks into an explicit list (one row per claim), and classify each:
+   - **code-checkable** — any service/route/procedure/setting-name/column/enum/status/sentinel-value/log-value/dep/topology fact. **Specificity is the tell: names a literal → grep it → owes a `file:line`** (`../{{ names.authoring_core }}.md §6` / §10) — applies even when the sentence reads soft/domain-flavoured or cites another doc.
+   - **human-sourced** — carries `(human: <{{ git.user_label }}>, <YYYY-MM-DD>)`.
+   - **external-owned** — carries `(external: <team>)`: authority in another team's code/settings you never clone or reach.
+   - **convention/structural** — markers, cross-links, header meta, anchors, retired rows.
+     An **added or edited anchor is not a convention tick — run it** (`../{{ names.authoring_core }}.md §9` pilot mode): legal ERE **and** a real hit in each repo it names, per `|`-alternative. A contributor's anchor that can never fire looks like coverage and detects nothing, and every later audit inherits it as permanent false drift.
+
+   The inventory is this review's **completeness contract** (`../{{ names.authoring_core }}.md §10`):
+   DONE only when **every** row either carries a `file:line` verdict (CONFIRMED / DRIFT / WRONG /
+   NOT-FOUND) or sits in the **irreducible-open** set — `(human:)` / `(external:)` / a runtime value
+   the doc shouldn't record (§0). Nothing in between, no row silently dropped; resolve every
+   verifiable row *this pass*, never hand one back as "for the user to decide".
+   **The verdict vocabulary is closed** — the code-checkable four above, plus the `(human:)` /
+   `(external:)` verdicts of step 3 (NEEDS-CONFIRM, ACCEPTED (maintainer), ACCEPTED (external),
+   CONTRADICTED), REMOVE for a runtime value, and MISSING-PROJECT from step 3b. A verdict outside
+   this list is not a verdict, and step 4 reports every one of them.
+
+3. **Verify, fanning out one agent per changed doc / repo** (group docs sharing a repo;
+   reuse the repo-resolution map + transforms in `../{{ names.sync_local }}/SKILL.md`, step 1 "Map to repo(s)" — doc filename ≠
+   local dir). Build each agent's prompt from the **Fan-out agent prompt contract** in
+   `../{{ names.sync_local }}/SKILL.md` (resolved repo path, range, convention brief, tool boundary,
+   output contract — the agent has none of this skill loaded). Each agent returns verdicts, not file dumps:
+   - **code-checkable** → Explore the owning repo (`repo:` header → local `{{ paths.repos_root }}/<dir>`)
+     and confirm with `file:line`. Verdict per claim: **CONFIRMED** (quote code) /
+     **DRIFT** (doc says X, code says Y — quote both) / **WRONG** / **NOT-FOUND**.
+{{#if has.live_tools}}
+   - **live-tool values are the orchestrator's job** (agents can't reach the tools):
+{{#if has.logs}}
+     log identities re-probed with a live query on {{ derived.labels.logs }}, never accepted from config —
+     and check the contributor listed **every** identity in scope, since a missing one is a silent false zero;
+{{/if}}
+{{#if has.global_settings}}
+     setting names **and** values via {{ capabilities.global_settings.lookup }} (the contributor may have guessed a
+     name or a value — confirm both); a business-rule value (§5 carve-out) must match prod;
+{{/if}}
+{{#if has.external_reference}}
+     external-reference ({{ derived.labels.external_reference }}) refs that you *can* reach are checked now (see the "noncode refs you *can* reach" guardrail).
+{{/if}}
+{{/if}}
+   - **human-sourced `(human:)`** → **never mark CONFIRMED from code** (code can't show it).
+     Check: (a) attribution is well-formed (`<{{ git.user_label }}>, <YYYY-MM-DD>` present);
+     (b) **not contradicted** by code (if code now says otherwise → flag **CONTRADICTED**);
+     (c) plausibility against your own knowledge. Default verdict **NEEDS-CONFIRM** (ask the
+     author) unless you personally know it holds → **ACCEPTED (maintainer)**.
+   - **external-owned `(external:)`** → like `(human:)`, **never CONFIRMED from code** — but the
+     reason is a cross-team boundary, not code-invisibility. A **full clone does NOT resolve it**
+     (the repo is another team's, never in `{{ paths.repos_root }}`). Verdict **ACCEPTED (external)** unless
+     code / tools you *do* have **contradict** it → **CONTRADICTED**. **Never downgrade it to `(unverified)`**
+     (that implies it's resolvable here — it isn't); re-verification is only via that team / their tool, surfaced by age.
+   - **convention** → run the relevant `{{ names.add_project }}` / `{{ names.add_domain }}`
+     CHECKLIST items: no bare `(verified)`, no emoji, markers correct, provenance only for
+     non-obvious sources, **both-way cross-links** (grep both ends yourself, orchestrator-side
+     — a per-doc agent sees one end), header meta, `(unverified)` only when a repo is truly
+     absent or a tool unreachable (you have them all → an `(unverified)` here is usually resolvable now → verify it).
+
+   **Agent verdicts are leads** (`../{{ names.authoring_core }}.md §10`): before a verdict enters the report
+   or drives an edit, the orchestrator re-opens its cited `file:line` — every DRIFT / WRONG /
+   NOT-FOUND (a negative claim is the weakest) and every count, plus 2–3 CONFIRMED rows per agent. A
+   verdict whose citation does not hold is re-verified by another agent; the one that found it never
+   re-checks its own.
+
+3b. **Omission sweep — find involved-but-unmentioned projects** (orchestrator-side; the one
+   check only your full clone can do). Run the identifier sweep defined in
+   `../{{ names.authoring_core }}.md §10` ("Omission sweep": which identifiers to extract, the live-step
+   bar) over each changed domain/flow doc, across **all** `{{ paths.repos_root }}` repos. A repo that
+   clears the bar and is absent from the doc's `Projects involved` → **MISSING-PROJECT** (resolve the
+   repo dir with the `{{ names.sync_local }}` transform map). Mostly a domain-doc concern.
+
+3c. **Overlap / dedup gate — when a changed or added doc restates an existing doc's topic.**
+   A contributor without the full kb often writes a fresh doc that **duplicates** an existing one.
+   **Do NOT decide merge / keep-separate / delete from topical overlap** — run a **claim-by-claim
+   coverage diff**: for every claim in the contribution, either point to the covering line in the
+   existing doc (quote it) or mark it **UNCOVERED (net-new)**. Dropping the contribution while any
+   claim is UNCOVERED-and-unmigrated = **data loss**. Fold each net-new residue into the *correct*
+   existing doc (code-verify the code-checkable ones at write time — see the migrated-claim
+   guardrail), then the duplicate is safe to delete. **Coverage first, verdict second**; a
+   high-level "looks like a dup" is not a coverage proof.
+
+4. **Report** — group by verdict, every line with `file:line` + evidence:
+   - **CONFIRMED** (n) · **DRIFT / WRONG / NOT-FOUND** (with the correction) ·
+     **NEEDS-CONFIRM (human)** (list each with author + date to chase) ·
+     **CONTRADICTED** (human or external) · **ACCEPTED (maintainer / external)** ·
+     **REMOVE** (runtime values to drop or point to source) · **MISSING-PROJECT** (handles an
+     identifier in code, absent from `Projects involved`) · **convention gaps** · **pre-existing
+     DRIFT** found in a target doc, in its own bucket. A verdict with no rows is stated as 0, never omitted.
+   - End with a verdict: **accept as-is** / **accept after fixes** (list them) / **bounce to author**.
+
+5. **Fix or report** — fix clear DRIFT/WRONG and convention gaps yourself (you have the
+   evidence); for `(human:)` NEEDS-CONFIRM, **do not invent a verification** — leave it and
+   list it for the author. Show the diff; commit only after the user confirms.
+
+## Guardrails
+
+- **A `(human:)` fact is never silently confirmed or deleted** — surface it (step 3, human-sourced).
+- **An `(unverified)` from a contributor is a lead, not a verdict** — you have the repo they
+  lacked; resolve it to a fact (or confirm it really is unreachable).
+- **Absence isn't a marker — sweep for it (step 3b).** "No `(unverified)` left" does NOT mean complete: a
+  partial-clone contributor structurally cannot run the identifier sweep.
+- **Read-only on the contributor's intent** — report DRIFT/WRONG, fix mechanically only when
+  the correct value is unambiguous from code/tools; never rewrite a judgment call.
+- **Owner lines are never code/deploy/catalog-confirmable** (`../{{ names.authoring_core }}.md §6`): a verify
+  agent proposing an owner change from code is wrong; surface it, leave the line.
+- **Code-checkable verdicts need the full call-graph, not the first grep hit** (`../{{ names.authoring_core }}.md §10` — agent output is a lead, ~30% of "simple" findings wrong): trace every set-site / decorator / override / fallback; give exact counts; don't trust a lone hit.
+- **A migrated / rewritten claim is a NEW claim — read its definition against code, never inherit
+  it from another kb doc.** When folding residue into another doc (step 3c) or rewriting a
+  contribution, any code-checkable identifier you write (job / procedure / service / tag / route /
+  topic name) must be confirmed against **code** at write time — an existing knowledge-base
+  doc is **not** a trusted source (it can be stale too). And **confirming the symbol exists ≠
+  verifying the claim** — read the **body/definition**, because the name lies. (Real miss, twice: a
+  job's label was copied from a sibling doc, then "corrected" from the job's *name* — but the stored
+  procedure behind it filtered on a different site entirely. Reasoning from the name, without reading
+  the procedure body, reversed the true meaning both times.)
+- **No code-checkable claim closes on plausibility, consistency, or another doc's authority**
+  (`../{{ names.authoring_core }}.md §10` / §6): a row is resolved by a `file:line` from the owning
+  repo, never by "consistent with the sibling doc" / "cross-linked, so presumably verified". **Verify-specific
+  corollary:** a cited/cross-linked doc is **not** a verification source, so the migrated-claim rule
+  applies to *inline* claims that reference another doc, not only folded ones — re-grep the literal
+  against code. (Real miss: a created-by value was waved through as "consistent with the sibling doc";
+  the code stamped a different value, so it was WRONG.)
+- **Verify-or-remove triage — check a claim *should exist* before spending effort verifying it.**
+  A changing **runtime data value** (which entities currently carry a tag / status, a
+  current setting value, row contents, a live blocklist) is exactly what
+  `../{{ names.authoring_core }}.md §0` says NOT to record — its verdict is **REMOVE / point-to-source**, not
+  chase-to-verify. Don't burn tool calls or clone effort confirming a value that shouldn't be in the doc
+  at all. A changing runtime value is also **never** a valid `(unverified)` — that marker is for a
+  code-checkable fact whose repo was absent (→ resolve it, per the guardrail above; one whose tool was unreachable stays marked); a runtime
+  value is REMOVE / point-to-source, not resolve.
+- **Off-convention *format* is not droppable *content*; a detail-level flowchart normalizes to
+  prose, a structural skeleton may stay.** A contribution's non-standard form — emoji callouts,
+  ASCII art, decorative tables, and **detail-level** flowcharts (nodes naming
+  procedures / toggles / values / priority order) — gets normalized to plain prose. Normalizing the
+  *form* is not licence to drop what it *encodes*: first extract the information (decision logic,
+  ordering, edge cases) and confirm it survives in prose — **node-by-node for a flowchart** —
+  before deleting the markup. What *may* stay (flow/pipeline/state-machine docs only) is a
+  **structural-only skeleton** per `../{{ names.authoring_core }}.md §0`: box+arrow, no identifiers/values, no
+  emoji/`style` decoration. "It's not a convention" justifies dropping the markup, never the
+  facts inside it.
+- **Skeleton-vs-prose drift (docs carrying a §0 structural diagram).** Apply the skeleton check of
+  `../{{ names.sync_local }}/SKILL.md` step 3b to every changed doc that carries one.
+- **Folding / cross-linking can surface a pre-existing error in the target doc — flag it
+  separately.** When you fold into, or cross-link to, an existing doc, spot-verify the specific
+  claims you touch. Report any **pre-existing DRIFT** (not introduced by this contribution) in its
+  own bucket, distinct from the contribution's findings; fix it only when the correct value is
+  unambiguous from code, else flag it for the user.
+{{#if has.external_reference}}
+- **Verify the noncode refs you *can* reach — `by-age` is for the unreachable, not a skip.** If a
+  reachable tool can confirm a noncode ref at review time — an external-reference ({{ derived.labels.external_reference }}) page
+  resolves and its title matches, a project or board exists, a table exists — do it now; catching a wrong
+  page id / dead link / duplicate ref is cheap. The `verified:`-by-age cadence is for refs you genuinely
+  can't reach (an offline SOP, another team's tool), not licence to skip a check the tooling makes trivial.
+{{/if}}
+- **Don't declare "done / covered / fixed" on assertion — re-verify your own fix first.** A
+  correction you just made (a relabel, a fold, a "now covered") is a NEW claim; it is not verified
+  because you wrote it. Before reporting complete, re-run the check against code/tools on the changed
+  text and actively try to **falsify** it — treat "this looks done" as the trigger to re-check, not
+  to stop. (Real pattern: "fully covered / done" was announced several times in one review and was
+  wrong each time until an actual re-check ran; one wrong relabel even survived into the first fix.)
+- This verifies a **changeset**; for a full periodic sweep use `{{ names.sync_local }}`.

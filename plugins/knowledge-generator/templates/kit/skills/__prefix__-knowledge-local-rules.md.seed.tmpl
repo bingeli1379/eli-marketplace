@@ -1,0 +1,30 @@
+# {{ identity.display_name }} local rules
+
+Rules that belong to {{ identity.display_name }} only. The generator writes this file once and never overwrites it: regenerating the kit rewrites the other kit files and leaves this one alone. The shared rules live in `{{ names.authoring_core }}.md`; its section numbers are the anchors used below, and `{{ names.add_project }}`, `{{ names.add_domain }}`, `{{ names.sync_local }}` and `{{ names.verify }}` read this file next to it.
+
+An empty section means nothing has been added yet.
+
+## Known context (§5b)
+
+Facts already settled for this knowledge base, so authors do not re-check them every time.
+
+## Verification recipes (§5)
+
+How to verify facts for tools or conventions specific to {{ identity.display_name }}.
+
+## Additional hard rules (§6)
+
+Rules that caused real rework here and have no home in the shared rules.
+
+## Pitfall cases (§6)
+
+| Wrote | Truth | Lesson |
+|---|---|---|
+
+## Checklist additions — project docs
+
+Items appended to `{{ names.add_project }}/CHECKLIST.md`, one `- [ ] <check>` per line:
+
+## Checklist additions — domain docs
+
+Items appended to `{{ names.add_domain }}/CHECKLIST.md`, one `- [ ] <check>` per line:

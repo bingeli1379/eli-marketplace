@@ -1,0 +1,152 @@
+{
+  "config_version": 1,
+  "identity": {
+    "prefix": "nw",
+    "display_name": "Northwind"
+  },
+  "paths": {
+    "repo": "~/code/northwind-knowledge",
+    "out": ".",
+    "repos_root": "~/code",
+    "repo_dir_map": {
+      "rules": [],
+      "aliases": {}
+    }
+  },
+  "git": {
+    "host": "github",
+    "user_label": "github-username"
+  },
+  "scope": {
+    "rule": "Repos the platform team develops. Upstream-only dependencies get no doc.",
+    "owner_source": "none",
+    "owners": [
+      {
+        "code": "PLATFORM",
+        "label": "Platform",
+        "reachable": true
+      },
+      {
+        "code": "DATA",
+        "label": "Data",
+        "reachable": true
+      },
+      {
+        "code": "VENDOR",
+        "label": "Third-party vendor",
+        "reachable": false
+      }
+    ],
+    "audience": [
+      {
+        "slug": "public",
+        "meaning": "reached directly by customers",
+        "deployed": true
+      },
+      {
+        "slug": "internal",
+        "meaning": "staff or service-to-service",
+        "deployed": true
+      },
+      {
+        "slug": "library",
+        "meaning": "shared package, not deployed",
+        "deployed": false
+      }
+    ],
+    "retirement_date_source": "the release notes"
+  },
+  "environments": {
+    "names": [
+      "staging",
+      "production"
+    ],
+    "exclude": []
+  },
+  "stack": {
+    "frontend": {
+      "presets": [
+        "react"
+      ],
+      "other": ""
+    },
+    "runtime": {
+      "presets": [
+        "serverless"
+      ],
+      "other": ""
+    },
+    "database": {
+      "presets": [
+        "postgres"
+      ],
+      "other": ""
+    },
+    "messaging": {
+      "presets": [
+        "sqs"
+      ],
+      "other": ""
+    },
+    "skeletons": [
+      "service",
+      "artifact"
+    ]
+  },
+  "capabilities": {
+    "logs": {
+      "kind": "none",
+      "access": "none",
+      "streams": []
+    },
+    "metrics": {
+      "kind": "none",
+      "access": "none"
+    },
+    "global_settings": {
+      "kind": "none",
+      "lookup": ""
+    },
+    "db_schema": {
+      "kind": "migrations-in-repo",
+      "repos_hint": "db/migrations in each service repo"
+    },
+    "external_reference": {
+      "kind": "notion",
+      "sources": []
+    },
+    "shared_catalogs": []
+  },
+  "reader": {
+    "example_projects": [],
+    "example_flows": [],
+    "example_questions": []
+  },
+  "known_context": {
+    "platform_basics": [
+      "time",
+      "environments",
+      "deployment"
+    ]
+  },
+  "audit": {
+    "full_sweep_max_age_days": 30,
+    "domain_swept_max_age_days": 30,
+    "by_age_days": {
+      "noncode_refs": 180,
+      "global_setting_values": 90,
+      "liveness_probes": 90
+    },
+    "fan_out": {
+      "max_concurrent_agents": 4,
+      "wave_size": [
+        10,
+        15
+      ],
+      "agent_report_char_cap": 10000
+    }
+  },
+  "kit": {
+    "contributing_note": ""
+  }
+}

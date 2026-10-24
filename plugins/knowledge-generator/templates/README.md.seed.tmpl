@@ -1,0 +1,78 @@
+# {{ identity.display_name }} knowledge base
+
+A code-verified knowledge base for {{ identity.display_name }} projects, loaded as background context while you develop. When you work on a project or business flow, the matching reference gives you its architecture, dependencies, deployment, environments and cross-project conventions before you touch code, so you (or the assistant) do not rediscover them or guess from training data.
+
+It is not a Q&A bot or a tutorial. It is the map you read before going in: where things are, how they connect, and what traps to avoid.
+
+## Philosophy
+
+The value of this knowledge base is that it is trustworthy, not that it covers everything. A single stale fact gets quoted as authoritative and quietly drags down the credibility of the whole base: wrong information is worse than none. Every rule follows from that:
+
+- Trust over coverage. Scope is deliberately narrow; the base does not try to document anything you could look up.
+- Do not duplicate code. Anything an assistant can re-derive by reading the current repo (package lists, folder layouts, route tables) is left to the repo. Copying it in only creates a second thing to keep correct.
+- Record only what code cannot tell you: cross-project relationships, deployment topology, environments, naming caveats, "looks like a bug but is intentional", why it is built this way, and who to find when it breaks.
+- Anchor every fact so staleness is cheap to catch. Claims carry grep-able code anchors, dated references to non-code sources, or one of the markers `(unverified)`, `(human: …)`, `(external: …)`. Unmarked text means verified against code. The goal is not to pick facts that never change; it is that a sweep can tell whether a fact still holds.
+- Audit, not authoring, is the credibility mechanism. Writing a doc makes it correct now; the routine audit against the repos keeps it correct over time.
+
+## What's inside
+
+Two knowledge blocks{{#if has.observability_file}}, a shared observability reference{{/if}}{{#if has.shared_catalogs}} and a cross-cutting catalog{{/if}}, all under `skills/{{ names.knowledge }}/references/`:
+
+| Entry | Contents |
+|---|---|
+| `project/index.md` | Per-project basics: purpose, architecture, dependencies, deployment, environments, investigation entry points. One doc per project in scope. |
+| `domain/index.md` | Cross-project end-to-end business flows, business rules and the domain glossary. |
+{{#if has.observability_file}}
+| `observability.md` | {{#if has.observability_doc}}Investigation: conventions for {{ derived.observability_tools }} shared across projects.{{else}}Database schema: which repository holds each database's schema.{{/if}} |
+{{/if}}
+{{#if has.shared_catalogs}}
+| `platform-basics.md` | Cross-cutting lookups: {{ derived.catalog_headings }}. |
+{{/if}}
+
+Project and domain docs cross-link: a project doc links to the flows it takes part in, and each flow lists the projects it touches, so you can hop from a service to the end-to-end flow and back. The two `index.md` files are the source of truth for the inventory; this README deliberately does not repeat counts or lists that would go stale.
+
+## How it is used
+
+The reader skill `{{ names.knowledge }}` loads itself as context when you develop, debug, review or plan work on a project or flow, or when you name one. You can also load it on demand by naming it. `SKILL.md` carries the always-on platform basics; for anything project- or flow-specific, follow the relevant `index.md` and load only the part you need. To make the reader skill available to Claude Code, link or copy the folder `skills/{{ names.knowledge }}/` into a `.claude/skills/` directory; this repository's own `.claude/skills/` holds only the maintainer kit. You can also read the files under `skills/{{ names.knowledge }}/references/` directly.
+
+## What you unlock at each tier
+
+The knowledge base works on its own and gets more capable as you add tooling around it. Each tier is useful by itself; combining them compounds.
+
+| You have | You can |
+|---|---|
+| the knowledge base alone | Ask about any project or flow (architecture, dependencies, environments, flows, naming traps) and be answered from the docs, with no repo or extra tool needed. |
+{{#if has.live_access}}
+| plus live tools: {{ lists.live_access }} | Resolve the live values the docs deliberately do not store. |
+{{/if}}
+| plus local repos under `{{ paths.repos_root }}` | Verify facts against current code, and let the maintainer kit audit and refresh the whole base against your clones. |
+
+## Routing for your CLAUDE.md
+
+`CLAUDE.snippet.md` holds a short block to paste into the CLAUDE.md of the machine or project that reads this knowledge base. The reader skill loads lazily from its description; tools and MCP servers do not, so the block says when to reach for each.
+
+## Scope
+
+{{ scope.rule }} Each project doc records its owning team from this vocabulary: {{ lists.owners }}. Pure upstream dependencies that are only called, not developed, are listed by name and get no doc of their own.
+
+## Maintaining the knowledge
+
+The authoring kit is a set of Claude Code skills under [`.claude/skills/`]({{ derived.kit_rel }}/), committed with this repository so Claude Code loads them for anyone who opens it. It is not a reader skill, and every skill in it is command-only. It holds the maintainer skills and the shared authoring rules:
+
+- `{{ names.add_project }}`: add or update a per-project doc
+- `{{ names.add_domain }}`: add or update a domain flow doc
+- `{{ names.sync_local }}`: audit and refresh the docs against local repos under `{{ paths.repos_root }}`
+- `{{ names.verify }}`: review a contributor's changeset before accepting it
+- `{{ names.list_markers }}`: list every open marker as a hand-off worklist
+
+See [`.claude/skills/README.md`]({{ derived.kit_rel }}/README.md) for the maintainer workflow.
+
+### Contributing a doc
+
+You do not need every repo cloned, or to be an engineer: the skills route each fact by what you have, not by who you are.
+
+The steps live in [`.claude/skills/README.md`]({{ derived.kit_rel }}/README.md): "Contributing a change" covers authoring with `/{{ names.add_project }}` or `/{{ names.add_domain }}`, the merge request, and the maintainer's `/{{ names.verify }}` before merging. A contribution is a lead, not a merge-ready fact.
+{{#if kit.contributing_note}}
+
+{{ kit.contributing_note }}
+{{/if}}

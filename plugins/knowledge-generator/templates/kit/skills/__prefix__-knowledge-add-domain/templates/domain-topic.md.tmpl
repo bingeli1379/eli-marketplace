@@ -1,0 +1,83 @@
+# <Topic Title>
+
+- Last updated: YYYY-MM-DD
+- Swept at: YYYY-MM-DD                                 <!-- domain audit cursor: date the doc was last fully re-verified against its involved repos (project `Verified at` analogue; date-only, no sha). Leave this whole line out on a first write that did not read every repo under Projects involved; the audit then does the full read and adds it -->
+{{#if has.external_reference}}
+- External reference ({{ derived.labels.external_reference }}): <id or url> — reference, may be stale          <!-- OPTIONAL: only when an external page backs the doc -->
+{{/if}}
+
+<!-- A domain doc = a CROSS-PROJECT business flow ("how the business works"), linking out to per-project docs for "how each project implements it". NOT a single project (that → {{ names.add_project }}). Authority: {{ names.authoring_core }}.md. -->
+<!-- Header = meta list (- Last updated:, - Swept at:{{#if has.external_reference}}, optional - External reference:{{/if}}). NO `- Owner:` (a flow spans projects), NO env/cluster table, NO log-identity value — those are project-doc concerns. -->
+<!-- The section set is NOT fixed like a project doc, but draw from this standard vocabulary in THIS order; include only what applies (omit an empty section, don't leave a shell). Shared writing rules (from authoring-core, same as project docs): one fact per bullet (multi-fact → sub-bullets, no run-on); bold labels; parallel / growing lists → bullets; large detail (full enum / error-code / procedure table) points to source, not pasted; declarative no-person prose, no emphasis glyphs. All project references are markdown links `[\`name\`](../project/<name>.md)`, never a bare path. -->
+
+## Background / why
+
+<why this flow / domain exists, in a few clauses. Parallel variants → a comparison table whose columns fit them (the ones below are only an example):>
+
+| Type | Trigger | Symptom | Response |
+|---|---|---|---|
+| <variant A> | <who/what triggers> | <observable> | <what the system does> |
+| <variant B> | ... | ... | ... |
+
+## Flows
+
+<!-- Mother section — collect every end-to-end flow here as `###` sub-headings (parallels the project doc's `## Flows`). A single-flow doc still uses one `### Flow`. Steps are code-verified by default (unmarked); tag a code-invisible step `(human: <{{ git.user_label }}>, <YYYY-MM-DD>)`. For each step name the CONCRETE mechanism — job / service / endpoint / toggle / setting — and link the project doc instead of re-describing its internals. -->
+<!-- OPTIONAL structural skeleton ({{ names.authoring_core }}.md §0): a flow/pipeline/state-machine doc MAY carry ONE mermaid skeleton — box+arrow structure only (stage order / decision branches), NO method/toggle/status-value identifiers, NO emoji/style — co-located at the top of the `### Flow` it summarizes. Glossary / flat rule-set / single-step docs don't draw one. Skeleton nodes must map 1:1 to prose stages (drift guarded by {{ names.verify }} + {{ names.sync_local }}). -->
+
+### Flow A — <name>
+
+<one-line summary: what this flow achieves>
+
+1. **<Detect / trigger>** — <service `JobName` (schedule …) reads <source>, filters …; toggle `Toggle_X`> ([`<proj>`](../project/<name>.md)).
+2. **<Decide / execute>** — <service `Method`> ([`<proj>`](../project/<name>.md)).
+3. **<Notify / enforce>** — <e.g. posts to a chat channel; a redirect at [`<proxy-proj>`](../project/<name>.md)>.
+
+### Flow B — <name>
+<!-- add Flow B, Flow C as needed for parallel paths -->
+
+## <Sub-mechanics — named>
+<!-- OPTIONAL: a supporting mechanism that is NOT an end-to-end flow — detection sources / status model / money-flow rules / page gating. One `##` per mechanism, placed between Flows and Projects involved. -->
+
+- **<mechanism>** — <its role in feeding / recording / gating this flow> ([`<proj>`](../project/<name>.md)).
+
+## Projects involved
+
+<!-- every project the flow touches; markdown link + one-line role IN THIS FLOW. Bidirectional ({{ names.authoring_core }}.md §6): each linked project's `## Flows` section must carry a back-link bullet to this doc. {{#if has.frontend}}A frontend app that calls + renders the flow is its OWN entry — don't fold it into a backend's "their apps". {{/if}}Pure external / upstream party → bold name, no link. -->
+
+- [`<proj>`](../project/<name>.md) — <role in this flow>.
+- **<External API>** — <role> (third party; no project doc).
+
+## Key rules / constraints
+<!-- OPTIONAL: business rules / thresholds / skip lists / gating toggles / credential requirements. REDACT credentials — reference where they live. A large rule / error-code table → point to source, don't paste. -->
+{{#if has.global_settings}}
+<!-- A threshold/trigger whose value lives in a settings store (e.g. "blocked after 10 consecutive failures") MAY state the value — for readers without the lookup tool — IF tagged prod + a `global-setting values` anchor (website+key) + snapshot date ({{ names.authoring_core }}.md §5 carve-out / §9). Plain config values do NOT belong here. -->
+{{/if}}
+
+- **<rule category>**: <fact>. {{#if has.global_settings}}<!-- e.g. A domain is **blocked** after **10** consecutive failed detections (prod, snapshot — see anchor). -->{{/if}}
+
+## Glossary
+<!-- After Key rules. Keep the terms the team actually uses as canonical vocabulary (no invented terms). -->
+
+- **<term>**: <definition>.
+
+## TODO
+<!-- OPTIONAL and rare. Keep an item ONLY when (a) its repo is NOT local or its tool is unreachable, marked `(unverified — <missing repo or unreachable tool>)`, or (b) it is an important gap in the flow that was looked at and not traced, stated with no marker. Everything else: verify it against the local repo and state it as fact, OR — if it's a minor untraceable detail — drop the hedge and just state what IS known. Do NOT leave routine "not traced" notes. -->
+
+- <gap> — <(a) `(unverified — <missing repo or unreachable tool>)`, or (b) what was looked at and why it could not be traced>.
+
+<!-- anchors (machine-readable for {{ names.sync_local }} AUDIT; not rendered to readers — see {{ names.authoring_core }}.md §9)
+code claims — grep pattern in repo under {{ paths.repos_root }}; present = ok, missing/renamed = drift to re-verify:
+- <claim>            | repo: <repo>          | grep: <symbol|procedure|toggle|topic pattern>
+noncode refs — re-check the source manually; age from verified date:
+- <claim>            | src: <external page / workflow / schema DDL / not-traced>  | verified: YYYY-MM-DD
+{{#if has.global_settings}}
+global-setting values — re-verify via {{ capabilities.global_settings.lookup }}, prod, by age (only for a value that IS a business-rule threshold/trigger — §5 carve-out):
+- <rule + value>     | website: <name>       | key: <Key>  | env: prod  | verified: YYYY-MM-DD
+{{/if}}
+snapshot tables — re-derive from source file on AUDIT (only for an inlined append-only value table serving standalone readers — §0 enum / value snapshot carve-out):
+- <table name>       | source: <repo/path/to/file>  | derive: <how to regenerate rows>
+{{#if has.logs}}
+liveness probes — re-run the log/metric query on AUDIT; sustained 0 = retirement-review flag, NOT auto-delete (only for a flow whose usage/liveness the doc asserts — §9):
+- <flow/path>        | index: <log stream>  | query: <identity + phrase match, or metric>  | expect: >0 over <window>  | verified: YYYY-MM-DD
+{{/if}}
+-->

@@ -1,0 +1,61 @@
+---
+name: {{ names.list_markers }}
+description: >-
+  Read-only inventory of every `(human:)`, `(external:)` and `(unverified)` marker in the
+  {{ names.knowledge }} docs, grouped as a hand-off worklist. It only lists; resolving a marker
+  is `{{ names.sync_local }}` or `{{ names.verify }}`.
+disable-model-invocation: true
+---
+
+# {{ names.list_markers }} (read-only marker inventory)
+
+Gather every marker in the knowledge base into one categorized list. Marker meanings and how
+each is resolved are defined in `../{{ names.authoring_core }}.md §6` — this skill only
+**lists**, it never verifies or edits. Resolving them is `{{ names.sync_local }}` /
+`{{ names.verify }}`'s job.
+
+## Target path
+
+```
+KNOWLEDGE={{ derived.knowledge_root }}   # adjust to your clone
+REF="$KNOWLEDGE/references"
+```
+
+## Gather (three inline markers)
+
+Run each grep with full-line context (`-rn`), then organize the output — do NOT just dump raw grep:
+
+```bash
+grep -rn '(human:'      "$REF"    # code-invisible facts asserted by a person
+grep -rn '(external:'   "$REF"    # authority in another team's code/settings
+grep -rn '(unverified'  "$REF"    # code-checkable but not yet verified (repo absent or live tool unreachable); open paren only — the reason often rides inside it: (unverified — <why>)
+```
+
+Organize into three sections. For each entry keep `file:line` + the claim text so it's actionable:
+
+- **`(human:)` — re-confirm with the person.** Parse `(human: <{{ git.user_label }}>, <YYYY-MM-DD>)`; **group by `<{{ git.user_label }}>`** and **sort each group oldest-date-first** (oldest = most likely stale = ask first). This is the "who to go ask" list.
+  - An entry that does not parse goes under `unparsed` with its `file:line`. After the groups, list each distinct person once so the reader can mark who has left or handed over — those facts risk becoming unrecoverable and want succession or downgrade.
+- **`(external: <team>)` — re-check with the owning team.** Group by `<team>`. This is the cross-team review list; each needs a look at that team's system, not a code grep.
+- **`(unverified)` — verify against code.** List each with the missing-repo or unreachable-tool note recorded inline. This is the backlog to clear next time the repo is cloneable or the tool is reachable (via `{{ names.sync_local }}`).
+
+## Optional — by-age anchor items
+
+When the invocation also asks for the periodic-recheck items, scan every `<!-- anchors -->` block for runtime entries (those carrying a `verified:` date):
+
+```bash
+grep -rl 'anchors (machine-readable' "$REF" | while read -r f; do
+  awk '/anchors \(machine-readable/{on=1; next} /^[[:space:]]*-->/{on=0}
+       on && /^[^-[:space:]]/{cat=$1" "$2} on && /verified:/{print FILENAME ":" FNR ": [" cat "] " $0}' "$f"
+done
+```
+
+Group by the bracketed anchor category, sort by `verified:` date oldest first, and mark the entries past their category's threshold (`../{{ names.authoring_core }}.md §9` defines the per-category thresholds — don't restate the numbers here, they live there). These overlap with what a `{{ names.sync_local }}` audit would triage; this is a standalone peek.
+
+## Report
+
+Output ONE markdown report, grouped as above, with a count per category up top
+(`human: N · external: N · unverified: N`) and each entry as `` `file:line` `` + claim.
+Keep it copy-pasteable so it can be handed to someone else.
+
+**Read-only** — never edit a doc, never mark anything verified, never re-verify here. If a marker
+looks resolvable, say which skill resolves it (`{{ names.sync_local }}` / `{{ names.verify }}`); don't do it in this skill.
