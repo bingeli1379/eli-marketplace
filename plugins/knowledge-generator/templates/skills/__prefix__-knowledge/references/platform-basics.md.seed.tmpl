@@ -1,0 +1,33 @@
+{{#if has.shared_catalogs}}
+# Platform basics — infrastructure catalog
+
+- Last updated: YYYY-MM-DD
+- Swept at: YYYY-MM-DD
+
+Cross-cutting lookups that every project shares but that are needed on demand, not on every task, so they are kept out of the reader `SKILL.md` (which stays a lean always-on router). The always-on gist of each block lives in `SKILL.md` Platform basics with a pointer here; the full detail is below.
+
+This file is a roll-up of facts that live (and are audited) in the individual project docs. `{{ names.sync_local }}` reconciles it against them on every sweep, so it should not need manual updates (see the anchors block).
+{{#each capabilities.shared_catalogs}}
+
+## {{ this.heading }}
+
+A cross-project roll-up of each project doc's `- {{ this.source_field }}:` line. Each of those lines is authoritative for its own service and is verified against that repo; this is the grouped view. Node lists and addresses are infrastructure topology and can change, so treat them as a snapshot and re-verify against the live source rather than assuming they are current.
+
+- **<group>**: <the shared {{ this.name }}, its nodes or endpoints per environment>. Users: <projects>.
+- **Dedicated**: <a project that has its own {{ this.name }}, and where>.
+- **Connection only in a secret**: <projects whose address is not a literal in the repo, and the secret that holds it>.
+- **Present but unused**: <projects that provision {{ this.name }} without using it>.
+- **None**: <notable projects that use no {{ this.name }}>.
+{{/each}}
+
+## Further cross-cutting lookups
+
+Cross-project facts that are not a roll-up of project-doc fields. A section here is hand-kept and outside the per-claim audit, and says so in its first line, unless it is a re-derivable roll-up carrying a `snapshot tables` anchor below.
+
+<!-- anchors (machine-readable for {{ names.sync_local }} AUDIT; not rendered)
+snapshot tables — re-derive on AUDIT by reconciling against the source docs (a shared-layer roll-up; the source is other docs, not one code file — see authoring-core §9):
+{{#each capabilities.shared_catalogs}}
+- {{ this.heading }} | source: references/project/*.md `- {{ this.source_field }}:` lines | derive: group every project's per-env value by resource; any project whose own doc changed this sweep but is not reflected here = catalog drift → update this table
+{{/each}}
+-->
+{{/if}}

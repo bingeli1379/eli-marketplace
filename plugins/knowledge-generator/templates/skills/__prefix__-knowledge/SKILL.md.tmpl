@@ -1,0 +1,45 @@
+---
+name: {{ names.knowledge }}
+description: >-
+  {{ derived.reader_description }}
+---
+
+# {{ names.knowledge }}
+
+{{ identity.display_name }} domain and project knowledge base. **Load as background context while developing**: when working on a project or business flow of {{ identity.display_name }}, read the matching reference first to understand its architecture / dependencies / deployment / environments / cross-project conventions before touching code.
+
+## How to use
+
+<!-- Items 4 and 5 are load-bearing: they are the only thing stopping a reader from quoting this knowledge base as live truth. Do not remove or weaken them (authoring-core §0 for the markers, §2 for the live-check contract). -->
+
+1. Pick the entry point for the task at hand (see table below) and read its `index.md`.
+2. Each `index.md` lists its files and what each covers — follow the relevant link, load only the part you need.
+3. Treat the facts here as authoritative (identifiers, names, environments, hosts — quote as written). For anything not covered here, confirm via source / chat / a person; do not infer from training data.
+4. **Markers** — only exceptions are tagged; **unmarked text = verified against code**. `(unverified)` = a code-checkable claim not yet confirmed (treat as a lead). `(human: <{{ git.user_label }}>, <date>)` = a fact code can't show (business reason / ops practice / historical decision) asserted by that person — authoritative, but confirm with them if it looks stale; don't try to derive it from code. `(external: <team>)` = a fact owned by another team's code or settings that {{ identity.display_name }} neither clones nor can query — re-check it with that team, not against our repos.
+5. **This doc gives you where to look, not the live answer — never conclude these from the doc alone; check the primary source (code{{#if has.logs}} / {{ derived.labels.logs }}{{/if}}{{#if has.global_settings}} / the settings store{{/if}}{{#if has.metrics}} / {{ derived.labels.metrics }}{{/if}} / the issue tracker / the owning team) before stating them:** a live incident's root cause; a current config / toggle / setting value; deployment or release status; whether a URL, producer/consumer, job, or endpoint is currently running; a specific customer's case status; the current contents of an enumeration / blocklist / whitelist; and any "is X still the main/active path" usage claim. The doc locates the system and names the execution path; the current *state* of that path is always a live lookup.
+
+## Knowledge blocks
+
+| Entry | Contents |
+|---|---|
+| `references/project/index.md` | Per-project basics — purpose / architecture / dependencies / deployment / environments / investigation entry points |
+| `references/domain/index.md` | Cross-project end-to-end business flows, business rules, domain glossary |
+{{#if has.observability_doc}}
+| `references/observability.md` | Investigating — conventions for {{ derived.observability_tools }} (hosts, fields, dashboards, entry points) |
+{{/if}}
+{{#if has.shared_catalogs}}
+| `references/platform-basics.md` | On-demand cross-cutting lookups — {{ derived.catalog_headings }} {{#if derived.platform_basics}}(the always-on gist stays below) {{/if}}|
+{{/if}}
+
+{{#if derived.platform_basics}}
+## Platform basics
+
+Platform-wide facts to keep in mind while developing. Keep this section lean and always-on; anything needed only on demand belongs in the references above.
+
+<!-- keep -->
+- Last updated: YYYY-MM-DD
+{{#each derived.platform_basics}}
+- **{{ this.label }}**: <{{ this.hint }}>
+{{/each}}
+<!-- /keep -->
+{{/if}}

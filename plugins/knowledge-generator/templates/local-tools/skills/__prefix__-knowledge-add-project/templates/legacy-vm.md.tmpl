@@ -1,0 +1,89 @@
+{{#if has.skeleton_legacy_vm}}
+# <repo.name>
+
+- repo: <https url>
+- Owner: <{{ lists.owners }}>
+- Status: retired (YYYY-MM)   <!-- retired standard ({{ names.authoring_core }}.md §6): OMIT unless the service is retired — no middle state, some parts switched off is not retired. Month = when it was actually switched off, from the {{ scope.retirement_date_source }}; never a {{ git.host }} timestamp. -->
+- Audience: <{{ lists.audiences_deployed }}>   <!-- exposure/audience ({{ names.authoring_core }}.md §3/§6): {{ lists.audience_meanings_deployed }}. Single repo split across two → join with ` + `. -->
+- Last updated: YYYY-MM-DD
+- Verified at: <short-sha> (<commit-date>)   <!-- repo commit this doc was verified against. A repo without a usable git history (e.g. a mirror of another source-control system) → n/a (<reason>; no git anchor). -->
+
+<!-- banner OPTIONAL: only for a clone note / critical caveat; not to restate Purpose. -->
+<!-- VM variant of the service template: same section order, but Environments = Deployment (not containerized) + per-env Hosts. Use for projects deployed straight onto VMs. Don't assume a VM app lacks ops fields — verify health/scheduler/security/metrics too. Parallel / growing lists → sub-bullets, never a run-on. -->
+
+## What it does
+
+- **Purpose**: <role + scope in 1–2 clauses>
+- **Capabilities**: <key features — own bullet, not crammed into Purpose>
+
+## Flows
+<!-- OPTIONAL: only if it participates in a domain flow ({{ names.authoring_core }}.md §6). Omit if none. -->
+
+- **<Flow Title>** — [`<slug>`](../domain/<slug>.md)
+
+## Architecture
+
+- **Stack**: <runtime and framework versions, data-access library, notable libraries — verified from the project files, not assumed from sibling projects>. Runtime version lives HERE.
+- **Ships**: <consumer package/SDK, if any>.
+
+## Dependencies
+
+- **Upstream**: <group by domain; codename + purpose>
+- **Consumed by**: <who uses it>
+
+## Environments
+
+<!-- not containerized -->
+
+- **Deployment**: <host OS / web server on VM(s); deploy method; do NOT enumerate standby / per-machine names>
+- **Hosts** (public; internal VMs not enumerated):
+{{#each environments.names}}
+  - {{ this }}: <host>
+{{/each}}
+{{#if has.external_reference}}
+  <!-- confirm each host against the external reference ({{ derived.labels.external_reference }}); note any alias that breaks the naming pattern -->
+{{/if}}
+
+## Data & settings
+
+- **Data stores**: <DBs + data-access lib; verify DB engine; secret source REDACTED>
+{{#each capabilities.shared_catalogs}}
+- **{{ this.source_field }}**: <`none`, or the {{ this.name }} it uses (mechanism) + per-env sub-bullets; VM apps usually have no deploy manifest, so the host comes from a secret or config>
+{{/each}}
+{{#if has.global_settings}}
+- **Settings**: <namespace + how loaded; look up via {{ capabilities.global_settings.lookup }}>
+{{/if}}
+
+## Caching & retry
+
+- <cache layers / retry library; if none "no explicit retry">
+
+## Background jobs
+
+- <`none`, or scheduler + jobs. VM apps may also self-monitor scheduler liveness — note it here, but don't mistake an internal monitor for an inbound health probe.>
+
+## Security
+<!-- OPTIONAL: only if a notable surface. Older APIs often have inbound token auth — check (request filters / token validation). -->
+
+- <inbound auth (token validation / API key) / rate limit / etc>
+
+## Development & testing
+
+- **Unit**: <test projects>.
+- <Integration / E2E only if they exist>
+{{#if has.observability_doc}}
+
+## Observability
+
+For log and dashboard conventions see `observability.md`.
+
+- **logging**: <logging library → sink; a library that writes local files may NOT reach the log system — verify with a live query before claiming "not in the log system">.
+- **APM**: <service identity if an APM agent is configured>.
+{{#if has.logs}}
+- **Server log** ({{ derived.labels.logs }}): <identity of this service — VERIFY with a live query; some environments may ship to a system the assistant cannot reach>. Query that identity in:
+{{#each derived.envs_reversed}}
+  - {{ this }} → <stream or none>
+{{/each}}
+{{/if}}
+{{/if}}
+{{/if}}

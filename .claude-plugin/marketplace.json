@@ -65,6 +65,11 @@
       "name": "sdd-devops",
       "source": "./plugins/sdd-devops",
       "description": "SDD stack pack: DevOps engineer and infrastructure skills"
+    },
+    {
+      "name": "knowledge-generator",
+      "source": "./plugins/knowledge-generator",
+      "description": "Generate a project-knowledge skill and its maintainer toolkit for any company: answer a few setup questions about your repos and tooling, and an AI fills in the templates"
     }
   ]
 }

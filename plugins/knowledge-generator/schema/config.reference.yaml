@@ -1,0 +1,163 @@
+# knowledge-generator config reference (v1 draft)
+#
+# One file per generated knowledge base. `setup` writes it, every other skill reads it.
+# The machine-readable file is JSON with exactly this shape (the Python standard library
+# cannot read YAML). This file only documents it; a test compares the top-level keys.
+# "drives:" lines point at the kit section the field parameterizes, so a field with no
+# consumer can be deleted. Section numbers refer to the kit's authoring-core.
+#
+# Scope of v1: the knowledge skill and its maintainer kit only. Capabilities that belong
+# to a devtools generator (user lookup, message decoding) are deliberately absent.
+#
+# Output layout contract (fixed, not configurable below `paths.out`):
+#   <out>/skills/<prefix>-knowledge/SKILL.md
+#   <out>/skills/<prefix>-knowledge/references/{project,domain}/index.md
+#   <out>/skills/<prefix>-knowledge/references/{observability,platform-basics}.md  (capability-gated)
+#   <out>/local-tools/skills/<prefix>-knowledge-*/        (the maintainer kit; never under skills/)
+#   <out>/README.md
+#   <out>/CLAUDE.snippet.md                               (routing block for the user's own CLAUDE.md)
+
+config_version: 1            # bumped when this schema changes shape; the migration key
+
+# ---------------------------------------------------------------- identity
+identity:
+  prefix: acme               # required. Skill names are <prefix>-knowledge, <prefix>-knowledge-add-project, ...
+  display_name: ACME         # required. Used in prose and in the reader SKILL.md description.
+  # drives: every skill name, ledger directory, reader SKILL.md frontmatter, README
+
+# ---------------------------------------------------------------- paths
+paths:
+  repo: ~/code/acme-knowledge  # required. The repository that holds the knowledge base and its .claude/ directory.
+  out: .                     # required. Root of the generated tree, relative to `repo`.
+  repos_root: ~/code         # required. Where source repos are cloned.
+  repo_dir_map:              # optional. Only needed when a doc name differs from its local directory.
+    rules: []                # ordered regex rewrites, e.g. [{ from: "-", to: "." }]
+    aliases: {}              # exact doc name -> local directory
+  # drives: sync-local step 1 (repo resolution), verify, add-project, add-domain
+
+# ---------------------------------------------------------------- git
+git:
+  host: github               # github | gitlab | bitbucket | other
+  user_label: github-username  # the word shown in (human: <label>, <date>)
+  # drives: the (human: <label>, <date>) marker text in the reader and the kit; the host name in the project templates
+
+# ---------------------------------------------------------------- scope and ownership
+scope:
+  rule: ""                   # required, free text. Which repos get a project doc.
+                             # e.g. "Repos our team develops, including ones we work on but do not own."
+  owners:                    # controlled vocabulary for `- Owner:` and the index Owner column
+    - { code: TEAM-A, label: Platform, reachable: true }
+    # reachable: true  = we can read their repos and data, so (external:) is never used for it
+    # reachable: false = candidate for (external: <code>)
+  own_team: TEAM-A           # must be one of owners[].code
+  audience:                  # fixed vocabulary for `- Audience:`; edit the list, keep the slugs unique
+    # deployed: true  = a running service, offered in the service and legacy-vm templates
+    # deployed: false = a non-deployed artifact, offered in the artifact template
+    - { slug: player-facing, meaning: "public traffic, reached directly by end users", deployed: true }
+    - { slug: back-office, meaning: "staff or ops surface", deployed: true }
+    - { slug: internal-service, meaning: "server-to-server, no human interface", deployed: true }
+    - { slug: library, meaning: "shared package, not deployed", deployed: false }
+    - { slug: db-project, meaning: "database project or DBA scripts", deployed: false }
+  retirement_date_source: "team chat announcement"   # where the real switch-off month comes from
+  # drives: §0 scope rule, §3 header (Owner, Audience), §6 owner vocabulary and retired standard,
+  #         §9 (external: <team>) values, project/index.md intro
+
+# ---------------------------------------------------------------- environments
+environments:
+  names: [stg, uat, prod]    # ordered; env tables list only these
+  exclude: []                # e.g. [dr]; filtered out of any manifest diff
+  # drives: §3 Environments, §6 env rules, project templates
+
+# ---------------------------------------------------------------- stack
+# Each area is a list of presets plus a free-text `other`. Presets pick the default
+# "where to look" rows (§4); `other` makes setup ask the user where those facts live.
+stack:
+  frontend:   { presets: [], other: "" }   # vue | nuxt | react | next | angular | svelte | none
+  backend:    { presets: [], other: "" }   # dotnet | java-spring | node | python | go | ruby | php | none
+  runtime:    { presets: [], other: "" }   # kubernetes | vm | serverless | paas
+  ci:         { presets: [], other: "" }   # github-actions | gitlab-ci | jenkins | circleci
+  database:   { presets: [], other: "" }   # postgres | mysql | sqlserver | mongodb | sqlite
+  cache:      { presets: [], other: "" }   # redis | memcached | in-memory | none
+  messaging:  { presets: [], other: "" }   # kafka | rabbitmq | sqs | nats | none
+  scheduler:  { presets: [], other: "" }   # hangfire | quartz | cron | sidekiq | none
+  skeletons: []              # project doc templates to emit: service | legacy-vm | artifact
+                             # default derives from runtime (kubernetes -> service, vm -> legacy-vm)
+                             # and always includes artifact for libraries and DB projects
+  # drives: §3 section set, §4 source table, §7, add-project templates and checklist
+
+# ---------------------------------------------------------------- capabilities
+# Tools used to verify facts. kind: none removes the matching sections, anchors and
+# probes entirely; pointers to a removed section are removed with it.
+capabilities:
+  logs:
+    kind: none               # elk | loki | cloudwatch | none | other
+    access: none             # mcp name the assistant can call, or none
+    streams: []              # free-form: { name, scope, syntax }
+    # drives: §4 Observability row, §5 log verification, project template Observability section,
+    #         §9 liveness-probe anchors, sync-local runtime probes, observability.md
+  metrics:
+    kind: none               # grafana | datadog | none | other
+    access: none
+    # drives: §5 dashboards, observability.md
+  global_settings:
+    kind: none               # central-store | env-files | none
+    lookup: ""               # tool or procedure used to read a live value
+    # drives: §5 business-rule value carve-out, §9 global-setting-values anchors
+  db_schema:
+    kind: none               # repo-per-db | migrations-in-repo | none
+    repos_hint: ""           # where schema and stored procedures live
+    # drives: §5 DB location pointers, anchors of the form `repo: <x> | grep: <Table>`
+  external_reference:
+    kind: none               # confluence | notion | wiki | none
+    sources: []              # [{ purpose: "per-env host list", ref: "<page id or url>" }]
+    # drives: §0 and §6 "reference, may be stale" rule, §4 host and CDN rows
+  shared_catalogs: []        # [{ name: redis, source_field: "Redis", heading: "Redis cluster catalog" }]
+                             # a roll-up of one project-doc field, regenerated from the project docs on each sweep
+  # drives: references/platform-basics.md, §9 snapshot-tables anchors (roll-up variant)
+
+# ---------------------------------------------------------------- reader skill
+# The reader skill is the one model-selectable skill, so its description is what makes it load
+# lazily. The generator composes it from identity, reachable owners, capabilities and the
+# examples below; every list may be empty. The result must stay within 1024 characters.
+reader:
+  example_projects: []       # a few project names a user would say out loud
+  example_flows: []          # a few business flows
+  example_questions: []      # phrasings worth matching, e.g. "how does the login flow work"
+  # drives: reader SKILL.md description
+
+# ---------------------------------------------------------------- reader skill content
+known_context:
+  platform_basics:           # categories the setup interview offers; each can be skipped
+    - time
+    - environments
+    - domains
+    - deployment
+    - clusters
+    - config-store
+    - cache
+    - cdn
+    - shared-libraries
+    - organization
+    - cross-team
+    - db-conventions
+    - db-schema-location
+  # drives: the starting list of the reader SKILL.md "Platform basics" (the user's facts live in its keep region and survive a render), §5b (the free slot users fill themselves)
+
+# ---------------------------------------------------------------- audit tuning
+# Defaults come from the original kit. fan_out values are observed limits, not documented
+# ones, and may need to change.
+audit:
+  full_sweep_max_age_days: 30
+  domain_swept_max_age_days: 30
+  by_age_days: { noncode_refs: 180, global_setting_values: 90, liveness_probes: 90 }
+  fan_out:
+    max_concurrent_agents: 4
+    wave_size: [10, 15]
+    agent_report_char_cap: 10000
+  # drives: §9 by-age and backstop, sync-local scale control and prompt contract
+
+# ---------------------------------------------------------------- kit activation
+kit:
+  link_dir: .claude/skills   # where symlinks to local-tools/skills/* are created
+  contributing_note: ""      # optional free text appended to the README contributing section
+  # drives: update-skills, local-tools README, README

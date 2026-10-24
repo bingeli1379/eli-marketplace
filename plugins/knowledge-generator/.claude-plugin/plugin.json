@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "knowledge-generator",
+  "displayName": "Knowledge Generator",
+  "description": "Generate a project-knowledge skill and its maintainer toolkit for any company: answer a few setup questions about your repos and tooling, and an AI fills in the templates",
+  "version": "0.1.0",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-marketplace",
+  "license": "MIT",
+  "keywords": ["knowledge-base", "skill-generator", "documentation", "audit", "templates"]
+}

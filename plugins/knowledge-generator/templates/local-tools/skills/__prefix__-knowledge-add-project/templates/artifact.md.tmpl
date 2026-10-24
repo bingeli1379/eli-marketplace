@@ -1,0 +1,64 @@
+{{#if has.skeleton_artifact}}
+# <repo.name>
+
+- repo: <https url>
+- Owner: <{{ lists.owners }}>
+- Status: retired (YYYY-MM)   <!-- retired standard ({{ names.authoring_core }}.md §6): OMIT unless the service is retired — no middle state, some parts switched off is not retired. Month = when it was actually switched off, from the {{ scope.retirement_date_source }}; never a {{ git.host }} timestamp. -->
+- Audience: <{{ lists.audiences_artifact }}>   <!-- non-deployed artifact ({{ names.authoring_core }}.md §3/§6): {{ lists.audience_meanings_artifact }}. -->
+- Last updated: YYYY-MM-DD
+- Verified at: <short-sha> (<commit-date>)   <!-- repo commit this doc was verified against. A family/group overview doc → n/a (family doc; per-repo anchors in member docs). -->
+
+<!-- banner OPTIONAL: only a clone note / critical caveat. Type/identity goes in Purpose, NOT a heading-less banner. Don't list which sections are omitted. -->
+<!-- A NON-DEPLOYED artifact: a package library{{#if has.db_projects}} OR a DB-project{{/if}}. Not a deployed service → NO runtime sections (Environments / caches / Background jobs / Observability) — OMIT them, don't write `none` (no runtime = no field; a `none` there is an orphan). A deployed message consumer/worker is NOT an artifact — it has a runtime → use the service template. -->
+<!-- Parallel / growing lists (packages, modules, consumers, DBs) → sub-bullets, never a run-on. Keep ONLY the type-specific blocks that fit; delete the rest. -->
+
+## What it does
+
+- **Purpose**: <what it is + **type** ({{#if has.db_projects}}package library · DB-project{{else}}package library{{/if}}) + "not a deployed service" + what it provides>
+{{#if has.db_projects}}
+- **Tech** <!-- DB-project, OPTIONAL: schema tooling / target engine version / deploy tool --> : <…>
+{{/if}}
+
+## Flows
+<!-- OPTIONAL: rare for an artifact. Omit if none. -->
+
+- **<Flow Title>** — [`<slug>`](../domain/<slug>.md)
+
+## Architecture
+<!-- structure / transport / runtime — multi-fact → sub-bullets -->
+
+- **Structure**: <package layout / multi-target frameworks / monorepo tooling{{#if has.db_projects}} / one project per DB{{/if}}>
+- <transport or other notes — sub-bullets if multi-fact>
+
+<!-- ─────────── Package library ─────────── -->
+
+## Packages
+- <one row/sub-bullet per package (table OK): name + target runtimes + what each provides; growing list → don't run-on>
+- <built on — framework deps the lib sits on; hand-written vs codegen (OpenAPI/proto)>
+
+## Publishing & usage
+- <published to which registry; version source (manifest field) + CI publish trigger; how consumers install / register it>
+- **Consumers** (verified via dependency manifests): <list + which modules each uses — {{ names.authoring_core }}.md §6 library two-way; sub-bullets>
+{{#if has.db_projects}}
+
+<!-- ─────────── DB-project ─────────── -->
+<!-- If part of a sibling family, shared build/deploy/conventions live in the family overview doc — see {{ names.authoring_core }}.md §2/§3 (repo families). This member then carries only its own Databases + its own non-prod subset (verified) + own gotchas + a banner pointing to the family doc. A standalone DB-project (no family) keeps the full Deploy / Conventions here. -->
+
+## Databases
+- <one top-level folder = one DB; sub-bullet per DB + one-line domain (grouping notes as a nested note); flag non-DB folders (shared server-level DDL)>
+
+## Deploy
+- **Local**: <deploy script + publish profile; destructive options>.
+- **CI**: <stages + which envs; note if later envs are deployed outside CI>.
+
+## Conventions & gotchas
+<!-- DB-project, OPTIONAL: schema-only/no-rollback, shard pairs, grouping conventions -->
+
+- <…>
+{{/if}}
+
+## Development & testing
+
+- **Unit**: <test projects, if any>.
+- <Integration / E2E only if they exist>
+{{/if}}

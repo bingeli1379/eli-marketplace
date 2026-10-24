@@ -1,0 +1,74 @@
+# {{ names.add_domain }} checklist
+
+One-by-one confirmation for a domain doc, distilled from `../{{ names.authoring_core }}.md`. Full rationale: `../{{ names.authoring_core }}.md §6`. Also run the domain-doc additions in `../{{ names.local_rules }}.md`. (Project-only items — env table / cluster / client-log — do NOT apply here.)
+
+## A. Scope & placement
+
+- [ ] This is a **cross-project flow / business rule / glossary**, not a single project's implementation (that → `{{ names.add_project }}`).
+- [ ] Checked `domain/index.md`: new topic → new file; existing topic gained a branch → extend it (don't fragment).
+
+## B. Trace & verify (don't guess)
+
+- [ ] **Probed clone inventory** (`ls {{ paths.repos_root }}`) and routed each fact as in SKILL step 0, probe the clone inventory. **Listed every project the flow touches even if uncloned** (an unlisted project is an omission no marker catches — only verify's sweep does).
+- [ ] Each flow step names a **concrete mechanism** (job / service / endpoint / toggle / setting) with `file:line` from Explore.
+- [ ] **No claim written on plausibility or inheritance** (`../{{ names.authoring_core }}.md §6`): a claim naming a specific literal (column / enum / status / topic / created-by value) is grepped against the owning repo; "makes sense", "matches" a cross-linked doc, or a cited kb doc is not verification.
+{{#if has.global_settings}}
+- [ ] **Toggle / setting names** verified via {{ capabilities.global_settings.lookup }} (use the code's actual name).
+{{/if}}
+{{#if has.logs}}
+- [ ] Any **log / metric** claim verified with a live query on the log system ({{ derived.labels.logs }}), not read from config.
+{{/if}}
+- [ ] **Verified against ACTIVE usage** (`../{{ names.authoring_core }}.md §6` + the pitfall table): traced the **active caller** (who really reads/writes it), not a comment, schema note, seed row, history table, stale list or dead code.
+- [ ] **Verify-or-drop**: a step whose repo is local is Explored and stated as fact. A `## TODO` / `(unverified)` is kept ONLY for (a) a repo not local, or (b) an important flow gap worth flagging (`../{{ names.authoring_core }}.md §6`) — minor untraceable detail is dropped, not parked as "not traced".
+
+## B2. From notes (when the input is a note / wiki page)
+
+- [ ] Treated the note as a **lead**, verified against code; corrected NOTE-ERRORs; flagged conflicts to the user — did **not** transcribe.
+- [ ] Dropped schema **dumps** / enum dumps / exhaustive interval lists / re-derivable / unimportant note content (large detail → source){{#if has.db_schema}} — **but a targeted location pointer is kept** (§5: location vs values; the one column that answers "where does X live", not a table dump){{/if}}.
+{{#if has.external_reference}}
+- [ ] External-reference ({{ derived.labels.external_reference }}) refs marked **"reference (may be stale)"**; code = source of truth.
+{{/if}}
+- [ ] Re-structured to the **real domain(s)** — did not mirror the note's (possibly mislabeled / conflated) headings.
+
+## C. Content rules
+
+- [ ] **Declarative, no person** (no I / we / you); no conversational notes; no emphasis glyphs.
+- [ ] **All secrets redacted** — credentials, tokens, account passwords. Reference where they live, don't reproduce.
+- [ ] **Markers = exceptions only** (`../{{ names.authoring_core }}.md §0`, marker decision order §6): unmarked = code-verified; no bare `(verified)`, no emoji; only `(unverified)` / `(human: <{{ git.user_label }}>, <YYYY-MM-DD>)` / `(external: <team>)`. Non-code sources (incl. an `(external:)` fact's `src:`) → `noncode refs:` anchor. Provenance parens only for non-guessable sources.
+- [ ] **Large detail points to the project doc / source**, not pasted inline.
+- [ ] **Sources disagree → converged to the verified value** (`../{{ names.authoring_core }}.md §0`): the current truth only; no stale variants listed as equal, at most a one-clause guard.
+{{#if has.db_schema}}
+- [ ] **DB = location pointer, not values** (§5): record "which business semantic lives in which table and column" (e.g. where a status lives); anchor with the repo that holds the schema ({{ capabilities.db_schema.repos_hint }}). **Never record changing data values** (row contents, blocked-id lists, enum-value maps) — fetched live at use-time (enum-value maps have a narrow exception — see the stable-enum carve-out below). Use one consistent path notation for `Db.Table.Column` pointers.
+{{/if}}
+{{#if has.global_settings}}
+- [ ] **Business-rule value carve-out** (`../{{ names.authoring_core }}.md §5`): a setting value that **is itself the rule's threshold/trigger** (e.g. "blocked after **10** failed detections") MAY be written IF tagged **prod** + source anchor (`website`+`key`, §9 `global-setting values`) + dated snapshot. Plain config / current-data values still NOT recorded (looked up live at use-time).
+{{/if}}
+- [ ] **Stable-enum snapshot carve-out — domain docs only** (`../{{ names.authoring_core }}.md §0`, enum / value snapshot carve-out): an enum/value-map table MAY be inlined as a **full** sourced snapshot only if **append-only & long-lived** AND a **standalone** reader can't follow the flow without it — tag `(snapshot YYYY-MM-DD, source <file>)`, mark append-only, **and add a §9 `snapshot tables` anchor**. No re-derive anchor → **don't inline**. **Project docs never qualify.**
+- [ ] **One fact per bullet** (multi-fact → sub-bullets, no run-on); **bold labels** on labelled bullets.
+- [ ] Each project reference is a **markdown link** `[\`name\`](../project/<name>.md)` — never a bare `→ ../project/x.md`; pure external/upstream parties → bold name, no link.
+
+## D. Structure & language
+
+- [ ] **Header = meta list** — `- Last updated:` (today) + `- Swept at:` (domain audit cursor, date-only, project `Verified at` analogue; moved only if the whole doc was re-verified this run){{#if has.external_reference}} + optional `- External reference:`{{/if}}; no blockquote header, no `- Owner:`, no env/cluster table.
+- [ ] **`## Flows` mother section** — each flow a `### Flow A — <name>` under it (single flow → one `### Flow`); no top-level `## Flow A`.
+- [ ] **Structural skeleton (if drawn)** — flow/pipeline/state-machine doc only; ONE mermaid, structure-only (no method/toggle/status-value identifiers, no emoji/`style`), co-located with the `### Flow` it summarizes; skeleton nodes map 1:1 to prose stages (`../{{ names.authoring_core }}.md §0`).
+- [ ] **Do not split by default** — length is not a reason to split; decision-type forks are never split; to split, pass the three-condition gate in `../{{ names.authoring_core }}.md §2` (the thresholds live there, don't invent your own here).
+- [ ] Section set is standard-vocab-in-order, applied-only (Background → `## Flows` → sub-mechanics → Projects involved → Key rules → Glossary → TODO → anchors); omit empty sections, don't leave a shell.
+- [ ] **Anchor coverage incl. cross-project seams** (`../{{ names.authoring_core }}.md §9`): every code-checkable claim is reachable by an anchor, and the anchor set spans **every repo in `Projects involved`** — not just the primary. The seams a flow rides (message topics/schemas, RPC definitions, shared libs, setting triggers, routing) MUST be anchored to their upstream repo, so AUDIT catches an upstream change that doesn't move this doc's own symbols. Un-anchored claims only get caught by the costly full-reread backstop.
+- [ ] **Every anchor pattern was actually RUN, per `|`-alternative and per repo** (`../{{ names.authoring_core }}.md §9` pilot mode): legal ERE **and** ≥1 real hit in each repo it names — a multi-repo anchor whose other half never fires is a dead half, not coverage. A correct MISS (inverted / deleted claim) carries the `INVERTED` token on its line or sits in the `INVERTED anchors —` sub-block (§9 — no other wording counts); otherwise the pattern is what changes.
+- [ ] **Prose is English**; technical terms and identifiers verbatim.
+- [ ] **Glossary keeps the terms the team actually uses** as canonical vocabulary (no invented terms).
+
+## E. Finalize
+
+- [ ] `domain/index.md` row added or updated in place (no duplicate) — `| Topic | Covers | File |` (one-line Covers; no Owner column).
+- [ ] **Cross-linked both ways for every involved project** (`../{{ names.authoring_core }}.md §6`): domain doc lists it under `Projects involved` (`../project/<name>.md`), AND that project doc carries a back-link bullet in its **`## Flows` section** (`- **<Flow>** — [\`slug\`](../domain/slug.md)`) — neither direction optional.
+{{#if has.frontend}}
+- [ ] **Frontend app listed separately** (§6): if a frontend calls the flow's APIs + renders it, list that app as its own `Projects involved` entry — don't fold it into the backend's "their apps"; link if its doc is new-format, plain text if still old-format.
+{{/if}}
+{{#if has.observability_doc}}
+- [ ] Platform-wide fact → the reader `SKILL.md`; a logs/metrics convention → `observability.md` (don't leave it duplicated in the topic).
+{{else}}
+- [ ] Platform-wide fact → the reader `SKILL.md` (don't leave it duplicated in the topic).
+{{/if}}
+- [ ] Diff shown; **commit only after the user confirms** (SKILL step 9, show the diff).

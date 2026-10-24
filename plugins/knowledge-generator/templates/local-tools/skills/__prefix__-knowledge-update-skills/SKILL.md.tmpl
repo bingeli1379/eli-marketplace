@@ -1,0 +1,38 @@
+---
+name: {{ names.update_skills }}
+description: >-
+  Edit the {{ names.knowledge }} maintainer kit itself, or relink it after a skill folder was
+  added, renamed or removed. Not for editing the knowledge docs; use `{{ names.add_project }}` or
+  `{{ names.add_domain }}` for those.
+argument-hint: "[change to make to the kit]"
+disable-model-invocation: true
+---
+
+# {{ names.update_skills }} (edit the maintainer kit; relink on folder changes)
+
+Make a requested change to the **authoring skills themselves**. **There is no deploy step** — the live
+skills are symlinks, so editing the source under `{{ derived.kit_src }}/` IS editing the live skill
+(each `{{ kit.link_dir }}/<name>` is a symlink into it). The only mechanical action beyond editing
+is **(re)linking** — recreating or pruning those symlinks when a skill folder is added / renamed /
+removed (step 2); a content edit alone needs nothing but the edit.
+
+## Flow
+
+**If invoked with no edit request** (bare `/{{ names.update_skills }}`) → **skip step 1, just run step 2** to (re)create any missing symlinks (e.g. after adding or renaming a skill folder, or to repair a partly-linked checkout). A fresh checkout has no `{{ kit.link_dir }}/`, so this skill cannot be invoked there; its first activation is the loop under "Activate" in `{{ paths.out }}/local-tools/README.md`. With an edit request → step 1 is enough; run step 2 only if you ADDED or RENAMED a skill folder.
+
+1. **Edit the SOURCE** under `{{ derived.kit_src }}/` (the `{{ kit.link_dir }}/` symlinks point here — editing either path edits the same file, but always refer to the source path, and never describe `{{ kit.link_dir }}/` as the place to edit). Targets: `{{ names.add_domain }}/`, `{{ names.add_project }}/`, `{{ names.sync_local }}/`, `{{ names.verify }}/`, `{{ names.list_markers }}/`, `{{ names.authoring_core }}.md`, `{{ names.local_rules }}.md` (rules specific to {{ identity.display_name }}; the generator never overwrites it), or this skill (`{{ names.update_skills }}/`). Match the existing style and keep skills tight.
+   - **Shared rules live canonically in `{{ names.authoring_core }}.md` — the other files POINT, don't copy.** Marker rules (§0/§6), audit/verify discipline (§10), and hard rules (§5/§6) are defined **once** in authoring-core; the two `CHECKLIST.md` files and `{{ names.sync_local }}` / `{{ names.verify }}` carry a terse actionable line + a `../{{ names.authoring_core }}.md §X` pointer plus only their own scope-specific nuance. So a rule change lands in **authoring-core**; then just confirm the pointers still name the right §. Do **not** re-paste the rule text into the CHECKLISTs / skills — that verbatim duplication is exactly what the shared file exists to prevent (add a local copy back only to deliberately override the shared rule).
+2. **Ensure symlinks** (only when a skill was ADDED or RENAMED, or on a fresh checkout) — run the loop under "Activate" in `{{ paths.out }}/local-tools/README.md` from the repository root (`{{ paths.repo }}`, adjust to where you cloned it). It is idempotent, points each live entry at its committed source, and its relative targets survive a repo move.
+
+   If you **renamed or deleted a whole skill folder**, its old live entry is now a **dangling symlink** — remove that one symlink under `{{ kit.link_dir }}/` (`unlink <name>`; harmless, it's git-ignored).
+   - **The loop has two homes: that README section (canonical) and the root `README.md` ("Contributing a doc").** A change to the source path or the link mechanics updates both, or a fresh checkout bootstraps against a stale list.
+
+3. **Verify + report**: every `{{ kit.link_dir }}/*` symlink resolves (`for e in {{ kit.link_dir }}/*; do test -e "$e" || echo "BROKEN $e"; done` prints nothing); report which skills changed.
+4. **Cross-file check** (after a prompt-content edit): grep a distinctive token of the changed rule across the kit and fix every copy that still states the old version.
+
+## Guardrails
+
+- The maintainer kit must stay out of the reader skill root (`{{ derived.skills_root }}/`) — symlinking or copying it there would activate it for end users.
+- `{{ kit.link_dir }}/` is **git-ignored** (symlinks included); only `{{ derived.kit_src }}/` is committed, so `git status` does not show the live side.
+- Every file under `{{ derived.kit_src }}/` except `{{ names.local_rules }}.md` is generator-owned: a later generator run lists a hand edit as `changed` and replaces it once the user confirms. A rule specific to {{ identity.display_name }} goes in `{{ names.local_rules }}.md`; edit another kit file only for a change that should also land in the generator's templates.
+- This is for editing the **skills**, not the knowledge base. To add/update domain or project docs, use `{{ names.add_domain }}` / `{{ names.add_project }}`.
