@@ -10,7 +10,7 @@
 
 <!-- Sister/clone? open with: "Clone of `X.md`; most conventions identical — this doc covers differences only." then point shared parts back to X. -->
 <!-- Covers every deployed runtime: backend API · frontend · message consumer/worker · scheduler. Same section skeleton — per-type differences are marked inline (BACKEND / FRONTEND / CONSUMER / SCHEDULER). -->
-<!-- Section order is fixed (big-picture → detail → ops trivia). OPTIONAL: include only when applicable. ALWAYS: keep a structured per-env or jobs field, writing `none` when empty; an optional bullet or layer (endpoints, a test layer, client log) is omitted instead. Parallel / growing lists (modules, jobs, consumers, DBs) → sub-bullets, never a run-on. -->
+<!-- Section order is fixed (big-picture → detail → ops trivia). OPTIONAL: include only when applicable. ALWAYS: keep a structured per-env or jobs field, writing `none` when empty; an optional bullet or layer (endpoints, a test layer{{#if has.logs}}, client log{{/if}}) is omitted instead. Parallel / growing lists (modules, jobs, consumers, DBs) → sub-bullets, never a run-on. -->
 
 ## What it does
 
@@ -120,12 +120,17 @@
 - **Unit**: <framework + test projects>.
 - **Integration**: <framework + test projects>.
 - **E2E**: <only if it exists. An E2E suite owned by another repo that this repo's CI merely triggers is not this repo's E2E — a backend's story is its own integration tests.>
-{{#if has.observability_doc}}
+{{#if has.observability_section}}
 
 ## Observability
 
+{{#if has.observability_doc}}
 For log and dashboard conventions see `observability.md`.
+{{else}}
+For where each tool is reached see `observability.md`.
+{{/if}}
 
+{{#if has.observability_doc}}
 - **endpoints** <!-- OPTIONAL: omit if none. Frontends usually have no metrics endpoint --> : <metrics / scheduler dashboard paths>.
 - **logging**: <lib → sink; APM meters / service identity if any>.
 {{#if has.logs}}
@@ -139,4 +144,10 @@ For log and dashboard conventions see `observability.md`.
 {{/if}}
 {{/if}}
 {{/if}}
+{{/if}}
+{{#each derived.tools}}
+{{#if this.identity}}
+- **{{ this.name }}**: <the project's {{ this.identity }}>.
+{{/if}}
+{{/each}}
 {{/if}}

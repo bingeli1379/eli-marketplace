@@ -6,7 +6,7 @@ The generator supplies structure and rules. The knowledge itself comes from you 
 
 ## Status
 
-Early version. The renderer, the config schema and every template are tested. The two skills, `setup` (an interview that writes the config) and `generate` (renders it), are written and checked statically but have not been run in a live session yet.
+Early version. The renderer, the config schema and every template are tested. The two skills, `setup` (an interview that writes the config) and `generate` (renders it), are written and checked statically, and both have run once in a live session against a real set of repositories.
 
 ## Install
 
@@ -36,7 +36,7 @@ skills/acme-knowledge/                      the reader skill, loaded lazily from
   SKILL.md
   references/project/index.md               yours to fill in
   references/domain/index.md                yours to fill in
-  references/observability.md               only when you configured logs, dashboards or one schema repository per database; yours to fill in
+  references/observability.md               only when you configured logs, dashboards, other tools or one schema repository per database; yours to fill in
   references/platform-basics.md             only when a shared catalog is set in the config by hand; yours to fill in
 .claude/skills/                             the maintainer kit, committed with the repository
   README.md
@@ -53,7 +53,7 @@ The reader skill is the only one the model may pick on its own, so its descripti
 
 ## How it works
 
-1. A config file describes your company: the repo layout, owners, environments, the stack you use (read from your repositories; only where your services run is asked, and only when they show none), and which verification capabilities you have (logs, dashboards, a settings store, a schema source, an external reference such as a wiki).
+1. A config file describes your company: the repo layout, owners, environments, the stack you use (read from your repositories; only where your services run is asked, and only when they show none), and which verification capabilities you have (logs, dashboards, a settings store, a schema source, an external reference such as a wiki, any other tool you check facts with).
 2. The renderer turns that config and the templates into the tree above. A capability you do not have removes its sections, anchors and probes entirely instead of leaving empty headings.
 3. Files you are meant to edit (`README.md`, the two `index.md` files, `observability.md`, `platform-basics.md`, the local rules) are written once and never overwritten, so regenerating after a generator upgrade refreshes everything else and leaves your content alone. The one exception inside a generated file is the Platform basics list in the reader `SKILL.md`: write your facts between its `<!-- keep -->` and `<!-- /keep -->` lines and every render carries them over. The list starts from the categories you chose in the config; adding or dropping a category later is a hand edit there.
 
@@ -61,7 +61,7 @@ The shared rules are about trust: every fact is verified against code or visibly
 
 ## Config
 
-The shape of the config is documented in `schema/config.reference.yaml`; the file itself is JSON, because the renderer uses only the Python standard library. Three complete examples live in `tests/fixtures/`: `acme` has every capability on, `fakeco` has most of them off, and `minimal` has them all off.
+The shape of the config is documented in `schema/config.reference.yaml`; the file itself is JSON, because the renderer uses only the Python standard library. Three complete examples live in `tests/fixtures/`: `acme` has every verification capability on except other tools, `fakeco` has most of them off, and `minimal` has them all off.
 
 ## Rendering by hand
 

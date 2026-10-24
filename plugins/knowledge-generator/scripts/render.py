@@ -222,6 +222,9 @@ def validate(cfg):
     for path in ("identity.display_name", "paths.repo", "paths.out", "paths.repos_root", "git.host",
                  "git.user_label", "scope.rule", "scope.owner_source", "scope.audience", "environments.names"):
         need(path)
+    rule = cfg["scope"].get("rule")
+    if isinstance(rule, str) and rule.strip() and not re.search(r"[.!?\u3002\uff01\uff1f][\"')\uff09]*$", rule.strip()):
+        errs.append("scope.rule must be a sentence ending in a full stop; the templates continue after it")
     for entry in (cfg["scope"].get("audience") or []):
         if not isinstance(entry.get("deployed"), bool):
             errs.append(f"scope.audience[{entry.get('slug')}].deployed must be true or false")
@@ -256,8 +259,47 @@ def validate(cfg):
         errs.append("capabilities.db_schema.map must be a list of { db, repo } entries (it may be empty)")
     if not isinstance(caps.get("shared_catalogs"), list):
         errs.append("capabilities.shared_catalogs must be a list")
+    tools = caps.get("tools", [])
+    if not isinstance(tools, list):
+        errs.append("capabilities.tools must be a list (it may be empty or absent)")
+    else:
+        for i, tool in enumerate(tools):
+            label = f"capabilities.tools[{i}]"
+            if not isinstance(tool, dict):
+                errs.append(f"{label} must be an object")
+                continue
+            if isinstance(tool.get("name"), str) and tool["name"].strip():
+                label += f" ({' '.join(tool['name'].split())})"
+            for key in ("name", "purpose"):
+                if not isinstance(tool.get(key), str) or not tool[key].strip():
+                    errs.append(f"{label}.{key} is required")
+            for key in ("access", "project_identity"):
+                if key in tool and not isinstance(tool[key], str):
+                    errs.append(f"{label}.{key} must be a string")
+            for key in ("name", "purpose", "access", "project_identity"):
+                if isinstance(tool.get(key), str) and re.search(r"[|\r\n]", tool[key]):
+                    errs.append(f"{label}.{key} must not contain | or a line break (it is written into a table row)")
     if errs:
         raise ConfigError("; ".join(errs))
+
+
+def other_tools(caps):
+    """The entries of capabilities.tools, normalised so templates never test a missing key."""
+    out = []
+    for tool in caps.get("tools") or []:
+        access = (tool.get("access") or "").strip()
+        live = access.lower() not in ("", "none")
+        identity = (tool.get("project_identity") or "").strip()
+        out.append({
+            "name": tool["name"].strip(),
+            "purpose": tool["purpose"].strip(),
+            "live": live,
+            "reach": f"the `{access}` MCP" if live else "no connected tool",
+            "identity": identity,
+            "find": identity or "not recorded per project",
+            "access": access if live else "none",
+        })
+    return out
 
 
 def stack_on(entry):
@@ -354,11 +396,22 @@ def derive(cfg):
     ctx["has"]["db_projects"] = caps["db_schema"]["kind"] == "repo-per-db"
     ctx["has"]["observability_doc"] = ctx["has"]["logs"] or ctx["has"]["metrics"]
     ctx["has"]["deployed_skeleton"] = ctx["has"]["skeleton_service"] or ctx["has"]["skeleton_legacy_vm"]
-    ctx["has"]["observability_file"] = ctx["has"]["observability_doc"] or ctx["has"]["db_projects"]
+    extra_tools = other_tools(caps)
+    ctx["has"]["tools"] = bool(extra_tools)
+    ctx["has"]["tool_identity"] = any(t["identity"] for t in extra_tools)
+    ctx["has"]["tools_live"] = any(t["live"] for t in extra_tools)
+    ctx["has"]["observability_section"] = ctx["has"]["observability_doc"] or ctx["has"]["tool_identity"]
+    ctx["has"]["observability_file"] = (
+        ctx["has"]["observability_doc"] or ctx["has"]["db_projects"] or ctx["has"]["tools"]
+    )
     # the live tools a verification step can name; dashboards (metrics) are not one of them
-    ctx["has"]["live_tools"] = any(
+    ctx["has"]["live_tools"] = ctx["has"]["tools_live"] or any(
         ctx["has"][name] for name in ("logs", "global_settings", "external_reference")
     )
+    # a project doc only consults a live tool that names a project identity
+    ctx["has"]["project_live_tools"] = any(
+        ctx["has"][name] for name in ("logs", "global_settings", "external_reference")
+    ) or any(t["live"] and t["identity"] for t in extra_tools)
     ctx["has"]["excluded_envs"] = bool(cfg["environments"]["exclude"])
     ctx["has"]["owner_source"] = cfg["scope"]["owner_source"] != "none"
     audience = cfg["scope"]["audience"]
@@ -381,9 +434,20 @@ def derive(cfg):
     ctx["lists"]["owners_reachable"] = ", ".join(o["code"] for o in owners if o["reachable"])
     ctx["lists"]["owners_external"] = ", ".join(o["code"] for o in owners if not o["reachable"])
     ctx["lists"]["live_checks"] = " / ".join(
-        label for name, label in (("logs", "log identity"), ("global_settings", "settings"),
-                                  ("external_reference", "external-reference pages")) if ctx["has"][name]
+        [label for name, label in (("logs", "log identity"), ("global_settings", "settings"),
+                                   ("external_reference", "external-reference pages")) if ctx["has"][name]]
+        + [t["name"] for t in extra_tools if t["live"]]
     )
+    ctx["lists"]["tools_live_names"] = ", ".join(t["name"] for t in extra_tools if t["live"])
+    value_kinds = (
+        (["a log identity"] if ctx["has"]["logs"] else [])
+        + (["a setting value"] if ctx["has"]["global_settings"] else [])
+        + (["a tool identifier"] if ctx["has"]["tool_identity"] else [])
+    )
+    ctx["has"]["live_value_kinds"] = bool(value_kinds)
+    ctx["lists"]["live_value_kinds"] = ", ".join(value_kinds)
+    ctx["lists"]["tool_identity_names"] = ", ".join(t["name"] for t in extra_tools if t["identity"])
+    ctx["lists"]["tool_identities"] = "; ".join(f"{t['name']}: {t['identity']}" for t in extra_tools if t["identity"])
     dir_map = cfg["paths"]["repo_dir_map"]
     ctx["lists"]["repo_rules"] = "; ".join(f"`{r['from']}` → `{r['to']}`" for r in dir_map["rules"])
     ctx["lists"]["repo_aliases"] = "; ".join(f"`{k}` → `{v}`" for k, v in dir_map["aliases"].items())
@@ -397,6 +461,7 @@ def derive(cfg):
             access.append(f"the `{caps[name]['access']}` MCP ({labels[name]})")
     if ctx["has"]["global_settings"] and caps["global_settings"]["lookup"]:
         access.append(caps["global_settings"]["lookup"])
+    access.extend(f"{t['reach']} ({t['name']})" for t in extra_tools if t["live"])
     ctx["has"]["live_access"] = bool(access)
     ctx["lists"]["live_access"] = join_and(access)
     ctx["derived"] = {
@@ -405,6 +470,7 @@ def derive(cfg):
         "observability_tools": tools,
         "labels": labels,
         "db_map": caps["db_schema"].get("map", []),
+        "tools": extra_tools,
         "catalog_headings": ", ".join(c["heading"] for c in caps["shared_catalogs"]),
         "knowledge_root": posixpath.join(repo, out_rel, "skills", base) if out_rel != "." else posixpath.join(repo, "skills", base),
         "kit_root": posixpath.join(repo, ".claude/skills"),

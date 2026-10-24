@@ -37,9 +37,9 @@ When the input is a note (personal doc / wiki page / old write-up), treat it as 
 
 ## Flow
 
-1. **Scope + ownership** — the project's **own** repo is under `{{ paths.repos_root }}` (a project doc = that one repo's basics; not there → clone it, or write a domain doc for the cross-project facts instead). **Per-fact routing, not per-role** (`../{{ names.authoring_core }}.md §6`): probe `ls {{ paths.repos_root }}` for the **cross-referenced** repos (Dependencies / Consumed by / Flows) — name upstreams you don't have (Dependencies lists by name, no clone needed); a Flows link to an uncloned **our-side** project → tag `(unverified — <missing repo>)`; a fact owned by **another team's** code/settings we never clone or reach → `(external: <team>)`; code-invisible facts → `(human:)`. **Owner** per `../{{ names.authoring_core }}.md §6`: {{#if has.owner_source}}read {{ scope.owner_source }} in the project's repo and map it onto the vocabulary; no value there → `unknown`{{else}}`unknown` until the user decides, offered as a proposal in step 6's question{{/if}}.
+1. **Scope + ownership** — the project's **own** repo is under `{{ paths.repos_root }}` (a project doc = that one repo's basics; not there → clone it, or write a domain doc for the cross-project facts instead). **Per-fact routing, not per-role** (`../{{ names.authoring_core }}.md §6`): probe `ls {{ paths.repos_root }}` for the **cross-referenced** repos (Dependencies / Consumed by / Flows) — name upstreams you don't have (Dependencies lists by name, no clone needed); a Flows link to an uncloned **our-side** project → tag `(unverified — <missing repo>)`; a fact owned by **another team's** code/settings we never clone or reach → `(external: <team>)`; code-invisible facts → `(human:)`. {{#if has.project_live_tools}}Preflight the live tools step 3 names before researching, as `../{{ names.authoring_core }}.md §5` ("Preflight") says. {{/if}}**Owner** per `../{{ names.authoring_core }}.md §6`: {{#if has.owner_source}}read {{ scope.owner_source }} in the project's repo and map it onto the vocabulary; no value there → `unknown`{{else}}`unknown` until the user decides, offered as a proposal in step 6's question{{/if}}.
 2. **Research** — fan out an Explore agent per `../{{ names.authoring_core }}.md §4` (decision-grade facts + `file:line`, "not found" over guessing). A source the repo lacks (README, CI file, deploy manifest, tests) is a fact about the project: a structured field takes `none` and prose leaves it out, and it is never a reason to ask the user. Purpose comes from what the code shows (entry points, routes, consumers, jobs, manifest description), never from the repo name; the business reason is `(human:)` or left out.
-3. **Verify with live tools** (`../{{ names.authoring_core }}.md §5`):{{#if has.live_tools}}
+3. **Verify with live tools** (`../{{ names.authoring_core }}.md §5`):{{#if has.project_live_tools}}
 {{#if has.logs}}
    - log identity via a live query on {{ derived.labels.logs }}, never read from config. If the tool is unreachable, write one `(unverified — <tool> unreachable)` on the fact.
 {{/if}}
@@ -49,8 +49,13 @@ When the input is a note (personal doc / wiki page / old write-up), treat it as 
 {{#if has.external_reference}}
    - values whose source of truth is the external reference ({{ derived.labels.external_reference }}) are read from it, not derived from code.
 {{/if}}
-{{else}} no live tools are configured for this knowledge base — verify from code only.
+{{else}} no live tool applies to a project doc — verify from code only.
 {{/if}}
+{{#each derived.tools}}
+{{#if this.identity}}
+   - other tool `{{ this.name }}` ({{ this.reach }}): record the project's {{ this.identity }} (`../{{ names.authoring_core }}.md §5`, "Other tools").
+{{/if}}
+{{/each}}
 4. **Pick a template** (table below) → copy from `templates/`. An existing doc keeps its shape: edit it in place and re-verify every claim you touch.
 5. **Draft** — fill the body prose in English; **section headings stay fixed** (`../{{ names.authoring_core }}.md §7`). Set `Last updated` to today. Move `Verified at` to the verified commit only when the **whole** doc was re-verified against it (`../{{ names.authoring_core }}.md §3`); after a partial update leave it, so the audit still diffs the unreviewed range. Project docs cite symbols inline; add an `<!-- anchors -->` block when the project is cross-repo or multi-deployment, and not otherwise (`../{{ names.authoring_core }}.md §9` defines both).
 6. **Run `CHECKLIST.md`** against the draft; ask the open points ({{#if has.owner_source}}anything no source holds, except an owner the source lacks, which stays `unknown`{{else}}ownership proposals, anything no source holds{{/if}}) as one question with a proposal each, and one question for the whole run when several projects were written. When nobody can answer (a run with no user in the loop), the open points go in the closing report and the affected fields stay `unknown` or marked.
@@ -87,7 +92,7 @@ Sub-cases (apply on top of a template):
 - **Multi-deployment one service**: list each deployment's responsibility + the split key (env var / reverse-proxy routing) + why it's split.
 {{#if has.frontend}}
 {{#if has.skeleton_service}}
-- **Frontend** (in `service.md`): subdomain-prefix pattern only (not each env domain), the platform per env as a sub-bullet list, claim the render-chain flows it calls APIs for, client log structured (identifier + per-env), omitted when errors are only POSTed to the backend (say so under `logging`).
+- **Frontend** (in `service.md`): subdomain-prefix pattern only (not each env domain), the platform per env as a sub-bullet list, claim the render-chain flows it calls APIs for{{#if has.logs}}, client log structured (identifier + per-env), omitted when errors are only POSTed to the backend (say so under `logging`){{/if}}.
 {{/if}}
 {{/if}}
 

@@ -46,7 +46,7 @@ Runtime sections (Environments, Data & settings, Caching & retry, Background job
 - [ ] **Header = meta list**: `- repo:` / `- Owner:` / (`- Status: retired (YYYY-MM)` only when retired) / `- Audience:` / `- Last updated:` / `- Verified at:` (+ `- Tracks branch: <branch>` when the doc describes a non-default branch, `../{{ names.authoring_core }}.md §3`) (no blockquote header). Banner blockquote only if it adds info Purpose doesn't (clone / library-omission / a critical caveat) — never restates Purpose.
 - [ ] **`Audience` set** (fixed vocabulary, `../{{ names.authoring_core }}.md §3`): {{ lists.audiences_deployed }} for deployed apps{{#if has.skeleton_artifact}}; {{ lists.audiences_artifact }} for non-deployed artifacts{{/if}} (` + `-join for two deployments of different audiences, §3). Derived from `Domains/ingress` + Purpose. Internal-only nature lives HERE — don't repeat "internal-only" in prose.
 - [ ] **`Verified at` set** (project doc only): `<short-sha> (<commit-date>)` of the repo commit the doc was verified against; `n/a (<reason>)` for repos without a usable git history, family/group overview docs and not-cloned repos. Distinct from `Last updated` (doc edit date).
-- [ ] **Section order** (big→small, see §3): What it does → Flows → Architecture → Dependencies → Environments → Data & settings → Caching & retry → Background jobs → Security → Development & testing{{#if has.observability_doc}} → Observability{{/if}}.
+- [ ] **Section order** (big→small, see §3): What it does → Flows → Architecture → Dependencies → Environments → Data & settings → Caching & retry → Background jobs → Security → Development & testing{{#if has.observability_section}} → Observability{{/if}}.
 - [ ] **Bold labels** on every `- **Label**:` bullet. **Any multi-fact bullet split into sub-bullets** (no run-ons).
 - [ ] **What it does**: Capabilities in their own bullet, NOT crammed into Purpose. **Architecture**: runtime version here only (not repeated in Dev & testing).
 - [ ] **Dependencies** upstream grouped by domain, not a comma-run.
@@ -57,9 +57,14 @@ Runtime sections (Environments, Data & settings, Caching & retry, Background job
 {{/each}}
 - [ ] **Background jobs** always present in a deployed doc (`none` if no scheduler). **Development & testing**: one bullet per layer (Unit / Integration / E2E).
 {{#if has.observability_doc}}
-- [ ] **Observability**: endpoints · logging · server log (per-env query). Frontend variant: browser-side log identifier.
+- [ ] **Observability**: endpoints · logging{{#if has.logs}} · server log (per-env query). Frontend variant: browser-side log identifier.{{else}}.{{/if}}
 {{/if}}
-- [ ] **Structured-field `none`** for empty per-env{{#if has.shared_catalogs}} / catalog{{/if}} / jobs fields and caching (uniformity); an optional bullet or layer (endpoints, Health/probes, Scaling, Deployments, Traffic split, Security, Settings, i18n/CDN, a test layer, client log) is omitted, not `none`. But **no free-text "not X / not found here" reminders** — write positive facts only.
+{{#each derived.tools}}
+{{#if this.identity}}
+- [ ] **{{ this.name }}**: the project's {{ this.identity }} recorded as `../{{ names.authoring_core }}.md §5`, "Other tools", prescribes.
+{{/if}}
+{{/each}}
+- [ ] **Structured-field `none`** for empty per-env{{#if has.shared_catalogs}} / catalog{{/if}} / jobs fields and caching (uniformity); an optional bullet or layer (endpoints, Health/probes, Scaling, Deployments, Traffic split, Security, Settings, i18n/CDN, a test layer{{#if has.logs}}, client log{{/if}}) is omitted, not `none`. But **no free-text "not X / not found here" reminders** — write positive facts only.
 - [ ] **Sources disagree → converged to the verified value** (`../{{ names.authoring_core }}.md §0`): the current truth only; no stale variants listed as equal, at most a one-clause guard.
 {{#if has.db_schema}}
 - [ ] **DB = location pointer, not values** (§5): record "which business semantic lives in which table and column" (code-invisible, stable mapping; anchored with the repo that holds the schema — {{ capabilities.db_schema.repos_hint }}); **never record changing data values** (row contents, blocked-id lists, enum-value maps, setting values) — fetched live at use-time. Whole-table dumps point to source.{{#if has.global_settings}} **Exception** (§5 business-rule value carve-out): a setting value that *is* a business-rule threshold/trigger may be written with **prod + source anchor (`website`+`key`, §9) + snapshot date** — but that's usually a domain-doc concern; a project doc records plain config as "where to look", not the value.{{/if}}
@@ -85,6 +90,7 @@ Runtime sections (Environments, Data & settings, Caching & retry, Background job
 - [ ] `Last updated` is today; `Verified at` moved only if the whole doc was re-verified against that commit (SKILL step 5, draft).
 - [ ] **Domain flows linked both ways** (§6): the project doc's **`## Flows` section** lists each flow `- **<Flow>** — [\`slug\`](../domain/slug.md)`, AND each `domain/<slug>.md` lists this project under `Projects involved`.
 {{#if has.frontend}}
+- [ ] **Device and region gating** (§3, frontend): when the app redirects by device or region (client code and server both checked), the doc states which go where and on which side the redirect runs.
 - [ ] **Frontend claims its render chains** (§6): a frontend claims every flow it **calls APIs for + renders**, not only backend-owned flows — so a chain editor finds the app from either end. The domain doc lists the app as its own `Projects involved` entry (not folded into the backend's "their apps").
 {{/if}}
 - [ ] Any fact that now repeats in a 2nd project → moved to the shared layer ({{#if has.observability_file}}`observability.md` / {{/if}}the reader `SKILL.md`); project doc keeps its own value + pointer.
