@@ -6,7 +6,7 @@ user-invocable: false
 
 # Writing a skill
 
-**Read `${CLAUDE_PLUGIN_ROOT}/references/authoring-rules.md` now, before you touch the file.** It is the catalogue of every rule about what a good skill or agent file looks like — trigger wording, examples, structure, naming, step handoffs, state changes, which mechanism a plugin's hooks and mods should use, outside dependencies, safe editing, where content lives, and the order to cut cost in. Each entry states the rule, what breaks without it, and how the violation is visible. Follow it while writing; do not work from a memory of it.
+**Read `${CLAUDE_PLUGIN_ROOT}/references/authoring-rules.md` now, before you touch the file.** It is the catalogue of every rule about what a good skill or agent file looks like — trigger wording, examples, structure, naming, step handoffs, state changes, which mechanism a plugin's hooks and mods should use, what a bundled script's interface carries, outside dependencies, safe editing, where content lives, and the order to cut cost in. Each entry states the rule, what breaks without it, and how the violation is visible. Follow it while writing; do not work from a memory of it.
 
 The same catalogue is what `/review-skill` audits against, so the rules you write to are the rules you get checked against.
 
