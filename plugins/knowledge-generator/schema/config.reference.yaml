@@ -9,6 +9,10 @@
 # Scope of v1: the knowledge skill and its maintainer kit only. Capabilities that belong
 # to a devtools generator (user lookup, message decoding) are deliberately absent.
 #
+# `ask:` and `effect:` lines are what setup says to the user, in the user's language, in place of the
+# field name: `ask` is the question in plain words, `effect` is what the answer changes in the generated
+# files. A field with no `ask` line is not asked: setup fills it from the probe, a default, or step 1.
+#
 # Output layout contract (fixed, not configurable below `paths.out`):
 #   <out>/skills/<prefix>-knowledge/SKILL.md
 #   <out>/skills/<prefix>-knowledge/references/{project,domain}/index.md
@@ -23,52 +27,83 @@ config_version: 1            # bumped when this schema changes shape; the migrat
 identity:
   prefix: acme               # required. Skill names are <prefix>-knowledge, <prefix>-knowledge-add-project, ...
   display_name: ACME         # required. Used in prose and in the reader SKILL.md description.
+  # ask: What short name should the generated skills carry? Lowercase letters, digits and hyphens.
+  # effect: It starts every skill name: `<name>-knowledge` is the one Claude loads, and the maintainer
+  #         commands follow it (`/<name>-knowledge-add-project` and so on). Avoid a name an installed skill already uses.
+  # ask: What do you call this body of knowledge in a sentence, such as the company or department name?
+  # effect: It appears in the generated text and in the description Claude uses to decide when to load the knowledge skill.
   # drives: every skill name, ledger directory, reader SKILL.md frontmatter, README
 
 # ---------------------------------------------------------------- paths
 paths:
   repo: ~/code/acme-knowledge  # required. The repository that holds the knowledge base and its .claude/ directory.
   out: .                     # required. Root of the generated tree, relative to `repo`.
+  # ask: Should the generated files sit at the top of this repository, or inside a subfolder?
+  # effect: Top level is simplest. A subfolder keeps the generated files apart from anything else in the same repository.
   repos_root: ~/code         # required. Where source repos are cloned.
+  # ask: Which folder holds the source repositories you want to document?
+  # effect: The commands that write and check docs look for each project's clone here, and the generated text uses this path.
   repo_dir_map:              # optional. Only needed when a doc name differs from its local directory.
     rules: []                # ordered regex rewrites, e.g. [{ from: "-", to: "." }]
     aliases: {}              # exact doc name -> local directory
+  # (not asked: only when the probe finds a documented name that differs from its folder name)
   # drives: sync-local step 1 (repo resolution), verify, add-project, add-domain
 
 # ---------------------------------------------------------------- git
 git:
   host: github               # github | gitlab | bitbucket | other
+  # ask: Where are your repositories hosted?
+  # effect: The generated guidance names the host where it talks about commits, timestamps and merge requests.
   user_label: github-username  # the word shown in (human: <label>, <date>)
+  # ask: When someone records a fact that code cannot show, which kind of id should they sign it with?
+  # effect: It shows in notes like `(human: <id>, 2026-01-31)`, so a later reader knows whom to ask about that fact.
   # drives: the (human: <label>, <date>) marker text in the reader and the kit; the host name in the project templates
 
 # ---------------------------------------------------------------- scope and ownership
 scope:
   rule: ""                   # required, free text. Which repos get a project doc.
                              # e.g. "Repos our team develops, including ones we work on but do not own."
+  # ask: In one sentence, which repositories get their own doc?
+  # effect: The commands that write docs use it to decide whether a repository deserves a doc or only a mention in another doc. The gap check uses it to list repositories that should have a doc and do not.
+  # ask: Which teams own the repositories you document? Give each a short name, and say whether you can read that team's code and data yourself.
+  # effect: Each project doc records its owning team from this list, and the project index gets a team column.
+  #         A team you can read is checked like your own. Facts about a team you cannot read are marked "check with that team" instead of verified.
   owners:                    # controlled vocabulary for `- Owner:` and the index Owner column
     - { code: TEAM-A, label: Platform, reachable: true }
     # reachable: true  = we can read their repos and data, so (external:) is never used for it
     # reachable: false = candidate for (external: <code>)
-  own_team: TEAM-A           # must be one of owners[].code
+  # ask: How do you tell apart the kinds of project (for example customer-facing, back-office, internal service, library)? Edit or trim this list, and for each kind say whether it runs as a service or is not deployed.
+  # effect: Each project doc is labelled with one of these kinds. A kind that runs as a service gets the full doc layout; a kind that is not deployed (a library, a database project) gets a shorter one.
   audience:                  # fixed vocabulary for `- Audience:`; edit the list, keep the slugs unique
     # deployed: true  = a running service, offered in the service and legacy-vm templates
     # deployed: false = a non-deployed artifact, offered in the artifact template
-    - { slug: player-facing, meaning: "public traffic, reached directly by end users", deployed: true }
+    - { slug: customer-facing, meaning: "public traffic, reached directly by end users", deployed: true }
     - { slug: back-office, meaning: "staff or ops surface", deployed: true }
     - { slug: internal-service, meaning: "server-to-server, no human interface", deployed: true }
     - { slug: library, meaning: "shared package, not deployed", deployed: false }
     - { slug: db-project, meaning: "database project or DBA scripts", deployed: false }
   retirement_date_source: "team chat announcement"   # where the real switch-off month comes from
+  # ask: When a project is switched off, where do you find the month it really happened?
+  # effect: The retired-project rules tell authors to take the retirement month from this source, not from a commit date.
   # drives: §0 scope rule, §3 header (Owner, Audience), §6 owner vocabulary and retired standard,
   #         §9 (external: <team>) values, project/index.md intro
 
 # ---------------------------------------------------------------- environments
 environments:
   names: [stg, uat, prod]    # ordered; env tables list only these
+  # ask: Which environments do your projects deploy to, in order from earliest to production?
+  # effect: Every project doc's environment section lists exactly these, and the check that compares docs with code uses them to read deploy settings.
   exclude: []                # e.g. [dr]; filtered out of any manifest diff
+  # ask: Is there an environment that exists but should be ignored in the docs (for example a disaster-recovery copy)?
+  # effect: Docs never list it, and the check that compares docs with code ignores its deploy settings.
   # drives: §3 Environments, §6 env rules, project templates
 
 # ---------------------------------------------------------------- stack
+# ask (per area): What do your projects use for <area>? Pick all that apply, or none. Name the areas in plain words:
+#         front end, back end, where services run, build and deploy pipeline, database, cache, message queue, scheduled jobs.
+# effect: It decides which sections a project doc has and where the commands that write docs look for each fact
+#         (for example the message-queue section appears only when one is chosen). Anything not in the choices is
+#         written in the user's own words, and setup then asks where those facts live.
 # Each area is a list of presets plus a free-text `other`. Presets pick the default
 # "where to look" rows (§4); `other` makes setup ask the user where those facts live.
 stack:
@@ -83,6 +118,7 @@ stack:
   skeletons: []              # project doc templates to emit: service | legacy-vm | artifact
                              # default derives from runtime (kubernetes -> service, vm -> legacy-vm)
                              # and always includes artifact for libraries and DB projects
+  # (not asked: derived from where services run; ask only when a project kind has no matching layout)
   # drives: §3 section set, §4 source table, §7, add-project templates and checklist
 
 # ---------------------------------------------------------------- capabilities
@@ -90,29 +126,41 @@ stack:
 # probes entirely; pointers to a removed section are removed with it.
 capabilities:
   logs:
+    # ask: Which tool do you read service logs in, if any, and which tool connected to Claude (an MCP server) lets it search them?
+    # effect: Turns on log checks: how to confirm a service's real log name, a reference page for investigating, and live log checks when the docs are re-verified. Answering none leaves all of that out.
     kind: none               # elk | loki | cloudwatch | none | other
     access: none             # mcp name the assistant can call, or none
     streams: []              # free-form: { name, scope, syntax }
     # drives: §4 Observability row, §5 log verification, project template Observability section,
     #         §9 liveness-probe anchors, sync-local runtime probes, observability.md
   metrics:
+    # ask: Which tool do you read dashboards and metrics in, if any, and which tool connected to Claude (an MCP server) lets it query them?
+    # effect: Adds the dashboards part of the investigating reference page and the dashboard checks. Answering none leaves them out.
     kind: none               # grafana | datadog | none | other
     access: none
     # drives: §5 dashboards, observability.md
   global_settings:
+    # ask: Do your services read settings from a central store? If so, how does someone look up a live value (a tool or a procedure)?
+    # effect: Project and domain docs verify setting names through that lookup, and every re-check of the docs re-verifies the threshold values they record. Answering none leaves all of that out.
     kind: none               # central-store | env-files | none
     lookup: ""               # tool or procedure used to read a live value
     # drives: §5 business-rule value carve-out, §9 global-setting-values anchors
   db_schema:
+    # ask: Where does the database schema live: one repository per database, migration files in each repository, or nowhere you can read?
+    # effect: Docs record which table and column holds each business meaning and point to the repository that owns the schema. Answering none leaves the database pointers out.
     kind: none               # repo-per-db | migrations-in-repo | none
     repos_hint: ""           # where schema and stored procedures live
     # drives: §5 DB location pointers, anchors of the form `repo: <x> | grep: <Table>`
   external_reference:
+    # ask: Do you keep reference pages in a wiki (Confluence, Notion and so on) that docs may cite? Which pages hold things like host lists?
+    # effect: Those pages count as reference that may be out of date, never as proof, and host and CDN rows are taken from them. Answering none leaves that out.
     kind: none               # confluence | notion | wiki | none
     sources: []              # [{ purpose: "per-env host list", ref: "<page id or url>" }]
     # drives: §0 and §6 "reference, may be stale" rule, §4 host and CDN rows
   shared_catalogs: []        # [{ name: redis, source_field: "Redis", heading: "Redis cluster catalog" }]
                              # a roll-up of one project-doc field, regenerated from the project docs on each sweep
+  # ask: Is there one fact every project doc records that you also want as a single overview page (for example which cache each project uses)?
+  # effect: Adds an overview page that is read only when needed and is rebuilt from the project docs each time the docs are re-checked.
   # drives: references/platform-basics.md, §9 snapshot-tables anchors (roll-up variant)
 
 # ---------------------------------------------------------------- reader skill
@@ -121,6 +169,8 @@ capabilities:
 # examples below; every list may be empty. The result must stay within 1024 characters.
 reader:
   example_projects: []       # a few project names a user would say out loud
+  # ask: Name a few projects and business flows people say out loud, and a few questions they ask.
+  # effect: They go into the description Claude uses to decide when to load the knowledge skill, so the right questions reach it. Keep them few; the description has a size limit.
   example_flows: []          # a few business flows
   example_questions: []      # phrasings worth matching, e.g. "how does the login flow work"
   # drives: reader SKILL.md description
@@ -128,6 +178,8 @@ reader:
 # ---------------------------------------------------------------- reader skill content
 known_context:
   platform_basics:           # categories the setup interview offers; each can be skipped
+  # ask: Which kinds of platform-wide fact do you want listed up front (for example time zone, environments, domains)? You can skip any.
+  # effect: Each one becomes an empty bullet in the knowledge skill's Platform basics list for you to fill in; that list is kept across later regenerations.
     - time
     - environments
     - domains
@@ -141,9 +193,10 @@ known_context:
     - cross-team
     - db-conventions
     - db-schema-location
-  # drives: the starting list of the reader SKILL.md "Platform basics" (the user's facts live in its keep region and survive a render), §5b (the free slot users fill themselves)
+  # drives: the starting list of the reader SKILL.md "Platform basics" (the user's facts live in its keep region and survive a render), §5b (the free space users fill themselves)
 
 # ---------------------------------------------------------------- audit tuning
+# (not asked: setup takes these defaults and lists them at the end so the user can change them later)
 # Defaults come from the original kit. fan_out values are observed limits, not documented
 # ones, and may need to change.
 audit:

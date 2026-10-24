@@ -93,9 +93,9 @@ class Config(unittest.TestCase):
         with self.assertRaises(r.ConfigError):
             r.validate(cfg)
 
-    def test_own_team_must_exist(self):
+    def test_scope_needs_an_owner(self):
         cfg = load("fakeco.config.json")
-        cfg["scope"]["own_team"] = "NOPE"
+        cfg["scope"]["owners"] = []
         with self.assertRaises(r.ConfigError):
             r.validate(cfg)
 
@@ -520,12 +520,12 @@ class Cli(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path, out = staged(tmp)
             cfg = json.loads(path.read_text())
-            cfg["scope"]["own_team"] = "NOPE"
+            cfg["scope"]["owners"] = []
             path.write_text(json.dumps(cfg))
             for argv in (["--config", str(path)], ["--config", str(path), "--write"]):
                 code, text, err = run(argv)
                 self.assertEqual((code, text), (1, ""))
-                self.assertIn("own_team", err)
+                self.assertIn("scope.owners", err)
             self.assertFalse(out.exists())
 
     def test_a_missing_nested_key_is_reported_by_name_not_as_a_traceback(self):

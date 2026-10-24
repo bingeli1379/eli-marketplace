@@ -237,11 +237,7 @@ def validate(cfg):
                         "add one, or list only the other skeletons in stack.skeletons")
         if any(s in wanted for s in ("service", "legacy-vm")) and True not in deployed:
             errs.append("scope.audience needs an entry with deployed true for the service and legacy-vm templates")
-    owners = need("scope.owners") or []
-    own = need("scope.own_team")
-    codes = [o.get("code") for o in owners if isinstance(o, dict)]
-    if own is not None and own not in codes:
-        errs.append("scope.own_team is not one of scope.owners[].code")
+    need("scope.owners")
     reader = cfg["reader"]
     for key in ("example_projects", "example_flows", "example_questions"):
         if not isinstance(reader.get(key), list):
