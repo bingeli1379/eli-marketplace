@@ -1,0 +1,17 @@
+# Routing block for your own CLAUDE.md
+
+Paste the lines below into the CLAUDE.md of the machine or project that reads this knowledge base. The reader skill loads lazily from its description. Where the harness defers MCP tools, a tool has to be loaded before it can be called, so each line below says when to reach for a tool and to load it first. Drop the lines for tools you have not installed.
+
+```markdown
+- Dev / debug / review / plan any {{ identity.display_name }} project or flow{{#if has.observability_doc}} (including investigating logs and dashboards){{/if}} → load `{{ names.knowledge }}` (authoritative project and domain inventory). Quote its facts as written; never infer from training data.
+{{#if has.logs}}
+- Reading {{ derived.labels.logs }} logs →{{#if capabilities.logs.access}} the `{{ capabilities.logs.access }}` MCP, loading its tools on demand first.{{/if}} Read `{{ names.knowledge }}`'s `references/observability.md` before the first query.
+{{/if}}
+{{#if has.metrics}}
+- Reading {{ derived.labels.metrics }} dashboards or metrics →{{#if capabilities.metrics.access}} the `{{ capabilities.metrics.access }}` MCP, loading its tools on demand first.{{else}} read `{{ names.knowledge }}`'s `references/observability.md` for where they live.{{/if}}
+{{/if}}
+{{#if has.global_settings}}
+- A live setting value → {{ capabilities.global_settings.lookup }}. Never guess the value or search the database by hand.
+{{/if}}
+- Local repos: {{ identity.display_name }} projects live at `{{ paths.repos_root }}/<repo>`, where `<repo>` is the project key in `{{ names.knowledge }}`'s `references/project/index.md`. Resolve the path through the knowledge base.
+```

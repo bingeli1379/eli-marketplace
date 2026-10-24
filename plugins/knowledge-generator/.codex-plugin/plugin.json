@@ -1,0 +1,21 @@
+{
+  "name": "knowledge-generator",
+  "description": "Generate a project-knowledge skill and its maintainer toolkit for any company: answer a few setup questions about your repos and tooling, and an AI fills in the templates",
+  "version": "0.1.0",
+  "author": {
+    "name": "Eli",
+    "url": "https://github.com/bingeli1379"
+  },
+  "homepage": "https://github.com/bingeli1379/eli-marketplace",
+  "repository": "https://github.com/bingeli1379/eli-marketplace",
+  "license": "MIT",
+  "keywords": ["knowledge-base", "skill-generator", "documentation", "audit", "templates"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Knowledge Generator",
+    "shortDescription": "Generate a project-knowledge skill and its maintainer toolkit for any company: answer a few setup questions about your repos and tooling, and an AI fills in the templates",
+    "developerName": "Eli",
+    "category": "Developer Tools",
+    "capabilities": ["Skills", "Files"]
+  }
+}

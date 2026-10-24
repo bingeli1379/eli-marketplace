@@ -1,0 +1,82 @@
+---
+name: {{ names.add_domain }}
+description: >-
+  Add or update one domain doc (references/domain/<topic>.md): a cross-project business flow, rule
+  set or glossary, including distilling an existing note into a code-verified doc. A single
+  project's basics belong to `{{ names.add_project }}`.
+argument-hint: "<topic or note path>"
+disable-model-invocation: true
+---
+
+# {{ names.add_domain }} (maintainer authoring helper)
+
+Create / update a domain doc in **{{ names.knowledge }}**. Domain docs capture **cross-project
+business flows** — "how the business works" — and link out to the per-project docs
+for "how each project implements it". Authority for all rules: the shared
+`../{{ names.authoring_core }}.md`; this skill is the working kit (template + checklist + flow).
+
+Input is `$ARGUMENTS`: a topic, or a path to a note to distill. If `references/domain/<topic>.md` already exists this is an **update**: edit it in place, never a second doc.
+
+## Target paths
+
+```
+KNOWLEDGE={{ derived.knowledge_root }}   # adjust to your clone
+$KNOWLEDGE/references/domain/<topic>.md     # the doc you write (FLAT — one file per topic)
+$KNOWLEDGE/references/domain/index.md        # nav table: | Topic | Covers | File |  (NO Owner column)
+$KNOWLEDGE/references/project/<name>.md       # per-project docs you cross-link to (../project/<name>.md)
+```
+
+Full path set (`SKILL.md`{{#if has.observability_doc}} / `observability.md`{{/if}}), the `$KNOWLEDGE` root, and all conventions: `../{{ names.authoring_core }}.md` (source of truth), plus the rules specific to {{ identity.display_name }} in `../{{ names.local_rules }}.md`. Edit the source repository, never an installed cache copy.
+
+## Domain vs project (pick the right skill)
+
+- A **single project's** architecture / deps / deployment → `{{ names.add_project }}` (`references/project/`).
+- A **flow that spans projects** (detection → decision → enforcement, who-calls-whom, a business rule that lives nowhere in one repo) → here. Link each project to `../project/<name>.md` instead of re-describing it.
+
+## Working from existing notes
+
+When the input is a note (personal doc / wiki page / old write-up), it is a **lead, not truth** — may be outdated, wrong, mislabeled, or internally inconsistent. Distill, don't transcribe:
+
+1. **Verify against code first** — for anything code-checkable, Explore the actual repo (`../{{ names.authoring_core }}.md §4`) and write what the **code** says; the note only points where to look. Track **CONFIRMED / NOTE-ERROR (note said X, code says Y) / NOT-FOUND**, correct errors in the doc, and tell the user what was wrong.
+2. **Pick the granularity** (`../{{ names.authoring_core }}.md §0`): keep decision-grade flow / cross-repo relations / rules / gotchas. **DROP** column-level DB schema, full enum dumps, exhaustive interval lists, unimportant detail — anything `grep`-able. Large detail → point to repo/source. "My note had it" is not a reason to keep it.
+3. **Wikis and external pages = reference only, often stale** (`../{{ names.authoring_core }}.md §6`): code is the source of truth. Link the page, mark it "reference (may be stale)".
+4. **Re-structure to the real domains** — a note may mislabel or conflate several domains. Split into the correct domain docs; don't mirror the note's headings.
+5. **Anchors + dates** (`../{{ names.authoring_core }}.md §9`): add anchors for code-verified claims; date-stamp non-code refs (`verified:`).
+6. **Big notes → batches**: process a section at a time; report "kept / dropped / verified / TODO" before writing, let the user correct.
+
+## Flow
+
+0. **Probe your clone inventory** (`ls {{ paths.repos_root }}`) — the skill routes **each fact by what you have, not by your role** (`../{{ names.authoring_core }}.md §6` capability model): a code-checkable fact whose repo is **local** → Explore/verify it; whose **our-side** repo is **absent (but cloneable)** → still state it but tag `(unverified) + <missing repo>`; a fact owned by **another team's** code/settings we never clone or reach → `(external: <team>)`; a code-invisible fact → `(human: <{{ git.user_label }}>, <date>)`. **Always list every project the flow touches even if you didn't clone it** — the cross-link must exist so the final `{{ names.verify }}` (full clone) can resolve it. A project you never list is an *omission*, not a marker, and only that verify step's identifier sweep catches it.
+
+1. **Decide placement** — read `domain/index.md`. New topic → new `<topic>.md`. Existing topic gained a new branch/rule → extend that file (don't fragment). On an existing doc set `Last updated` to today; bump `Swept at` only when the **whole** doc was re-verified against its involved repos this run — it is the audit's full-read cursor, and a partial update that advances it hides the unreviewed rest.
+2. **Trace the flow** — Explore the involved repos you have locally (per step 0, clone inventory; an involved repo you didn't clone → still list the project, tag its facts `(unverified)`) (`../{{ names.authoring_core }}.md §4`); for each step name the concrete trigger (job / service / toggle / endpoint) with `file:line`; "not found" over guessing.
+3. **Verify with live tools** (`../{{ names.authoring_core }}.md §5`){{#if has.live_tools}}:
+{{#if has.global_settings}}
+   - toggle and setting names via {{ capabilities.global_settings.lookup }}. A setting **value** that *is* a business-rule threshold/trigger may be recorded for readers without the tool — but tag it **prod + source anchor (`website`+`key`) + snapshot date** (§5 business-rule value carve-out, §9 `global-setting values` anchor); plain config values stay out (looked up live at use-time).
+{{/if}}
+{{#if has.logs}}
+   - any log / metric claim via a live query on {{ derived.labels.logs }}, never read from config.
+{{/if}}
+{{#if has.external_reference}}
+   - values whose source of truth is the external reference ({{ derived.labels.external_reference }}) are read from it, not derived from code.
+{{/if}}
+{{else}} — no live tools are configured for this knowledge base, so verify from code only.
+{{/if}}
+4. **Copy `templates/domain-topic.md`** and fill the body in English; keep the section headings fixed.
+5. **Run `CHECKLIST.md`**; confirm open points with the user. **Verify, don't park**: a flow step whose repo is local must be Explored and stated as fact — a `## TODO` / `(unverified)` is only for a repo that isn't local, or an important gap worth flagging (`../{{ names.authoring_core }}.md §6`). Drop minor untraceable detail rather than leaving a "not traced" note.
+6. **Update `domain/index.md`** — add a row `| Topic | Covers | File |` (one-line "Covers", no Owner column), or update the topic's existing row (never a duplicate).
+7. **Cross-link both ways — mandatory, every involved project** (`../{{ names.authoring_core }}.md §6`): the domain doc lists each project under `Projects involved` with a `../project/<name>.md` link, AND each of those project docs gets a back-link bullet in its **`## Flows` section** (`- **<Flow>** — [\`slug\`](../domain/slug.md)`). Neither direction is optional.
+8. **Abstract repeats** — a platform-wide fact moves to the reader `SKILL.md`{{#if has.observability_doc}}; a logs/metrics convention to `observability.md`{{/if}} (`../{{ names.authoring_core }}.md §2`).
+9. **Show the diff, ask before committing** (`knowledge: <topic> — <short summary>`).
+
+## What to borrow from {{ names.add_project }} (shared discipline)
+
+Same as projects: `../{{ names.authoring_core }}.md §6` hard rules · live-tool verification (§5) · index-row update · abstract-repeats · ask-before-commit. The differences are below.
+
+## Domain-specific (differs from a project doc)
+
+The AI-facing skeleton is **shared** with project docs (meta-list header · `## Flows` · markdown links · exception markers · anchors, which a project doc carries only when it is cross-repo or multi-deployment); only the body shape differs (flow-driven, not the fixed project section set). The shape of a domain doc — header (`Last updated` + `Swept at`, no `- Owner:`), section set and order, the `## Flows` mother section, markdown project links, glossary vocabulary — lives in `templates/domain-topic.md` and `../{{ names.authoring_core }}.md §7`; the shared writing rules in `../{{ names.authoring_core }}.md §3`. Unmarked = code-verified (no bare `(verified)`, §0); a code-invisible step gets `(human: <{{ git.user_label }}>, <YYYY-MM-DD>)`; for TODO discipline see step 5 (verify-or-drop).
+
+## Hard rules
+
+See `CHECKLIST.md`; full rationale in `../{{ names.authoring_core }}.md §6`. Still binding here: redact all secrets (credentials, tokens) · declarative no-person prose · markers = exceptions only (unmarked = verified; no emoji; `(unverified)`, `(human:)`, `(external: <team>)` per §0; counter-intuitive facts stated plainly) · don't paste large detail (point to the project doc / source) — **exception**: the enum / value snapshot carve-out (`../{{ names.authoring_core }}.md §0`, domain docs only; gate in `CHECKLIST.md`).
