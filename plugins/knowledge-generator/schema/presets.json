@@ -9,27 +9,11 @@
       "svelte",
       "none"
     ],
-    "backend": [
-      "dotnet",
-      "java-spring",
-      "node",
-      "python",
-      "go",
-      "ruby",
-      "php",
-      "none"
-    ],
     "runtime": [
       "kubernetes",
       "vm",
       "serverless",
       "paas"
-    ],
-    "ci": [
-      "github-actions",
-      "gitlab-ci",
-      "jenkins",
-      "circleci"
     ],
     "database": [
       "postgres",
@@ -39,24 +23,11 @@
       "sqlite",
       "none"
     ],
-    "cache": [
-      "redis",
-      "memcached",
-      "in-memory",
-      "none"
-    ],
     "messaging": [
       "kafka",
       "rabbitmq",
       "sqs",
       "nats",
-      "none"
-    ],
-    "scheduler": [
-      "hangfire",
-      "quartz",
-      "cron",
-      "sidekiq",
       "none"
     ]
   },

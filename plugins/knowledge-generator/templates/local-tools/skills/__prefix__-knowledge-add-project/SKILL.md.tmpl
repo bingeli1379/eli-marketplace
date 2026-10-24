@@ -41,10 +41,10 @@ When the input is a note (personal doc / wiki page / old write-up), treat it as 
 2. **Research** — fan out an Explore agent per `../{{ names.authoring_core }}.md §4` (decision-grade facts + `file:line`, "not found" over guessing).
 3. **Verify with live tools** (`../{{ names.authoring_core }}.md §5`):{{#if has.live_tools}}
 {{#if has.logs}}
-   - log identity via a live query on {{ derived.labels.logs }}, never read from config;
+   - log identity via a live query on {{ derived.labels.logs }}, never read from config.
 {{/if}}
 {{#if has.global_settings}}
-   - settings namespace via {{ capabilities.global_settings.lookup }};
+   - settings namespace via {{ capabilities.global_settings.lookup }}.
 {{/if}}
 {{#if has.external_reference}}
    - values whose source of truth is the external reference ({{ derived.labels.external_reference }}) are read from it, not derived from code.
@@ -54,7 +54,7 @@ When the input is a note (personal doc / wiki page / old write-up), treat it as 
 4. **Pick a template** (table below) → copy from `templates/`. An existing doc keeps its shape: edit it in place and re-verify every claim you touch.
 5. **Draft** — fill the body prose in English; **section headings stay fixed** (`../{{ names.authoring_core }}.md §7`). Set `Last updated` to today. Move `Verified at` to the verified commit only when the **whole** doc was re-verified against it (`../{{ names.authoring_core }}.md §3`); after a partial update leave it, so the audit still diffs the unreviewed range. Project docs cite symbols inline and **don't carry an `<!-- anchors -->` block by default** — add one only to a cross-repo / multi-deployment project doc, per `../{{ names.authoring_core }}.md §9`.
 6. **Run `CHECKLIST.md`** against the draft; confirm open points with the user.
-7. **Update `references/project/index.md`** — add a row `| Project | Owner | Audience | one-line purpose | file |`, or update the doc's existing row (never a duplicate). Owner + Audience columns mandatory, match the doc's header `- Owner:` / `- Audience:`. A **retired** project's row lives in the `## Retired` section at the end of that file instead (move an existing row there) — see `../{{ names.authoring_core }}.md §6`.
+7. **Update `references/project/index.md`** — add a row `| Project | Owner | Audience | one-line purpose | file |`, or update the doc's existing row (never a duplicate). Owner + Audience columns mandatory, match the doc's header `- Owner:` / `- Audience:`. A **retired** project's row lives in the `## Retired` section at the end of that file instead (move an existing row there) — see `../{{ names.authoring_core }}.md §6`. Bump the index's `Last updated` date.
 7b. **Link domain flows both ways** (`../{{ names.authoring_core }}.md §6`) — for each domain flow this project participates in, add a bullet in the project doc's **`## Flows` section** (`- **<Flow>** — [\`slug\`](../domain/slug.md)`) AND confirm the matching `domain/<slug>.md` lists this project under `Projects involved`; add it there if missing.
 8. **Abstract repeats** — a fact that recurs in a 2nd project moves to {{#if has.observability_doc}}`observability.md` / {{/if}}the reader `SKILL.md` (`../{{ names.authoring_core }}.md §2`); the project doc keeps only its own value + a pointer.
 9. **Show the diff, ask before committing.** Commit message: `knowledge: <project> — <short purpose>` (technical-only, no tool mentions).

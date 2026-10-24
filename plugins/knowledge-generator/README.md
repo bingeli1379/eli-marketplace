@@ -55,7 +55,7 @@ The reader skill is the only one the model may pick on its own, so its descripti
 
 ## How it works
 
-1. A config file describes your company: the repo layout, owners, environments, the stack you use (each question has presets and a free-text `other`), and which verification capabilities you have (logs, dashboards, a settings store, a schema source, an external reference such as a wiki).
+1. A config file describes your company: the repo layout, owners, environments, the stack you use (read from your repositories, not asked), and which verification capabilities you have (logs, dashboards, a settings store, a schema source, an external reference such as a wiki).
 2. The renderer turns that config and the templates into the tree above. A capability you do not have removes its sections, anchors and probes entirely instead of leaving empty headings.
 3. Files you are meant to edit (`README.md`, the two `index.md` files, `observability.md`, `platform-basics.md`, the local rules) are written once and never overwritten, so regenerating after a generator upgrade refreshes everything else and leaves your content alone. The one exception inside a generated file is the Platform basics list in the reader `SKILL.md`: write your facts between its `<!-- keep -->` and `<!-- /keep -->` lines and every render carries them over. The list starts from the categories you chose in the config; adding or dropping a category later is a hand edit there.
 

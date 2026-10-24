@@ -54,11 +54,26 @@ The same concept can sit under a different field per stream, and a wrong field r
 | severity |{{#each capabilities.logs.streams}} <field and values> |{{/each}}
 | trace correlation |{{#each capabilities.logs.streams}} <field, or none> |{{/each}}
 
+{{else}}
+### Field cross-reference
+
+The same concept can sit under a different field per stream, and a wrong field reads as a false zero. Add one column per stream and resolve the field by stream before querying.
+
+| Concept | `<stream A>` | `<stream B>` |
+|---|---|---|
+| service identity | <field> | <field> |
+| environment | <field and values> | <field and values> |
+| log text | <field> | <field> |
+| timestamp | <field and format> | <field and format> |
+| severity | <field and values> | <field and values> |
+| trace correlation | <field, or none> | <field, or none> |
+
 {{/if}}
 ### Wrong-field traps
 
 Before reading a zero as absence, run a control query that must return something: a scan with no control cannot tell "really none" from "my query is broken".
 
+- A presence check covers every stream a service can log to; one service may log to several, so a zero in one stream is not absence.
 - <symptom> — <cause>; <fix>.
 
 ### Recipes
@@ -107,6 +122,7 @@ Schema is code-checkable: table definitions, column meaning and stored-procedure
 | <database> | <repo> | <tables or procedures worth knowing> |
 
 - When several versions of a procedure coexist, read the highest.
+- Split "where is the logic" by kind: configurable values (thresholds, toggles) live in the caller, while date-window and row-filter logic is often inside the stored-procedure body. When a behavioral question turns on that logic, read the procedure body in its schema repo.
 - Record location pointers (which meaning lives in which table and column), never data values: values change, pointers do not.
 {{/if}}
 {{/if}}

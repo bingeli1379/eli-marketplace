@@ -53,7 +53,7 @@
         "deployed": false
       }
     ],
-    "retirement_date_source": "release notes"
+    "retirement_date_source": "the release notes"
   },
   "environments": {
     "names": [
@@ -69,21 +69,9 @@
       ],
       "other": ""
     },
-    "backend": {
-      "presets": [
-        "node"
-      ],
-      "other": ""
-    },
     "runtime": {
       "presets": [
         "serverless"
-      ],
-      "other": ""
-    },
-    "ci": {
-      "presets": [
-        "github-actions"
       ],
       "other": ""
     },
@@ -93,21 +81,9 @@
       ],
       "other": ""
     },
-    "cache": {
-      "presets": [
-        "none"
-      ],
-      "other": ""
-    },
     "messaging": {
       "presets": [
         "sqs"
-      ],
-      "other": ""
-    },
-    "scheduler": {
-      "presets": [
-        "cron"
       ],
       "other": ""
     },
