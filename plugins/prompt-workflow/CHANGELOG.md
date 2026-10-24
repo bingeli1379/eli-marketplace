@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.24] - 2026-10-24
+
+### Added
+- The writing and audit rules now cover a script a skill ships and runs. It keeps only what cannot be asked for in a sentence — the work that must come out the same every time, the guards on your own files, and the switch that turns on the destructive action — so flags that merely preview, redirect or pick a subset no longer get written.
+- A script that writes, overwrites or deletes now does nothing but report on a plain run; it only applies when the step that owns the action passes the switch. Checking what it would do is simply running it with no argument.
+- `/review-skill` now reads a bundled script's arguments and how the skill calls it, and reports what it finds alongside the other findings.
+
+### Changed
+- The warning about a mod depending on an event the built-in guard swallows no longer stops at `classic.*` events. The guard covers a much wider set that moves with each release, so the rule now tells you to read the list it prints as it loads and confirm the one event your mod needs in a real run.
+
 ## [0.2.23] - 2026-10-24
 
 ### Added
