@@ -123,7 +123,8 @@ stack:
 # logs, metrics, global_settings and external_reference are proposed from the tools the session can see and
 # confirmed together in one question, never one question per capability. A tool the session cannot see is
 # not asked about; a user who has one adds it by editing the config. A tool the session sees but that does not answer
-# is asked about too, stated as unreachable. db_schema and shared_catalogs are never asked.
+# is asked about too, stated as unreachable. tools is asked as one more question in the same batch, whether or not the session
+# sees a candidate. db_schema and shared_catalogs are never asked.
 capabilities:
   logs:
     # ask: Which tool do you read service logs in, if any, and which tool connected to Claude (an MCP server) lets it search them?
@@ -158,6 +159,11 @@ capabilities:
     kind: none               # confluence | notion | wiki | none
     sources: []              # [{ purpose: "per-env host list", ref: "<page id or url>" }]
     # drives: §0 and §6 "reference, may be stale" rule, §4 host and CDN rows
+  tools: []                  # optional; absent means empty. [{ name: "<tool>", purpose: "what it answers", access: "<mcp name> | none", project_identity: "project key" }]
+                             # name and purpose are required; access is an MCP server name or none; project_identity is a noun phrase and may be empty
+  # ask: Do you use any other tool to check facts about a project, such as a code-quality scanner, a tracing backend, an error tracker or an issue tracker? For each one: what is it called, what does it answer, and, if you want it, what should a project doc record to find the project in it?
+  # effect: Each tool gets a row in the "Other tools" table of the investigating reference page. A tool that names what to record per project also gets one bullet under Observability in every deployed project doc (a non-deployed artifact has no such section) and one line in the authoring checklist. Readings from a tool are never recorded. A tool with a connected access joins the live-tool checks. Answering none leaves all of that out.
+  # drives: observability.md "Other tools", project template Observability section, §3 and §5 other tools, add-project step 3 and checklist
   shared_catalogs: []        # [{ name: redis, source_field: "Redis", heading: "Redis cluster catalog" }]
                              # a roll-up of one project-doc field, regenerated from the project docs on each sweep
   # (not asked: left empty; a roll-up page is added by editing the config once the project docs show a field worth rolling up)

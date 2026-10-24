@@ -79,14 +79,19 @@
 - **Unit**: <test projects>.
 - **Integration**: <framework + test projects>.
 - **E2E**: <only if it exists>.
-{{#if has.observability_doc}}
+{{#if has.observability_section}}
 
 ## Observability
 
+{{#if has.observability_doc}}
 For log and dashboard conventions see `observability.md`.
+{{else}}
+For where each tool is reached see `observability.md`.
+{{/if}}
 
+{{#if has.observability_doc}}
 - **endpoints** <!-- OPTIONAL: omit if none --> : <metrics / scheduler dashboard paths>.
-- **logging**: <logging library → sink; a library that writes local files may NOT reach the log system — verify with a live query before claiming "not in the log system">.
+- **logging**: <logging library → sink{{#if has.logs}}; a library that writes local files may NOT reach the log system — verify with a live query before claiming "not in the log system"{{/if}}>.
 - **APM**: <service identity if an APM agent is configured>.
 {{#if has.logs}}
 - **Server log** ({{ derived.labels.logs }}): <identity of this service — VERIFY with a live query; when the tool is unreachable write one `(unverified — <tool> unreachable)` after the identity and leave out the per-environment lines; some environments may ship to a system the assistant cannot reach. A sibling repo or second component may own another identity, and the repo may hold two candidates for one: list every one>. Query that identity in:
@@ -95,4 +100,10 @@ For log and dashboard conventions see `observability.md`.
 {{/each}}
 {{/if}}
 {{/if}}
+{{/if}}
+{{#each derived.tools}}
+{{#if this.identity}}
+- **{{ this.name }}**: <the project's {{ this.identity }}>.
+{{/if}}
+{{/each}}
 {{/if}}

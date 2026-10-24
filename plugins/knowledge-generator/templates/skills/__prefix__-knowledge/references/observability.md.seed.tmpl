@@ -1,5 +1,5 @@
 {{#if has.observability_file}}
-{{#if has.observability_doc}}# Observability — logging & monitoring{{else}}# Database schema map{{/if}}
+{{#if has.observability_doc}}# Observability — logging & monitoring{{else}}{{#if has.db_projects}}# Database schema map{{else}}# Investigation tools{{/if}}{{/if}}
 
 - Last updated: YYYY-MM-DD
 
@@ -137,5 +137,17 @@ Schema is code-checkable: table definitions, column meaning and stored-procedure
 
 - When several versions of a procedure coexist, read the highest.
 - Record location pointers (which meaning lives in which table and column), never data values: values change, pointers do not.
+{{/if}}
+{{#if has.tools}}
+
+## Other tools
+
+A reading from one of these tools (a score, a count, a status) changes, so only where to look is recorded here and in each project doc.
+
+| Tool | Answers | Reach it through | Finding a project |
+|---|---|---|---|
+{{#each derived.tools}}
+| {{ this.name }} | {{ this.purpose }} | {{ this.reach }} | {{ this.find }} |
+{{/each}}
 {{/if}}
 {{/if}}

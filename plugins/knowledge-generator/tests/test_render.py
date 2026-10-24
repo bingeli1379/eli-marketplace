@@ -495,6 +495,183 @@ class SharedReferences(unittest.TestCase):
         self.assertIn("- Queue catalog | source:", text)
 
 
+class OtherTools(unittest.TestCase):
+    OBS = "skills/nw-knowledge/references/observability.md"
+    SERVICE = PROJECT_TPL.format(p="nw", n="service")
+    CORE = ".claude/skills/nw-knowledge-authoring-core.md"
+    ADD_PROJECT = ".claude/skills/nw-knowledge-add-project/SKILL.md"
+    CHECKLIST = ".claude/skills/nw-knowledge-add-project/CHECKLIST.md"
+    SCANNER = {"name": "Scanner", "purpose": "code quality findings", "access": "scanner-mcp", "project_identity": "project key"}
+    TRACER = {"name": "Tracer", "purpose": "request traces", "access": "none", "project_identity": ""}
+
+    def render(self, tools, bare=False):
+        """Render the fixture with these tools; bare also switches every other capability off."""
+        import copy
+        cfg = copy.deepcopy(load("fakeco.config.json"))
+        if tools is not None:
+            cfg["capabilities"]["tools"] = tools
+        if bare:
+            cfg["capabilities"].update({
+                "logs": {"kind": "none", "access": "none", "streams": []},
+                "metrics": {"kind": "none", "access": "none"},
+                "global_settings": {"kind": "none", "lookup": ""},
+                "db_schema": {"kind": "none", "repos_hint": "", "map": []},
+                "external_reference": {"kind": "none", "sources": []},
+            })
+        return dict(r.render_tree(TEMPLATES, cfg))
+
+    def test_a_tool_needs_a_name_and_a_purpose(self):
+        import copy
+        for tools, pattern in (([{"purpose": "x"}], r"tools\[0\]\.name"),
+                               ([{"name": "Scanner"}], r"tools\[0\] \(Scanner\)\.purpose"),
+                               ([{"name": "Scanner", "purpose": "x", "access": 3}], r"\.access must be a string"),
+                               ("scanner", r"capabilities\.tools must be a list")):
+            cfg = copy.deepcopy(load("fakeco.config.json"))
+            cfg["capabilities"]["tools"] = tools
+            with self.assertRaisesRegex(r.ConfigError, pattern):
+                r.validate(cfg)
+
+    def test_a_tool_field_cannot_break_the_table_row_it_is_written_into(self):
+        import copy
+        for key, value in (("purpose", "errors | warnings"), ("name", "Scan\nner"), ("project_identity", "key | id"), ("access", "scanner | x")):
+            cfg = copy.deepcopy(load("fakeco.config.json"))
+            tool = dict(self.SCANNER)
+            tool[key] = value
+            cfg["capabilities"]["tools"] = [tool]
+            with self.assertRaisesRegex(r.ConfigError, rf"tools\[0\].*\.{key} must not contain"):
+                r.validate(cfg)
+
+    def test_the_observability_section_is_listed_wherever_a_tool_identity_creates_it(self):
+        with_identity = self.render([self.SCANNER], bare=True)
+        without = self.render([self.TRACER], bare=True)
+        for rel, needle in ((self.CHECKLIST, "Development & testing → Observability"),
+                            (self.CORE, "Development & testing → Observability"),
+                            (self.CORE, "Development & testing / Observability")):
+            self.assertIn(needle, with_identity[rel], rel)
+            self.assertNotIn(needle, without[rel], rel)
+
+    def test_every_place_that_lists_the_observability_section_agrees_with_the_template(self):
+        import copy
+        import itertools
+        for logs, metrics, tool in itertools.product((False, True), (False, True), (None, "identity", "plain")):
+            cfg = copy.deepcopy(load("fakeco.config.json"))
+            caps = cfg["capabilities"]
+            caps["logs"] = {"kind": "elk" if logs else "none", "access": "none", "streams": []}
+            caps["metrics"] = {"kind": "grafana" if metrics else "none", "access": "none"}
+            caps["global_settings"] = {"kind": "none", "lookup": ""}
+            caps["db_schema"] = {"kind": "none", "repos_hint": "", "map": []}
+            caps["external_reference"] = {"kind": "none", "sources": []}
+            caps["tools"] = [] if tool is None else [dict(self.SCANNER if tool == "identity" else self.TRACER, access="none")]
+            files = dict(r.render_tree(TEMPLATES, cfg))
+            expected = logs or metrics or tool == "identity"
+            where = f"logs={logs} metrics={metrics} tool={tool}"
+            self.assertEqual("\n## Observability" in files[self.SERVICE], expected, f"service.md {where}")
+            for rel, needle in ((self.CORE, "Development & testing → Observability"),
+                                (self.CORE, "Development & testing / Observability"),
+                                (self.CHECKLIST, "Development & testing → Observability")):
+                self.assertEqual(needle in files[rel], expected, f"{rel} {where}")
+
+    def test_a_connected_tool_without_an_identity_is_not_a_project_doc_step(self):
+        files = self.render([dict(self.SCANNER, project_identity="")], bare=True)
+        add_project = files[self.ADD_PROJECT]
+        self.assertIn("no live tool applies to a project doc", add_project)
+        self.assertNotIn("Preflight the live tools", add_project)
+        self.assertNotIn("other tool `Scanner`", add_project)
+        add_domain = files[".claude/skills/nw-knowledge-add-domain/SKILL.md"]
+        self.assertIn("Preflight the live tools", add_domain)
+        self.assertIn("Scanner", add_domain)
+
+    def test_none_in_any_case_means_no_connected_tool(self):
+        files = self.render([dict(self.SCANNER, access="None")], bare=True)
+        self.assertIn("| Scanner | code quality findings | no connected tool | project key |", files[self.OBS])
+        self.assertNotIn("Preflight the live tools", files[self.ADD_PROJECT])
+
+    def test_a_tool_with_a_project_identity_reaches_the_project_docs_and_the_kit(self):
+        files = self.render([self.SCANNER, self.TRACER])
+        for rel, text in files.items():
+            self.assertNotIn("{{", text, rel)
+        obs = files[self.OBS]
+        self.assertIn("## Other tools", obs)
+        self.assertIn("| Scanner | code quality findings | the `scanner-mcp` MCP | project key |", obs)
+        self.assertIn("| Tracer | request traces | no connected tool | not recorded per project |", obs)
+        service = files[self.SERVICE]
+        self.assertIn("- **Scanner**: <the project's project key>.", service)
+        self.assertNotIn("**Tracer**", service)
+        self.assertIn("Other tools → what is recorded per project", files[self.CORE])
+        self.assertIn("(Scanner: project key)", files[self.CORE])
+        self.assertIn("other tool `Scanner`", files[self.ADD_PROJECT])
+        self.assertIn("**Scanner**: the project's project key", files[self.CHECKLIST])
+        for rel in (self.ADD_PROJECT, self.CHECKLIST):
+            self.assertNotIn("Tracer", files[rel])
+
+    def test_only_a_tool_with_a_connected_access_joins_the_preflight(self):
+        with_access = self.render([self.SCANNER], bare=True)
+        without = self.render([self.TRACER], bare=True)
+        self.assertIn("Preflight the live tools", with_access[self.ADD_PROJECT])
+        self.assertNotIn("Preflight the live tools", without[self.ADD_PROJECT])
+        self.assertIn("Scanner", with_access[".claude/skills/nw-knowledge-add-domain/SKILL.md"])
+        self.assertIn("Any claim a connected tool answers (Scanner)", with_access[".claude/skills/nw-knowledge-add-domain/CHECKLIST.md"])
+        self.assertNotIn("Any claim a connected tool answers", without[".claude/skills/nw-knowledge-add-domain/CHECKLIST.md"])
+
+    def test_other_tools_alone_turn_the_reference_on(self):
+        files = self.render([self.SCANNER], bare=True)
+        obs = files[self.OBS]
+        self.assertTrue(obs.startswith("# Investigation tools"))
+        self.assertNotIn("Database schema", obs)
+        self.assertNotIn("Cross-project conventions for investigating", obs)
+        self.assertIn("references/observability.md", files["skills/nw-knowledge/SKILL.md"])
+        service = files[self.SERVICE]
+        self.assertIn("For where each tool is reached see `observability.md`.", service)
+        self.assertNotIn("**endpoints**", service)
+
+    SYNC = ".claude/skills/nw-knowledge-sync-local/SKILL.md"
+    LOG_PHRASES = re.compile(r"server log|client log|log identity|browser-side log|log stream|log system", re.I)
+
+    def test_the_audit_hands_tool_identifiers_to_the_orchestrator(self):
+        files = self.render([self.SCANNER, self.TRACER], bare=True)
+        sync = files[self.SYNC]
+        self.assertIn("Tool identifiers are the orchestrator's job too", sync)
+        self.assertIn("the per-project identifier of Scanner recorded", sync)
+        self.assertNotIn("Tracer", sync)
+        self.assertIn("live-value claim (a tool identifier) for the orchestrator", sync)
+        self.assertIn("`noncode refs` anchor (`src:` naming the tool, `verified:` date", files[self.CORE])
+        for rel, text in self.render([self.TRACER], bare=True).items():
+            self.assertNotIn("Tool identifiers are the orchestrator's job", text, rel)
+            self.assertNotIn("a tool identifier", text, rel)
+
+    def test_no_log_system_means_no_instruction_to_record_one(self):
+        import copy
+        for metrics in ("grafana", "none"):
+            cfg = copy.deepcopy(load("fakeco.config.json"))
+            cfg["stack"]["runtime"]["presets"] = ["kubernetes"]
+            cfg["stack"]["frontend"]["presets"] = ["vue"]
+            cfg["capabilities"]["logs"] = {"kind": "none", "access": "none", "streams": []}
+            cfg["capabilities"]["metrics"] = {"kind": metrics, "access": "none"}
+            cfg["capabilities"]["global_settings"] = {"kind": "none", "lookup": ""}
+            cfg["capabilities"]["tools"] = [self.SCANNER]
+            for rel, text in dict(r.render_tree(TEMPLATES, cfg)).items():
+                hit = self.LOG_PHRASES.search(text)
+                self.assertIsNone(hit, f"{rel} (metrics {metrics}): {text[max(0, hit.start() - 60):hit.end() + 60]!r}" if hit else rel)
+
+    def test_a_log_system_still_gets_its_instructions(self):
+        files = render_all("acme.config.json")
+        self.assertIn("live-value claim (a log identity, a setting value) for the orchestrator",
+                      files[".claude/skills/acme-knowledge-sync-local/SKILL.md"])
+        for rel in (".claude/skills/acme-knowledge-add-project/CHECKLIST.md",
+                    ".claude/skills/acme-knowledge-authoring-core.md",
+                    ".claude/skills/acme-knowledge-sync-local/SKILL.md"):
+            self.assertRegex(files[rel], self.LOG_PHRASES, rel)
+
+    def test_no_residue_without_tools(self):
+        absent = self.render(None)
+        self.assertEqual(absent, self.render([]))
+        for rel, text in absent.items():
+            self.assertNotIn("Other tools", text, rel)
+        acme = render_all("acme.config.json")
+        for rel, text in acme.items():
+            self.assertNotIn("Other tools", text, rel)
+
+
 FIXTURE_NAMES = sorted(p.name for p in FIXTURES.glob("*.config.json"))
 
 
@@ -713,14 +890,14 @@ class EveryFixture(unittest.TestCase):
         import copy
         obs = ".claude/../skills/{p}-knowledge/references/observability.md".replace(".claude/../", "")
         cfg = copy.deepcopy(load("acme.config.json"))
-        cfg["capabilities"]["db_schema"]["map"] = [{"db": "AccountDB", "repo": "consus.account"}]
+        cfg["capabilities"]["db_schema"]["map"] = [{"db": "OrdersDB", "repo": "schema.orders"}]
         text = dict(r.render_tree(TEMPLATES, cfg))[obs.format(p="acme")]
-        self.assertIn("| AccountDB | `consus.account` |", text)
+        self.assertIn("| OrdersDB | `schema.orders` |", text)
         self.assertNotIn("| <database> | <repo> |", text)
         cfg["capabilities"]["db_schema"]["map"] = []
         text = dict(r.render_tree(TEMPLATES, cfg))[obs.format(p="acme")]
         self.assertIn("| <database> | <repo> |", text)
-        cfg["capabilities"]["db_schema"]["map"] = [{"db": "AccountDB"}]
+        cfg["capabilities"]["db_schema"]["map"] = [{"db": "OrdersDB"}]
         with self.assertRaises(r.ConfigError):
             r.validate(cfg)
 

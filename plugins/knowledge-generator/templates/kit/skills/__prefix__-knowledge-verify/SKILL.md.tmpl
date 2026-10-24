@@ -68,6 +68,9 @@ do have it, so you can confirm what they couldn't.
 {{#if has.external_reference}}
      external-reference ({{ derived.labels.external_reference }}) refs that you *can* reach are checked now (see the "noncode refs you *can* reach" guardrail).
 {{/if}}
+{{#if has.tools_live}}
+     other connected tools ({{ lists.tools_live_names }}) are re-probed the same way, never accepted from memory.
+{{/if}}
 {{/if}}
    - **human-sourced `(human:)`** → **never mark CONFIRMED from code** (code can't show it).
      Check: (a) attribution is well-formed (`<{{ git.user_label }}>, <YYYY-MM-DD>` present);
