@@ -57,7 +57,7 @@ The same concept can sit under a different field per stream, and a wrong field r
 {{else}}
 ### Field cross-reference
 
-The same concept can sit under a different field per stream, and a wrong field reads as a false zero. Add one column per stream and resolve the field by stream before querying.
+The same concept can sit under a different field per stream, and a wrong field reads as a false zero. Resolve the field by stream before querying.
 
 | Concept | `<stream A>` | `<stream B>` |
 |---|---|---|
@@ -115,14 +115,13 @@ Logs and dashboards that live on a separate instance (another team's, or a netwo
 
 ## Database schema
 
-Schema is code-checkable: table definitions, column meaning and stored-procedure bodies live in {{ capabilities.db_schema.repos_hint }}. To confirm a table, column or procedure, find which repo holds that database (map below), then grep it. Do not stop at "the procedure is not in the caller's repo": the time window and row filter are often written inside the procedure body, so read it.
+Schema is code-checkable: table definitions, column meaning and stored-procedure bodies live in {{ capabilities.db_schema.repos_hint }}. To confirm a table, column or procedure, find which repo holds that database (map below), then grep it. Do not stop at "the procedure is not in the caller's repo": configurable values such as thresholds and toggles live in the caller, but the time window and row filter are often written inside the procedure body, so read it.
 
 | Database | Schema repo | Examples seen |
 |---|---|---|
 | <database> | <repo> | <tables or procedures worth knowing> |
 
 - When several versions of a procedure coexist, read the highest.
-- Split "where is the logic" by kind: configurable values (thresholds, toggles) live in the caller, while date-window and row-filter logic is often inside the stored-procedure body. When a behavioral question turns on that logic, read the procedure body in its schema repo.
 - Record location pointers (which meaning lives in which table and column), never data values: values change, pointers do not.
 {{/if}}
 {{/if}}

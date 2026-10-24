@@ -16,7 +16,7 @@ a **review gate**, distinct from `{{ names.sync_local }}` (which audits the *who
 cadence). Authority for facts/markers: `../{{ names.authoring_core }}.md`, plus the rules specific to {{ identity.display_name }} in `../{{ names.local_rules }}.md`. Assumes a complete
 local environment — every repo under `{{ paths.repos_root }}` cloned{{#if has.live_tools}} and the live tools reachable{{/if}} — the
 maintainer's machine, NOT the contributor's. Probe `ls {{ paths.repos_root }}` first: a row that depends on a repo
-that is not cloned keeps its `(unverified)`, with that repo named in the report — never a guessed verdict.
+that is not cloned keeps its `(unverified)`, with that repo (or the unreachable tool) named in the report — never a guessed verdict.
 
 Why a separate skill: the contributor may **not** have had a complete environment (missing
 repos, no live tools) — that is exactly what a `(human:)` fact or an `(unverified)` tag signals. You
@@ -83,7 +83,7 @@ do have it, so you can confirm what they couldn't.
      CHECKLIST items: no bare `(verified)`, no emoji, markers correct, provenance only for
      non-obvious sources, **both-way cross-links** (grep both ends yourself, orchestrator-side
      — a per-doc agent sees one end), header meta, `(unverified)` only when a repo is truly
-     absent (you have them all → an `(unverified)` here is usually resolvable now → verify it).
+     absent or a tool unreachable (you have them all → an `(unverified)` here is usually resolvable now → verify it).
 
    **Agent verdicts are leads** (`../{{ names.authoring_core }}.md §10`): before a verdict enters the report
    or drives an edit, the orchestrator re-opens its cited `file:line` — every DRIFT / WRONG /
@@ -124,7 +124,6 @@ do have it, so you can confirm what they couldn't.
 ## Guardrails
 
 - **A `(human:)` fact is never silently confirmed or deleted** — surface it (step 3, human-sourced).
-- **Cross-link checks are orchestrator-side** — grep both ends across all docs; a single-doc agent mis-calls link state.
 - **An `(unverified)` from a contributor is a lead, not a verdict** — you have the repo they
   lacked; resolve it to a fact (or confirm it really is unreachable).
 - **Absence isn't a marker — sweep for it (step 3b).** "No `(unverified)` left" does NOT mean complete: a
@@ -156,7 +155,7 @@ do have it, so you can confirm what they couldn't.
   `../{{ names.authoring_core }}.md §0` says NOT to record — its verdict is **REMOVE / point-to-source**, not
   chase-to-verify. Don't burn tool calls or clone effort confirming a value that shouldn't be in the doc
   at all. A changing runtime value is also **never** a valid `(unverified)` — that marker is for a
-  code-checkable fact whose repo was absent (→ resolve it, per the guardrail above); a runtime
+  code-checkable fact whose repo was absent (→ resolve it, per the guardrail above; one whose tool was unreachable stays marked); a runtime
   value is REMOVE / point-to-source, not resolve.
 - **Off-convention *format* is not droppable *content*; a detail-level flowchart normalizes to
   prose, a structural skeleton may stay.** A contribution's non-standard form — emoji callouts,

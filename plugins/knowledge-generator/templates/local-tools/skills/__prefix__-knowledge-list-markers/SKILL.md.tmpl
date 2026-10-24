@@ -28,7 +28,7 @@ Run each grep with full-line context (`-rn`), then organize the output — do NO
 ```bash
 grep -rn '(human:'      "$REF"    # code-invisible facts asserted by a person
 grep -rn '(external:'   "$REF"    # authority in another team's code/settings
-grep -rn '(unverified'  "$REF"    # code-checkable but not yet verified (repo was absent); open paren only — the reason often rides inside it: (unverified — <why>)
+grep -rn '(unverified'  "$REF"    # code-checkable but not yet verified (repo absent or live tool unreachable); open paren only — the reason often rides inside it: (unverified — <why>)
 ```
 
 Organize into three sections. For each entry keep `file:line` + the claim text so it's actionable:
@@ -36,7 +36,7 @@ Organize into three sections. For each entry keep `file:line` + the claim text s
 - **`(human:)` — re-confirm with the person.** Parse `(human: <{{ git.user_label }}>, <YYYY-MM-DD>)`; **group by `<{{ git.user_label }}>`** and **sort each group oldest-date-first** (oldest = most likely stale = ask first). This is the "who to go ask" list.
   - An entry that does not parse goes under `unparsed` with its `file:line`. After the groups, list each distinct person once so the reader can mark who has left or handed over — those facts risk becoming unrecoverable and want succession or downgrade.
 - **`(external: <team>)` — re-check with the owning team.** Group by `<team>`. This is the cross-team review list; each needs a look at that team's system, not a code grep.
-- **`(unverified)` — verify against code.** List each with the missing-repo note recorded inline. This is the backlog to clear next time the repo is cloneable (via `{{ names.sync_local }}`).
+- **`(unverified)` — verify against code.** List each with the missing-repo or unreachable-tool note recorded inline. This is the backlog to clear next time the repo is cloneable or the tool is reachable (via `{{ names.sync_local }}`).
 
 ## Optional — by-age anchor items
 
