@@ -25,7 +25,7 @@ description: >-
 | `references/project/index.md` | Per-project basics — purpose / architecture / dependencies / deployment / environments / investigation entry points |
 | `references/domain/index.md` | Cross-project end-to-end business flows, business rules, domain glossary |
 {{#if has.observability_file}}
-| `references/observability.md` | {{#if has.observability_doc}}Investigating — conventions for {{ derived.observability_tools }} (hosts, fields, dashboards, entry points){{#if has.db_projects}}, and which repository holds each database's schema{{/if}}{{else}}Database schema — which repository holds each database's schema{{/if}} |
+| `references/observability.md` | {{#if has.observability_doc}}Investigating — conventions for {{ derived.observability_tools }} (hosts, fields, dashboards, entry points){{#if has.db_projects}}, {{#unless has.tools}}and {{/unless}}which repository holds each database's schema{{/if}}{{#if has.tools}}, and where the other tools are reached{{/if}}{{else}}{{#if has.db_projects}}Database schema — which repository holds each database's schema{{#if has.tools}}, and where the other tools are reached{{/if}}{{else}}Where each other tool is reached and how a project is found in it{{/if}}{{/if}} |
 {{/if}}
 {{#if has.shared_catalogs}}
 | `references/platform-basics.md` | On-demand cross-cutting lookups — {{ derived.catalog_headings }} {{#if derived.platform_basics}}(the always-on gist stays below) {{/if}}|

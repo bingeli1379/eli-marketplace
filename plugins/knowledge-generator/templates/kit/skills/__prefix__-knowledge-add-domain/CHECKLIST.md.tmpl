@@ -9,7 +9,8 @@ One-by-one confirmation for a domain doc, distilled from `../{{ names.authoring_
 
 ## B. Trace & verify (don't guess)
 
-- [ ] **Probed clone inventory** (`ls {{ paths.repos_root }}`) and routed each fact as in SKILL step 0, probe the clone inventory. **Listed every project the flow touches even if uncloned** (an unlisted project is an omission no marker catches — only verify's sweep does).
+- [ ] **Probed clone inventory** (`ls {{ paths.repos_root }}`) and routed each fact as in SKILL step 0, probe the clone inventory. **Listed every project the flow touches even if uncloned** (an unlisted project is an omission no marker catches — the identifier sweep does).
+- [ ] **Identifier sweep run** (SKILL step 2, trace the flow): every live step it found is in `Projects involved`.
 - [ ] Each flow step names a **concrete mechanism** (job / service / endpoint / toggle / setting) with `file:line` from Explore.
 - [ ] **No claim written on plausibility or inheritance** (`../{{ names.authoring_core }}.md §6`): a claim naming a specific literal (column / enum / status / topic / created-by value) is grepped against the owning repo; "makes sense", "matches" a cross-linked doc, or a cited kb doc is not verification.
 {{#if has.global_settings}}
@@ -17,6 +18,9 @@ One-by-one confirmation for a domain doc, distilled from `../{{ names.authoring_
 {{/if}}
 {{#if has.logs}}
 - [ ] Any **log / metric** claim verified with a live query on the log system ({{ derived.labels.logs }}), not read from config.
+{{/if}}
+{{#if has.tools_live}}
+- [ ] Any claim a connected tool answers ({{ lists.tools_live_names }}) verified through that tool, not read from memory.
 {{/if}}
 - [ ] **Verified against ACTIVE usage** (`../{{ names.authoring_core }}.md §6` + the pitfall table): traced the **active caller** (who really reads/writes it), not a comment, schema note, seed row, history table, stale list or dead code.
 - [ ] **Verify-or-drop**: a step whose repo is local is Explored and stated as fact. A `## TODO` is kept ONLY for (a) a repo not local or a tool unreachable, each item marked `(unverified — <missing repo or unreachable tool>)`, or (b) an important flow gap that was looked at and not traced, stated without a marker (`../{{ names.authoring_core }}.md §6`) — minor untraceable detail is dropped, not parked as "not traced".

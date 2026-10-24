@@ -25,7 +25,7 @@ The sibling `{{ names.authoring_core }}.md` keeps the `../{{ names.authoring_cor
 2. Open Claude Code in this repository; the commands above are available.
 3. Author with `/{{ names.add_project }}` or `/{{ names.add_domain }}`. They probe your clone inventory and route each fact: repo local means verified (unmarked); repo absent or live tool unreachable means `(unverified — <missing repo or unreachable tool>)`; code-invisible means `(human: <{{ git.user_label }}>, <date>)`. Mark what you cannot check; do not guess.
 4. Push a branch and open a merge request.
-5. A maintainer with all repos cloned runs `/{{ names.verify }}` before merging. It resolves the `(unverified)`, judges the `(human:)`, and sweeps the full clone for whole projects nobody mentioned: an omission leaves no marker, so only this step catches it.
+5. A maintainer with all repos cloned runs `/{{ names.verify }}` before merging. It resolves the `(unverified)`, judges the `(human:)`, and sweeps the full clone for whole projects nobody mentioned: an omission leaves no marker, so a contributor without the clones relies on this step to catch it.
 
 ## Conventions
 

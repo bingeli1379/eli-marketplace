@@ -23,7 +23,7 @@ Two knowledge blocks{{#if has.observability_file}}, a shared observability refer
 | `project/index.md` | Per-project basics: purpose, architecture, dependencies, deployment, environments, investigation entry points. One doc per project in scope. |
 | `domain/index.md` | Cross-project end-to-end business flows, business rules and the domain glossary. |
 {{#if has.observability_file}}
-| `observability.md` | {{#if has.observability_doc}}Investigation: conventions for {{ derived.observability_tools }} shared across projects.{{else}}Database schema: which repository holds each database's schema.{{/if}} |
+| `observability.md` | {{#if has.observability_doc}}Investigation: conventions for {{ derived.observability_tools }} shared across projects{{#if has.tools}}, plus where the other tools are reached{{/if}}.{{else}}{{#if has.db_projects}}Database schema: which repository holds each database's schema{{#if has.tools}}, plus where the other tools are reached{{/if}}.{{else}}Where each other tool is reached and how a project is found in it.{{/if}}{{/if}} |
 {{/if}}
 {{#if has.shared_catalogs}}
 | `platform-basics.md` | Cross-cutting lookups: {{ derived.catalog_headings }}. |
