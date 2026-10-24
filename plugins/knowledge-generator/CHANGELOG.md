@@ -1,21 +1,19 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.1] - 2026-10-24
 
 ### Added
 
-- A config can list other tools it uses to check facts about a project (`capabilities.tools`): a code-quality scanner, a tracing backend, an error tracker, an issue tracker, anything. Each tool gets a row in the "Other tools" table of the investigating reference page, and a tool that names what to record per project also gets one bullet under Observability in every deployed project doc. Readings from a tool are never recorded. `setup` asks for them in one extra question.
+- List the other tools you use to check facts about a project (`capabilities.tools`): a code-quality scanner, a tracing backend, an error tracker, an issue tracker, anything. Each tool gets a row in the "Other tools" table of the investigating page, and one that names what identifies a project also gets a line in every deployed project doc. Readings from a tool are never recorded. `setup` asks for these tools in one extra question.
 
 ### Changed
 
-- `setup` counts the owner values, the environment names in deploy files and the database folders over every repository in the folder, so a 30-repository sample no longer drops teams or keeps an environment that fewer than half of all deploy files name.
-- `setup` calls each connected tool once while probing, and names one that does not answer in the connected-tools question and in the hand-off, so a missing VPN shows up before the authoring commands run instead of as `(unverified)` markers in every doc.
-- `setup` with no argument takes the current directory instead of asking for it.
-- `render.py` rejects a `scope.rule` that does not end in a full stop, because five templates continue the sentence after it.
-- The add-project and add-domain commands in the kit preflight the live tools before research (the rule lives in authoring-core §5): an unreachable tool is reported once and the run waits for the reply. add-domain runs the identifier sweep at authoring, so readers and writers outside the owning service join `Projects involved` on the first pass, and its checklist asks for it. add-project's checklist asks a frontend doc for its device and region gating.
-- With no log system configured, the generated kit no longer tells authors to record a server log, a browser-side client log or a log identity.
-- The audit command hands a per-project tool identifier to the orchestrator the way it does a log identity, and authoring-core asks for a `noncode refs` anchor on it so the audit can age it.
-- `render.py` rejects a tool field that contains `|` or a line break (it is written into a table row) and reads an access of `None` in any case as no connected tool.
+- `setup` reads the owner names, the environment names in deploy files and the database folders from every repository in the folder instead of a sample of 30, so it no longer misses teams or keeps an environment that most projects do not use.
+- `setup` and the commands that add or update a doc try each connected tool once before they start. A tool that does not answer is reported once, so a missing VPN shows up up front instead of as `(unverified)` marks in every doc.
+- `setup` with no argument takes the current directory instead of asking for it, and a `scope.rule` that does not end in a full stop is rejected, because generated text continues the sentence after it.
+- The command that adds a flow doc searches every project for the other readers and writers of what the flow touches, so projects outside the owning service are listed on the first pass.
+- The audit command re-checks a per-project tool identifier through the tool, and the rules ask for a `noncode refs` anchor on it so the audit can age it.
+- Without a log system configured, the generated commands and templates no longer ask for a server log, a client log or a log identity. A frontend doc is asked for its device and region gating.
 
 ## [0.1.0] - 2026-10-24
 
