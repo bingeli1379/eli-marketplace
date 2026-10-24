@@ -38,7 +38,7 @@ skills/acme-knowledge/                      the reader skill, loaded lazily from
   references/project/index.md               yours to fill in
   references/domain/index.md                yours to fill in
   references/observability.md               only when you configured logs or dashboards; yours to fill in
-  references/platform-basics.md             only when you configured a shared catalog; yours to fill in
+  references/platform-basics.md             only when a shared catalog is set in the config by hand; yours to fill in
 local-tools/                                the maintainer kit
   README.md
   skills/acme-knowledge-authoring-core.md   shared rules, the single source every skill points to

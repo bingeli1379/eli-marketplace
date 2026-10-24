@@ -53,7 +53,7 @@ paths:
 # ---------------------------------------------------------------- git
 git:
   host: github               # github | gitlab | bitbucket | other
-  # (not asked: read from the source repositories' remote and CI files)
+  # (not asked: read from the source repositories' remote and CI files; `other` when they show none)
   user_label: github-username  # the word shown in (human: <label>, <date>)
   # ask: When someone records a fact that code cannot show, which kind of id should they sign it with?
   # effect: It shows in notes like `(human: <id>, 2026-01-31)`, so a later reader knows whom to ask about that fact.
@@ -65,7 +65,7 @@ scope:
                              # e.g. "Repos our team develops, including ones we work on but do not own."
   # (not asked: the default rule is "any repository cloned locally with a git remote it can be updated from")
   # ask: Which team are you on?
-  # effect: Each project doc records its owning team from this list, and the project index gets a team column. The list starts with this team; teams named in the repositories are added as they turn up.
+  # effect: Each project doc records its owning team from this list, and the project index gets a team column. The list starts with this team, its `code` in capitals unless a repository names one; teams the probe finds in repositories are added to the proposal and confirmed in the same question.
   #         Every team is `reachable: true` unless the user says some repository cannot be cloned; only then does a team become a candidate for "check with that team" instead of verified.
   owners:                    # controlled vocabulary for `- Owner:` and the index Owner column
     - { code: TEAM-A, label: Platform, reachable: true }
@@ -81,8 +81,8 @@ scope:
     - { slug: internal-service, meaning: "server-to-server, no human interface", deployed: true }
     - { slug: library, meaning: "shared package, not deployed", deployed: false }
     - { slug: db-project, meaning: "database project or DBA scripts", deployed: false }
-  retirement_date_source: "the team chat announcement"   # where the real switch-off month comes from
-  # (not asked: the retired-project rules take the month from the date the user states)
+  retirement_date_source: "the date the user gives for the switch-off"   # where the real switch-off month comes from
+  # (not asked: the default above; a noun phrase with its own article, because the templates read "taken from <value>")
   # drives: §0 scope rule, §3 header (Owner, Audience), §6 owner vocabulary and retired standard,
   #         §9 (external: <team>) values, project/index.md intro
 
@@ -97,7 +97,7 @@ environments:
   # drives: §3 Environments, §6 env rules, project templates
 
 # ---------------------------------------------------------------- stack
-# (not asked: probed from the source repositories; the user sees the result in the proposal table)
+# (not asked: probed from the source repositories; the user sees the result in the proposal table. An area with no evidence stays `presets: []`, and `runtime` is asked when it ends up empty)
 # Only these four areas change the generated files, and each only by whether it is present, never by which
 # preset: frontend adds the "frontend claims the flows it renders" paragraph, database adds the data-store
 # section and its checks, messaging adds the send/process chain block, runtime picks the project-doc layout.
@@ -170,8 +170,7 @@ reader:
 # ---------------------------------------------------------------- reader skill content
 known_context:
   platform_basics:           # categories the setup interview offers; each can be skipped
-  # ask: Which kinds of platform-wide fact do you want listed up front (for example time zone, environments, domains)? You can skip any.
-  # effect: Each one becomes an empty bullet in the knowledge skill's Platform basics list for you to fill in; that list is kept across later regenerations.
+  # (not asked: every category below is listed as an empty bullet in the knowledge skill's Platform basics for you to fill in; drop one by editing the config. The list is kept across later regenerations.)
     - time
     - environments
     - domains
