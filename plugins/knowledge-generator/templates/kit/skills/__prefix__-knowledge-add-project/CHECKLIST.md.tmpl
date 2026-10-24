@@ -85,6 +85,7 @@ Runtime sections (Environments, Data & settings, Caching & retry, Background job
 - [ ] `Last updated` is today; `Verified at` moved only if the whole doc was re-verified against that commit (SKILL step 5, draft).
 - [ ] **Domain flows linked both ways** (§6): the project doc's **`## Flows` section** lists each flow `- **<Flow>** — [\`slug\`](../domain/slug.md)`, AND each `domain/<slug>.md` lists this project under `Projects involved`.
 {{#if has.frontend}}
+- [ ] **Device and region gating** (§3, frontend): when the app redirects by device or region (client code and server both checked), the doc states which go where and on which side the redirect runs.
 - [ ] **Frontend claims its render chains** (§6): a frontend claims every flow it **calls APIs for + renders**, not only backend-owned flows — so a chain editor finds the app from either end. The domain doc lists the app as its own `Projects involved` entry (not folded into the backend's "their apps").
 {{/if}}
 - [ ] Any fact that now repeats in a 2nd project → moved to the shared layer ({{#if has.observability_file}}`observability.md` / {{/if}}the reader `SKILL.md`); project doc keeps its own value + pointer.
