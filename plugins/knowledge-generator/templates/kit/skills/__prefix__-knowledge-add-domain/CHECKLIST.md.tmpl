@@ -19,6 +19,9 @@ One-by-one confirmation for a domain doc, distilled from `../{{ names.authoring_
 {{#if has.logs}}
 - [ ] Any **log / metric** claim verified with a live query on the log system ({{ derived.labels.logs }}), not read from config.
 {{/if}}
+{{#if has.tools_live}}
+- [ ] Any claim a connected tool answers ({{ lists.tools_live_names }}) verified through that tool, not read from memory.
+{{/if}}
 - [ ] **Verified against ACTIVE usage** (`../{{ names.authoring_core }}.md §6` + the pitfall table): traced the **active caller** (who really reads/writes it), not a comment, schema note, seed row, history table, stale list or dead code.
 - [ ] **Verify-or-drop**: a step whose repo is local is Explored and stated as fact. A `## TODO` is kept ONLY for (a) a repo not local or a tool unreachable, each item marked `(unverified — <missing repo or unreachable tool>)`, or (b) an important flow gap that was looked at and not traced, stated without a marker (`../{{ names.authoring_core }}.md §6`) — minor untraceable detail is dropped, not parked as "not traced".
 

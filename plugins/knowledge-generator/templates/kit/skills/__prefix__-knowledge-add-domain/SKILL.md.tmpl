@@ -60,13 +60,16 @@ When the input is a note (personal doc / wiki page / old write-up), it is a **le
 {{#if has.external_reference}}
    - values whose source of truth is the external reference ({{ derived.labels.external_reference }}) are read from it, not derived from code.
 {{/if}}
+{{#if has.tools_live}}
+   - claims that a connected tool answers ({{ lists.tools_live_names }}) are checked through it, never read from memory.
+{{/if}}
 {{else}} — no live tools are configured for this knowledge base, so verify from code only.
 {{/if}}
 4. **Copy `templates/domain-topic.md`** and fill the body in English; keep the section headings fixed.
 5. **Run `CHECKLIST.md`**; ask the open points as one question with a proposal each; when nobody can answer, they go in the closing report. **Verify, don't park**: a flow step whose repo is local must be Explored and stated as fact — a `## TODO` is only for a repo that isn't local or a tool that is unreachable (marked `(unverified — <missing repo or unreachable tool>)`), or an important gap that was looked at and not traced (no marker) (`../{{ names.authoring_core }}.md §6`). Drop minor untraceable detail rather than leaving a "not traced" note.
 6. **Update `domain/index.md`** — add a row `| Topic | Covers | File |` (one-line "Covers", no Owner column), or update the topic's existing row (never a duplicate). When two topics sit next to each other, end the `Covers` cell with `**Boundary**: <what this doc covers> — <what it does not> → <the doc that does>`.
 7. **Cross-link both ways — mandatory, every involved project** (`../{{ names.authoring_core }}.md §6`): the domain doc lists each project under `Projects involved` with a `../project/<name>.md` link, AND each of those project docs gets a back-link bullet in its **`## Flows` section** (`- **<Flow>** — [\`slug\`](../domain/slug.md)`). Neither direction is optional.
-8. **Abstract repeats** — a platform-wide fact moves to the reader `SKILL.md`{{#if has.observability_file}}; a logs/metrics convention to `observability.md`{{/if}} (`../{{ names.authoring_core }}.md §2`).
+8. **Abstract repeats** — a platform-wide fact moves to the reader `SKILL.md`{{#if has.observability_doc}}; a logs/metrics convention to `observability.md`{{/if}} (`../{{ names.authoring_core }}.md §2`).
 9. **Show the diff, ask before committing** (`knowledge: <topic> — <short summary>`).
 
 ## What to borrow from {{ names.add_project }} (shared discipline)

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- A config can list other tools it uses to check facts about a project (`capabilities.tools`): a code-quality scanner, a tracing backend, an error tracker, an issue tracker, anything. Each tool gets a row in the "Other tools" table of the investigating reference page, and a tool that names what to record per project also gets one bullet under Observability in every deployed project doc. Readings from a tool are never recorded. `setup` asks for them in one extra question.
+
 ### Changed
 
 - `setup` counts the owner values, the environment names in deploy files and the database folders over every repository in the folder, so a 30-repository sample no longer drops teams or keeps an environment that fewer than half of all deploy files name.
@@ -9,6 +13,9 @@
 - `setup` with no argument takes the current directory instead of asking for it.
 - `render.py` rejects a `scope.rule` that does not end in a full stop, because five templates continue the sentence after it.
 - The add-project and add-domain commands in the kit preflight the live tools before research (the rule lives in authoring-core §5): an unreachable tool is reported once and the run waits for the reply. add-domain runs the identifier sweep at authoring, so readers and writers outside the owning service join `Projects involved` on the first pass, and its checklist asks for it. add-project's checklist asks a frontend doc for its device and region gating.
+- With no log system configured, the generated kit no longer tells authors to record a server log, a browser-side client log or a log identity.
+- The audit command hands a per-project tool identifier to the orchestrator the way it does a log identity, and authoring-core asks for a `noncode refs` anchor on it so the audit can age it.
+- `render.py` rejects a tool field that contains `|` or a line break (it is written into a table row) and reads an access of `None` in any case as no connected tool.
 
 ## [0.1.0] - 2026-10-24
 
