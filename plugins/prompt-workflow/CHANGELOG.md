@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.25] - 2026-10-27
+
+### Fixed
+- `/improve-skill` no longer bumps the version or writes the changelog entry itself; its handoff names the release skill for that instead. Both of them claimed the work, so whichever you ran first decided the outcome — run the improvement first and the release afterwards found nothing left to do, which quietly skipped its own checks too: picking the right baseline, keeping sibling manifests on the same version, and sweeping for other packages with unreleased work. Where no release skill is installed it still bumps the version and writes the entry, and says in the handoff that it did.
+
 ## [0.2.24] - 2026-10-24
 
 ### Added
