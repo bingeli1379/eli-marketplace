@@ -7,7 +7,7 @@ description: Use when ANY asset shipped by a plugin you maintain in a LOCAL mark
 
 Feed real-usage problems back into your own skills: you used a skill you maintain in **another project**, it did something wrong, you handled it and finished — this skill turns that into a fix to the skill's **source** in whichever local repo owns it.
 
-**Scope — this skill does exactly ONE thing: patch the target's source in the local working copy of whichever repo owns it, and that repo's structure script when the defect is one a script can detect (step 3, locate the source).** It does NOT commit, push, or reinstall the plugin. Those are your follow-up steps.
+**Scope — this skill does exactly ONE thing: patch the target's source in the local working copy of whichever repo owns it, and that repo's structure script when the defect is one a script can detect (step 3, locate the source).** It does NOT commit, push, bump a version, write a changelog entry, or reinstall the plugin. Those are your follow-up steps; step 7, hand off, states the one case where the version and the changelog land here after all.
 
 ---
 
@@ -90,10 +90,11 @@ Feed real-usage problems back into your own skills: you used a skill you maintai
 
    Fix anything the applicable checks flag until they pass.
 
-7. **Hand off (do NOT commit, push, or reinstall)**
+7. **Hand off (do NOT commit, push, release, or reinstall)**
 
-   Report **the per-target verdict from step 1, capture the usage problems** (every target reviewed, problems or clean; in the session sweep, also each asset dropped at step 0b, resolve the local source), **the ranked changeset from step 4** (each item with its usage evidence), **the calls you made** (what you picked, what you rejected), and the `<repo>` path(s). **Group the handoff by repo — one block per touched repo, its own files and its own three steps**, since each repo has its own git history and plugin install:
-   - commit from that repo (or `git -C <repo> …`), plus a version bump and changelog entry if the target's behavior changed;
+   Report **the per-target verdict from step 1, capture the usage problems** (every target reviewed, problems or clean; in the session sweep, also each asset dropped at step 0b, resolve the local source), **the ranked changeset from step 4** (each item with its usage evidence), **the calls you made** (what you picked, what you rejected), and the `<repo>` path(s). **Group the handoff by repo — one block per touched repo, its own files and its own four steps**, since each repo has its own git history and plugin install:
+   - commit from that repo (or `git -C <repo> …`);
+   - when the target's behavior changed, hand the release over by name: `dev-workflow`'s `release` skill owns the version bump and the changelog entry. Bumping either here leaves that skill nothing to release, so its own work never runs — baseline detection, the parallel-manifest lockstep, the sweep for other changed packages. **Absent** (that plugin is not installed, or the repo has no release flow) → bump the version file(s) and prepend the changelog entry here, and say in the handoff that you did;
    - `git push` in that repo;
    - reinstall / update that repo's plugin so the fix goes live.
    Flag explicitly: **the fix is NOT active in the current environment until that reinstall** — the running copy still comes from the old installed cache.
