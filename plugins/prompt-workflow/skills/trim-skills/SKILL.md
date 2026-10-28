@@ -66,6 +66,7 @@ Find what the prompt files you author no longer need — rules a stronger model 
 5. **Report, then stop**
 
    The report carries:
+   - the step 3 run directory, so an approval landing in a later session still reaches the audits and step 6 still has somewhere to write — `無檔案` when the run was fileless
    - a table per slice — owned lines, removable lines, where the bulk is. A slice whose step 3 audit never came back reads `未稽核` with its counts empty, and contributes nothing to the totals
    - the unreached files from step 2's scan, grouped by state: `orphan` files are deletion candidates; `dynamic` and `runtime-only` files are the user's call, each shown with the evidence that kept it off the candidate list — the loader line and step 4's verdict on it, or the transcript count — and the transcript window the counts cover. A zero there covers that window only
    - deletions that also fix a defect, first: they are the strongest case
@@ -87,7 +88,7 @@ Find what the prompt files you author no longer need — rules a stronger model 
 
 7. **Review with fresh eyes**
 
-   Run `/review-skill`'s procedure in fix mode over every changed file, one fresh agent per slice — never the agents that edited, which carry the reasoning that produced the defect. Each fixes inside its own slice and returns findings outside it to you, since the slices run in parallel. When the swept repo authors this plugin, point them at the criteria in its source tree, not the installed cache: step 6 may just have changed them. Each also hunts *What a trim breaks*.
+   Run `/review-skill`'s procedure in fix mode over every changed file, one fresh agent per slice — never the agents that edited, which carry the reasoning that produced the defect. Each fixes inside its own slice and returns findings outside it to you, since the slices run in parallel. **Its report goes in a file too** — `/review-skill`'s report is the same multi-table shape step 3 moved out of the reply, so each writes it to the step 3 run directory as `review-<its slice name>.md` and replies with its counts per rating, any cross-slice finding, and that path; a fileless run takes the full report in the reply instead. A slice whose file never appears, and whose reply holds no full report either, is a missing result: cite nothing from it and let step 8's hand-off name it. When the swept repo authors this plugin, point them at the criteria in its source tree, not the installed cache: step 6 may just have changed them. Each also hunts *What a trim breaks*.
 
    Agent tool unavailable → run the review yourself, and step 8 says it was not fresh-eyed and recommends a `/review-skill` pass in a new session before committing.
 
@@ -95,7 +96,7 @@ Find what the prompt files you author no longer need — rules a stronger model 
 
 8. **Hand off**
 
-   Report step 7's review in `/review-skill`'s report shape, then: `git diff --stat <base>` per plugin, the checks run with their output and those that did not run, the PLAUSIBLE findings left open, and the will-not-take list with each reason, worded for the commit body — step 2 of the next run finds kept items only through commit messages. Nothing is committed; committing and releasing are the user's.
+   Report step 7's review in `/review-skill`'s report shape, then: `git diff --stat <base>` per plugin, the checks run with their output and those that did not run, any slice whose step 6 or step 7 report never appeared — a missing step 6 report leaves that slice's changes unverified, a missing step 7 one leaves it unreviewed — the PLAUSIBLE findings left open, and the will-not-take list with each reason, worded for the commit body — step 2 of the next run finds kept items only through commit messages. Nothing is committed; committing and releasing are the user's.
 
 ## Guardrails
 
