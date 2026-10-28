@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.24.2] - 2026-10-28
+
+### Fixed
+- Acceptance tests no longer pop browser windows open on your screen while they run. Anything an agent launches now runs headless by default, and the E2E report says which mode the run actually used, so a project whose own Playwright config pins a visible browser is named instead of quietly tolerated.
+
 ## [3.24.1] - 2026-10-28
 
 ### Changed
