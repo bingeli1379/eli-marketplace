@@ -16,7 +16,7 @@ Inspects staged changes and generates a [Conventional Commits](https://www.conve
 
 Detects the current version from project files (package.json, csproj, pyproject.toml, etc.), compares changes since the last release, generates a [Keep a Changelog](https://keepachangelog.com/) entry, bumps the version, and commits.
 
-- Multi-package repo: releases every package with unreleased work, each with its own bump, changelog and commit; name packages after the command to restrict it to those. It prints the plan before the first bump and does not wait for a confirmation
+- Multi-package repo: releases every package with unreleased work, each with its own bump, changelog and commit; pass package names to restrict it to those, and one you name with nothing to release is reported and skipped. It prints the plan before writing anything and does not wait for a confirmation
 - Auto-determines bump level: major (breaking), minor (feat), patch (fix/refactor)
 - Changelog written from end-user perspective
 - Internal refactors, CI tweaks, dependency bumps are omitted unless user-facing
