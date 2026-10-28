@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.25.0] - 2026-10-28
+
+### Changed
+- Agents dispatched by `/apply` no longer each rediscover the same codebase from scratch. Whoever goes first writes down where things turned out to live - the file that owns a concern, a convention it had to read the surrounding code to work out, and the places it searched that held nothing - and everyone dispatched after it in the same repository starts with that. The reviewers get the whole set too, as leads they confirm for themselves rather than as coverage they may claim.
+
 ## [3.24.2] - 2026-10-28
 
 ### Fixed
