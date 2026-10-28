@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.24.1] - 2026-10-28
+
+### Changed
+- A standalone `/review` now gives every reviewer a file to write its report into, under the plugin's own data directory rather than the repository you are reviewing. Full reports were being returned inside the reply and cut off part-way through, taking exactly the findings you act on. The reply now carries the verdict, the coverage and the path.
+
+### Fixed
+- A lens whose report never arrives is now marked as not run in the consolidated review, rather than reading the same as a lens that found nothing. Its findings are never reconstructed from the counts.
+- A review that cannot create its report directory now falls back cleanly: every reviewer answers inline with its findings first, and the review says it ran without files. The performance lens is told the same ordering, which it was previously never given.
+
+
 ## [3.24.0] - 2026-10-21
 
 ### Added
