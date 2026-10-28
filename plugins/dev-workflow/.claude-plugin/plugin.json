@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "dev-workflow",
   "displayName": "Dev Workflow",
-  "description": "Daily dev workflow commands: commit, release, sharpen, and PR descriptions",
-  "version": "4.2.0",
+  "description": "Daily dev workflow commands: commit, release, sharpen, PR descriptions, and session handoff",
+  "version": "4.3.0",
   "author": {
     "name": "Eli",
     "url": "https://github.com/bingeli1379"
@@ -11,5 +11,12 @@
   "homepage": "https://github.com/bingeli1379/eli-marketplace",
   "repository": "https://github.com/bingeli1379/eli-marketplace",
   "license": "MIT",
-  "keywords": ["commit", "release", "changelog", "conventional-commits", "workflow"]
+  "keywords": [
+    "commit",
+    "release",
+    "changelog",
+    "conventional-commits",
+    "workflow",
+    "handoff"
+  ]
 }
