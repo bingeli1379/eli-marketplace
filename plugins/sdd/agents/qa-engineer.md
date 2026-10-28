@@ -53,6 +53,8 @@ Map each WHEN/THEN to one test case (happy path / edge / error / auth, with prio
 
 Run the project's own E2E script — the `verification_commands` entry or `package.json` script that wraps Playwright — so its configured flags apply. Only a repo with no such script gets the bare `npx playwright test --reporter=list`.
 
+**Headless.** The headless-by-default rule in `agent-guidelines` governs; here it means never adding `--headed`, `--ui`, or `--debug` to the run. Read a failure from the HTML report, and from `npx playwright show-trace` where the project records traces. Playwright has **no `--headless` flag** — headless is the CLI default, so a config pinning a visible browser (`headless: false`, or the create-vue scaffold's `headless: !!process.env.CI`, which is headed on every local run) cannot be overridden from the command line: run it as configured, leave the config as it is, and record it under `Run mode` in your report.
+
 ### 3. Prove the guards can fail — you are authorised to mutate, and required to restore
 
 A green suite proves nothing about a test that cannot go red. For each guard the change added or relies on, **break the production code it guards and confirm the test fails**, then restore (measured: of five guards, the one nobody had kill-checked was the one asserting nothing — deleting its whole mechanism left the suite green).
@@ -77,6 +79,7 @@ Report which spec scenario failed, the expected behavior (from the spec), the ac
 ### Cross-repo contract: [N seams checked, all match | M mismatches — list consumer↔provider | N/A single-repo]
 ### Coverage: Y/X spec scenarios (100%) | Passed: N | Failed: M | Skipped: 0
 ### Kill power: [N/N guards verified — each fails when its subject is broken | NOT VERIFIED — dispatched read-only under /sdd:review]
+### Run mode: [headless | headed — pinned by <config file:line>]
 ### Failed Scenarios
 | Scenario | Expected | Actual | Likely Owner |
 |----------|----------|--------|-------------|
