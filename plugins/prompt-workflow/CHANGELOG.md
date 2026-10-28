@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.26] - 2026-10-28
+
+### Changed
+- A `/trim-skills` sweep now hands each slice's audit and edit report over as a file instead of returning it inside the reply, and the fresh-eyes review afterwards does the same. Those reports are several tables each, and arriving all at once they were being cut off part-way through — a half-delivered candidate table looked exactly like a slice with less to remove. The reply now carries the counts and the path, and a slice whose report never arrives is marked as such instead of counting as audited.
+
+### Fixed
+- The sweep's report directory is now named in the report you approve. Approving a sweep can happen in a later sitting, and until now the directory was only held in the running session, so coming back to it left the audits unreachable.
+- The hand-off at the end now names any slice whose report never arrived, saying whether that leaves its changes unverified or unreviewed. It previously read as a complete sweep either way.
+
+
 ## [0.2.25] - 2026-10-27
 
 ### Fixed

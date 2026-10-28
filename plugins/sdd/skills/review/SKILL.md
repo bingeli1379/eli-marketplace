@@ -94,11 +94,16 @@ Two entry conditions, same read-only contract:
    - **Name shards stably** (`review:security:api`, `review:quality:web`) — Step 7's follow-ups route back to a specific shard agent via SendMessage.
    - **Sharding never narrows a lens's mandate.** performance-engineer's exhaustive memory-boundedness enumeration applies within each shard; the union across shards must still cover every data path in scope.
 
-   **5b — Dispatch.** Dispatch every agent in the plan (one per lens, or one per lens × shard) **simultaneously in one message**, in the background (`run_in_background: true`, `mode: "bypassPermissions"`), each with a **stable descriptive `name`** (`review:security`, `review:perf`; sharded: `review:security:api`) and bound to its target repo and scope. Each agent's prompt MUST include:
+   **5b — Dispatch.**
+
+   **Resolve this run's report directory first.** Reports live in `${CLAUDE_PLUGIN_DATA}/reviews/<UTC yyyymmdd-HHMMSS>/`, created before the dispatch. `${CLAUDE_PLUGIN_DATA}` is not exported to commands run through the Bash tool, and a dispatch prompt is text you write rather than a shell the harness expands, so resolve it here — `~/.claude/plugins/data/<this plugin's id>/` — and pass the absolute path. Each run owns its directory and never reads another run's. The contents are regenerable, which is why they go under the plugin's data path instead of into the repo under review. Cannot create it → name no directory at all, which is `references/reviewer-depth.md` requirement 4's fileless branch: every reviewer replies with its report itself, findings first, and step 6 says the run was fileless.
+
+   Then dispatch every agent in the plan (one per lens, or one per lens × shard) **simultaneously in one message**, in the background (`run_in_background: true`, `mode: "bypassPermissions"`), each with a **stable descriptive `name`** (`review:security`, `review:perf`; sharded: `review:security:api`) and bound to its target repo and scope. Each agent's prompt MUST include:
    - The scope it owns — the whole resolved target when unsharded (file list, or `git diff BASE_SHA..HEAD_SHA`, or definition+callers); its **own shard** when sharded, plus the full manifest and the reporting fence from 5a
    - `## Project Context` (config.yaml verbatim) when present + the project-knowledge directive
-   - **Hard read-only constraint**: *"Review and report ONLY. Do NOT edit any file, do NOT create commits, do NOT dispatch other agents. Return findings as a structured report."* **This constraint outranks `agents/qa-engineer.md`'s mutation mandate, and the cost is real**: proving a guard can actually fail means temporarily breaking the code it guards, which this contract forbids, so under `/review` the e2e lens verifies that the tests pass and **cannot** establish that any of them would fail if the behaviour regressed. Its report says so rather than implying coverage it did not measure. A run that needs kill power verified belongs in `/quick` or `/apply`, where the pipeline serializes the mutation safely.
+   - **Hard read-only constraint**: *"Review and report ONLY. Do NOT edit any file under review, do NOT create commits, do NOT dispatch other agents. Your own report file is not covered by this ban — write it where this dispatch says."* **Say "any file" and the ban swallows the report too** — observed in `references/reviewer-depth.md`: a reviewer read a read-only dispatch as forbidding its report, replied inline, and the reply was truncated. **This constraint outranks `agents/qa-engineer.md`'s mutation mandate, and the cost is real**: proving a guard can actually fail means temporarily breaking the code it guards, which this contract forbids, so under `/review` the e2e lens verifies that the tests pass and **cannot** establish that any of them would fail if the behaviour regressed. Its report says so rather than implying coverage it did not measure. A run that needs kill power verified belongs in `/quick` or `/apply`, where the pipeline serializes the mutation safely.
    - **Analytical depth — `review-engineer` / `security-engineer` / `qa-engineer` only**: read `${CLAUDE_PLUGIN_ROOT}/references/reviewer-depth.md` and include its block verbatim in each of those dispatches. That file also states the two things you must settle **before** dispatching — cross-repo questions, and asserting only what you verified — which are the dispatcher's, not the reviewer's. **One copy per agent, so a sharded run carries it into every shard** — each agent then enumerates its coverage over its own shard, which is what stops a shard reviewer silently narrowing to whatever caught its eye. That file also names who must NOT receive it and why; `performance-engineer` is excluded there and gets its own mandate in the `performance-engineer` bullet below instead.
+   - **Where its report goes**: name this run's report directory in the dispatch. `references/reviewer-depth.md` requirement 4 then routes `review-engineer` / `security-engineer` / `qa-engineer` to `<run dir>/reviews/<its dispatched name>.md`. `performance-engineer` never receives that file, so state the same destination to it in plain words. Every reply then carries the verdict, its scope line, its not-covered list and a count per severity, plus that path — step 6 reads the files. **A fileless run names no directory**, and requirement 4's second branch then lands those three reviewers inline, findings first; `performance-engineer`, which never sees that file, is told the same ordering in plain words.
    - performance-engineer: capacity analysis is **static**; output is a per-path verdict (SAFE / RISKY / WILL NOT SCALE, or `未評估` where a project `never-read` path blocked assessment). Its coverage rule — every data path in scope gets a verdict — is `agents/performance-engineer.md` → *Data-Scale & Capacity Analysis*.
 
    **Keep them alive.** Do NOT treat reviewers as one-shot. After they report, they stay backgrounded — follow-up questions and re-reviews go back to the **same** agent via **SendMessage** (its context, loaded skills, and the files it already read are intact), which avoids re-paying agent startup. Only spawn a fresh reviewer if its context was lost or the target changed substantially.
@@ -107,6 +112,8 @@ Two entry conditions, same read-only contract:
 
 6. **Triage, then consolidate and report**
 
+   **Read every agent's report file before triaging.** The replies carry a verdict and counts, not the findings themselves. A file that is absent or unreadable, where the reply holds no full report either, is a **missing result**: its lens section below reads `未執行 — 報告未取得`, cite nothing from it, and never rebuild its findings from the counts.
+
    Before writing the report, load the **`review-triage`** skill (Skill tool) and run its gate over the union of all agents' findings: anchor check → falsification-only filter → root-cause dedup. It only ever drops findings the code **disproves**, downgrades unlocatable ones instead of deleting them, and logs every drop — read its guardrails before applying it.
 
    Then present one consolidated review. Do NOT change code or commit.
@@ -114,12 +121,13 @@ Two entry conditions, same read-only contract:
    ```
    ## Review: <target>
    **Lenses:** <list>   **Repo(s):** <list>   **Scope:** <files / diff range / definition+callers>
-   **Shards:** <n shards, or 未分片>   **Triage:** N reported → M reported (誤報 D · 合併 G 組 · 位置未確認 U)
+   **Shards:** <n shards, or 未分片>   **Reports:** <run dir path, or 無檔案 — inline 回傳>
+   **Triage:** N reported → M reported (誤報 D · 合併 G 組 · 位置未確認 U)
 
-   ### quality — review-engineer        [no findings / N findings]
-   ### security — security-engineer      [SECURE / N findings]
-   ### performance — performance-engineer [verdict table: SAFE/RISKY/WILL NOT SCALE/未評估]
-   ### e2e — qa-engineer                 [PASSED / FAILED / SMOKE-ONLY / SKIPPED — no spec]
+   ### quality — review-engineer        [no findings / N findings / 未執行 — 報告未取得]
+   ### security — security-engineer      [SECURE / N findings / 未執行 — 報告未取得]
+   ### performance — performance-engineer [verdict table: SAFE/RISKY/WILL NOT SCALE/未評估, or 未執行 — 報告未取得]
+   ### e2e — qa-engineer                 [PASSED / FAILED / SMOKE-ONLY / SKIPPED — no spec / 未執行 — 報告未取得]
 
    ### 位置未確認 (unanchored) — 非 blocking
    - <finding> — reviewer 引用的位置對不上,問題可能仍成立但無法指向
@@ -137,7 +145,7 @@ Two entry conditions, same read-only contract:
    > 要追問或直接修嗎?跟我說要看哪項或改哪幾項 — 追問我問回原 reviewer,修我派對應 specialist。
    ```
 
-   **Each lens section opens with that agent's scope line and its not-covered list** — what it was dispatched to read and what inside that it did not examine, ahead of everything else in the section, from the analytical-depth block it was dispatched with (5b); where the reviewer also loaded review criteria, those lines sit above their layout rather than displacing any of it. Drop them and a reviewer that skipped half its shard reads exactly like one that found nothing in it.
+   **Each lens section opens with that agent's scope line and its not-covered list** — what it was dispatched to read and what inside that it did not examine, ahead of everything else in the section, from the analytical-depth block it was dispatched with (5b); where the reviewer also loaded review criteria, those lines sit above their layout rather than displacing any of it. Drop them and a reviewer that skipped half its shard reads exactly like one that found nothing in it. A lens reading `未執行 — 報告未取得` has neither line to carry, and that label stands alone rather than being filled in from the reply's counts.
 
    **A reviewer that loaded review criteria hands you a section those criteria already laid out — reproduce it, do not reshape it.** Its counting lines, its item shapes, and its section order come through verbatim; rewriting them into this template's prose is the reflex a consolidation step has, and it is the one move that undoes what loading those criteria bought. What stays yours is the frame *around* the lens sections — the header, the `Triage:` counts, `位置未確認`, `scope 外`, and the recommendations — because those are cross-reviewer facts no single reviewer's criteria can see. A lens whose reviewer found no such criteria says so in one line and follows this template as usual, so the two cases stay distinguishable.
 
