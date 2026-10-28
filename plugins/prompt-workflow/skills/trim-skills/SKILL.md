@@ -40,7 +40,11 @@ Find what the prompt files you author no longer need — rules a stronger model 
 
 3. **Audit each slice, report-only**
 
+   **Resolve this run's report directory first.** Audits land in `${CLAUDE_PLUGIN_DATA}/trim/<UTC yyyymmdd-HHMMSS>/`, created before the dispatch. `${CLAUDE_PLUGIN_DATA}` is not exported to commands run through the Bash tool, and a dispatch prompt is text you write rather than a shell the harness expands, so resolve it here — `~/.claude/plugins/data/<this plugin's id>/` — and pass the absolute path. Each run owns its directory and never reads another run's. The contents are regenerable, which is why they stay out of the repo being swept. Record the path beside step 1's base commit; step 6 reuses it, and the approval gate in step 5 can land in a later session. Cannot create it → name no directory and each agent replies with its full audit, candidates first; step 5's report says the run was fileless.
+
    Dispatch one general-purpose agent per slice, all in one message. Each prompt carries the slice's files, the slice's entries from step 2's file scan, the catalogue entries named at the top, *Where drag hides*, the earlier trim commits from step 2, and the return shape: ranked candidates (file:lines, reason, one-line why, lines saved, confidence), defects found (contradictions, broken recipes), a must-stay list with the record protecting each, and totals. No edits.
+
+   **That return goes in a file, not the reply.** Each agent writes it to `<run dir>/audit-<its slice name>.md` and replies with its totals, its candidate count, its defect count and that path. Four tables from every slice, all arriving at once, is the shape the reply size limit cuts mid-row — and a truncated candidate table reads exactly like a slice with fewer candidates. A slice whose file is absent or unreadable, and whose reply holds no full audit either, is a **missing result**: step 5's table marks it unaudited, and no count from it enters the totals.
 
    Agent tool unavailable → audit the slices one after another in this context, and step 5's report says so.
 
@@ -62,7 +66,7 @@ Find what the prompt files you author no longer need — rules a stronger model 
 5. **Report, then stop**
 
    The report carries:
-   - a table per slice — owned lines, removable lines, where the bulk is
+   - a table per slice — owned lines, removable lines, where the bulk is. A slice whose step 3 audit never came back reads `未稽核` with its counts empty, and contributes nothing to the totals
    - the unreached files from step 2's scan, grouped by state: `orphan` files are deletion candidates; `dynamic` and `runtime-only` files are the user's call, each shown with the evidence that kept it off the candidate list — the loader line and step 4's verdict on it, or the transcript count — and the transcript window the counts cover. A zero there covers that window only
    - deletions that also fix a defect, first: they are the strongest case
    - **policy forks**: a rule in the repo's own authoring rules that protects a line by its length or form rather than by its record, or that licenses restating a rule, blocks the sweep. Observed: "a one-line rule is not bloat" and "a one-line guardrail restatement is house style" did. Recommend, and leave the call to the user
@@ -74,7 +78,7 @@ Find what the prompt files you author no longer need — rules a stronger model 
 
    Apply approved policy changes to the repo's own authoring rules yourself first; they change what the slice agents may delete.
 
-   Then dispatch one agent per slice, in parallel — a fork when available, so it carries steps 4–5; otherwise a full prompt. Each gets its approved items, its own files only, and the will-not-take list as do-not-touch. Each locates its items by their text — step 3's line numbers predate the policy edits — reports every change with its reason, sweeps the skeleton of anything removed, and greps the repo for every deleted filename, section name and number. Agent tool unavailable → edit the slices one after another yourself.
+   Then dispatch one agent per slice, in parallel — a fork when available, so it carries steps 4–5; otherwise a full prompt. Each gets its approved items, its own files only, and the will-not-take list as do-not-touch. Each locates its items by their text — step 3's line numbers predate the policy edits — sweeps the skeleton of anything removed, and greps the repo for every deleted filename, section name and number. Each writes its per-change report — every change with its reason — to the step 3 run directory as `edit-<its slice name>.md`, and replies with the count of changes made, any item it did not take with why, and that path. A slice whose file never appears is treated as a slice whose changes are unverified: step 7 reviews it as usual and step 8's hand-off names it. Agent tool unavailable → edit the slices one after another yourself.
    - Stage nothing: delete with `rm`, never `git rm`. Observed: deletions one slice had staged rode into another plugin's commit at commit time.
    - No commit, no version bump.
    - A finding outside its slice comes back to you; relay it to the owning slice's agent, or fix it yourself after the agents finish.
