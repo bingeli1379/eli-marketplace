@@ -7,15 +7,17 @@ description: "Use when cutting a release, bumping a version, or generating a cha
 
 **Goal**: Detect current version, compare changes since that version, generate changelog, and bump version number
 
-**Ask only when the answer is not in the repo** — which package to release, where the version lives when no manifest or tag says, which baseline when none can be found. Everything the repo already settles — the bump, mirror manifests, the commit — is applied without confirmation.
+**Ask only when the answer is not in the repo** — where the version lives when no manifest or tag says, which baseline when none can be found. Which packages to release is not one of those: unreleased work is visible in the history, so the run reads it rather than asking. Everything the repo already settles — the bump, mirror manifests, the commit — is applied without confirmation.
 
 ## Instructions
 
 ### 1. Resolve target & detect version source
 
-**Target package** (multi-package repos): if `$ARGUMENTS` names a package/plugin, that is the release target. Otherwise detect candidate packages (each directory carrying its own version manifest). If exactly one exists, use it. If several exist (e.g. a marketplace with multiple plugins), list them with their current versions and ask which to release — never release all of them at once unless explicitly told.
+**Target packages** (multi-package repos): `$ARGUMENTS` naming a package or plugin restricts the run to exactly those named, however many others have unreleased work. **Naming none releases every package that has unreleased changes** — the sweep below finds them, and each is released as its own target. Detect candidate packages as each directory carrying its own version manifest.
 
-**Sweep for other changed packages.** When the user asks to also release changed sub-packages ("release the changed ones too") — or after releasing the primary target — detect **every** package that has unreleased changes and release each as its OWN target (own version bump, own CHANGELOG, own `chore(<pkg>): release` commit — never fold several packages into one). Detect per package:
+**Print the plan before the first bump** — one line per package, `<pkg> <current> → <new>`, naming where it came from when `$ARGUMENTS` restricted the set. It is the only place a package nobody meant to release is visible before its commit lands, and a run that releases several must not be the first to mention them in its closing report. Printing is not a gate: no confirmation is waited for.
+
+**Sweep for changed packages.** Detect **every** package that has unreleased changes and release each as its OWN target (own version bump, own CHANGELOG, own `chore(<pkg>): release` commit — never fold several packages into one). Detect per package:
 - find its last release commit: `git log --oneline -1 --grep='release v' -- <package>/` — filter by the package **directory**, not its version file: a first release keeps the version as it stands, so its release commit touches only the CHANGELOG and a version-file filter misses it entirely
 - list non-release commits touching it since: `git log <rel>..HEAD --oneline --no-merges -- <package>/`
 - a package with commits there has unreleased work; a package with none is up to date, skip it.
