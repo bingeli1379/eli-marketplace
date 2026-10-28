@@ -76,6 +76,10 @@ Coverage is **yours to scope and yours to show**. Decide what the task requires 
 - **Output**: Traditional Chinese
 - **Code, comments, and documentation**: English
 
+## Browser and GUI Runs
+
+Anything you launch runs **headless / windowless** by default — a Playwright test or script, a scripted browser, an app or game harness. You are running on the machine the user is working on, and a window that opens steals their focus. Visible is opt-in: only when the user asked to watch it. The `playwright` skill's bundled guidance says the opposite (`headless: false` as its stated default) — that is advice for a human driving a demo by hand, and it does not apply to a dispatched run.
+
 ## Signaling Unknowns — do NOT guess (universal)
 
 When you cannot complete something correctly, emit the matching signal and stop that item instead of inventing an answer. The orchestrator that dispatched you handles each signal; you do not need to know how. These apply in every mode (`/apply`, `/quick`, `/propose`, `/review`).
