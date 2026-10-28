@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.3.0] - 2026-10-28
+
+### Added
+- `/handoff` packs the session you are in into a `HANDOFF.md` at the top of your working directory, so a fresh session - another window, another repository, another tool, or a side task you want to try without losing this one - can carry the work on. It needs no path to find and one `rm` to clear. Beside what is done and what is left, it records the paths you already closed and why, which is what stops the next session walking back into them, and keeps decisions only you can make in their own section so nobody decides them for you. Before handing it over it rereads the file as someone holding nothing else, and fills whatever that reader would have had to come back and ask.
+
+### Changed
+- In a repository holding several packages, `/release` on its own now releases every package that has unreleased work instead of stopping to ask which one you meant. Each still gets its own version, its own changelog entry and its own commit. Name the packages after the command to release only those; a package you name with nothing to release is reported and skipped. The plan prints before anything is written, so you can see what is about to ship, and it does not wait for you to confirm.
+
 ## [4.2.0] - 2026-10-21
 
 ### Added
