@@ -37,3 +37,14 @@ Rewrites a shallow or vague task prompt so it asks for deeper work, not wider sc
 - Takes the task as an argument, or your last request when empty
 - Rewrites the prompt and stops; it does not do the task
 - Choices that are yours stay open in the rewrite instead of being decided
+
+### `/handoff` — Hand the Work to Another Session
+
+Compacts the current session into `HANDOFF.md` at the top of the working directory, so an agent holding none of this conversation can continue the work, and one `rm` clears it when the work lands. For work that has to travel: another window, another repo, another harness, or a side task forked off while this session stays live. Not a replacement for `/compact`, which keeps the same thread.
+
+- Command-only: you invoke it, the model never selects it
+- Takes what the next session is for as an argument, and weights the file toward it
+- Fixed sections, `已決定不做` among them — a closed decision left out reads as an open task and the next session re-derives it
+- `還沒做` and `等你決定` are separate sections: the next session does everything in the first, and leaves the second for you
+- Reads the file back as the next session would and fills what that reader would have to ask, up to 3 rounds
+- Confirms before replacing an existing `HANDOFF.md`, and offers to `.gitignore` it
