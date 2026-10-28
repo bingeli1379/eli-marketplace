@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.2] - 2026-10-28
+
+### Added
+
+- The local rules file the generator writes now shows an example of a pitfall row, as a comment above the empty table, so the first person to record a mistake can see what each column is meant to hold.
+
 ## [0.1.1] - 2026-10-24
 
 ### Added
