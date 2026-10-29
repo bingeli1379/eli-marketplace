@@ -1,6 +1,6 @@
 # Reviewer Analytical Depth
 
-The **Analytical depth requirement** every reviewer dispatch must carry, plus the two things the dispatcher settles before composing it. Single source for `/apply` (Phase 2 initial run AND every fresh-review retry round), `/quick` (all complexity tiers), and `/review` (every lens dispatch, one copy per agent when the scope is sharded).
+The **Analytical depth requirement** every reviewer dispatch must carry, plus what the dispatcher settles before composing it: the two things it establishes, and the report directory requirement 4 routes to. Single source for `/apply` (Phase 2 initial run AND every fresh-review retry round), `/quick` (all complexity tiers), and `/review` (every lens dispatch, one copy per agent when the scope is sharded).
 
 **Who gets it:** `review-engineer`, `security-engineer`, `qa-engineer`.
 
@@ -16,6 +16,9 @@ The **Analytical depth requirement** every reviewer dispatch must carry, plus th
 
 - **Resolve cross-repo questions BEFORE dispatching.** A reviewer's scope is the repo it was bound to, so a question that can only be settled in another repo comes back unresolved every round no matter how many rounds run — who else consumes this shared library, whether any caller constructs it directly instead of through the sanctioned entry point, whether a contract is relied on elsewhere. Answer those yourself and hand the answer over as context. Discovering after two rounds that a grep would have settled it costs both rounds.
 - **The prompt carries only what you verified; everything else is asked, not asserted.** A premise stated as fact and later found wrong spends that reviewer's coverage correcting you instead of reading the diff, and it can steer the whole review — observed: a dispatch asserting the change removed a network call from a failure path, when that path had always been in-memory. State what you checked, and for what you did not, ask the reviewer to establish it.
+
+
+**Resolving the report directory requirement 4 routes to.** A spec-driven run names its change directory. Every other run creates `~/.claude/plugins/data/<this plugin's id>/reviews/<UTC yyyymmdd-HHMMSS>/` and passes that absolute path: `${CLAUDE_PLUGIN_DATA}` is not exported to the Bash tool and a dispatch prompt is text you write rather than a shell the harness expands, so it is resolved here or not at all. Each run owns its directory and never reads another run's, and the contents are regenerable, which is why they sit under plugin data rather than in the repo under review — so a run that writes no artifacts into the repo still has somewhere to put these. Cannot create it → name none, which is requirement 4's second branch.
 
 ---
 
@@ -40,4 +43,4 @@ Include the following verbatim in each reviewer's dispatched prompt:
 > 3. **Severity-rank every finding** — `blocker` / `major` / `minor`, each with a one-line rationale. Raw observations without severity are rejected.
 > 4. **Deliver the report as a file when this run has somewhere to put one.** Requirements 1–3 plus a criteria set's own layout overrun the reply size limit on a real change, and a reply cut off mid-finding loses precisely the part the dispatcher acts on — three of six reviewer reports on one measured run came back truncated. **This changes where the report is delivered, never what it contains**: your own agent file's Report Format still governs its sections, its anchors and its wording, and it is that report which goes in the file.
 >    - **The dispatch names a directory for reports** — a spec-driven run's change directory, or a standalone run's own report directory → write the report to `<that directory>/reviews/<your dispatched name>.md`, creating `reviews/` if absent, and reply with the verdict, the range you covered, a count per severity, and that path. Writing this file is always within your remit: a read-only dispatch, or a general instruction not to create files, covers the code under review, not this report (observed: a reviewer read "read-only" as forbidding it, replied inline, and the reply was truncated).
->    - **It names none** (a fileless run — `/quick` writes no artifacts, and any run whose dispatcher could not create a directory) → there is nowhere to put a file, so reply with the report itself, ordered **findings first, scope and not-covered list last**, so that a truncation costs the half the dispatcher can re-derive rather than the half it acts on.
+>    - **It names none** (a fileless run — any run whose dispatcher could not create a directory) → there is nowhere to put a file, so reply with the report itself, ordered **findings first, scope and not-covered list last**, so that a truncation costs the half the dispatcher can re-derive rather than the half it acts on.
