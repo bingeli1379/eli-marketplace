@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.25.1] - 2026-10-29
+
+### Fixed
+- Review reports from a small `/quick` task no longer get cut off partway through. Each reviewer writes its report to a file and replies with just the verdict and where to find it, so a long report arrives whole instead of losing its last findings to the reply limit.
+- A small task `/quick` writes itself now reads the specialist's own notes on your stack, not only the reference catalogues that specialist pulls in. Before, it could apply advice those catalogues give in general - the wrong test framework, the wrong architecture - that the specialist had already overridden for the project in front of it.
+- When two reviewers reach opposite conclusions about the same line, the run now settles it on whether the problem can actually happen today, and names the one it set aside in its report. Before, both went to the fix step and could undo each other.
+- A reviewer still reading while fixes are being committed is now told what moved and why. Before, it could report another reviewer's decision as a fresh defect of its own.
+
 ## [3.25.0] - 2026-10-28
 
 ### Changed
