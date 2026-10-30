@@ -47,7 +47,13 @@ silence is not:
 
 Co-affected callers (fill whenever the breadth classifier returned fleet-wide — SKILL.md 5d):
 - <svc>: <N> failed / <N> of those recovered by retry / <N> degraded / <N> distinct users   (same signature, same window)
+  failing endpoint: <controller.method | access path>   user-facing: <one line, this caller's own>
   # `recovered: not checked` is legal per caller — but then Impact must say the failure count is not a user-loss count.
+  # The endpoint and the user-facing line are per caller, read from ONE of that caller's own failure
+  # samples (its stack trace's controller, or its structured access path). The anchor's symptom does
+  # not transfer: co-affected callers serve different products and different front ends, so reusing it
+  # misstates both the scope and the nature of the impact. A caller with no user-facing line is a
+  # caller whose failure sample was never read.
 - Peeled until the breadth query returned 0? <yes → all callers accounted for | no → who is missing>
 - Any caller NOT quantified ⇒ Impact is a LOWER BOUND and must say so, naming who is missing.
 # A shared-layer root cause with one named victim contradicts itself; this block is what stops
@@ -111,8 +117,8 @@ An empty or "skipped" block means the work is incomplete — go back and fill it
      - **C. input / load 變了** → 同一段 code、沒人 release，但進來的 request 變了：bot / 暴量 / 新客戶資料 / 一直潛伏今天才被打中的 edge case（往 caller 鑽，`next-hop-drill.md` caller-direction drill）。
      - **D. 啥都沒變** → 本來就這個錯誤率 = chronic 背景 / by-design（`next-hop-drill.md` baseline ratio ≈ 1 即屬此類）。
      - ⚠️ 最常見的漏判：沒人 release 就直接跳 B/D，漏掉 **C**（code 沒變但觸發變了）。
-     佐證用可查、不可捏造的數字：git blame 意圖、IP 集中度、distinct customerId 集中度（log 分析步驟）、incident/baseline 暴增倍率（`next-hop-drill.md` correlation check）。這層是使用者做後續決策（封 bot / 改 code / 接受）的依據，**必須優先查實**。查不到就明寫「觸發源未判定 + 還缺什麼資料」，**絕不能因為「還沒確定是不是 bug」就把觸發源丟進 Unknowns** — 事實層與判斷層獨立。
-   - **機制 / 判斷（看法層）**：agent 認為這是 bug / 預期行為 / 設計缺陷，**標明這是判斷**並給依據（stack trace、code、git blame）。注意 throw 的那行不一定是真因，可能是下游症狀（頂層 NullRef 源自上游 bad state）——先判這行是因還是果。
+     佐證用可查、不可捏造的數字：commit hash + 日期（`git blame` 是判定工具，寫進報告的是 commit，見 HARD RULE 9）、IP 集中度、distinct customerId 集中度（log 分析步驟）、incident/baseline 暴增倍率（`next-hop-drill.md` correlation check）。這層是使用者做後續決策（封 bot / 改 code / 接受）的依據，**必須優先查實**。查不到就明寫「觸發源未判定 + 還缺什麼資料」，**絕不能因為「還沒確定是不是 bug」就把觸發源丟進 Unknowns** — 事實層與判斷層獨立。
+   - **機制 / 判斷（看法層）**：agent 認為這是 bug / 預期行為 / 設計缺陷，**標明這是判斷**並給依據（stack trace、code、commit hash）。注意 throw 的那行不一定是真因，可能是下游症狀（頂層 NullRef 源自上游 bad state）——先判這行是因還是果。
    - 兩層獨立：觸發是 bot 不代表沒有 code 問題；是設計意圖也要分清「意圖」與「實作後果」是否一致（例：刻意拒絕 token 是對的，但用 unhandled exception 回 500 仍是缺陷）。
 
 5. **根因觸底到共享基礎設施 → 明列「請使用者去找 infra owner 確認」，但判斷在先。** 當 Root Cause 是共享資料層 / 網路（Redis / DB / cache 叢集、DNS、LB）而非單一服務自身資源時（通常經 step 5d 廣度分類器判為 fleet-wide、`infra-metrics.md` §11g 判定）：
@@ -137,7 +143,13 @@ An empty or "skipped" block means the work is incomplete — go back and fill it
    - **三類請求結果算的是「請求數」，受影響使用者算的是「人數」，不可混。** 同一個人的失敗與重試會各佔一格，所以人數必須跨格去重。沒去重就會把 N 個人報成 2N 個人，而且讀報告的人無從發現。
    - Impact 要同時給兩個數：**失敗 <N> 筆 / 其中 <M> 人自行重試成功 / 真正流失 <N−M>**。
    - **只有 client address 可用時，明寫那是代理不是身分**——同一出口位址可能是不同人，同一人也可能換位址。
-   - **「大家都自己回來了」不是「不用修」。** 他們回得來是因為 burst 比使用者的耐心短，換一次更長的就不是這個結果。報告要把這句寫進去，否則這個數字會被直接拿去降優先度。
+   - **「大家都自己回來了」不是「不用修」。** 這個數字會被直接拿去降優先度，所以根治項仍要寫進 How to Resolve。但報告正文只放量到的數字，不要補一句「換一次更長的中斷就不是這個結果」——那是推演，違反寫作規則的中性要求。
+
+9. **報告不點名個人，這條在送出前套用，與 HARD RULE 0 同一時機。** 觸發源回答的是「什麼變了」，所以主詞用作業、變更或設定，不用執行者。佐證引來源與時間（頻道名 + 時間戳、工單編號、commit hash、設定的 `modifiedOn`），不引人名、帳號或 `modifiedBy`。
+   - 事故報告會被轉貼、被存成工單，一個寫進去的名字比事故活得久，而根因是那個變更，不是做那個變更的人。
+   - 這條不犧牲可追溯性：引來源與時間，讀的人要追一樣追得到，而且追到的是脈絡不是對象。
+   - 需要追問作業決策時，Unknowns 寫「需回到該作業的執行脈絡確認」，不指名由誰說明。
+   - **git blame 是 HARD RULE 4 觸發源 A 的判定工具，不是報告的引用來源。** blame 的用途是判斷意圖與時間點，寫進報告的是 commit hash 與日期。
 
 ## Output
 
@@ -151,9 +163,13 @@ Output **two versions**: Traditional Chinese first (full detail, the user reads 
 
 Heading 順序固定：**Root Cause → Impact → How to Resolve → Unknowns**。
 
-寫作規則：
+寫作規則（每個 section 一體適用，含下面 benign noise 變體的 `為什麼無影響` 與 `噪音組成`）：
 - 每個 section 之間空一行；section 內若 > 1 點用 bullet。
 - 句子要短，避免長段落。一段超過 3 行就拆 bullet。
+- **一條 bullet 只放一件事，同一件事也不要拆成兩條。** 拆的單位是「事實」不是「句子」。因果鏈逐步拆，一步一條才看得出斷在哪；同一事實的多個屬性合併（持續時間與結束時刻是同一件事，同一組請求的筆數與耗時是同一件事）；同一判定的依據與結論寫在一起，分開寫兩條都站不住。
+- **每個 section 只放份內的東西。** Root Cause 放機制與判定依據，Impact 放結果，How to Resolve 放要做的動作，Unknowns 放缺口。寫錯棚的句子要搬到對的 section，不是刪短——「這個數字是怎麼推出來的」是 Root Cause 或 Unknowns 的料，放進 Impact 就是在描述方法而不是在講影響。
+- **限制與保留條件寫進它修飾的那一條，不另開一條。** 「失敗 <N> 筆（未比對逐 client 重試，非流失人數）」勝過在 Impact 末尾單獨掛一條通則；掛在末尾的通則讀者對不回是哪個數字。
+- **中性描述，不下評語、不寫延伸推演。** 報告放量到的數字與發生的事。推演（「換一次更長的中斷就不是這個結果」）、評價（「這個設計有問題」）都不進報告正文，判斷屬於 Root Cause 的機制層並標明是判斷。
 - **使用者體驗**遵守上面 HARD RULE #1。模板：「使用者進入 `<產品/頁面>` 後 `<看到什麼>`，`<其他部分如何>`，因為 `<error 處理方式>`。」`<error 處理方式>` 用人話描述（如「error 沒被 catch」、「有 fallback 顯示舊值」），不寫 code。
 - 數字濃縮（Impact 區塊放數字，不在句子中重複）。
 
@@ -161,20 +177,27 @@ No "中文版" / "English" headings. Output the report blocks directly. Separate
 
 ```
 **Root Cause**
-- 觸發源（事實，什麼變了）：<A code 變 / B dependency 變 / C input·load 變 / D 啥都沒變>，佐證：<git blame? IP·customerId 集中? incident/baseline 倍率?>
-- 機制（判斷，標明看法）：<我認為這是 bug / 預期行為 / 設計缺陷，因為…（stack trace / code / git blame）>
+- 觸發源（事實，什麼變了）：<A code 變 / B dependency 變 / C input·load 變 / D 啥都沒變>，佐證：<commit hash + 日期? IP·customerId 集中? incident/baseline 倍率? 事故前同簽名筆數?>
+- 機制（判斷，標明看法）：<我認為這是 bug / 預期行為 / 設計缺陷，因為…（stack trace / code / commit hash）>
 - <call chain / infra 數據 補充>
 
 **Impact**
-- 受影響使用者：~<N>（distinct customerId；**跨下面三類去重**，同一人的失敗與重試各佔一格）or n/a
-- 請求結果（三類都要有數字，缺的寫 n/a + 原因）：
-  - 失敗：<N> 筆（<主要 status>），端點：<path…>；其中 <M> 人自行重試成功、真正流失 <N−M>
-  - 成功但顯著變慢：<N> 筆，<延遲分佈，見下>
+- 時間：<from> ~ <to> (GMT+8)，持續 <X>，<怎麼結束的>
+- 影響面：<涵蓋哪些產品／端末>
+- 請求結果（失敗 / 變慢 / 未受影響三類都要有數字，缺的寫 n/a + 原因；失敗按服務逐條列）：
+  - <svc-A> 失敗 <N> 筆（佔同窗 <M> 筆的 <X>%，其中 <R> 筆自行重試成功 | 未比對），<使用者看到什麼>
+  - <svc-B> 失敗 <N> 筆（佔同窗 <M> 筆的 <X>%，其中 <R> 筆自行重試成功 | 未比對），<使用者看到什麼>
+  - <svc-C> error 行 <N> 筆，<使用者看到什麼>（未換算為失敗請求數，因 <原因>）
+  - 成功但顯著變慢：<N> 筆，中位數 <x>s、最大 <y>s，區間 <<5s: N>、<5–10s: N>、<10–20s: N>、<>20s: N> or n/a + 原因
   - 未受影響：<N> 筆 or「同窗其餘請求正常」
-- 延遲（只在有「慢但成功」時）：中位數 <x>s、最大 <y>s；區間：<<5s: N>、<5–10s: N>、<10–20s: N>、<>20s: N>
-- 其他同樣中招的 caller：<service: N 筆 / N 人> or「已確認僅此服務」
-- 時間：<from> ~ <to> (GMT+8)
-- 使用者體驗：使用者進入 <產品> 後 <看到什麼>，<其他部分如何>，因為 <error 處理>。
+- 合計失敗請求 <N> 筆、真正流失 <N−ΣR> 筆（<哪幾支未計入>，整體為下限）
+- 受影響使用者：~<N>（distinct <該 stream 的 user id 欄位>；**跨上面三類請求結果去重**，同一人的失敗與重試各佔一格）or n/a + 原因
+
+**每支受災服務一條，失敗請求數與使用者行為寫在同一條。** 數字與行為分開列，讀的人對不出哪個服務造成哪個症狀、又有多少量，而那正是他要拿來排優先度的東西。拿不到失敗請求數的服務照樣給一條，寫 error 行數並在同條內說明為什麼換算不出來。
+
+**每支受災服務的使用者行為，要從「那支自己的失敗端點」讀出來，不可拿錨點那支的行為代表全部。** 共享依賴故障時各服務走不同呼叫路徑，面向的端末也不同（一支服務於行動端、另一支於桌面端），所以錨點的症狀套到全部會同時報錯範圍與性質。做法是每支各取一筆失敗樣本，從 stack trace 的 controller / endpoint 或結構化 access 欄位的 path 讀出它斷在哪個功能，再翻成使用者視角。
+
+**影響範圍要讀到分支，不要停在服務。** 失敗的呼叫常落在某個條件分支或 toggle 之內（僅特定 client 類型、僅開關開啟時、僅快取未命中時），此時該服務的受影響對象是那個分支的使用者而非全部使用者。判定依據寫進 Root Cause 的機制層（哪一行、哪個分支、該 toggle 現值），Impact 只寫結論。同一份判定不可外推到其他服務——每支的分支要各自判，判不了就寫進 Unknowns。
 
 **How to Resolve**
 - 短期：<止血>
