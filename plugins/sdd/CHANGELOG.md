@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.26.0] - 2026-11-01
+
+### Added
+- Engineers and reviewers now follow a rule about where a value belongs. A value used once stays where it is used, instead of being lifted to a class- or module-level field out of habit, which saves nothing measurable and costs the next reader the trip to go find it. Lifting it is still right when the thing is genuinely expensive to build or must be shared to be correct, when it really is shared state every caller has to see, or when the runtime itself pays off for the placement. In a server-rendered Vue or Nuxt app the shared case flips: state at module level is shared across requests, so one person's data can render in another person's page, and it belongs in the framework's per-request container instead. A value already written that way is left alone, and a reviewer no longer raises it.
+
 ## [3.25.1] - 2026-10-29
 
 ### Fixed
