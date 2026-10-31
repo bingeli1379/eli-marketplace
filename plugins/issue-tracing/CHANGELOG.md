@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0] - 2026-11-01
+
+### Changed
+- A Grafana link now gets traced back to the alert rule behind it before anything else is read. The investigation takes its query, its evaluation window, its threshold and the moment it fired from the rule itself, instead of from whichever panel and time range the person who sent you the link happened to have open. A dashboard URL shows no sign that a rule is attached, so this used to be missed entirely, and the counts in the report disagreed with the count that actually crossed the threshold.
+- The time the alert fired now wins over the time range in the URL.
+- The log window reaches further back on the early side, by the length of the rule's evaluation window. An alert fires that much after the burst that caused it, so the burst itself used to fall outside the slice being read.
+
 ## [1.13.0] - 2026-10-31
 
 ### Added
