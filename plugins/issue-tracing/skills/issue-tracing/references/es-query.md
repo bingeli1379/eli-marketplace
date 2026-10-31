@@ -3,7 +3,7 @@
 **Every field name and value below is a ROLE, not a literal.** Resolve each role to this stream's actual field via the per-stream mapping loaded in SKILL.md step 1c (or via the URL's own filter clauses, which already carry the right ones). The concrete names shown are one common shape, not defaults — see "Roles, not names" below.
 
 Required filters on every query:
-- `range` on the **timestamp field** (commonly `@timestamp`) — the parsed time range with ±5 min buffer
+- `range` on the **timestamp field** (commonly `@timestamp`) — the buffered window SKILL.md step 2's Time buffer paragraph settled, never a literal range off the URL
 - an **env filter** — from the URL's filter; the value's wording and casing differ per stream (`prod` on one, `production` on another), so copy, don't normalize
 - a **service filter** — REQUIRED; one query per candidate service
 - a **severity filter** — REQUIRED. Error+fatal by default, expressed in whatever form this stream uses: a text value set, a numeric severity range, or both. Include warning-level only if the originating alert was warning-level or the dashboard panel includes warnings. Count warning separately from error/fatal.

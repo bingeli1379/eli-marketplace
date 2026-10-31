@@ -12,7 +12,7 @@ Before writing the report, paste the evidence below in chat verbatim — real nu
 === Pre-report evidence ===
 
 Time window (GMT+8): <from> ~ <to>
-Burst window (if narrower than the URL range): <from> ~ <to>
+Burst window (if narrower than the window step 2 settled on): <from> ~ <to>
 
 Chain visibility (one line per hop, in call order):
 # How each hop became visible, and — for the LAST hop — which of 5f's three visibility-end
@@ -134,7 +134,7 @@ An empty or "skipped" block means the work is incomplete — go back and fill it
    - **沒有結構化 access 欄位不等於拿不到 status**：該 stream 若有 access-severity 的 log 行，那行通常是固定欄位順序，撈原始 log 文字下來 client-side 解析即可得 status／耗時／client address（SKILL.md step 4 的 access-line 段落）。走完那條才算「拿不到」。
    - 拿不到 status 就明寫「未取得請求結果」並列進 Unknowns——**不可用 error 筆數代替失敗數**。
 
-7. **止血建議要對得起你自己量到的數字，而且「擋得住這件事的開關是關的」永遠是一條 How to Resolve。** 這兩件事在調查途中就已經拿到，卻最容易在寫報告時掉——因為此刻眼前只有這份模板：告警／SOP 附的第一時間處置（step 2b「Alert URL / alert context」已要求驗證而非照抄），以及能擋住這類事件的設定現值（step 1c 的 config / settings lookup）。收尾前檢查兩項：**你的 infra 數字有沒有否證掉告警指定的動作**（有 → 明說哪一項無效與依據，不可把它原文寫成建議），以及**那顆旋鈕現在是什麼值**（關著／設錯 → 指名設定與現值，那通常就是真正的長期解）。查不到值就進 Unknowns，**不可寫「建議調整相關設定」這種沒有受詞的句子**——它讀起來像有結論，實際沒有。
+7. **止血建議要對得起你自己量到的數字，而且「擋得住這件事的開關是關的」永遠是一條 How to Resolve。** 這兩件事在調查途中就已經拿到，卻最容易在寫報告時掉——因為此刻眼前只有這份模板：告警／SOP 附的第一時間處置（step 2b「The firing condition is fact; the alert's remediation text and its definitions are NOT」已要求驗證而非照抄），以及能擋住這類事件的設定現值（step 1c 的 config / settings lookup）。收尾前檢查兩項：**你的 infra 數字有沒有否證掉告警指定的動作**（有 → 明說哪一項無效與依據，不可把它原文寫成建議），以及**那顆旋鈕現在是什麼值**（關著／設錯 → 指名設定與現值，那通常就是真正的長期解）。查不到值就進 Unknowns，**不可寫「建議調整相關設定」這種沒有受詞的句子**——它讀起來像有結論，實際沒有。
 
 8. **請求失敗 ≠ 使用者流失。把失敗筆數寫進 Impact 之前，先查那些人有沒有自己回來重試成功。**
    規則 6 擋的是「error 筆數當成失敗數」，這條擋下一層：一個失敗的請求，如果使用者二十秒後自己重送就成功了，跟一個真的把人弄丟的請求是兩種嚴重度。工單優先度、要不要通知使用者、要不要補償，全掛在這個差別上。
