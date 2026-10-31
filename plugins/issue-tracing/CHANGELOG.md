@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.13.0] - 2026-10-31
+
+### Added
+- Impact now gives every affected service its own line, with that service's failure count and what its own users saw, read from that service's own failure sample. Before this, one service's symptom was copied onto every other caller that shared the cause.
+- Reports no longer name individuals. What changed is described as the operation, the change or the setting, with a source and a timestamp (channel and time, ticket number, commit hash) so it stays just as traceable.
+
+### Fixed
+- A log sample that only covers one edge of the time window is now rejected. A fixed-size sample sorted by time could come back full of nothing but background while the real burst sat outside the slice, and nothing flagged the miss.
+
+### Changed
+- Writing rules now cover every section of the report: one fact per bullet, each section holding only its own material, a caveat written into the line it qualifies, and no speculation beyond what was actually measured.
+
 ## [1.12.5] - 2026-10-09
 
 ### Fixed
