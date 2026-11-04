@@ -187,9 +187,9 @@ The URL's filter (or alert condition) **is the user's scope and intent** — you
 
 4. **Run the filter, surface the logs, read the dominant pattern**
 
-   **Run the recovered filter verbatim** (from step 2, resolved per step 3: same index, same field paths, `match_phrase`): `sort @timestamp desc`, small `size` (5–10) to surface the matching logs, plus one `size: 0` + `track_total_hits: true` for the total. This is the anchor — everything downstream explains these logs.
+   **GATE — Read `${CLAUDE_PLUGIN_ROOT}/skills/issue-tracing/references/es-query.md` NOW**, before this step's first query, for filter requirements, the aggs ban, `track_total_hits`, `size`/token budget, stack-trace dedupe, and the dominant-pattern weighting method.
 
-   **GATE — Read `${CLAUDE_PLUGIN_ROOT}/skills/issue-tracing/references/es-query.md` NOW** (before firing ANY of the queries described in this step — including the third one below) for filter requirements, the aggs ban, `track_total_hits`, `size`/token budget, stack-trace dedupe, and the dominant-pattern weighting method.
+   **Then run the recovered filter verbatim** (from step 2, resolved per step 3: same index, same field paths, `match_phrase`): `sort @timestamp desc`, small `size` (5–10) to surface the matching logs, plus one `size: 0` + `track_total_hits: true` for the total. This is the anchor — everything downstream explains these logs.
 
    **FIRST, the short-circuit: is the anchor already ON the trace-carrying family?** If step 3 resolved the anchor's stream to the family that natively carries the trace-correlation id, the question is answered by construction — the id is in the hits you are about to read. Record `trace: available` and **send no probe at all**; this block is two queries, not three. This is not a rare corner: when the user's URL already points at the telemetry stream, it is the normal case, and probing it asks a question whose answer is in your hands. (Confirm it the moment the anchor sample returns, by checking the trace-id field is populated — not by spending a query.)
 
