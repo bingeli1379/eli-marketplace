@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.27] - 2026-11-05
+
+### Fixed
+- Writing, reviewing or improving a skill now reads the full authoring rulebook instead of the first page of it. All three commands pointed at the same rules file without saying how to open it, and read through the shell it comes back cut off after a couple of kilobytes, so most of the rules an edit is judged against were never in view. Each pointer now names the way to read it whole.
+
 ## [0.2.26] - 2026-10-28
 
 ### Changed
