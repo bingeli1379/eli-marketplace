@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.1] - 2026-11-05
+
+### Fixed
+- A service that runs in several clusters at once is now read from all of its log streams, not only the one the link resolved to. Each cluster writes to its own stream, so the anchor used to be computed over whichever share of the traffic happened to reach one of them, and every count, every comparison against a normal day, and every "that error does not appear here" quietly described a fraction of the service with nothing saying so.
+- The query rules are now read before the first query of the step that needs them, instead of in the paragraph after it. Following the step in order used to spend those queries first, so the filter requirements and the size limits arrived too late to apply to them.
+- The trigger-source line in the report now says what actually happened. The template used to hand over the internal A/B/C/D classification as the thing to write in that slot, so a finished report could carry a bare label where the reader needed the fact and had to come back and ask what it meant.
+
 ## [1.14.0] - 2026-11-01
 
 ### Changed
