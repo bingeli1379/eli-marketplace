@@ -6,7 +6,7 @@ user-invocable: false
 
 # Writing a skill
 
-**Read `${CLAUDE_PLUGIN_ROOT}/references/authoring-rules.md` now, before you touch the file.** It is the catalogue of every rule about what a good skill or agent file looks like — trigger wording, examples, structure, naming, step handoffs, state changes, which mechanism a plugin's hooks and mods should use, what a bundled script's interface carries, outside dependencies, safe editing, where content lives, and the order to cut cost in. Each entry states the rule, what breaks without it, and how the violation is visible. Follow it while writing; do not work from a memory of it.
+**Read `${CLAUDE_PLUGIN_ROOT}/references/authoring-rules.md` now, before you touch the file — with the Read tool and `allow_large`, never `cat` or a shell pipe.** It is about 55KB on very long lines, so a shell read is truncated to a preview and the rules that bite hardest are in the half you then never see. Observed 2026-11-05: it was `cat`-ed, came back as a 2KB preview, and had to be re-read properly. It is the catalogue of every rule about what a good skill or agent file looks like — trigger wording, examples, structure, naming, step handoffs, state changes, which mechanism a plugin's hooks and mods should use, what a bundled script's interface carries, outside dependencies, safe editing, where content lives, and the order to cut cost in. Each entry states the rule, what breaks without it, and how the violation is visible. Follow it while writing; do not work from a memory of it.
 
 The same catalogue is what `/review-skill` audits against, so the rules you write to are the rules you get checked against.
 

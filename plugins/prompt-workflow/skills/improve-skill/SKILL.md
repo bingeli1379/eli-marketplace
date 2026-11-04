@@ -73,7 +73,7 @@ Feed real-usage problems back into your own skills: you used a skill you maintai
 
 5. **Apply to the working copy**
 
-   **Before writing any prose edit, read `${CLAUDE_PLUGIN_ROOT}/references/authoring-rules.md`** — the same catalogue step 6's audit measures the edit against, and the rules that bite hardest are invisible from the file being edited (which frontmatter flag a behavior change needs, what a description may hold). Where the conventions loaded in `0c` conflict with it, they win.
+   **Before writing any prose edit, read `${CLAUDE_PLUGIN_ROOT}/references/authoring-rules.md` — with the Read tool and `allow_large`, never `cat` or a shell pipe, which truncate it to a preview** — the same catalogue step 6's audit measures the edit against, and the rules that bite hardest are invisible from the file being edited (which frontmatter flag a behavior change needs, what a description may hold). Where the conventions loaded in `0c` conflict with it, they win.
 
    Make the edits at `<repo>`. For any item classified as a preference in step 2, write the memory / suggest the `CLAUDE.md` line instead of editing the target.
 
