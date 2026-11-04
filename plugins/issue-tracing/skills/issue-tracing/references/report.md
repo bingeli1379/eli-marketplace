@@ -117,6 +117,7 @@ An empty or "skipped" block means the work is incomplete — go back and fill it
      - **C. input / load 變了** → 同一段 code、沒人 release，但進來的 request 變了：bot / 暴量 / 新客戶資料 / 一直潛伏今天才被打中的 edge case（往 caller 鑽，`next-hop-drill.md` caller-direction drill）。
      - **D. 啥都沒變** → 本來就這個錯誤率 = chronic 背景 / by-design（`next-hop-drill.md` baseline ratio ≈ 1 即屬此類）。
      - ⚠️ 最常見的漏判：沒人 release 就直接跳 B/D，漏掉 **C**（code 沒變但觸發變了）。
+     - **A/B/C/D 是判斷用的分類，不是寫進報告的字。** 觸發源那一行寫實際發生的事（「單一來源 IP 在 <N> 分鐘內送出 <M> 次請求，事故前同窗 <K> 次」），代號與類別名都不出現；讀報告的人要的是事實，看到代號只會回頭問那是什麼意思。
      佐證用可查、不可捏造的數字：commit hash + 日期（`git blame` 是判定工具，寫進報告的是 commit，見 HARD RULE 9）、IP 集中度、distinct customerId 集中度（log 分析步驟）、incident/baseline 暴增倍率（`next-hop-drill.md` correlation check）。這層是使用者做後續決策（封 bot / 改 code / 接受）的依據，**必須優先查實**。查不到就明寫「觸發源未判定 + 還缺什麼資料」，**絕不能因為「還沒確定是不是 bug」就把觸發源丟進 Unknowns** — 事實層與判斷層獨立。
    - **機制 / 判斷（看法層）**：agent 認為這是 bug / 預期行為 / 設計缺陷，**標明這是判斷**並給依據（stack trace、code、commit hash）。注意 throw 的那行不一定是真因，可能是下游症狀（頂層 NullRef 源自上游 bad state）——先判這行是因還是果。
    - 兩層獨立：觸發是 bot 不代表沒有 code 問題；是設計意圖也要分清「意圖」與「實作後果」是否一致（例：刻意拒絕 token 是對的，但用 unhandled exception 回 500 仍是缺陷）。
@@ -177,7 +178,7 @@ No "中文版" / "English" headings. Output the report blocks directly. Separate
 
 ```
 **Root Cause**
-- 觸發源（事實，什麼變了）：<A code 變 / B dependency 變 / C input·load 變 / D 啥都沒變>，佐證：<commit hash + 日期? IP·customerId 集中? incident/baseline 倍率? 事故前同簽名筆數?>
+- 觸發源（事實，什麼變了）：<一句話寫實際發生的事，不寫 HARD RULE 4 的分類代號>，佐證：<commit hash + 日期? IP·customerId 集中? incident/baseline 倍率? 事故前同簽名筆數?>
 - 機制（判斷，標明看法）：<我認為這是 bug / 預期行為 / 設計缺陷，因為…（stack trace / code / commit hash）>
 - <call chain / infra 數據 補充>
 
