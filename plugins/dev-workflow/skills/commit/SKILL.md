@@ -1,7 +1,7 @@
 ---
 name: commit
 description: Use when committing staged changes, or whenever the user asks to commit in ANY phrasing — "commit", "ai commit", "commit 一下", "幫我 commit", asks for a commit message to be written, or runs /commit. Applies even when the commit looks trivial enough to just run `git commit` directly — do not hand-roll the message, invoke this skill.
-allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git commit:*), Bash(git reset:*)
+allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git commit:*), Bash(git reset:*), Bash(git apply:*)
 ---
 
 # Commit Message Generation
@@ -26,6 +26,7 @@ User instruction (optional): `$ARGUMENTS` (the text passed after the command; em
    - **A lock file goes in the commit that changed its manifest**, not in a `chore` commit of its own. When the same changeset touches a dependency manifest (`package.json`, `*.csproj`, `pyproject.toml`, `go.mod`), the lock beside it is part of that change: splitting them leaves the manifest commit with a lock that does not match it, and a checkout there fails a frozen-lockfile install. A lock changed with no manifest change in the set is a `chore` commit as above.
 3. **Match this repo's style** from the recent-commits log (scope usage, casing, prefixes) on top of the format rules below.
 4. For each group, in dependency order: stage only that group's files (`git add <files>`), then `git commit`. Never `git add -A` when splitting.
+   - **A file whose hunks belong to different concerns is staged by hunk, non-interactively.** `git add -p` and `git add -i` need a TTY and are unavailable to an agent. Take `git diff HEAD -- <file>`, cut it at its `@@` hunk boundaries into one patch per group — each part repeating every header line above the first `@@`, which is four lines for a modified file and more for an add or a rename — and `git apply --cached <part>` for the group being staged. **Those parts live outside the working tree**: written inside it they appear as untracked files, which step 2 is told to include, and a stray patch lands in the commit. `git apply --cached --check` first; a part that will not apply means the cut landed inside a hunk, not that the file is unstageable. The fallback is the whole file in one commit, with the body naming the second concern it carries.
 5. After committing, report the result (`git log --oneline -<n>`).
 
 ## Rules
