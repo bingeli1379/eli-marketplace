@@ -200,6 +200,8 @@ No "中文版" / "English" headings. Output the report blocks directly. Separate
 
 **影響範圍要讀到分支，不要停在服務。** 失敗的呼叫常落在某個條件分支或 toggle 之內（僅特定 client 類型、僅開關開啟時、僅快取未命中時），此時該服務的受影響對象是那個分支的使用者而非全部使用者。判定依據寫進 Root Cause 的機制層（哪一行、哪個分支、該 toggle 現值），Impact 只寫結論。同一份判定不可外推到其他服務——每支的分支要各自判，判不了就寫進 Unknowns。
 
+**沒查過的服務不是沒受影響。** 「影響面」寫的是掃出來的範圍，不是手上剛好有資料的那一支。觸發源落在單一 client 識別時，範圍由 `SKILL.md` step 4 的 client-identity sweep 決定；沒跑那個 sweep 就把 Impact 收在錪點服務，等於用「沒查」冒充「沒事」。此時 Impact 只寫已確認的那幾支，並在 Unknowns 明寫範圍未掃，不可寫成「只有 <svc> 受影響」。
+
 **How to Resolve**
 - 短期：<止血>
 - 長期：<根治>

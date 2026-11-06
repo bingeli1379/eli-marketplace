@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.15.0] - 2026-11-05
+
+### Added
+- An incident driven by one external source is now measured across every service that source reached, not only the one the link pointed at. The investigation takes the client identity behind the burst and counts it once across the whole log stream with the service filter dropped, so the report says how wide the source got rather than how wide the starting point was. On the run that prompted this, the starting service showed 363 requests from that source while the same identity unfiltered showed 4671 across nine services. The sweep is capped at two queries and deliberately does not look inside any service it newly names.
+
+### Fixed
+- The list of requests that actually failed is now read over the event's own start and end rather than the time range the investigation began from. A burst whose tail ran past that range left its failures outside the filter, and the count came back zero, which reads as nothing having failed instead of as the wrong minutes having been read.
+- A report that only ever looked at one service no longer presents that as the whole impact. It now says in the unknowns that the range was never swept.
+
 ## [1.14.1] - 2026-11-05
 
 ### Fixed

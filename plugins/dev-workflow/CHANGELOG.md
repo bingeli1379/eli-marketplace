@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.4.0] - 2026-11-06
+
+### Added
+- When `/commit` splits your work into several commits and one file carries changes belonging to two of them, it now splits that file too, putting each part in the commit it belongs to. Before, a file like that had to go whole into one commit or the other. It still falls back to the whole file in one commit when the split will not come out cleanly, and says in the message which second thing that commit is also carrying.
+
 ## [4.3.0] - 2026-10-28
 
 ### Added
